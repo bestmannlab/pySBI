@@ -58,6 +58,7 @@ def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
     trial_duration=2*second
     launcher=Launcher(instances)
     launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+    launcher.start_instances()
     for p_b_e in p_b_e_range:
         for p_x_e in p_x_e_range:
             for p_e_e in p_e_e_range:
