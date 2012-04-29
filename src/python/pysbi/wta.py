@@ -4,6 +4,7 @@ from brian.library.IF import *
 from brian.library.synapses import *
 from time import time
 import h5py
+import argparse
 
 default_params=Parameters(
     # Neuron parameters
