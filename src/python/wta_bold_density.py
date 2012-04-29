@@ -1,7 +1,7 @@
 from brian import *
 import numpy as np
 from playdoh import *
-from wta import default_params, WTANetworkGroup, get_bold, get_voxel
+from src.python.pysbi.wta import default_params, WTANetworkGroup, get_bold, get_voxel
 
 def get_contrast(params):
     wta_params=default_params()
