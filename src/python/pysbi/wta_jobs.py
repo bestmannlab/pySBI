@@ -3,8 +3,8 @@ from brian.units import second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
 
-def get_wta_commands(num_groups, input_pattern, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, 
-                     record_voxel=False, record_neuron_state=False, record_spikes=False, record_firing_rate=True):
+def get_wta_cmds(num_groups, input_pattern, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e,
+                 record_voxel=False, record_neuron_state=False, record_spikes=False, record_firing_rate=True):
     cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta.py']
     file_desc='wta.groups.%d.input.%s.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
               (num_groups, input_pattern, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
