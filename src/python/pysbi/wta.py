@@ -31,8 +31,8 @@ default_params=Parameters(
     w_gaba_b=0.1*nS,
     # Connection probabilities
     p_b_e=0.005,
-    p_x_e=0.005,
-    p_e_e=0.005,#3,
+    p_x_e=0.01,
+    p_e_e=0.01,#3,
     p_e_i=0.1,
     p_i_i=0.01,#1,
     p_i_e=0.01)#8)
@@ -292,6 +292,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     wta_monitor=WTAMonitor(wta_network, voxel, record_voxel=record_voxel, record_neuron_state=record_neuron_state)
 
     net=Network(background_input, task_inputs, wta_network, voxel, wta_network.connections, wta_monitor.monitors)
+    reinit_default_clock()
 
     start_time = time()
     net.run(trial_duration, report='text')
