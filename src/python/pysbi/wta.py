@@ -320,7 +320,15 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         f_vox.attrs['e_base'] = voxel.e_base
         f_vox.attrs['v_base'] = voxel.v_base
         f_vox.attrs['alpha'] = voxel.alpha
-        f_vox.attrs['k1'] = voxel.k1
+        f_vox.attrs['T_2E'] = voxel.T_2E
+        f_vox.attrs['T_2I'] = voxel.T_2I
+        f_vox.attrs['s_e_0'] = voxel.s_e_0
+        f_vox.attrs['s_i_0'] = voxel.s_i_0
+        f_vox.attrs['B0'] = voxel.B0
+        f_vox.attrs['TE'] = voxel.TE
+        f_vox.attrs['se'] = voxel.se
+        f_vox.attrs['si'] = voxel.si
+        f_vox.attrs['beta'] = voxel.beta
         f_vox.attrs['k2'] = voxel.k2
         f_vox.attrs['k3'] = voxel.k3
         f_vox['G_total'] = wta_monitor.voxel_monitor['G_total'].values
