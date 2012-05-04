@@ -1,6 +1,7 @@
 import os
 from brian.units import second, farad, siemens, volt, amp
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
@@ -61,25 +62,33 @@ class FileInfo():
         self.wta_params.p_i_i=float(f.attrs['p_i_i'])
         self.wta_params.p_i_e=float(f.attrs['p_i_e'])
 
-        if 'voxel' in f:
-            f_vox=f['voxel']
-            self.voxel_params=voxel.default_params()
-            self.voxel_params.eta=float(f_vox.attrs['eta'])*second
-            self.voxel_params.G_base=float(f_vox.attrs['G_base'])*amp
-            self.voxel_params.tau_f=float(f_vox.attrs['tau_f'])*second
-            self.voxel_params.tau_sfloat(f_vox.attrs['tau_s'])*second
-            self.voxel_params.tau_o=float(f_vox.attrs['tau_o'])*second
-            self.voxel_params.e_base=float(f_vox.attrs['e_base'])
-            self.voxel_params.v_base=float(f_vox.attrs['v_base'])
-            self.voxel_params.alpha=float(f_vox.attrs['alpha'])
-            self.voxel_params.k1=float(f_vox.attrs['k1'])
-            self.voxel_params.k2=float(f_vox.attrs['k2'])
-            self.voxel_params.k3=float(f_vox.attrs['k3'])
-            self.voxel_rec={'s':    np.array(f_vox['s']),
-                            'f_in': np.array(f_vox['f_in']),
-                            'v':    np.array(f_vox['v']),
-                            'q':    np.array(f_vox['q']),
-                            'y':    np.array(f_vox['y'])}
+#        if 'voxel' in f:
+#            f_vox=f['voxel']
+#            self.voxel_params=voxel.default_params()
+#            self.voxel_params.eta=float(f_vox.attrs['eta'])*second
+#            self.voxel_params.G_base=float(f_vox.attrs['G_base'])*amp
+#            self.voxel_params.tau_f=float(f_vox.attrs['tau_f'])*second
+#            self.voxel_params.tau_s=float(f_vox.attrs['tau_s'])*second
+#            self.voxel_params.tau_o=float(f_vox.attrs['tau_o'])*second
+#            self.voxel_params.e_base=float(f_vox.attrs['e_base'])
+#            self.voxel_params.v_base=float(f_vox.attrs['v_base'])
+#            self.voxel_params.alpha=float(f_vox.attrs['alpha'])
+#            self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
+#            self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
+#            self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
+#            self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
+#            self.voxel_params.B0=float(f_vox.attrs['B0'])
+#            self.voxel_params.TE=float(f_vox.attrs['TE'])
+#            self.voxel_params.se=float(f_vox.attrs['se'])
+#            self.voxel_params.si=float(f_vox.attrs['si'])
+#            self.voxel.beta=float(f_vox.attrs['beta'])
+#            self.voxel_params.k2=float(f_vox.attrs['k2'])
+#            self.voxel_params.k3=float(f_vox.attrs['k3'])
+#            self.voxel_rec={'s':    np.array(f_vox['s']),
+#                            'f_in': np.array(f_vox['f_in']),
+#                            'v':    np.array(f_vox['v']),
+#                            'q':    np.array(f_vox['q']),
+#                            'y':    np.array(f_vox['y'])}
 
         if 'neuron_state' in f:
             f_state=f['neuron_state']
@@ -134,8 +143,10 @@ def is_valid(high_contrast_e_rates, low_contrast_e_rates):
     return True
 
 def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range):
-    overall_param_range=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+    likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
                                   len(p_i_i_range), len(p_i_e_range)])
+    priors=1.0/float(len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range))*\
+           np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range), len(p_i_e_range)])
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
@@ -144,14 +155,91 @@ def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_rang
                         for n,p_i_e in enumerate(p_i_e_range):
                             low_contrast_file='wta.groups.%d.input.low.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
                                               (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+                            low_contrast_path=os.path.join(DATA_DIR,'wta-output',low_contrast_file)
                             high_contrast_file='wta.groups.%d.input.high.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
                                                (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i,p_i_e)
-
+                            high_contrast_path=os.path.join(DATA_DIR,'wta-output',high_contrast_file)
                             try:
-                                low_contrast_data=FileInfo(os.path.join(DATA_DIR,'wta-output',low_contrast_file))
-                                high_contrast_data=FileInfo(os.path.join(DATA_DIR,'wta-output',high_contrast_file))
+                                low_contrast_data=FileInfo(low_contrast_path)
+                                high_contrast_data=FileInfo(high_contrast_path)
                                 if is_valid(high_contrast_data.e_firing_rates, low_contrast_data.e_firing_rates):
-                                    overall_param_range[i,j,k,l,m,n]=1
-                            except Exception:
+                                    likelihood[i,j,k,l,m,n]=1
+                            except Exception as e:
+                                print('Error opening files %s and %s' % (low_contrast_path, high_contrast_path))
                                 pass
-    return overall_param_range
+
+
+    posterior=likelihood*priors
+
+    marginal_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_p_i_e=np.zeros([len(p_i_e_range)])
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        marginal_p_i_e+=posterior[i,j,k,l,m,:]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_p_i_i+=posterior[i,j,k,l,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_p_e_i+=posterior[i,j,k,:,m,n]
+
+    marginal_p_e_i_p_i_i=np.zeros([len(p_e_i_range), len(p_i_i_range)])
+    marginal_p_e_i_p_i_e=np.zeros([len(p_e_i_range), len(p_i_e_range)])
+    marginal_p_i_i_p_i_e=np.zeros([len(p_i_i_range), len(p_i_e_range)])
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    marginal_p_e_i_p_i_i+=posterior[i,j,k,:,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    marginal_p_e_i_p_i_e+=posterior[i,j,k,:,m,:]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    marginal_p_i_i_p_i_e+=posterior[i,j,k,l,:,:]
+
+    fig1=plt.figure()
+    ax=plt.subplot(311)
+    ax.bar(np.array(p_i_e_range)-.005,marginal_p_i_e,.01)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(WTA)')
+    ax=plt.subplot(312)
+    ax.bar(np.array(p_i_i_range)-.005,marginal_p_i_i,.01)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(WTA)')
+    ax=plt.subplot(313)
+    ax.bar(np.array(p_e_i_range)-.005,marginal_p_e_i,.01)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(WTA)')
+
+    fig2=plt.figure()
+    ax=plt.subplot(311)
+    ax.imshow(marginal_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),min(p_e_i_range),max(p_e_i_range)])
+    plt.xlabel('p_i_i')
+    plt.ylabel('p_e_i')
+    ax=plt.subplot(312)
+    ax.imshow(marginal_p_e_i_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),min(p_e_i_range),max(p_e_i_range)])
+    plt.xlabel('p_i_e')
+    plt.ylabel('p_e_i')
+    ax=plt.subplot(313)
+    ax.imshow(marginal_p_i_i_p_i_e, extent=[min(p_i_i_range),max(p_i_i_range),min(p_i_e_range),max(p_i_e_range)])
+    plt.xlabel('p_i_i')
+    plt.ylabel('p_e_i')
+
+    plt.show()
+
+    return posterior, marginal_p_e_i, marginal_p_i_i, marginal_p_i_e
