@@ -73,5 +73,4 @@ def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
                             cmds,log_file_template,out_file=get_wta_cmds(num_groups, 'high', trial_duration, p_b_e,
                                 p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, record_voxel=True, record_neuron_state=False,
                                 record_firing_rate=True, record_spikes=True)
-                            launcher.add_batch_job(cmds, log_file_template=log_file_template, output_file=out_file)
-    launcher.post_jobs()
+                            launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)

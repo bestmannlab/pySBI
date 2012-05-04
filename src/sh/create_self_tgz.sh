@@ -1,0 +1,1 @@
+tar cvzf pySBI.tgz -C /data/projects/ --exclude=.git --exclude=data pySBI

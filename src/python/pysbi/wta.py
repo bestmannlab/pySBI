@@ -447,6 +447,6 @@ if __name__=='__main__':
     wta_params.p_i_i=argvals.p_i_i
     wta_params.p_i_e=argvals.p_i_e
 
-    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration, output_file=argvals.output,
+    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second, output_file=argvals.output,
         record_voxel=argvals.record_voxel, record_neuron_state=argvals.record_neuron_state,
         record_spikes=argvals.record_spikes, record_firing_rate=argvals.record_firing_rate)
