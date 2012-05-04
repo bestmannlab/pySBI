@@ -77,23 +77,26 @@ class FileInfo():
             self.voxel_params.e_base=float(f_vox.attrs['e_base'])
             self.voxel_params.v_base=float(f_vox.attrs['v_base'])
             self.voxel_params.alpha=float(f_vox.attrs['alpha'])
-            self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
-            self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
-            self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
-            self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
-            self.voxel_params.B0=float(f_vox.attrs['B0'])
-            self.voxel_params.TE=float(f_vox.attrs['TE'])
-            self.voxel_params.s_e=float(f_vox.attrs['s_e'])
-            self.voxel_params.s_i=float(f_vox.attrs['s_i'])
-            self.voxel_params.beta=float(f_vox.attrs['beta'])
-            self.voxel_params.k2=float(f_vox.attrs['k2'])
-            self.voxel_params.k3=float(f_vox.attrs['k3'])
-            self.voxel_rec={'G_total': np.array(f_vox['G_total']),
-                            's':       np.array(f_vox['s']),
-                            'f_in':    np.array(f_vox['f_in']),
-                            'v':       np.array(f_vox['v']),
-                            'q':       np.array(f_vox['q']),
-                            'y':       np.array(f_vox['y'])}
+            try:
+                self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
+                self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
+                self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
+                self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
+                self.voxel_params.B0=float(f_vox.attrs['B0'])
+                self.voxel_params.TE=float(f_vox.attrs['TE'])
+                self.voxel_params.s_e=float(f_vox.attrs['s_e'])
+                self.voxel_params.s_i=float(f_vox.attrs['s_i'])
+                self.voxel_params.beta=float(f_vox.attrs['beta'])
+                self.voxel_params.k2=float(f_vox.attrs['k2'])
+                self.voxel_params.k3=float(f_vox.attrs['k3'])
+                self.voxel_rec={'G_total': np.array(f_vox['G_total']),
+                                's':       np.array(f_vox['s']),
+                                'f_in':    np.array(f_vox['f_in']),
+                                'v':       np.array(f_vox['v']),
+                                'q':       np.array(f_vox['q']),
+                                'y':       np.array(f_vox['y'])}
+            except Exception:
+                pass
 
         if 'neuron_state' in f:
             f_state=f['neuron_state']
