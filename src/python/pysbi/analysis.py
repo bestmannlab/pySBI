@@ -1,10 +1,14 @@
 import os
+from brian.clock import reinit_default_clock, defaultclock
+from brian.network import network_operation, Network
 from brian.units import second, farad, siemens, volt, amp
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
+from pysbi.voxel import Voxel
+from pysbi.wta import WTAMonitor
 
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
@@ -143,24 +147,88 @@ def is_valid(high_contrast_e_rates, low_contrast_e_rates):
 
     return True
 
-def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range):
-    run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
+def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
+                p_i_e_range):
+    posterior,marginals=run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    contrast=run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
+        p_i_i_range, p_i_e_range, marginals)
 
-def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range):
-    likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
-                         len(p_i_i_range), len(p_i_e_range)])
-    priors=1.0/float(len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range))*\
-           np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range), len(p_i_e_range)])
+
+def run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
+                      p_i_e_range,priors):
+    contrast=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range)])
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
                 for l,p_e_i in enumerate(p_e_i_range):
                     for m,p_i_i in enumerate(p_i_i_range):
                         for n,p_i_e in enumerate(p_i_e_range):
-                            low_contrast_file='wta.groups.%d.input.low.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
+                            low_contrast_file='wta.groups.%d.input.low.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
+                                              '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
                                               (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
                             low_contrast_path=os.path.join(DATA_DIR,'wta-output',low_contrast_file)
-                            high_contrast_file='wta.groups.%d.input.high.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
+                            high_contrast_file='wta.groups.%d.input.high.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
+                                               '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
+                                               (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i,p_i_e)
+                            high_contrast_path=os.path.join(DATA_DIR,'wta-output',high_contrast_file)
+                            try:
+                                low_contrast_data=FileInfo(low_contrast_path)
+                                low_contrast_bold=get_bold_signal(low_contrast_data)
+
+                                high_contrast_data=FileInfo(high_contrast_path)
+                                high_contrast_bold=get_bold_signal(high_contrast_data)
+
+                                contrast[i,j,k,l,m,n]=max(high_contrast_bold)-max(low_contrast_bold)
+                            except Exception:
+                                pass
+    return contrast
+
+def get_bold_signal(wta_data, plot=False):
+    voxel=Voxel(params=wta_data.voxel_params)
+    voxel.G_base=wta_data.voxel_rec['G_total'][0][200:800].mean()
+    voxel_monitor = WTAMonitor(None, voxel, record_voxel=True, record_firing_rate=False, record_neuron_state=False,
+        record_spikes=False)
+
+    @network_operation(when='start')
+    def get_input():
+        idx=int(defaultclock.t/defaultclock.dt)
+        if idx<len(wta_data.voxel_rec['G_total'][0]):
+            voxel.G_total=wta_data.voxel_rec['G_total'][0][idx]
+        else:
+            voxel.G_total=voxel.G_base
+
+    net=Network(voxel, get_input, voxel_monitor.monitors)
+    reinit_default_clock()
+    net.run(6*second)
+
+    if plot:
+        voxel_monitor.plot()
+
+    return voxel_monitor.voxel_monitor['y'].values
+
+
+def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
+                          p_i_e_range):
+    likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                         len(p_i_i_range), len(p_i_e_range)])
+    n_param_vals=len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range)
+    priors=1.0/n_param_vals*np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                                     len(p_i_i_range), len(p_i_e_range)])
+    evidence=0
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        for n,p_i_e in enumerate(p_i_e_range):
+                            low_contrast_file='wta.groups.%d.input.low.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
+                                              '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
+                                              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+                            low_contrast_path=os.path.join(DATA_DIR,'wta-output',low_contrast_file)
+                            high_contrast_file='wta.groups.%d.input.high.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
+                                               '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
                                                (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i,p_i_e)
                             high_contrast_path=os.path.join(DATA_DIR,'wta-output',high_contrast_file)
                             try:
@@ -168,12 +236,13 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
                                 high_contrast_data=FileInfo(high_contrast_path)
                                 if is_valid(high_contrast_data.e_firing_rates, low_contrast_data.e_firing_rates):
                                     likelihood[i,j,k,l,m,n]=1
-                            except Exception as e:
+                                    evidence+=1/n_param_vals
+                            except Exception:
                                 print('Error opening files %s and %s' % (low_contrast_path, high_contrast_path))
                                 pass
 
 
-    posterior=likelihood*priors
+    posterior=(likelihood*priors)/evidence
 
     marginal_p_e_i=np.zeros([len(p_e_i_range)])
     marginal_p_i_i=np.zeros([len(p_i_i_range)])
@@ -216,7 +285,7 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
                 for l,p_e_i in enumerate(p_e_i_range):
                     marginal_p_i_i_p_i_e+=posterior[i,j,k,l,:,:]
 
-    fig1=plt.figure()
+    plt.figure()
     ax=plt.subplot(311)
     ax.bar(np.array(p_i_e_range)-.005,marginal_p_i_e,.01)
     plt.xlabel('p_i_e')
@@ -230,7 +299,7 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     plt.xlabel('p_e_i')
     plt.ylabel('p(WTA)')
 
-    fig2=plt.figure()
+    plt.figure()
     ax=plt.subplot(311)
     ax.imshow(marginal_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),min(p_e_i_range),max(p_e_i_range)])
     plt.xlabel('p_i_i')
@@ -246,4 +315,4 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
 
     plt.show()
 
-    return posterior, marginal_p_e_i, marginal_p_i_i, marginal_p_i_e
+    return posterior, {'p_e_i':marginal_p_e_i, 'p_i_i': marginal_p_i_i, 'p_i_e': marginal_p_i_e}
