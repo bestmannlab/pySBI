@@ -217,7 +217,7 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
                          len(p_i_i_range), len(p_i_e_range)])
     n_param_vals=len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range)
-    priors=1.0/n_param_vals*np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+    priors=1.0/float(n_param_vals)*np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
                                      len(p_i_i_range), len(p_i_e_range)])
     evidence=0
     for i,p_b_e in enumerate(p_b_e_range):
@@ -239,7 +239,7 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
                                 high_contrast_data=FileInfo(high_contrast_path)
                                 if is_valid(high_contrast_data.e_firing_rates, low_contrast_data.e_firing_rates):
                                     likelihood[i,j,k,l,m,n]=1
-                                    evidence+=1/n_param_vals
+                                    evidence+=1.0/float(n_param_vals)
                             except Exception:
                                 print('Error opening files %s and %s' % (low_contrast_path, high_contrast_path))
                                 pass
