@@ -326,8 +326,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         f_vox.attrs['s_i_0'] = voxel.params.s_i_0
         f_vox.attrs['B0'] = voxel.params.B0
         f_vox.attrs['TE'] = voxel.params.TE
-        f_vox.attrs['se'] = voxel.params.se
-        f_vox.attrs['si'] = voxel.params.si
+        f_vox.attrs['s_e'] = voxel.params.s_e
+        f_vox.attrs['s_i'] = voxel.params.s_i
         f_vox.attrs['beta'] = voxel.params.beta
         f_vox.attrs['k2'] = voxel.k2
         f_vox.attrs['k3'] = voxel.k3
