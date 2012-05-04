@@ -67,7 +67,7 @@ class Voxel(NeuronGroup):
         k3                                                                             : 1
         ''')
         NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
-
+        self.params=params
         self.G_base=params.G_base
         self.eta=params.eta
         self.tau_s=params.tau_s
@@ -77,11 +77,11 @@ class Voxel(NeuronGroup):
         self.e_base=params.e_base
         self.v_base=params.v_base
         self.k1=params.k1
-        s_e=params.s_e_0*exp(-params.TE/params.T_2E)
-        s_i=params.s_i_0*exp(-params.TE/params.T_2I)
-        beta=s_e/s_i
-        self.k2=beta*params.r_0*self.e_base*params.TE
-        self.k3=beta-1
+        self.params.s_e=params.s_e_0*exp(-params.TE/params.T_2E)
+        self.params.s_i=params.s_i_0*exp(-params.TE/params.T_2I)
+        self.params.beta=self.params.s_e/self.params.s_i
+        self.k2=self.params.beta*params.r_0*self.e_base*params.TE
+        self.k3=self.params.beta-1
 
         self.f_in=1
         self.s=0

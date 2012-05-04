@@ -43,18 +43,18 @@ class FileInfo():
         self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
         self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
         self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
-        self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
+        #self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
         self.wta_params.tau_ampa=float(f.attrs['tau_ampa'])*second
         self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
         self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
         self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
-        self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
-        self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
+        #self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
+        #self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
         self.wta_params.w_ampa_e=float(f.attrs['w_ampa_e'])*siemens
         self.wta_params.w_ampa_r=float(f.attrs['w_ampa_r'])*siemens
         self.wta_params.w_nmda=float(f.attrs['w_nmda'])*siemens
         self.wta_params.w_gaba_a=float(f.attrs['w_gaba_a'])*siemens
-        self.wta_params.w_gaba_b=float(f.attrs['w_gaba_b'])*siemens
+        #self.wta_params.w_gaba_b=float(f.attrs['w_gaba_b'])*siemens
         self.wta_params.p_b_e=float(f.attrs['p_b_e'])
         self.wta_params.p_x_e=float(f.attrs['p_x_e'])
         self.wta_params.p_e_e=float(f.attrs['p_e_e'])
@@ -62,33 +62,33 @@ class FileInfo():
         self.wta_params.p_i_i=float(f.attrs['p_i_i'])
         self.wta_params.p_i_e=float(f.attrs['p_i_e'])
 
-#        if 'voxel' in f:
-#            f_vox=f['voxel']
-#            self.voxel_params=voxel.default_params()
-#            self.voxel_params.eta=float(f_vox.attrs['eta'])*second
-#            self.voxel_params.G_base=float(f_vox.attrs['G_base'])*amp
-#            self.voxel_params.tau_f=float(f_vox.attrs['tau_f'])*second
-#            self.voxel_params.tau_s=float(f_vox.attrs['tau_s'])*second
-#            self.voxel_params.tau_o=float(f_vox.attrs['tau_o'])*second
-#            self.voxel_params.e_base=float(f_vox.attrs['e_base'])
-#            self.voxel_params.v_base=float(f_vox.attrs['v_base'])
-#            self.voxel_params.alpha=float(f_vox.attrs['alpha'])
-#            self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
-#            self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
-#            self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
-#            self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
-#            self.voxel_params.B0=float(f_vox.attrs['B0'])
-#            self.voxel_params.TE=float(f_vox.attrs['TE'])
-#            self.voxel_params.se=float(f_vox.attrs['se'])
-#            self.voxel_params.si=float(f_vox.attrs['si'])
-#            self.voxel.beta=float(f_vox.attrs['beta'])
-#            self.voxel_params.k2=float(f_vox.attrs['k2'])
-#            self.voxel_params.k3=float(f_vox.attrs['k3'])
-#            self.voxel_rec={'s':    np.array(f_vox['s']),
-#                            'f_in': np.array(f_vox['f_in']),
-#                            'v':    np.array(f_vox['v']),
-#                            'q':    np.array(f_vox['q']),
-#                            'y':    np.array(f_vox['y'])}
+        if 'voxel' in f:
+            f_vox=f['voxel']
+            self.voxel_params=voxel.default_params()
+            self.voxel_params.eta=float(f_vox.attrs['eta'])*second
+            self.voxel_params.G_base=float(f_vox.attrs['G_base'])*amp
+            self.voxel_params.tau_f=float(f_vox.attrs['tau_f'])*second
+            self.voxel_params.tau_s=float(f_vox.attrs['tau_s'])*second
+            self.voxel_params.tau_o=float(f_vox.attrs['tau_o'])*second
+            self.voxel_params.e_base=float(f_vox.attrs['e_base'])
+            self.voxel_params.v_base=float(f_vox.attrs['v_base'])
+            self.voxel_params.alpha=float(f_vox.attrs['alpha'])
+            self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
+            self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
+            self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
+            self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
+            self.voxel_params.B0=float(f_vox.attrs['B0'])
+            self.voxel_params.TE=float(f_vox.attrs['TE'])
+            self.voxel_params.se=float(f_vox.attrs['se'])
+            self.voxel_params.si=float(f_vox.attrs['si'])
+            self.voxel_params.beta=float(f_vox.attrs['beta'])
+            self.voxel_params.k2=float(f_vox.attrs['k2'])
+            self.voxel_params.k3=float(f_vox.attrs['k3'])
+            self.voxel_rec={'s':    np.array(f_vox['s']),
+                            'f_in': np.array(f_vox['f_in']),
+                            'v':    np.array(f_vox['v']),
+                            'q':    np.array(f_vox['q']),
+                            'y':    np.array(f_vox['y'])}
 
         if 'neuron_state' in f:
             f_state=f['neuron_state']
@@ -143,8 +143,11 @@ def is_valid(high_contrast_e_rates, low_contrast_e_rates):
     return True
 
 def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range):
+    run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
+
+def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range):
     likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
-                                  len(p_i_i_range), len(p_i_e_range)])
+                         len(p_i_i_range), len(p_i_e_range)])
     priors=1.0/float(len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range))*\
            np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range), len(p_i_e_range)])
     for i,p_b_e in enumerate(p_b_e_range):
