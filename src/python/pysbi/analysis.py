@@ -44,6 +44,7 @@ class FileInfo():
         self.wta_params.EL=float(f.attrs['EL'])*volt
         self.wta_params.VT=float(f.attrs['VT'])*volt
         self.wta_params.DeltaT=float(f.attrs['DeltaT'])*volt
+        self.wta_params.Mg=float(f.attrs['Mg'])
         self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
         self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
         self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
