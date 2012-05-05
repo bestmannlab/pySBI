@@ -218,8 +218,9 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
                          len(p_i_i_range), len(p_i_e_range)])
     n_param_vals=len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range)
-    priors=1.0/float(n_param_vals)*np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
-                                     len(p_i_i_range), len(p_i_e_range)])
+    priors=np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                    len(p_i_e_range)])*1.0/float(n_param_vals)
+
     evidence=0
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
@@ -240,7 +241,7 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
                                 high_contrast_data=FileInfo(high_contrast_path)
                                 if is_valid(high_contrast_data.e_firing_rates, low_contrast_data.e_firing_rates):
                                     likelihood[i,j,k,l,m,n]=1
-                                    evidence+=1.0/float(n_param_vals)
+                                    evidence+=likelihood[i,j,k,l,m,n]*priors[i,j,k,l,m,n]
                             except Exception:
                                 print('Error opening files %s and %s' % (low_contrast_path, high_contrast_path))
                                 pass
@@ -303,17 +304,20 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     plt.xlabel('p_e_i')
     plt.ylabel('p(WTA)')
 
-    plt.figure()
+    fig=plt.figure()
     ax=plt.subplot(311)
-    ax.imshow(marginal_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),min(p_e_i_range),max(p_e_i_range)])
+    im=ax.imshow(marginal_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),min(p_e_i_range),max(p_e_i_range)])
+    fig.colorbar(im)
     plt.xlabel('p_i_i')
     plt.ylabel('p_e_i')
     ax=plt.subplot(312)
-    ax.imshow(marginal_p_e_i_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),min(p_e_i_range),max(p_e_i_range)])
+    im=ax.imshow(marginal_p_e_i_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),min(p_e_i_range),max(p_e_i_range)])
+    fig.colorbar(im)
     plt.xlabel('p_i_e')
     plt.ylabel('p_e_i')
     ax=plt.subplot(313)
-    ax.imshow(marginal_p_i_i_p_i_e, extent=[min(p_i_i_range),max(p_i_i_range),min(p_i_e_range),max(p_i_e_range)])
+    im=ax.imshow(marginal_p_i_i_p_i_e, extent=[min(p_i_i_range),max(p_i_i_range),min(p_i_e_range),max(p_i_e_range)])
+    fig.colorbar(im)
     plt.xlabel('p_i_i')
     plt.ylabel('p_e_i')
 
