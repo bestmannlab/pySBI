@@ -43,28 +43,36 @@ default_params=Parameters(
         r_0=25*(B0/1.5)**2
     ''')
 
+class LFPSource(NeuronGroup):
+    def __init__(self, network):
+        eqs=Equations('''
+         LFP : amp
+        ''')
+        NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
+        self.LFP=linked_var(network, 'I_abs', func=sum)
+
 class Voxel(NeuronGroup):
     def __init__(self, params=default_params, network=None):
         eqs=Equations('''
-        G_total                                                                        : amp
-        ds/dt=eta*(G_total-G_base)/G_base-s/tau_s-(f_in-1.0)/tau_f                     : 1
-        df_in/dt=s/second                                                              : 1
-        dv/dt=1/tau_o*(f_in-f_out)                                                     : 1
-        f_out=v**(1.0/alpha)                                                           : 1
-        o_e=1-(1-e_base)**(1/f_in)                                                     : 1
-        dq/dt=1/tau_o*((f_in*o_e/e_base)-f_out*q/v)                                    : 1
-        y=v_base*((k1+k2)*(1-q)-(k2+k3)*(1-v))                                         : 1
-        G_base                                                                         : amp
-        eta                                                                            : 1/second
-        tau_s                                                                          : second
-        tau_f                                                                          : second
-        alpha                                                                          : 1
-        tau_o                                                                          : second
-        e_base                                                                         : 1
-        v_base                                                                         : 1
-        k1                                                                             : 1
-        k2                                                                             : 1
-        k3                                                                             : 1
+        G_total                                                       : amp
+        ds/dt=eta*(G_total-G_base)/G_base-s/tau_s-(f_in-1.0)/tau_f    : 1
+        df_in/dt=s/second                                             : 1
+        dv/dt=1/tau_o*(f_in-f_out)                                    : 1
+        f_out=v**(1.0/alpha)                                          : 1
+        o_e=1-(1-e_base)**(1/f_in)                                    : 1
+        dq/dt=1/tau_o*((f_in*o_e/e_base)-f_out*q/v)                   : 1
+        y=v_base*((k1+k2)*(1-q)-(k2+k3)*(1-v))                        : 1
+        G_base                                                        : amp
+        eta                                                           : 1/second
+        tau_s                                                         : second
+        tau_f                                                         : second
+        alpha                                                         : 1
+        tau_o                                                         : second
+        e_base                                                        : 1
+        v_base                                                        : 1
+        k1                                                            : 1
+        k2                                                            : 1
+        k3                                                            : 1
         ''')
         NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
         self.params=params
