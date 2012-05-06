@@ -104,7 +104,7 @@ class FileInfo():
             self.neural_state_rec={'g_ampa':   np.array(f_state['g_ampa']),
                                    'g_nmda':   np.array(f_state['g_nmda']),
                                    'g_gaba_a': np.array(f_state['g_gaba_a']),
-                                   'g_gaba_b': np.array(f_state['g_gaba_b']),
+                                   #'g_gaba_b': np.array(f_state['g_gaba_b']),
                                    'vm':       np.array(f_state['vm'])}
 
         if 'firing_rates' in f:
@@ -119,10 +119,12 @@ class FileInfo():
             self.i_spike_neurons=[]
             self.i_spike_times=[]
             for idx in range(self.num_groups):
-                self.e_spike_neurons.append(np.array(f_spikes['e.%d.spike_neurons' % idx]))
-                self.e_spike_times.append(np.array(f_spikes['e.%d.spike_times' % idx]))
-                self.i_spike_neurons.append(np.array(f_spikes['i.%d.spike_neurons' % idx]))
-                self.i_spike_times.append(np.array(f_spikes['i.%d.spike_times' % idx]))
+                if ('e.%d.spike_neurons' % idx) in f_spikes:
+                    self.e_spike_neurons.append(np.array(f_spikes['e.%d.spike_neurons' % idx]))
+                    self.e_spike_times.append(np.array(f_spikes['e.%d.spike_times' % idx]))
+                if ('i.%d.spike_neurons' % idx) in f_spikes:
+                    self.i_spike_neurons.append(np.array(f_spikes['i.%d.spike_neurons' % idx]))
+                    self.i_spike_times.append(np.array(f_spikes['i.%d.spike_times' % idx]))
 
         f.close()
 
