@@ -399,12 +399,14 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     if record_spikes:
         f_spikes = f.create_group('spikes')
         for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['excitatory']):
-            f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
-            f_spikes['e.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
+            if len(spike_monitor.spikes):
+                f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
+                f_spikes['e.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
 
         for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['inhibitory']):
-            f_spikes['i.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
-            f_spikes['i.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
+            if len(spike_monitor.spikes):
+                f_spikes['i.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
+                f_spikes['i.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
     f.close()
 
 
