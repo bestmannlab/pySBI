@@ -44,7 +44,8 @@ class FileInfo():
         self.wta_params.EL=float(f.attrs['EL'])*volt
         self.wta_params.VT=float(f.attrs['VT'])*volt
         self.wta_params.DeltaT=float(f.attrs['DeltaT'])*volt
-        self.wta_params.Mg=float(f.attrs['Mg'])
+        if 'Mg' in f.attrs:
+            self.wta_params.Mg=float(f.attrs['Mg'])
         self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
         self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
         self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
@@ -78,26 +79,42 @@ class FileInfo():
             self.voxel_params.e_base=float(f_vox.attrs['e_base'])
             self.voxel_params.v_base=float(f_vox.attrs['v_base'])
             self.voxel_params.alpha=float(f_vox.attrs['alpha'])
-            try:
+            if 'T_2E' in f_vox.attrs:
                 self.voxel_params.T_2E=float(f_vox.attrs['T_2E'])
+            if 'T_2I' in f_vox.attrs:
                 self.voxel_params.T_2I=float(f_vox.attrs['T_2I'])
+            if 's_e_0' in f_vox.attrs:
                 self.voxel_params.s_e_0=float(f_vox.attrs['s_e_0'])
+            if 's_i_0' in f_vox.attrs:
                 self.voxel_params.s_i_0=float(f_vox.attrs['s_i_0'])
+            if 'B0' in f_vox.attrs:
                 self.voxel_params.B0=float(f_vox.attrs['B0'])
+            if 'TE' in f_vox.attrs:
                 self.voxel_params.TE=float(f_vox.attrs['TE'])
+            if 's_e' in f_vox.attrs:
                 self.voxel_params.s_e=float(f_vox.attrs['s_e'])
+            if 's_i' in f_vox.attrs:
                 self.voxel_params.s_i=float(f_vox.attrs['s_i'])
+            if 'beta' in f_vox.attrs:
                 self.voxel_params.beta=float(f_vox.attrs['beta'])
+            if 'k2' in f_vox.attrs:
                 self.voxel_params.k2=float(f_vox.attrs['k2'])
+            if 'k3' in f_vox.attrs:
                 self.voxel_params.k3=float(f_vox.attrs['k3'])
-                self.voxel_rec={'G_total': np.array(f_vox['G_total']),
-                                's':       np.array(f_vox['s']),
-                                'f_in':    np.array(f_vox['f_in']),
-                                'v':       np.array(f_vox['v']),
-                                'q':       np.array(f_vox['q']),
-                                'y':       np.array(f_vox['y'])}
-            except Exception:
-                pass
+
+            self.voxel_rec={}
+            if 'G_total' in f_vox:
+                self.voxel_rec['G_total']=np.array(f_vox['G_total'])
+            if 'G_total' in f_vox:
+                self.voxel_rec['s']=np.array(f_vox['s'])
+            if 'G_total' in f_vox:
+                self.voxel_rec['f_in']=np.array(f_vox['f_in'])
+            if 'G_total' in f_vox:
+                self.voxel_rec['v']=np.array(f_vox['v'])
+            if 'G_total' in f_vox:
+                self.voxel_rec['q']=np.array(f_vox['q'])
+            if 'G_total' in f_vox:
+                self.voxel_rec['y']=np.array(f_vox['y'])
 
         if 'neuron_state' in f:
             f_state=f['neuron_state']
@@ -252,24 +269,36 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     marginal_p_e_i=np.zeros([len(p_e_i_range)])
     marginal_p_i_i=np.zeros([len(p_i_i_range)])
     marginal_p_i_e=np.zeros([len(p_i_e_range)])
+    marginal_prior_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_prior_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_prior_p_i_e=np.zeros([len(p_i_e_range)])
+    marginal_likelihood_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_likelihood_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_likelihood_p_i_e=np.zeros([len(p_i_e_range)])
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
                 for l,p_e_i in enumerate(p_e_i_range):
                     for m,p_i_i in enumerate(p_i_i_range):
                         marginal_p_i_e+=posterior[i,j,k,l,m,:]
+                        marginal_prior_p_i_e+=priors[i,j,k,l,m,:]
+                        marginal_likelihood_p_i_e+=likelihood[i,j,k,l,m,:]
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
                 for l,p_e_i in enumerate(p_e_i_range):
                     for n,p_i_e in enumerate(p_i_e_range):
                         marginal_p_i_i+=posterior[i,j,k,l,:,n]
+                        marginal_prior_p_i_i+=priors[i,j,k,l,:,n]
+                        marginal_likelihood_p_i_i+=likelihood[i,j,k,l,:,n]
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
                 for m,p_i_i in enumerate(p_i_i_range):
                     for n,p_i_e in enumerate(p_i_e_range):
                         marginal_p_e_i+=posterior[i,j,k,:,m,n]
+                        marginal_prior_p_e_i+=priors[i,j,k,:,m,n]
+                        marginal_likelihood_p_e_i+=likelihood[i,j,k,:,m,n]
 
     marginal_p_e_i_p_i_i=np.zeros([len(p_e_i_range), len(p_i_i_range)])
     marginal_p_e_i_p_i_e=np.zeros([len(p_e_i_range), len(p_i_e_range)])
@@ -291,18 +320,42 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
                     marginal_p_i_i_p_i_e+=posterior[i,j,k,l,:,:]
 
     plt.figure()
-    ax=plt.subplot(311)
+    ax=plt.subplot(331)
+    ax.bar(np.array(p_i_e_range)-.005,marginal_prior_p_i_e,.01)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(p_i_e|M)')
+    ax=plt.subplot(332)
+    ax.bar(np.array(p_i_e_range)-.005,marginal_likelihood_p_i_e,.01)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(WTA|p_i_e,M)')
+    ax=plt.subplot(333)
     ax.bar(np.array(p_i_e_range)-.005,marginal_p_i_e,.01)
     plt.xlabel('p_i_e')
-    plt.ylabel('p(WTA)')
-    ax=plt.subplot(312)
+    plt.ylabel('p(p_i_e|WTA,M)')
+    ax=plt.subplot(334)
+    ax.bar(np.array(p_i_i_range)-.005,marginal_prior_p_i_i,.01)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(p_i_i|M)')
+    ax=plt.subplot(335)
+    ax.bar(np.array(p_i_i_range)-.005,marginal_likelihood_p_i_i,.01)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(WTA|p_i_i,M)')
+    ax=plt.subplot(336)
     ax.bar(np.array(p_i_i_range)-.005,marginal_p_i_i,.01)
     plt.xlabel('p_i_i')
-    plt.ylabel('p(WTA)')
-    ax=plt.subplot(313)
+    plt.ylabel('p(p_i_i|WTA,M)')
+    ax=plt.subplot(337)
+    ax.bar(np.array(p_e_i_range)-.005,marginal_prior_p_e_i,.01)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(p_e_i)')
+    ax=plt.subplot(338)
+    ax.bar(np.array(p_e_i_range)-.005,marginal_likelihood_p_e_i,.01)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(WTA|p_e_i,M)')
+    ax=plt.subplot(339)
     ax.bar(np.array(p_e_i_range)-.005,marginal_p_e_i,.01)
     plt.xlabel('p_e_i')
-    plt.ylabel('p(WTA)')
+    plt.ylabel('p(p_e_i|WTA,M)')
 
     fig=plt.figure()
     ax=plt.subplot(311)
@@ -323,4 +376,4 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
 
     plt.show()
 
-    return posterior, {'p_e_i':marginal_p_e_i, 'p_i_i': marginal_p_i_i, 'p_i_e': marginal_p_i_e}
+    return posterior,evidence,{'p_e_i':marginal_p_e_i, 'p_i_i': marginal_p_i_i, 'p_i_e': marginal_p_i_e}
