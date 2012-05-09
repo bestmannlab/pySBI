@@ -1,6 +1,7 @@
 import os
 from brian.clock import reinit_default_clock, defaultclock
 from brian.network import network_operation, Network
+from brian.stdunits import Hz
 from brian.units import second, farad, siemens, volt, amp
 import h5py
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
 from pysbi.voxel import Voxel
-from pysbi.wta import WTAMonitor
+from pysbi.wta import WTAMonitor, run_wta
 
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
@@ -29,7 +30,7 @@ class FileInfo():
         f = h5py.File(file_name)
 
         self.num_groups=int(f.attrs['num_groups'])
-        self.input_freq=str(f.attrs['input_freq'])
+        self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
         self.background_rate=float(f.attrs['background_rate'])*second
         self.stim_start_time=float(f.attrs['stim_start_time'])*second
@@ -56,7 +57,8 @@ class FileInfo():
         self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
         #self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
         #self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
-        self.wta_params.w_ampa_e=float(f.attrs['w_ampa_e'])*siemens
+        self.wta_params.w_ampa_x=float(f.attrs['w_ampa_x'])*siemens
+        self.wta_params.w_ampa_b=float(f.attrs['w_ampa_b'])*siemens
         self.wta_params.w_ampa_r=float(f.attrs['w_ampa_r'])*siemens
         self.wta_params.w_nmda=float(f.attrs['w_nmda'])*siemens
         self.wta_params.w_gaba_a=float(f.attrs['w_gaba_a'])*siemens
@@ -118,7 +120,9 @@ class FileInfo():
 
         if 'neuron_state' in f:
             f_state=f['neuron_state']
-            self.neural_state_rec={'g_ampa':   np.array(f_state['g_ampa']),
+            self.neural_state_rec={'g_ampa_r': np.array(f_state['g_ampa_r']),
+                                   'g_ampa_x': np.array(f_state['g_ampa_x']),
+                                   'g_ampa_b': np.array(f_state['g_ampa_b']),
                                    'g_nmda':   np.array(f_state['g_nmda']),
                                    'g_gaba_a': np.array(f_state['g_gaba_a']),
                                    #'g_gaba_b': np.array(f_state['g_gaba_b']),
@@ -379,3 +383,106 @@ def run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, 
     plt.show()
 
     return posterior,evidence,{'p_e_i':marginal_p_e_i, 'p_i_i': marginal_p_i_i, 'p_i_e': marginal_p_i_e}
+
+
+def get_roc_init(num_trials, option_idx, prefix):
+    l = []
+    p = 0
+    n = 0
+    for trial in range(num_trials):
+        data_path = os.path.join(DATA_DIR, '%s.%d.h5' % (prefix, trial))
+        data = FileInfo(data_path)
+        example = 0
+        if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
+            example = 1
+            p += 1
+        else:
+            n += 1
+
+        # Get mean rate of pop 1 for last 100ms
+        pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
+        other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+        f_score = pop_mean - other_pop_mean
+        l.append((example, f_score))
+    l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
+    return l_sorted, n, p
+
+def get_auc(prefix, num_trials):
+    l_sorted1, n1, p1 = get_roc_init(num_trials, 0, prefix)
+    l_sorted2, n2, p2 = get_roc_init(num_trials, 1, prefix)
+    auc1=get_auc_single_option(prefix, num_trials, 0)
+    auc2=get_auc_single_option(prefix, num_trials, 1)
+
+    auc=auc1*(float(p1)/float(p1+p2))+auc2*(float(p2)/float(p1+p2))
+    return auc
+
+def get_auc_single_option(prefix, num_trials, option_idx):
+    l_sorted, n, p = get_roc_init(num_trials, option_idx, prefix)
+    fp=0
+    tp=0
+    fp_prev=0
+    tp_prev=0
+    a=0
+    f_prev=float('-inf')
+    for (example_i,f_i) in l_sorted:
+        if not f_i==f_prev:
+            a+=trapezoid_area(float(fp),float(fp_prev),float(tp),float(tp_prev))
+            f_prev=f_i
+            fp_prev=fp
+            tp_prev=tp
+        if example_i>0:
+            tp+=1
+        else:
+            fp+=1
+    a+=trapezoid_area(float(fp),float(fp_prev),float(tp),float(tp_prev))
+    a=float(a)/(float(p)*float(n))
+    return a
+
+def get_roc_single_option(prefix, num_trials, option_idx):
+
+    l_sorted, n, p = get_roc_init(num_trials, option_idx, prefix)
+
+    fp=0
+    tp=0
+    roc=[]
+    f_prev=float('-inf')
+    for (example_i,f_i) in l_sorted:
+        if not f_i==f_prev:
+            roc.append([float(fp)/float(n),float(tp)/float(p)])
+            f_prev=f_i
+        if example_i>0:
+            tp+=1
+        else:
+            fp+=1
+    roc.append([float(fp)/float(n),float(tp)/float(p)])
+    roc=np.array(roc)
+    return roc
+
+def trapezoid_area(x1,x2,y1,y2):
+    base=float(abs(x1-x2))
+    height_avg=float(y1+y2)/2.0
+    return base*height_avg
+
+def get_roc(prefix, num_trials):
+    roc1=get_roc_single_option(prefix, num_trials, 0)
+    roc2=get_roc_single_option(prefix, num_trials, 1)
+
+    fig=plt.figure()
+    plt.plot(roc1[:,0],roc1[:,1],'x-',label='option 1')
+    plt.plot(roc2[:,0],roc2[:,1],'x-',label='option 2')
+    plt.plot([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],'--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend()
+    plt.show()
+
+
+def test_roc(wta_params, prefix, num_inputs, num_trials):
+    inputs=[[10, 10]]
+    for i in range(num_inputs-1):
+        inputs.append(10+np.random.rand(2)*30)
+
+    for i,input in enumerate(inputs):
+        run_wta(wta_params, 2, np.array(input)*Hz, 1*second, record_lfp=True, record_voxel=True,
+            record_neuron_state=True, record_spikes=True, record_firing_rate=True, plot_output=False,
+            output_prefix=os.path.join(DATA_DIR,'%s.%d' % (prefix, i)), num_trials=num_trials)
