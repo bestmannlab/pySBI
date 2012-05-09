@@ -30,18 +30,19 @@ default_params=Parameters(
     tau_gaba_a = 7.5*ms,
     #tau1_gaba_b = 10*ms,
     #tau2_gaba_b =100*ms,
-    w_ampa_e = 1.5 * nS,
-    w_ampa_r=.1*nS,
+    w_ampa_b = 2.0 * nS,
+    w_ampa_x = 2.0 * nS,
+    w_ampa_r=1.0*nS,
     w_nmda=0.01*nS,
     w_gaba_a=3.0*nS,
     #w_gaba_b=0.1*nS,
     # Connection probabilities
-    p_b_e=0.04,
+    p_b_e=0.05,
     p_x_e=0.05,
     p_e_e=0.01,
-    p_e_i=0.01,
-    p_i_i=0.02,
-    p_i_e=0.02)
+    p_e_i=0.05,
+    p_i_i=0.01,
+    p_i_e=0.01)
 
 single_inh_pop_params=Parameters(
     # Neuron parameters
@@ -67,10 +68,11 @@ single_inh_pop_params=Parameters(
     tau_gaba_a = 7.5*ms,
     #tau1_gaba_b = 10*ms,
     #tau2_gaba_b =100*ms,
-    w_ampa_e = 1.5 * nS,
-    w_ampa_r=.1*nS,
+    w_ampa_b = 1.0 * nS,
+    w_ampa_x = 1.0 * nS,
+    w_ampa_r=1.0*nS,
     w_nmda=0.01*nS,
-    w_gaba_a=3.0*nS,
+    w_gaba_a=1.0*nS,
     #w_gaba_b=0.1*nS,
     # Connection probabilities
     p_b_e=0.04,
@@ -78,19 +80,27 @@ single_inh_pop_params=Parameters(
     p_e_e=0.01,
     p_e_i=0.1,
     p_i_i=0.0,
-    p_i_e=0.02)
+    p_i_e=0.03)
 
 class WTANetworkGroup(NeuronGroup):
     def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None, single_inh_pop=False):
         self.num_groups=num_groups
+        self.params=params
 
         # Exponential integrate-and-fire neuron
         eqs = exp_IF(params.C, params.gL, params.EL, params.VT, params.DeltaT)
 
-        # AMPA conductance
-        #eqs += exp_conductance('g_ampa', E=params.E_ampa, tau=params.tau_ampa)
-        eqs += exp_synapse('g_ampa', params.tau_ampa, siemens)
-        eqs += Current('I_ampa=g_ampa*(E-vm): amp', E=params.E_ampa)
+        # AMPA conductance - recurrent input current
+        eqs += exp_synapse('g_ampa_r', params.tau_ampa, siemens)
+        eqs += Current('I_ampa_r=g_ampa_r*(E-vm): amp', E=params.E_ampa)
+
+        # AMPA conductance - background input current
+        eqs += exp_synapse('g_ampa_b', params.tau_ampa, siemens)
+        eqs += Current('I_ampa_b=g_ampa_b*(E-vm): amp', E=params.E_ampa)
+
+        # AMPA conductance - task input current
+        eqs += exp_synapse('g_ampa_x', params.tau_ampa, siemens)
+        eqs += Current('I_ampa_x=g_ampa_x*(E-vm): amp', E=params.E_ampa)
 
         # Voltage-dependent NMDA conductance
         #eqs += biexp_conductance('g_nmda', E=params.E_nmda, tau1=params.tau1_nmda, tau2=params.tau2_nmda)
@@ -107,23 +117,28 @@ class WTANetworkGroup(NeuronGroup):
         #eqs += biexp_conductance('g_gaba_b', E=params.E_gaba_b, tau1=params.tau1_gaba_b, tau2=params.tau2_gaba_b)
 
         # Total synaptic conductance
-        eqs += Equations('g_syn=g_ampa+g_V*g_nmda+g_gaba_a : siemens', Mg=params.Mg)
+        eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a : siemens', Mg=params.Mg)
         # Total synaptic current
-        eqs += Equations('I_abs=abs(I_ampa)+abs(I_nmda)+abs(I_gaba_a) : amp')
+        eqs += Equations('I_abs=abs(I_ampa_r)+abs(I_ampa_b)+abs(I_ampa_x)+abs(I_nmda)+abs(I_gaba_a) : amp')
 
         NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL, compile=True)
 
+        self.init_subpopulations(N, single_inh_pop)
+
+        self.init_connectivity(single_inh_pop, background_input, task_inputs)
+
+    def init_subpopulations(self, N, single_inh_pop):
         self.groups_e=[]
         self.groups_i=[]
 
-        for i in range(num_groups):
+        for i in range(self.num_groups):
             group=None
             if not single_inh_pop:
                 group=self.subgroup(N)
                 group_e=group.subgroup(int(4*N/5))
             else:
                 group_e=self.subgroup(int(4*N/5))
-            # regular spiking params (from Naud et al., 2008)
+                # regular spiking params (from Naud et al., 2008)
             group_e.C=104*pF
             group_e.gL=4.3*nS
             group_e.EL=-65*mV
@@ -152,62 +167,78 @@ class WTANetworkGroup(NeuronGroup):
             group_i.DeltaT=3.0*mV
             self.groups_i.append(group_i)
 
-        self.vm = params.EL
-        self.g_ampa_r = 0
-        self.g_ampa_e = 0
-        self.g_nmda = 0
-        self.g_gaba = 0
+        self.vm = self.params.EL+randn(N*self.num_groups)*10*mV
+        self.g_ampa_r = randn(N*self.num_groups)*self.params.w_ampa_r*.1
+        self.g_ampa_b = randn(N*self.num_groups)*self.params.w_ampa_b*.1
+        self.g_ampa_x = randn(N*self.num_groups)*self.params.w_ampa_x*.1
+        self.g_nmda = randn(N*self.num_groups)*self.params.w_nmda*.1
+        self.g_gaba_a = randn(N*self.num_groups)*self.params.w_gaba_a*.1
 
+
+    def init_connectivity(self, single_inh_pop, background_input, task_inputs):
         self.connections=[]
-        for i in range(num_groups):
-            self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa',
-                sparseness=params.p_e_e, weight=params.w_ampa_r, delay=(0*ms, 5*ms)))
+        for i in range(self.num_groups):
+            # E population - recurrent connections
+            self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa_r',
+                sparseness=self.params.p_e_e, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
             self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda',
-                sparseness=params.p_e_e, weight=params.w_nmda, delay=(0*ms, 5*ms)))
+                sparseness=self.params.p_e_e, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
 
             if not single_inh_pop:
+                # I population - recurrent connections
                 self.connections.append(DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a',
-                    sparseness=params.p_i_i, weight=params.w_gaba_a, delay=(0*ms, 5*ms)))
+                    sparseness=self.params.p_i_i, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
                 #self.connections.append(DelayConnection(self.input_groups_i[i], self.input_groups_i[i], 'g_gaba_b',
                 #    sparseness=params.p_i_i, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
-                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_ampa',
-                    sparseness=params.p_e_i, weight=params.w_ampa_r, delay=(0*ms, 5*ms)))
+
+                # E -> I excitatory connections
+                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
+                    sparseness=self.params.p_e_i, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
                 self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_nmda',
-                    sparseness=params.p_e_i, weight=params.w_nmda, delay=(0*ms, 5*ms)))
-                for j in range(num_groups):
+                    sparseness=self.params.p_e_i, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
+
+                # I -> E - inhibitory connections
+                for j in range(self.num_groups):
                     if not i==j:
                         self.connections.append(DelayConnection(self.groups_i[i], self.groups_e[j], 'g_gaba_a',
-                            sparseness=params.p_i_e, weight=params.w_gaba_a, delay=(0*ms, 5*ms)))
+                            sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
                         #self.connections.append(DelayConnection(self.input_groups_i[i], self.input_groups_e[j], 'g_gaba_b',
                         #    sparseness=params.p_i_e, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
+
             else:
-                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[0], 'g_ampa',
-                    sparseness=params.p_e_i, weight=params.w_ampa_r, delay=(0*ms, 5*ms)))
+                # E -> I excitatory connections
+                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[0], 'g_ampa_r',
+                    sparseness=self.params.p_e_i, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
                 self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[0], 'g_nmda',
-                    sparseness=params.p_e_i, weight=params.w_nmda, delay=(0*ms, 5*ms)))
+                    sparseness=self.params.p_e_i, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
+
+                # I -> E - inhibitory connections
                 self.connections.append(DelayConnection(self.groups_i[0], self.groups_e[i], 'g_gaba_a',
-                    sparseness=params.p_i_e, weight=params.w_gaba_a, delay=(0*ms, 5*ms)))
+                    sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
 
         if single_inh_pop:
+            # I population - recurrent connections
             self.connections.append(DelayConnection(self.groups_i[0], self.groups_i[0], 'g_gaba_a',
-                sparseness=params.p_i_i, weight=params.w_gaba_a, delay=(0*ms, 5*ms)))
+                sparseness=self.params.p_i_i, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
             #self.connections.append(DelayConnection(self.input_groups_i[0], self.input_groups_i[0], 'g_gaba_b',
             #    sparseness=params.p_i_i, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
 
         if background_input is not None:
-            self.connections.append(DelayConnection(background_input, self, 'g_ampa', sparseness=params.p_b_e,
-                weight=params.w_ampa_e, delay=(0*ms, 5*ms)))
+            # Background -> E+I population connectinos
+            self.connections.append(DelayConnection(background_input, self, 'g_ampa_b', sparseness=self.params.p_b_e,
+                weight=self.params.w_ampa_b, delay=(0*ms, 5*ms)))
 
         if task_inputs is not None:
-            for i in range(num_groups):
-                self.connections.append(DelayConnection(task_inputs[i], self.groups_e[i], 'g_ampa',
-                    sparseness=params.p_x_e, weight=params.w_ampa_e, delay=(0*ms, 5*ms)))
-
-
+            # Task input -> E population connections
+            for i in range(self.num_groups):
+                self.connections.append(DelayConnection(task_inputs[i], self.groups_e[i], 'g_ampa_x',
+                    sparseness=self.params.p_x_e, weight=self.params.w_ampa_x, delay=(0*ms, 5*ms)))
 
 class WTAMonitor():
-    def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
+    def __init__(self, network, N, num_groups, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
                  record_spikes=True, record_firing_rate=True):
+        self.num_groups=num_groups
+        self.N=N
         self.monitors=[]
 
         # LFP monitor
@@ -226,8 +257,13 @@ class WTAMonitor():
 
         # Network monitor
         if record_neuron_state:
-            self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa','g_gaba_a','g_nmda'],#,'g_gaba_b'],
-                record=[0,1000,2000,3000,4000,5000])
+            self.record_idx=[]
+            for i in range(num_groups):
+                e_idx=i*N
+                i_idx=i*N+N-1
+                self.record_idx.extend([e_idx, i_idx])
+            self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a','g_nmda'],#,'g_gaba_b'],
+                record=self.record_idx)
             self.monitors.append(self.network_monitor)
         else:
             self.network_monitor=None
@@ -273,22 +309,33 @@ class WTAMonitor():
             figure()
             ax=subplot(211)
             for pop_rate_monitor in self.population_rate_monitors['excitatory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms,
-                    filter='gaussian')/hertz)
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
             ax=subplot(212)
             for pop_rate_monitor in self.population_rate_monitors['inhibitory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 .smooth_rate(width=5*ms,
-                    filter='gaussian')/hertz)
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
         if self.network_monitor is not None:
             figure()
-            ax=subplot(111)
-            ax.plot(self.network_monitor['g_ampa'].times/ms, self.network_monitor['g_ampa'][0]/nA, label='AMPA')
-            ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][0]/nA, label='NMDA')
-            ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][0]/nA, label='GABA_A')
-            #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][0]/nA, label='GABA_B')
-            xlabel('Time (ms)')
-            ylabel('Conductance (nA)')
-            legend()
+            for i in range(self.num_groups):
+                ax=subplot(self.num_groups*100+20+(i*2+1))
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][self.record_idx[i*2]]/nA, label='AMPA-recurrent')
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][self.record_idx[i*2]]/nA, label='AMPA-task')
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][self.record_idx[i*2]]/nA, label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][self.record_idx[i*2]]/nA, label='NMDA')
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][self.record_idx[i*2]]/nA, label='GABA_A')
+                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][0]/nA, label='GABA_B')
+                xlabel('Time (ms)')
+                ylabel('Conductance (nA)')
+                legend()
+                ax=subplot(self.num_groups*100+20+(i*2+2))
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][self.record_idx[i*2+1]]/nA, label='AMPA-recurrent')
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][self.record_idx[i*2+1]]/nA, label='AMPA-task')
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][self.record_idx[i*2+1]]/nA, label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][self.record_idx[i*2+1]]/nA, label='NMDA')
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][self.record_idx[i*2+1]]/nA, label='GABA_A')
+                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][0]/nA, label='GABA_B')
+                xlabel('Time (ms)')
+                ylabel('Conductance (nA)')
+                legend()
         if self.lfp_monitor is not None:
             fig=figure()
             ax=subplot(111)
@@ -337,7 +384,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
     #f.attrs['tau1_gaba_b'] = wta_params.tau1_gaba_b
     #f.attrs['tau2_gaba_b'] = wta_params.tau2_gaba_b
-    f.attrs['w_ampa_e'] = wta_params.w_ampa_e
+    f.attrs['w_ampa_b'] = wta_params.w_ampa_b
+    f.attrs['w_ampa_x'] = wta_params.w_ampa_x
     f.attrs['w_ampa_r'] = wta_params.w_ampa_r
     f.attrs['w_nmda'] = wta_params.w_nmda
     f.attrs['w_gaba_a'] = wta_params.w_gaba_a
@@ -380,7 +428,9 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         f_vox['y'] = wta_monitor.voxel_monitor['y'].values
     if record_neuron_state:
         f_state = f.create_group('neuron_state')
-        f_state['g_ampa'] = wta_monitor.network_monitor['g_ampa'].values
+        f_state['g_ampa_r'] = wta_monitor.network_monitor['g_ampa_r'].values
+        f_state['g_ampa_x'] = wta_monitor.network_monitor['g_ampa_x'].values
+        f_state['g_ampa_b'] = wta_monitor.network_monitor['g_ampa_b'].values
         f_state['g_nmda'] = wta_monitor.network_monitor['g_nmda'].values
         f_state['g_gaba_a'] = wta_monitor.network_monitor['g_gaba_a'].values
         #f_state['g_gaba_b'] = wta_monitor.network_monitor['g_gaba_b'].values
@@ -410,14 +460,16 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.close()
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, record_lfp=True, record_voxel=True,
+def run_wta(wta_params, num_groups, input_freq, trial_duration, output_prefix=None, record_lfp=True, record_voxel=True,
             record_neuron_state=False, record_spikes=True, record_firing_rate=True, plot_output=False,
-            single_inh_pop=False):
+            single_inh_pop=False, num_trials=1):
     background_rate=10*Hz
-    stim_start_time=1*second
-    stim_end_time=1.5*second
+    #stim_start_time=1*second
+    stim_start_time=.25*second
+    #stim_end_time=1.5*second
+    stim_end_time=.75*second
     network_group_size=2000
-    background_input_size=3000
+    background_input_size=1000
     task_input_size=1000
 
     # Create network inputs
@@ -429,32 +481,35 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
         task_inputs=task_inputs, single_inh_pop=single_inh_pop)
 
-    # LFP source
-    lfp_source=LFPSource(wta_network)
+    for i in range(num_trials):
+        # LFP source
+        lfp_source=LFPSource(wta_network)
 
-    # Create voxel
-    voxel=Voxel(network=wta_network)
+        # Create voxel
+        voxel=Voxel(network=wta_network)
 
-    wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, record_lfp=record_lfp, record_voxel=record_voxel,
-        record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate)
+        wta_monitor=WTAMonitor(wta_network, network_group_size, num_groups, lfp_source, voxel, record_lfp=record_lfp,
+            record_voxel=record_voxel, record_neuron_state=record_neuron_state, record_spikes=record_spikes,
+            record_firing_rate=record_firing_rate)
 
-    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-        wta_monitor.monitors)
-    reinit_default_clock()
+        net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
+            wta_monitor.monitors)
+        reinit_default_clock()
 
-    start_time = time()
-    net.run(trial_duration, report='text')
-    print "Simulation time:", time() - start_time
+        start_time = time()
+        net.run(trial_duration, report='text')
+        print "Simulation time:", time() - start_time
 
-    if output_file is not None:
-        write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
-            record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, stim_end_time,
-            stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params)
+        if output_file is not None:
+            file='%s.%d.h5' % (output_prefix, i)
+            write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, file,
+                record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, stim_end_time,
+                stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params)
 
-        print 'Wrote output to %s' % output_file
+            print 'Wrote output to %s' % output_file
 
-    if plot_output:
-        wta_monitor.plot()
+        if plot_output:
+            wta_monitor.plot()
 
 if __name__=='__main__':
     ap = argparse.ArgumentParser(description='Run the WTA model')
@@ -471,7 +526,7 @@ if __name__=='__main__':
                                                               'neurons in the same group')
     ap.add_argument('--p_i_e', type=float, default=0.01, help='Connection prob from inhibitory neurons to excitatory ' \
                                                               'neurons in other groups')
-    ap.add_argument('--output', type=str, default=None, help='HDF5 output file')
+    ap.add_argument('--output_prefix', type=str, default=None, help='HDF5 output file prefix')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \
@@ -495,7 +550,7 @@ if __name__=='__main__':
     wta_params.p_i_i=argvals.p_i_i
     wta_params.p_i_e=argvals.p_i_e
 
-    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second, output_file=argvals.output,
+    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second, output_file=argvals.output_prefix,
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate)
