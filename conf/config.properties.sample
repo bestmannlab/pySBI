@@ -1,3 +1,4 @@
 [dir]
 src_dir=/data/projects/pySBI/src
 data_dir=/data/projects/pySBI/data
+template_dir=/data/projects/pySBI/src/html

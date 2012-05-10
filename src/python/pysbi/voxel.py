@@ -44,12 +44,12 @@ default_params=Parameters(
     ''')
 
 class LFPSource(NeuronGroup):
-    def __init__(self, network):
+    def __init__(self, pyramidal_group):
         eqs=Equations('''
          LFP : amp
         ''')
         NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
-        self.LFP=linked_var(network, 'I_abs', func=sum)
+        self.LFP=linked_var(pyramidal_group, 'I_abs', func=sum)
 
 class Voxel(NeuronGroup):
     def __init__(self, params=default_params, network=None):

@@ -70,6 +70,11 @@ class FileInfo():
         self.wta_params.p_i_i=float(f.attrs['p_i_i'])
         self.wta_params.p_i_e=float(f.attrs['p_i_e'])
 
+        self.lfp_rec=None
+        if 'lfp' in f:
+            f_lfp=f['lfp']
+            self.lfp_rec={'lfp': np.array(f_lfp['lfp'])}
+
         if 'voxel' in f:
             f_vox=f['voxel']
             self.voxel_params=voxel.default_params()
@@ -118,6 +123,7 @@ class FileInfo():
             if 'G_total' in f_vox:
                 self.voxel_rec['y']=np.array(f_vox['y'])
 
+        self.neural_state_rec=None
         if 'neuron_state' in f:
             f_state=f['neuron_state']
             self.neural_state_rec={'g_ampa_r': np.array(f_state['g_ampa_r']),
@@ -126,13 +132,30 @@ class FileInfo():
                                    'g_nmda':   np.array(f_state['g_nmda']),
                                    'g_gaba_a': np.array(f_state['g_gaba_a']),
                                    #'g_gaba_b': np.array(f_state['g_gaba_b']),
-                                   'vm':       np.array(f_state['vm'])}
+                                   'vm':       np.array(f_state['vm']),
+                                   'record_idx': np.array(f_state['record_idx'])}
 
+        self.e_firing_rates=None
+        self.i_firing_rates=None
         if 'firing_rates' in f:
             f_rates=f['firing_rates']
             self.e_firing_rates=np.array(f_rates['e_rates'])
             self.i_firing_rates=np.array(f_rates['i_rates'])
 
+        self.background_rate=None
+        if 'background_rate' in f:
+            b_rate=f['background_rate']
+            self.background_rate=np.array(b_rate['firing_rate'])
+
+        self.task_rates=None
+        if 'task_rates' in f:
+            t_rates=f['task_rates']
+            self.task_rates=np.array(t_rates['firing_rates'])
+
+        self.e_spike_neurons=None
+        self.e_spike_times=None
+        self.i_spike_neurons=None
+        self.i_spike_times=None
         if 'spikes' in f:
             f_spikes=f['spikes']
             self.e_spike_neurons=[]
@@ -176,7 +199,7 @@ def is_valid(high_contrast_e_rates, low_contrast_e_rates):
 
 def analyze_wta(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                 p_i_e_range):
-    posterior,marginals=run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range,
+    posterior,evidence,marginals=run_bayesian_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range,
         p_e_i_range, p_i_i_range, p_i_e_range)
     contrast=run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
         p_i_i_range, p_i_e_range, marginals)
@@ -215,8 +238,8 @@ def run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_
 def get_bold_signal(wta_data, plot=False):
     voxel=Voxel(params=wta_data.voxel_params)
     voxel.G_base=wta_data.voxel_rec['G_total'][0][200:800].mean()
-    voxel_monitor = WTAMonitor(None, voxel, record_voxel=True, record_firing_rate=False, record_neuron_state=False,
-        record_spikes=False)
+    voxel_monitor = WTAMonitor(None, 1, 1, None, voxel, None, None, record_voxel=True, record_firing_rate=False,
+        record_neuron_state=False, record_spikes=False, record_lfp=False, record_inputs=False)
 
     @network_operation(when='start')
     def get_input():
@@ -390,7 +413,7 @@ def get_roc_init(num_trials, option_idx, prefix):
     p = 0
     n = 0
     for trial in range(num_trials):
-        data_path = os.path.join(DATA_DIR, '%s.%d.h5' % (prefix, trial))
+        data_path = '%s.trial.%d.h5' % (prefix, trial)
         data = FileInfo(data_path)
         example = 0
         if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
@@ -407,14 +430,20 @@ def get_roc_init(num_trials, option_idx, prefix):
     l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
     return l_sorted, n, p
 
-def get_auc(prefix, num_trials):
-    l_sorted1, n1, p1 = get_roc_init(num_trials, 0, prefix)
-    l_sorted2, n2, p2 = get_roc_init(num_trials, 1, prefix)
-    auc1=get_auc_single_option(prefix, num_trials, 0)
-    auc2=get_auc_single_option(prefix, num_trials, 1)
+def get_auc(prefix, num_trials, num_groups):
+    total_auc=0
+    total_p=0
+    single_auc=[]
+    single_p=[]
+    for i in range(num_groups):
+        l_sorted, n, p = get_roc_init(num_trials, i, prefix)
+        single_auc.append(get_auc_single_option(prefix, num_trials, i))
+        single_p.append(p)
+        total_p+=p
+    for i in range(num_groups):
+        total_auc+=float(single_auc[i])*(float(single_p[i])/float(total_p))
 
-    auc=auc1*(float(p1)/float(p1+p2))+auc2*(float(p2)/float(p1+p2))
-    return auc
+    return total_auc
 
 def get_auc_single_option(prefix, num_trials, option_idx):
     l_sorted, n, p = get_roc_init(num_trials, option_idx, prefix)
@@ -470,19 +499,23 @@ def get_roc(prefix, num_trials):
     fig=plt.figure()
     plt.plot(roc1[:,0],roc1[:,1],'x-',label='option 1')
     plt.plot(roc2[:,0],roc2[:,1],'x-',label='option 2')
-    plt.plot([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],'--')
+    plt.plot([0,1],[0,1],'--')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend()
     plt.show()
 
 
-def test_roc(wta_params, prefix, num_inputs, num_trials):
-    inputs=[[10, 10]]
-    for i in range(num_inputs-1):
-        inputs.append(10+np.random.rand(2)*30)
+def test_roc(wta_params, prefix, num_trials):
+    inputs=[]
+    for i in range(num_trials):
+        input=np.zeros(2)
+        input[0]=np.random.rand()*40
+        input[1]=40-input[0]
+        input+=10
+        inputs.append(input)
 
     for i,input in enumerate(inputs):
-        run_wta(wta_params, 2, np.array(input)*Hz, 1*second, record_lfp=True, record_voxel=True,
+        run_wta(wta_params, 2, input*Hz, 1*second, record_lfp=True, record_voxel=True,
             record_neuron_state=True, record_spikes=True, record_firing_rate=True, plot_output=False,
-            output_prefix=os.path.join(DATA_DIR,'%s.%d' % (prefix, i)), num_trials=num_trials)
+            output_file=os.path.join(DATA_DIR,'%s.trial.%d.h5' % (prefix, i)))
