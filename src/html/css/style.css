@@ -1,0 +1,26 @@
+body {
+	font-family: verdana, sans-serif;
+	padding: 0px 20px;
+}
+
+table {
+    padding: 5px;
+    border-collapse: collapse;
+}
+
+.col_header {
+    background: #c5cbd4;
+    font-size: 90%;
+    font-weight: bold;
+}
+
+.odd_row {
+    background: #e6e8ed;
+}
+.even_row {
+    background: #ffffff;
+}
+
+.anomaly_row {
+    background: #ff0000;
+}
