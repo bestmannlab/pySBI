@@ -75,7 +75,7 @@ def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
                             for t in range(num_trials):
                                 inputs=np.zeros(2)
                                 inputs[0]=np.random.rand()*40
-                                inputs[1]=40-input[0]
+                                inputs[1]=40-inputs[0]
                                 inputs+=10
                                 cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
                                     p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, record_lfp=True, record_voxel=True,
