@@ -10,6 +10,23 @@ from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_bold_si
 from pysbi.config import TEMPLATE_DIR
 from pysbi.utils import save_to_png, Struct
 
+def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
+                       p_i_e_range, num_trials, base_report_dir):
+    for p_b_e in p_b_e_range:
+        for p_x_e in p_x_e_range:
+            for p_e_e in p_e_e_range:
+                for p_e_i in p_e_i_range:
+                    for p_i_i in p_i_i_range:
+                        for p_i_e in p_i_e_range:
+                            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
+                                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+                            file_prefix=os.path.join(data_dir,file_desc)
+                            reports_dir=os.path.join(base_report_dir,file_desc)
+                            if os.path.exists('%s.trial.0.h5' % file_prefix):
+                                print('Creating report for %s' % file_desc)
+                                create_wta_network_report(file_prefix, num_trials, reports_dir)
+
+
 def create_wta_network_report(file_prefix, num_trials, reports_dir):
     make_report_dirs(reports_dir)
 
