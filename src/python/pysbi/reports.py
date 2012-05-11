@@ -176,7 +176,7 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         fig = plt.figure()
         ax = plt.subplot(111)
         lfp=get_lfp_signal(data)
-        ax.plot(np.array(range(len(lfp)), lfp / mA))
+        ax.plot(np.array(range(len(lfp))), lfp / mA)
         plt.xlabel('Time (ms)')
         plt.ylabel('LFP (mA)')
         furl = 'img/lfp.trial.%d.png' % trial_idx
