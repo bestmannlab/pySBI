@@ -3,6 +3,7 @@ from brian.clock import reinit_default_clock, defaultclock
 from brian.network import network_operation, Network
 from brian.stdunits import Hz
 from brian.units import second, farad, siemens, volt, amp
+from scipy.signal import *
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -234,6 +235,17 @@ def run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_
                             except Exception:
                                 pass
     return contrast
+
+def get_lfp_signal(wta_data, plot=False):
+    [b,a]=butter(4.0,1.0/500.0,'high')
+    dur=len(wta_data.lfp_rec['lfp'][0])
+    resam_dur=int(dur*.1)
+    lfp_res=scipy.signal.resample(wta_data.lfp_rec['lfp'][0],resam_dur)
+    lfp=lfilter(b,a,lfp_res)
+    if plot:
+        plt.plot(lfp)
+        plt.show()
+    return lfp
 
 def get_bold_signal(wta_data, plot=False):
     voxel=Voxel(params=wta_data.voxel_params)

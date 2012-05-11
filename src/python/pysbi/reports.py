@@ -6,7 +6,7 @@ from brian.stdunits import nA, mA, Hz, ms
 import matplotlib.pylab as plt
 import numpy as np
 from shutil import copytree, copyfile
-from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_bold_signal, get_auc_single_option
+from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_bold_signal, get_auc_single_option, get_lfp_signal
 from pysbi.config import TEMPLATE_DIR
 from pysbi.utils import save_to_png, Struct
 
@@ -175,7 +175,8 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
     if data.lfp_rec is not None:
         fig = plt.figure()
         ax = plt.subplot(111)
-        ax.plot(np.array(range(len(data.lfp_rec['lfp'][0])))*.1, data.lfp_rec['lfp'][0] / mA)
+        lfp=get_lfp_signal(data)
+        ax.plot(np.array(range(len(lfp)), lfp / mA))
         plt.xlabel('Time (ms)')
         plt.ylabel('LFP (mA)')
         furl = 'img/lfp.trial.%d.png' % trial_idx
