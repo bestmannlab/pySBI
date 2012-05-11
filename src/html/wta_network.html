@@ -263,26 +263,38 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
         </tr>
         <tr>
             <td>
-                <img src="{{ trial.e_raster_url }}"/>
+                {% if trial.e_raster_url %}
+                    <img src="{{ trial.e_raster_url }}"/>
+                {% endif %}
             </td>
             <td>
-                <img src="{{ trial.i_raster_url }}"/>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <img src="{{ trial.firing_rate_url }}"/>
-            </td>
-            <td>
-                <img src="{{ trial.neural_state_url }}"/>
+                {% if trial.i_raster_url %}
+                    <img src="{{ trial.i_raster_url }}"/>
+                {% endif %}
             </td>
         </tr>
         <tr>
             <td>
-                <img src="{{ trial.lfp_url }}"/>
+                {% if trial.firing_rate_url %}
+                    <img src="{{ trial.firing_rate_url }}"/>
+                {% endif %}
             </td>
             <td>
-                <img src="{{ trial.voxel_url }}"/>
+                {% if trial.neural_state_url %}
+                    <img src="{{ trial.neural_state_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if trial.lfp_url %}
+                    <img src="{{ trial.lfp_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if trial.voxel_url %}
+                    <img src="{{ trial.voxel_url }}"/>
+                {% endif %}
             </td>
         </tr>
         <tr>

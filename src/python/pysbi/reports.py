@@ -99,6 +99,9 @@ def create_bold_report(reports_dir, trial_bold, file_prefix, num_trials):
 def create_trial_report(data, reports_dir, bold_signal, trial_idx):
     trial = Struct()
     trial.input_freq=data.input_freq
+
+    trial.e_raster_url = None
+    trial.i_raster_url = None
     if data.e_spike_neurons is not None and data.i_spike_neurons is not None:
         e_group_sizes=[]
         for i in range(data.num_groups):
@@ -120,6 +123,7 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         save_to_png(fig, fname)
         plt.clf()
 
+    trial.firing_rate_url = None
     if data.e_firing_rates is not None and data.i_firing_rates is not None:
         fig = plt.figure()
         ax = plt.subplot(211)
@@ -137,6 +141,8 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
         plt.clf()
+
+    trial.neural_state_url=None
     if data.neural_state_rec is not None:
         fig = plt.figure()
         for i in range(data.num_groups):
@@ -164,6 +170,8 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
         plt.clf()
+
+    trial.lfp_url = None
     if data.lfp_rec is not None:
         fig = plt.figure()
         ax = plt.subplot(111)
@@ -175,6 +183,8 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
         plt.clf()
+
+    trial.voxel_url = None
     if data.voxel_rec is not None:
         fig = plt.figure()
         ax = plt.subplot(211)
