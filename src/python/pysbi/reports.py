@@ -53,7 +53,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
-        bold_signal=get_bold_signal(data)
+        bold_signal=get_bold_signal(data, [500, 2500])
         trial = create_trial_report(data, reports_dir, bold_signal, i)
         trial_bold.append(bold_signal)
         report_info.trials.append(trial)

@@ -226,10 +226,10 @@ def run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_
                             high_contrast_path=os.path.join(DATA_DIR,'wta-output',high_contrast_file)
                             try:
                                 low_contrast_data=FileInfo(low_contrast_path)
-                                low_contrast_bold=get_bold_signal(low_contrast_data)
+                                low_contrast_bold=get_bold_signal(low_contrast_data, [500,2500])
 
                                 high_contrast_data=FileInfo(high_contrast_path)
-                                high_contrast_bold=get_bold_signal(high_contrast_data)
+                                high_contrast_bold=get_bold_signal(high_contrast_data, [500,2500])
 
                                 contrast[i,j,k,l,m,n]=max(high_contrast_bold)-max(low_contrast_bold)
                             except Exception:
@@ -247,16 +247,18 @@ def get_lfp_signal(wta_data, plot=False):
         plt.show()
     return lfp
 
-def get_bold_signal(wta_data, plot=False):
+def get_bold_signal(wta_data, baseline_range, plot=False):
     voxel=Voxel(params=wta_data.voxel_params)
-    voxel.G_base=wta_data.voxel_rec['G_total'][0][200:800].mean()
+    voxel.G_base=wta_data.voxel_rec['G_total'][0][baseline_range[0]:baseline_range[1]].mean()
     voxel_monitor = WTAMonitor(None, 1, 1, None, voxel, None, None, record_voxel=True, record_firing_rate=False,
         record_neuron_state=False, record_spikes=False, record_lfp=False, record_inputs=False)
 
     @network_operation(when='start')
     def get_input():
         idx=int(defaultclock.t/defaultclock.dt)
-        if idx<len(wta_data.voxel_rec['G_total'][0]):
+        if idx<baseline_range[0]:
+            voxel.G_total=voxel.G_base
+        elif idx<len(wta_data.voxel_rec['G_total'][0]):
             voxel.G_total=wta_data.voxel_rec['G_total'][0][idx]
         else:
             voxel.G_total=voxel.G_base
