@@ -60,12 +60,14 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
 
     return cmds, log_file_template, output_file
     
-def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, num_trials):
+def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, num_trials,
+                  start_instances=True):
     num_groups=2
     trial_duration=1*second
     launcher=Launcher(instances)
-    launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-    launcher.start_instances()
+    if start_instances:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_instances()
     for p_b_e in p_b_e_range:
         for p_x_e in p_x_e_range:
             for p_e_e in p_e_e_range:
