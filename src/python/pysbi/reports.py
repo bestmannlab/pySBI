@@ -226,32 +226,36 @@ def create_roc_report(file_prefix, num_groups, num_trials, reports_dir):
 def make_report_dirs(output_dir):
 
     rdirs = ['img']
-    try:
-        os.mkdir(output_dir)
-    except Exception:
-        print 'Could not make directory %s' % output_dir
+    if not os.path.exists(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except Exception:
+            print 'Could not make directory %s' % output_dir
 
     for d in rdirs:
         dname = os.path.join(output_dir, d)
-        try:
-            os.mkdir(dname)
-        except Exception:
-            print 'Could not make directory %s' % dname
+        if not os.path.exists(dname):
+            try:
+                os.mkdir(dname)
+            except Exception:
+                print 'Could not make directory %s' % dname
 
     dirs_to_copy = ['js', 'css']
     for d in dirs_to_copy:
         srcdir = os.path.join(TEMPLATE_DIR, d)
         destdir = os.path.join(output_dir, d)
-        try:
-            copytree(srcdir, destdir)
-        except Exception:
-            print 'Problem copying %s to %s' % (srcdir, destdir)
+        if not os.path.exists(destdir):
+            try:
+                copytree(srcdir, destdir)
+            except Exception:
+                print 'Problem copying %s to %s' % (srcdir, destdir)
 
     imgfiles = glob(os.path.join(TEMPLATE_DIR, '*.gif'))
     for ipath in imgfiles:
         [rootdir, ifile] = os.path.split(ipath)
         destfile = os.path.join(output_dir, ifile)
-        copyfile(ipath, destfile)
+        if not os.path.exists(destfile):
+            copyfile(ipath, destfile)
 
 def plot_raster(group_spike_neurons, group_spike_times, group_sizes):
     if len(group_spike_times) and len(group_spike_neurons)==len(group_spike_times):
