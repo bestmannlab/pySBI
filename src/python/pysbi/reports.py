@@ -53,16 +53,12 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
-        trial_bold.append(get_bold_signal(data))
-    report_info.contrast_bold_url=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
-
-    for i in range(num_trials):
-        file_name='%s.trial.%d.h5' % (file_prefix, i)
-        data=FileInfo(file_name)
-
-        trial = create_trial_report(data, reports_dir, trial_bold[i], i)
+        bold_signal=get_bold_signal(data)
+        trial = create_trial_report(data, reports_dir, bold_signal, i)
+        trial_bold.append(bold_signal)
         report_info.trials.append(trial)
 
+    report_info.contrast_bold_url=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
 
     report_info.roc=create_roc_report(file_prefix, data.num_groups, num_trials, reports_dir)
 
@@ -103,9 +99,7 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
     trial.e_raster_url = None
     trial.i_raster_url = None
     if data.e_spike_neurons is not None and data.i_spike_neurons is not None:
-        e_group_sizes=[]
-        for i in range(data.num_groups):
-            e_group_sizes.append(int(4*data.network_group_size/5))
+        e_group_sizes=[int(4*data.network_group_size/5) for i in range(data.num_groups)]
         fig=plot_raster(data.e_spike_neurons, data.e_spike_times, e_group_sizes)
         furl='img/e_raster.trial.%d.png' % trial_idx
         trial.e_raster_url = furl
@@ -113,9 +107,7 @@ def create_trial_report(data, reports_dir, bold_signal, trial_idx):
         save_to_png(fig, fname)
         plt.clf()
 
-        i_group_sizes=[]
-        for i in range(data.num_groups):
-            i_group_sizes.append(int(data.network_group_size/5))
+        i_group_sizes=[int(data.network_group_size/5) for i in range(data.num_groups)]
         fig=plot_raster(data.i_spike_neurons, data.i_spike_times, i_group_sizes)
         furl='img/i_raster.trial.%d.png' % trial_idx
         trial.i_raster_url = furl
