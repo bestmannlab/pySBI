@@ -233,6 +233,9 @@
     </tr>
 </table>
 
+<h4>Output Firing Rate as a Function of Input Rate</h4>
+<img src="{{ rinfo.input_output_rate_url }}"/>
+
 <h4>BOLD as a Function of Input Contrast</h4>
 <img src="{{ rinfo.contrast_bold_url }}"/>
 
@@ -252,6 +255,7 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
     {% endfor %}
 </ul>
 <br>
+<h4>Trials</h4>
 <table>
     {% for trial in rinfo.trials %}
         <tr>

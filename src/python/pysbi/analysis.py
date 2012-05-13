@@ -437,9 +437,12 @@ def get_roc_init(num_trials, option_idx, prefix):
             n += 1
 
         # Get mean rate of pop 1 for last 100ms
-        pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
-        other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
-        f_score = pop_mean - other_pop_mean
+        #pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
+        #other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+        pop_sum = np.sum(data.e_firing_rates[option_idx, 6500:7500])
+        other_pop_sum = np.sum(data.e_firing_rates[1 - option_idx, 6500:7500])
+        #f_score = pop_mean - other_pop_mean
+        f_score = pop_sum - other_pop_sum
         l.append((example, f_score))
     l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
     return l_sorted, n, p

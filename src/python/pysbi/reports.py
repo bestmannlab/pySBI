@@ -12,6 +12,10 @@ from pysbi.utils import save_to_png, Struct
 
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                        p_i_e_range, num_trials, base_report_dir):
+    template_file='wta_network.html'
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    template=env.get_template(template_file)
+
     for p_b_e in p_b_e_range:
         for p_x_e in p_x_e_range:
             for p_e_e in p_e_e_range:
@@ -24,10 +28,10 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                             reports_dir=os.path.join(base_report_dir,file_desc)
                             if os.path.exists('%s.trial.0.h5' % file_prefix):
                                 print('Creating report for %s' % file_desc)
-                                create_wta_network_report(file_prefix, num_trials, reports_dir)
+                                create_wta_network_report(file_prefix, num_trials, reports_dir, template)
 
 
-def create_wta_network_report(file_prefix, num_trials, reports_dir):
+def create_wta_network_report(file_prefix, num_trials, reports_dir, template):
     make_report_dirs(reports_dir)
 
     report_info=Struct()
@@ -50,25 +54,34 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
     (data_dir, data_file_prefix) = os.path.split(file_prefix)
 
     trial_bold=[]
+    trial_max_input=np.zeros(num_trials)
+    trial_max_rate=np.zeros(num_trials)
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
         bold_signal=get_bold_signal(data, [500, 2500])
         trial = create_trial_report(data, reports_dir, bold_signal, i)
         trial_bold.append(bold_signal)
+        trial_max_input[i]=trial.max_input
+        trial_max_rate[i]=trial.max_rate
         report_info.trials.append(trial)
+
+    fig=plt.figure()
+    plt.plot(trial_max_input, trial_max_rate, 'x')
+    plt.xlabel('Max Input Rate')
+    plt.ylabel('Max Population Rate')
+    furl='img/input_output_rate.png'
+    fname=os.path.join(reports_dir, furl)
+    save_to_png(fig, fname)
+    report_info.input_output_rate_url=furl
+    plt.clf()
 
     report_info.contrast_bold_url=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
 
     report_info.roc=create_roc_report(file_prefix, data.num_groups, num_trials, reports_dir)
 
     #create report
-    template_file='wta_network.html'
     output_file='wta_network.%s.html' % data_file_prefix
-
-    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
-    template=env.get_template(template_file)
-
     fname=os.path.join(reports_dir,output_file)
     stream=template.stream(rinfo=report_info)
     stream.dump(fname)
@@ -95,6 +108,10 @@ def create_bold_report(reports_dir, trial_bold, file_prefix, num_trials):
 def create_trial_report(data, reports_dir, bold_signal, trial_idx):
     trial = Struct()
     trial.input_freq=data.input_freq
+
+    max_input_idx=np.where(trial.input_freq==np.max(trial.input_freq))[0][0]
+    trial.max_input=max_input_idx
+    trial.max_rate=np.max(data.e_firing_rates[max_input_idx])
 
     trial.e_raster_url = None
     trial.i_raster_url = None
