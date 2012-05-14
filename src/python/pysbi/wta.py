@@ -1,9 +1,24 @@
-from brian import *
-from brian.library.IF import *
-from brian.library.synapses import *
 from time import time
+from brian.clock import reinit_default_clock
+from brian.connections.delayconnection import DelayConnection
+from brian.directcontrol import PoissonGroup
+from brian.equations import Equations
+from brian.library.IF import exp_IF
+from brian.library.synapses import exp_synapse, biexp_synapse
+from brian.membrane_equations import Current
+from brian.monitor import MultiStateMonitor, StateMonitor, PopulationRateMonitor, SpikeMonitor
+from brian.network import Network
+from brian.neurongroup import NeuronGroup
+from brian.plotting import raster_plot
+from brian.stdunits import pF, nS, mV, ms, nA, mA, Hz
+from brian.tools.parameters import Parameters
+from brian.units import siemens, hertz, second
 import h5py
 import argparse
+import numpy as np
+from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show
+from numpy.matlib import randn
+from pysbi.analysis import get_bold_signal
 from pysbi.voxel import Voxel, LFPSource
 
 default_params=Parameters(
@@ -16,9 +31,9 @@ default_params=Parameters(
     # Magnesium concentration
     Mg = 1,
     # Synapse parameters
-    E_ampa = 0 * mvolt,
-    E_nmda = 0 * mvolt,
-    E_gaba_a = -70 * mvolt,
+    E_ampa = 0 * mV,
+    E_nmda = 0 * mV,
+    E_gaba_a = -70 * mV,
     #E_gaba_b = -95 * mvolt,
     # value from  (Hestrin, Sah, & Nicoll, 1990; Sah, Hestrin, & Nicoll, 1990; Spruston, Jonas, & Sakmann, 1995; Angulo, Rossier, & Audinat, 1999)
     tau_ampa = 2*ms,
@@ -54,9 +69,9 @@ single_inh_pop_params=Parameters(
     # Magnesium concentration
     Mg = 1,
     # Synapse parameters
-    E_ampa = 0 * mvolt,
-    E_nmda = 0 * mvolt,
-    E_gaba_a = -70 * mvolt,
+    E_ampa = 0 * mV,
+    E_nmda = 0 * mV,
+    E_gaba_a = -70 * mV,
     #E_gaba_b = -95 * mvolt,
     # value from  (Hestrin, Sah, & Nicoll, 1990; Sah, Hestrin, & Nicoll, 1990; Spruston, Jonas, & Sakmann, 1995; Angulo, Rossier, & Audinat, 1999)
     tau_ampa = 2*ms,
@@ -317,14 +332,14 @@ class WTAMonitor():
             figure()
             ax=subplot(211)
             for pop_rate_monitor in self.population_rate_monitors['excitatory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
             ax=subplot(212)
             for pop_rate_monitor in self.population_rate_monitors['inhibitory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
         if self.background_rate_monitor is not None and self.task_rate_monitors is not None:
             figure()
             ax=subplot(111)
-            ax.plot(self.background_rate_monitor.times/ms, self.background_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+            ax.plot(self.background_rate_monitor.times/ms, self.background_rate_monitor.smooth_rate(width=5*ms)/hertz)
             for task_monitor in self.task_rate_monitors:
                 ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
         if self.network_monitor is not None:
@@ -351,7 +366,7 @@ class WTAMonitor():
                 ylabel('Conductance (nA)')
                 legend()
         if self.lfp_monitor is not None:
-            fig=figure()
+            figure()
             ax=subplot(111)
             ax.plot(self.lfp_monitor.times / ms, self.lfp_monitor[0] / mA)
             xlabel('Time (ms)')
@@ -525,6 +540,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     net.run(trial_duration, report='text')
     print "Simulation time:", time() - start_time
 
+    wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params, [500, 2500])
     if output_file is not None:
         write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
             record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
