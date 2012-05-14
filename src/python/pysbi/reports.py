@@ -501,9 +501,10 @@ def create_trial_report(data, reports_dir, trial_idx):
 
     trial.voxel_url = None
     if data.voxel_rec is not None:
+        end_idx=int(data.trial_duration/ms/.1)
         fig = plt.figure()
         ax = plt.subplot(211)
-        ax.plot(np.array(range(len(data.voxel_rec['G_total'][0])))*.1, data.voxel_rec['G_total'][0] / nA)
+        ax.plot(np.array(range(end_idx))*.1, data.voxel_rec['G_total'][0][:end_idx] / nA)
         plt.xlabel('Time (ms)')
         plt.ylabel('Total Synaptic Activity (nA)')
         ax = plt.subplot(212)
