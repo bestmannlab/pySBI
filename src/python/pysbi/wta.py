@@ -18,8 +18,7 @@ import argparse
 import numpy as np
 from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show
 from numpy.matlib import randn
-from pysbi.analysis import get_bold_signal
-from pysbi.voxel import Voxel, LFPSource
+from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 
 default_params=Parameters(
     # Neuron parameters

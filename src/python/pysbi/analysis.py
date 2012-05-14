@@ -1,6 +1,4 @@
 import os
-from brian.clock import reinit_default_clock, defaultclock
-from brian.network import network_operation, Network
 from brian.stdunits import Hz
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
@@ -10,8 +8,8 @@ import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
 from pysbi.utils import Struct
-from pysbi.voxel import Voxel
-from pysbi.wta import WTAMonitor, run_wta
+from pysbi.voxel import  get_bold_signal
+from pysbi.wta import  run_wta
 
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
@@ -239,31 +237,6 @@ def get_lfp_signal(wta_data, plot=False):
         plt.plot(lfp)
         plt.show()
     return lfp
-
-def get_bold_signal(g_total, voxel_params, baseline_range, plot=False):
-    voxel=Voxel(params=voxel_params)
-    voxel.G_base=g_total[baseline_range[0]:baseline_range[1]].mean()
-    voxel_monitor = WTAMonitor(None, 1, 1, None, voxel, None, None, record_voxel=True, record_firing_rate=False,
-        record_neuron_state=False, record_spikes=False, record_lfp=False, record_inputs=False)
-
-    @network_operation(when='start')
-    def get_input():
-        idx=int(defaultclock.t/defaultclock.dt)
-        if idx<baseline_range[0]:
-            voxel.G_total=voxel.G_base
-        elif idx<len(g_total):
-            voxel.G_total=g_total[idx]
-        else:
-            voxel.G_total=voxel.G_base
-
-    net=Network(voxel, get_input, voxel_monitor.monitors)
-    reinit_default_clock()
-    net.run(6*second)
-
-    if plot:
-        voxel_monitor.plot()
-
-    return voxel_monitor.voxel_monitor
 
 
 def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,

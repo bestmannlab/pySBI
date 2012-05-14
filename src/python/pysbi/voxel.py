@@ -1,5 +1,6 @@
 from math import exp
-from brian import Equations, NeuronGroup, Parameters, second
+from brian import Equations, NeuronGroup, Parameters, second, network_operation, defaultclock, Network, reinit_default_clock
+from brian.monitor import MultiStateMonitor
 from brian.neurongroup import linked_var
 from brian.stdunits import nA
 
@@ -101,3 +102,25 @@ class Voxel(NeuronGroup):
 
         if network is not None:
             self.G_total = linked_var(network, 'g_syn', func=sum)
+
+
+def get_bold_signal(g_total, voxel_params, baseline_range):
+    voxel=Voxel(params=voxel_params)
+    voxel.G_base=g_total[baseline_range[0]:baseline_range[1]].mean()
+    voxel_monitor = MultiStateMonitor(voxel, vars=['G_total','s','f_in','v','f_out','q','y'], record=True)
+
+    @network_operation(when='start')
+    def get_input():
+        idx=int(defaultclock.t/defaultclock.dt)
+        if idx<baseline_range[0]:
+            voxel.G_total=voxel.G_base
+        elif idx<len(g_total):
+            voxel.G_total=g_total[idx]
+        else:
+            voxel.G_total=voxel.G_base
+
+    net=Network(voxel, get_input, voxel_monitor)
+    reinit_default_clock()
+    net.run(6*second)
+
+    return voxel_monitor
