@@ -1,0 +1,310 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+    <title>WTA Network</title>
+</head>
+
+<body>
+
+<script type="text/javascript">
+    $(document).ready(function()
+            {
+                //$("#score_table").tablesorter();
+            }
+    );
+</script>
+
+<h4>Simulation Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>Number of groups</td>
+        <td>{{ rinfo.num_groups }}</td>
+    </tr>
+    <tr>
+        <td>Trial_duration</td>
+        <td>{{ rinfo.trial_duration }}</td>
+    </tr>
+    <tr>
+        <td>Background rate</td>
+        <td>{{ rinfo.background_rate }}</td>
+    </tr>
+    <tr>
+        <td>Stimulation start time</td>
+        <td>{{ rinfo.stim_start_time }}</td>
+    </tr>
+    <tr>
+        <td>Stimulation end time</td>
+        <td>{{ rinfo.stim_end_time }}</td>
+    </tr>
+    <tr>
+        <td>Network group size</td>
+        <td>{{ rinfo.network_group_size }}</td>
+    </tr>
+    <tr>
+        <td>Background input size</td>
+        <td>{{ rinfo.background_input_size }}</td>
+    </tr>
+    <tr>
+        <td>Task input size</td>
+        <td>{{ rinfo.task_input_size }}</td>
+    </tr>
+</table>
+
+<h4>Network Free Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>p_b_e</td>
+        <td>{{ rinfo.wta_params.p_b_e }}</td>
+    </tr>
+    <tr>
+        <td>p_x_e</td>
+        <td>{{ rinfo.wta_params.p_x_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td>{{ rinfo.wta_params.p_e_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td>{{ rinfo.wta_params.p_e_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td>{{ rinfo.wta_params.p_i_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td>{{ rinfo.wta_params.p_i_e }}</td>
+    </tr>
+</table>
+
+<h4>Network Fixed Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.wta_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.wta_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>EL</td>
+        <td>{{ rinfo.wta_params.EL }}</td>
+    </tr>
+    <tr>
+        <td>VT</td>
+        <td>{{ rinfo.wta_params.VT }}</td>
+    </tr>
+    <tr>
+        <td>DeltaT</td>
+        <td>{{ rinfo.wta_params.DeltaT }}</td>
+    </tr>
+    <tr>
+        <td>Mg</td>
+        <td>{{ rinfo.wta_params.Mg }}</td>
+    </tr>
+    <tr>
+        <td>E_ampa</td>
+        <td>{{ rinfo.wta_params.E_ampa }}</td>
+    </tr>
+    <tr>
+        <td>E_nmda</td>
+        <td>{{ rinfo.wta_params.E_nmda }}</td>
+    </tr>
+    <tr>
+        <td>E_gaba_a</td>
+        <td>{{ rinfo.wta_params.E_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>tau_ampa</td>
+        <td>{{ rinfo.wta_params.tau_ampa }}</td>
+    </tr>
+    <tr>
+        <td>tau1_nmda</td>
+        <td>{{ rinfo.wta_params.tau1_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau2_nmda</td>
+        <td>{{ rinfo.wta_params.tau2_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau_gaba_a</td>
+        <td>{{ rinfo.wta_params.tau_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_b</td>
+        <td>{{ rinfo.wta_params.w_ampa_b }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_x</td>
+        <td>{{ rinfo.wta_params.w_ampa_x }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_r</td>
+        <td>{{ rinfo.wta_params.w_ampa_r }}</td>
+    </tr>
+    <tr>
+        <td>w_nmda</td>
+        <td>{{ rinfo.wta_params.w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba_a</td>
+        <td>{{ rinfo.wta_params.w_gaba_a }}</td>
+    </tr>
+</table>
+
+<h4>Voxel Fixed Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>G_base</td>
+        <td>{{ rinfo.voxel_params.G_base }}</td>
+    </tr>
+    <tr>
+        <td>eta</td>
+        <td>{{ rinfo.voxel_params.eta }}</td>
+    </tr>
+    <tr>
+        <td>tau_s</td>
+        <td>{{ rinfo.voxel_params.tau_s }}</td>
+    </tr>
+    <tr>
+        <td>tau_f</td>
+        <td>{{ rinfo.voxel_params.tau_f }}</td>
+    </tr>
+    <tr>
+        <td>alpha</td>
+        <td>{{ rinfo.voxel_params.alpha }}</td>
+    </tr>
+    <tr>
+        <td>tau_o</td>
+        <td>{{ rinfo.voxel_params.tau_o }}</td>
+    </tr>
+    <tr>
+        <td>e_base</td>
+        <td>{{ rinfo.voxel_params.e_base }}</td>
+    </tr>
+    <tr>
+        <td>v_base</td>
+        <td>{{ rinfo.voxel_params.v_base }}</td>
+    </tr>
+    <tr>
+        <td>T_2E</td>
+        <td>{{ rinfo.voxel_params.T_2E }}</td>
+    </tr>
+    <tr>
+        <td>T_2I</td>
+        <td>{{ rinfo.voxel_params.T_2I }}</td>
+    </tr>
+    <tr>
+        <td>s_e_0</td>
+        <td>{{ rinfo.voxel_params.s_e_0 }}</td>
+    </tr>
+    <tr>
+        <td>s_i_0</td>
+        <td>{{ rinfo.voxel_params.s_i_0 }}</td>
+    </tr>
+    <tr>
+        <td>B0</td>
+        <td>{{ rinfo.voxel_params.B0 }}</td>
+    </tr>
+    <tr>
+        <td>TE</td>
+        <td>{{ rinfo.voxel_params.TE }}</td>
+    </tr>
+</table>
+
+<h4>Output Firing Rate as a Function of Input Rate</h4>
+<img src="{{ rinfo.input_output_rate_url }}"/>
+
+<h4>BOLD as a Function of Input Contrast</h4>
+<img src="{{ rinfo.contrast_bold_url }}"/>
+
+<h4>ROC</h4>
+{% for auc in rinfo.roc.auc_single_option %}
+Option {{ loop.index }} AUC={{ auc|round(3) }}
+<br>
+{% endfor %}
+<br>
+Overall AUC={{ rinfo.roc.auc|round(3) }}
+<br>
+<img src="{{ rinfo.roc.roc_url }}"/>
+
+<ul>
+    {% for trial in rinfo.trials %}
+        <li><a href="#trial.{{ loop.index }}">Trial {{ loop.index }}</a></li>
+    {% endfor %}
+</ul>
+<br>
+<h4>Trials</h4>
+<table>
+    {% for trial in rinfo.trials %}
+        <tr>
+            <td colspan="2">
+                <strong><a name="trial.{{ loop.index }}">Trial {{ loop.index }}</a></strong>
+                <br>
+                Inputs=[{% for input in trial.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if trial.e_raster_url %}
+                    <img src="{{ trial.e_raster_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if trial.i_raster_url %}
+                    <img src="{{ trial.i_raster_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if trial.firing_rate_url %}
+                    <img src="{{ trial.firing_rate_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if trial.neural_state_url %}
+                    <img src="{{ trial.neural_state_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if trial.lfp_url %}
+                    <img src="{{ trial.lfp_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if trial.voxel_url %}
+                    <img src="{{ trial.voxel_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"><hr/></td>
+        </tr>
+{% endfor %}
+</table>
+</body>
+</html>
