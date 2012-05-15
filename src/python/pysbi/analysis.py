@@ -363,7 +363,6 @@ def get_roc_init(num_trials, num_extra_trials, option_idx, prefix):
     n = 0
     for trial in range(num_trials):
         data_path = '%s.trial.%d.h5' % (prefix, trial)
-        print('opening %s' % data_path)
         data = FileInfo(data_path)
         example = 0
         if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
