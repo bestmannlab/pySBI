@@ -312,6 +312,9 @@ def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range
                         bayes_analysis.marginal_likelihood_p_e_i+=likelihood[i,j,k,:,m,n]
 
     bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e=np.zeros([len(p_b_e_range), len(p_x_e_range)])
+    bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i=np.zeros([len(p_e_e_range), len(p_e_i_range)])
+    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i=np.zeros([len(p_e_e_range), len(p_i_i_range)])
+    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e=np.zeros([len(p_e_e_range), len(p_i_e_range)])
     bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i=np.zeros([len(p_e_i_range), len(p_i_i_range)])
     bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e=np.zeros([len(p_e_i_range), len(p_i_e_range)])
     bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e=np.zeros([len(p_i_i_range), len(p_i_e_range)])
@@ -320,6 +323,21 @@ def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range
             for m,p_i_i in enumerate(p_i_i_range):
                 for n,p_i_e in enumerate(p_i_e_range):
                     bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e+=bayes_analysis.posterior[:,:,k,l,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for m,p_i_i in enumerate(p_i_i_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i+=bayes_analysis.posterior[i,j,:,:,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i+=bayes_analysis.posterior[i,j,:,l,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e+=bayes_analysis.posterior[i,j,:,l,m,:]
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
@@ -339,39 +357,46 @@ def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range
     return bayes_analysis
 
 
-def get_roc_init(num_trials, option_idx, prefix):
+def get_roc_init(num_trials, num_extra_trials, option_idx, prefix):
     l = []
     p = 0
     n = 0
     for trial in range(num_trials):
         data_path = '%s.trial.%d.h5' % (prefix, trial)
+        print('opening %s' % data_path)
         data = FileInfo(data_path)
         example = 0
         if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
             example = 1
-            p += 1
+            for j in range(num_extra_trials):
+                p += 1
         else:
-            n += 1
+            for j in range(num_extra_trials):
+                n += 1
 
         # Get mean rate of pop 1 for last 100ms
-        #pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
-        #other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+        pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
+        #pop_noise=np.random.randn(7500-6500)*pop_mean*.5
+        other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+        #other_pop_noise=np.random.randn(7500-6500)*other_pop_mean*.5
         pop_sum = np.sum(data.e_firing_rates[option_idx, 6500:7500])
         other_pop_sum = np.sum(data.e_firing_rates[1 - option_idx, 6500:7500])
         #f_score = pop_mean - other_pop_mean
-        f_score = pop_sum - other_pop_sum
-        l.append((example, f_score))
+        #f_score = float(pop_sum)/float(pop_sum+other_pop_sum)
+        for j in range(num_extra_trials):
+            f_score = float(pop_mean)/float(pop_mean+other_pop_mean)+.5*np.random.randn()
+            l.append((example, f_score))
     l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
     return l_sorted, n, p
 
-def get_auc(prefix, num_trials, num_groups):
+def get_auc(prefix, num_trials, num_extra_trials, num_groups):
     total_auc=0
     total_p=0
     single_auc=[]
     single_p=[]
     for i in range(num_groups):
-        l_sorted, n, p = get_roc_init(num_trials, i, prefix)
-        single_auc.append(get_auc_single_option(prefix, num_trials, i))
+        l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, i, prefix)
+        single_auc.append(get_auc_single_option(prefix, num_trials, num_extra_trials, i))
         single_p.append(p)
         total_p+=p
     for i in range(num_groups):
@@ -379,8 +404,8 @@ def get_auc(prefix, num_trials, num_groups):
 
     return total_auc
 
-def get_auc_single_option(prefix, num_trials, option_idx):
-    l_sorted, n, p = get_roc_init(num_trials, option_idx, prefix)
+def get_auc_single_option(prefix, num_trials, num_extra_trials, option_idx):
+    l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, option_idx, prefix)
     fp=0
     tp=0
     fp_prev=0
@@ -401,9 +426,9 @@ def get_auc_single_option(prefix, num_trials, option_idx):
     a=float(a)/(float(p)*float(n))
     return a
 
-def get_roc_single_option(prefix, num_trials, option_idx):
+def get_roc_single_option(prefix, num_trials, num_extra_trials, option_idx):
 
-    l_sorted, n, p = get_roc_init(num_trials, option_idx, prefix)
+    l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, option_idx, prefix)
 
     fp=0
     tp=0
@@ -426,9 +451,9 @@ def trapezoid_area(x1,x2,y1,y2):
     height_avg=float(y1+y2)/2.0
     return base*height_avg
 
-def get_roc(prefix, num_trials):
-    roc1=get_roc_single_option(prefix, num_trials, 0)
-    roc2=get_roc_single_option(prefix, num_trials, 1)
+def get_roc(prefix, num_trials, num_extra_trials):
+    roc1=get_roc_single_option(prefix, num_trials, num_extra_trials, 0)
+    roc2=get_roc_single_option(prefix, num_trials, num_extra_trials, 1)
 
     plt.figure()
     plt.plot(roc1[:,0],roc1[:,1],'x-',label='option 1')

@@ -34,7 +34,7 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                                       (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
                             file_prefix=os.path.join(data_dir,file_desc)
                             reports_dir=os.path.join(base_report_dir,file_desc)
-                            if os.path.exists('%s.trial.0.h5' % file_prefix):
+                            if all_trials_exist(file_prefix, num_trials):
                                 print('Creating report for %s' % file_desc)
                                 wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir)
                                 likelihood[i,j,k,l,m,n]=wta_report.roc.auc
@@ -61,6 +61,12 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     fname=os.path.join(base_report_dir,output_file)
     stream=template.stream(rinfo=report_info)
     stream.dump(fname)
+
+def all_trials_exist(file_prefix, num_trials):
+    for i in range(num_trials):
+        if not os.path.exists('%s.trial.%d.h5' % (file_prefix,i)):
+            return False
+    return True
 
 def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                            p_i_e_range, reports_dir):
@@ -286,6 +292,48 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         report_info.joint_marginal_p_b_e_p_x_e_url=furl
         plt.close()
 
+    report_info.joint_marginal_p_e_e_p_e_i_url=None
+    if len(p_e_e_range)>1 and len(p_e_i_range)>1:
+        fig=plt.figure()
+        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i, extent=[min(p_e_i_range),max(p_e_i_range),
+                                                                                   min(p_e_e_range),max(p_e_e_range)])
+        fig.colorbar(im)
+        plt.xlabel('p_e_i')
+        plt.ylabel('p_e_e')
+        furl='img/bayes_joint_marginal_p_e_e_p_e_i.png'
+        fname=os.path.join(reports_dir, furl)
+        save_to_png(fig, fname)
+        report_info.joint_marginal_p_e_e_p_e_i_url=furl
+        plt.close()
+
+    report_info.joint_marginal_p_e_e_p_i_i_url=None
+    if len(p_e_e_range)>1 and len(p_i_i_range)>1:
+        fig=plt.figure()
+        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),
+                                                                                   min(p_e_e_range),max(p_e_e_range)])
+        fig.colorbar(im)
+        plt.xlabel('p_i_i')
+        plt.ylabel('p_e_e')
+        furl='img/bayes_joint_marginal_p_e_e_p_i_i.png'
+        fname=os.path.join(reports_dir, furl)
+        save_to_png(fig, fname)
+        report_info.joint_marginal_p_e_e_p_i_i_url=furl
+        plt.close()
+
+    report_info.joint_marginal_p_e_e_p_i_e_url=None
+    if len(p_e_e_range)>1 and len(p_i_e_range)>1:
+        fig=plt.figure()
+        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),
+                                                                                   min(p_e_e_range),max(p_e_e_range)])
+        fig.colorbar(im)
+        plt.xlabel('p_i_e')
+        plt.ylabel('p_e_e')
+        furl='img/bayes_joint_marginal_p_e_e_p_i_e.png'
+        fname=os.path.join(reports_dir, furl)
+        save_to_png(fig, fname)
+        report_info.joint_marginal_p_e_e_p_i_e_url=furl
+        plt.close()
+
     report_info.joint_marginal_p_e_i_p_i_i_url=None
     if len(p_e_i_range)>1 and len(p_i_i_range)>1:
         fig=plt.figure()
@@ -393,15 +441,15 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
 
 
 def create_bold_report(reports_dir, trial_bold, file_prefix, num_trials):
-    diff=[]
+    contrast=[]
     max_bold=[]
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
-        diff.append(abs(data.input_freq[0]-data.input_freq[1]))
+        contrast.append(abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq))
         max_bold.append(np.max(trial_bold[i]))
     fig=plt.figure()
-    plt.plot(np.array(diff), np.array(max_bold), 'x')
+    plt.plot(np.array(contrast), np.array(max_bold), 'x')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
     furl='img/contrast_bold.png'
@@ -520,14 +568,15 @@ def create_trial_report(data, reports_dir, trial_idx):
 
 
 def create_roc_report(file_prefix, num_groups, num_trials, reports_dir):
+    num_extra_trials=10
     roc_report=Struct()
-    roc_report.auc=get_auc(file_prefix, num_trials, num_groups)
+    roc_report.auc=get_auc(file_prefix, num_trials, num_extra_trials, num_groups)
     roc_report.auc_single_option=[]
     fig=plt.figure()
     for i in range(num_groups):
-        roc=get_roc_single_option(file_prefix, num_trials, i)
+        roc=get_roc_single_option(file_prefix, num_trials, num_extra_trials, i)
         plt.plot(roc[:,0],roc[:,1],'x-',label='option %d' % i)
-        roc_report.auc_single_option.append(get_auc_single_option(file_prefix, num_trials, i))
+        roc_report.auc_single_option.append(get_auc_single_option(file_prefix, num_trials, num_extra_trials, i))
     plt.plot([0,1],[0,1],'--')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
