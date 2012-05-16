@@ -6,6 +6,7 @@ from brian.stdunits import nA, mA, Hz, ms
 import matplotlib.pylab as plt
 import numpy as np
 from shutil import copytree, copyfile
+from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_single_option, get_lfp_signal, run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.utils import save_to_png, Struct
@@ -24,6 +25,14 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
 
     evidence=0
 
+    report_info=Struct()
+    report_info.roc_auc={}
+    report_info.io_slope={}
+    report_info.io_intercept={}
+    report_info.io_r_sqr={}
+    report_info.bc_slope={}
+    report_info.bc_intercept={}
+    report_info.bc_r_sqr={}
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
@@ -39,8 +48,22 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                                 wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir)
                                 likelihood[i,j,k,l,m,n]=wta_report.roc.auc
                                 evidence+=likelihood[i,j,k,l,m,n]*priors[i,j,k,l,m,n]
+                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
+                                report_info.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_slope
+                                report_info.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_intercept
+                                report_info.io_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_r_sqr
+                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
+                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
+                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
+                            else:
+                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.io_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
 
-    report_info=Struct()
     report_info.num_groups=num_groups
     report_info.trial_duration=trial_duration
     report_info.num_trials=num_trials
@@ -388,8 +411,8 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
     (data_dir, data_file_prefix) = os.path.split(file_prefix)
 
     trial_bold=[]
-    trial_max_input=np.zeros(num_trials)
-    trial_max_rate=np.zeros(num_trials)
+    trial_max_input=np.zeros([num_trials,1])
+    trial_max_rate=np.zeros([num_trials])
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
@@ -412,9 +435,20 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
         trial_max_rate[i]=trial.max_rate
         report_info.trials.append(trial)
 
+    clf=LinearRegression()
+    clf.fit(trial_max_input,trial_max_rate)
+    a=clf.coef_[0]
+    b=clf.intercept_
+    report_info.io_slope=a
+    report_info.io_intercept=b
+    report_info.io_r_sqr=clf.score(trial_max_input,trial_max_rate)
+
     fig=plt.figure()
     plt.plot(trial_max_input, trial_max_rate, 'x')
-    plt.plot([np.min(trial_max_input),np.max(trial_max_input)],[np.min(trial_max_input),np.max(trial_max_input)],'--')
+    x_min=np.min(trial_max_input)
+    x_max=np.max(trial_max_input)
+    plt.plot([x_min,x_max],[x_min,x_max],'--')
+    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
     plt.xlabel('Max Input Rate')
     plt.ylabel('Max Population Rate')
     furl='img/input_output_rate.png'
@@ -423,7 +457,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
     report_info.input_output_rate_url=furl
     plt.close()
 
-    report_info.contrast_bold_url=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
+    report_info.bold=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
 
     report_info.roc=create_roc_report(file_prefix, data.num_groups, num_trials, reports_dir)
 
@@ -441,22 +475,39 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
 
 
 def create_bold_report(reports_dir, trial_bold, file_prefix, num_trials):
-    contrast=[]
-    max_bold=[]
+
+    report_info=Struct()
+
+    contrast=np.zeros([num_trials,1])
+    max_bold=np.zeros([num_trials])
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         data=FileInfo(file_name)
-        contrast.append(abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq))
-        max_bold.append(np.max(trial_bold[i]))
+        contrast[i]=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
+        max_bold[i]=np.max(trial_bold[i])
+
+    clf=LinearRegression()
+    clf.fit(contrast,max_bold)
+    a=clf.coef_[0]
+    b=clf.intercept_
+    report_info.bold_contrast_slope=a
+    report_info.bold_contrast_intercept=b
+    report_info.bold_contrast_r_sqr=clf.score(contrast,max_bold)
+
     fig=plt.figure()
-    plt.plot(np.array(contrast), np.array(max_bold), 'x')
+    plt.plot(contrast, max_bold, 'x')
+    x_min=np.min(contrast)
+    x_max=np.min(contrast)
+    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
     furl='img/contrast_bold.png'
     fname=os.path.join(reports_dir, furl)
     save_to_png(fig, fname)
     plt.close()
-    return furl
+    report_info.contrast_bold_url=furl
+
+    return report_info
 
 def create_trial_report(data, reports_dir, trial_idx):
     trial = Struct()

@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
     <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
-    <title>WTA Network</title>
+    <title>WTA ({{ rinfo.wta_params.p_b_e }},{{ rinfo.wta_params.p_x_e }},{{ rinfo.wta_params.p_e_e }},{{ rinfo.wta_params.p_e_i }},{{ rinfo.wta_params.p_i_i }},,{{ rinfo.wta_params.p_i_e }})</title>
 </head>
 
 <body>
@@ -235,9 +235,21 @@
 
 <h4>Output Firing Rate as a Function of Input Rate</h4>
 <img src="{{ rinfo.input_output_rate_url }}"/>
+<br>
+Slope={{ rinfo.io_slope }}
+<br>
+Intercept={{ rinfo.io_intercept }}
+<br>
+R^2={{ rinfo.io_r_sqr }}
 
 <h4>BOLD as a Function of Input Contrast</h4>
-<img src="{{ rinfo.contrast_bold_url }}"/>
+<img src="{{ rinfo.bold.contrast_bold_url }}"/>
+<br>
+Slope={{ rinfo.bold.bold_contrast_slope }}
+<br>
+Intercept={{ rinfo.bold.bold_contrast_intercept }}
+<br>
+R^2={{ rinfo.bold.bold_contrast_r_sqr }}
 
 <h4>ROC</h4>
 {% for auc in rinfo.roc.auc_single_option %}
