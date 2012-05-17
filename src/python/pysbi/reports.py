@@ -10,7 +10,6 @@ from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_single_option, get_lfp_signal, run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.utils import save_to_png, Struct
-from pysbi.voxel import get_bold_signal
 
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                        p_i_e_range, num_trials, base_report_dir):
@@ -302,7 +301,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_b_e_p_x_e_url=None
-    if len(p_b_e_range)>1 and len(p_x_e_range)>1:
+    if len(p_b_e_range) > 1 < len(p_x_e_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e, extent=[min(p_x_e_range),max(p_x_e_range),
                                                                                   min(p_b_e_range),max(p_b_e_range)])
@@ -316,7 +315,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_e_e_p_e_i_url=None
-    if len(p_e_e_range)>1 and len(p_e_i_range)>1:
+    if len(p_e_e_range) > 1 < len(p_e_i_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i, extent=[min(p_e_i_range),max(p_e_i_range),
                                                                                    min(p_e_e_range),max(p_e_e_range)])
@@ -330,7 +329,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_e_e_p_i_i_url=None
-    if len(p_e_e_range)>1 and len(p_i_i_range)>1:
+    if len(p_e_e_range) > 1 < len(p_i_i_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),
                                                                                    min(p_e_e_range),max(p_e_e_range)])
@@ -344,7 +343,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_e_e_p_i_e_url=None
-    if len(p_e_e_range)>1 and len(p_i_e_range)>1:
+    if len(p_e_e_range) > 1 < len(p_i_e_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),
                                                                                    min(p_e_e_range),max(p_e_e_range)])
@@ -358,7 +357,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_e_i_p_i_i_url=None
-    if len(p_e_i_range)>1 and len(p_i_i_range)>1:
+    if len(p_e_i_range) > 1 < len(p_i_i_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),
                                                                                   min(p_e_i_range),max(p_e_i_range)])
@@ -372,7 +371,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_e_i_p_i_e_url=None
-    if len(p_e_i_range)>1 and len(p_i_e_range)>1:
+    if len(p_e_i_range) > 1 < len(p_i_e_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),
                                                                                   min(p_e_i_range),max(p_e_i_range)])
@@ -386,7 +385,7 @@ def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_rang
         plt.close()
 
     report_info.joint_marginal_p_i_i_p_i_e_url=None
-    if len(p_i_i_range)>1 and len(p_i_e_range)>1:
+    if len(p_i_i_range) > 1 < len(p_i_e_range):
         fig=plt.figure()
         im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e, extent=[min(p_i_i_range),max(p_i_i_range),
                                                                                   min(p_i_e_range),max(p_i_e_range)])
@@ -459,7 +458,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir):
 
     report_info.bold=create_bold_report(reports_dir, trial_bold, file_prefix, num_trials)
 
-    report_info.roc=create_roc_report(file_prefix, data.num_groups, num_trials, reports_dir)
+    report_info.roc=create_roc_report(file_prefix, report_info.num_groups, num_trials, reports_dir)
 
     #create report
     template_file='wta_network_instance.html'
