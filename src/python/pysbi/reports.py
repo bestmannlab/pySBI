@@ -497,7 +497,7 @@ def create_bold_report(reports_dir, trial_bold, file_prefix, num_trials):
     fig=plt.figure()
     plt.plot(contrast, max_bold, 'x')
     x_min=np.min(contrast)
-    x_max=np.min(contrast)
+    x_max=np.max(contrast)
     plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
