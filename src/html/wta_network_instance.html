@@ -12,7 +12,7 @@
 <script type="text/javascript">
     $(document).ready(function()
             {
-                //$("#score_table").tablesorter();
+                $("#trial_table").tablesorter();
             }
     );
 </script>
@@ -261,11 +261,30 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
 <br>
 <img src="{{ rinfo.roc.roc_url }}"/>
 
-<ul>
+<table class="tablesorter" id="trial_table">
+    <thead>
+        <tr>
+            <th>Trial</th>
+            <th>Inputs</th>
+            <th>Input Contrast</th>
+            <th>Max Input Rate</th>
+            <th>Max Output Rate</th>
+            <th>Max Bold</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for trial in rinfo.trials %}
-        <li><a href="#trial.{{ loop.index }}">Trial {{ loop.index }}</a></li>
+        <tr>
+            <td><a href="#trial.{{ loop.index }}">{{ loop.index }}</a></td>
+            <td>[{% for input in trial.input_freq %} {{ input|round(2) }}Hz {% endfor %}]</td>
+            <td>{{ trial.input_contrast|round(3) }}</td>
+            <td>{{ trial.max_input|round(2) }}Hz</td>
+            <td>{{ trial.max_rate|round(2) }}Hz</td>
+            <td>{{ trial.max_bold|round(4) }}</td>
+        </tr>
     {% endfor %}
-</ul>
+    </tbody>
+</table>
 <br>
 <h4>Trials</h4>
 <table>
@@ -275,6 +294,14 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
                 <strong><a name="trial.{{ loop.index }}">Trial {{ loop.index }}</a></strong>
                 <br>
                 Inputs=[{% for input in trial.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+                <br>
+                Input Contrast={{ trial.input_contrast|round(3) }}
+                <br>
+                Max Input Rate={{ trial.max_input|round(2) }}Hz
+                <br>
+                Max Output Rate={{ trial.max_rate|round(2) }}Hz
+                <br>
+                Max BOLD signal={{ trial.max_bold|round(4) }}
             </td>
         </tr>
         <tr>
