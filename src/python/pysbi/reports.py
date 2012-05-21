@@ -3,6 +3,7 @@ from jinja2.environment import Environment
 from jinja2.loaders import FileSystemLoader
 import os
 from brian.stdunits import nA, mA, Hz, ms
+import h5py
 import matplotlib.pylab as plt
 import numpy as np
 from shutil import copytree, copyfile
@@ -16,13 +17,26 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
 
     make_report_dirs(base_report_dir)
 
+    # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
+    # p(AUC | theta, M)
     likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
                          len(p_i_i_range), len(p_i_e_range)])
+
+    # Number of parameter values tested
     n_param_vals=len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range)
+
+    # Priors are uniform
+    # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | M)
+    # p(theta | M)
     priors=np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
                     len(p_i_e_range)])*1.0/float(n_param_vals)
 
-    evidence=0
+    max_bold=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range), num_trials])
+    input_contrast=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range), num_trials])
+    auc=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                  len(p_i_e_range)])
 
     report_info=Struct()
     report_info.roc_auc={}
@@ -47,8 +61,15 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                                 wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir,
                                     regenerate_network_plots=regenerate_network_plots,
                                     regenerate_trial_plots=regenerate_trial_plots)
+
+                                # Update likelihood for this param value combination
                                 likelihood[i,j,k,l,m,n]=wta_report.roc.auc
-                                evidence+=likelihood[i,j,k,l,m,n]*priors[i,j,k,l,m,n]
+
+                                for o in range(num_trials):
+                                    max_bold[i,j,k,l,m,n,o]=wta_report.trials[o].max_bold
+                                    input_contrast[i,j,k,l,m,n,o]=wta_report.trials[o].input_contrast
+                                auc[i,j,k,l,m,n]=wta_report.roc.auc
+
                                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
                                 report_info.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_slope
                                 report_info.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_intercept
@@ -74,6 +95,13 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     report_info.p_e_i_range=p_e_i_range
     report_info.p_i_i_range=p_i_i_range
     report_info.p_i_e_range=p_i_e_range
+
+    save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
+        p_i_i_range, p_i_e_range, input_contrast, max_bold, auc, base_report_dir)
+
+    # p(AUC | M) = INT( p(AUC | theta, M)*p(theta | M) d theta
+    evidence=np.sum(likelihood*priors)
+
     report_info.bayesian_report=create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_range,
         p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, base_report_dir)
 
@@ -92,320 +120,139 @@ def all_trials_exist(file_prefix, num_trials):
             return False
     return True
 
+def save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
+                      p_i_i_range, p_i_e_range, input_contrast, max_bold, auc, base_report_dir):
+    output_file_name='wta_network_summary.h5'
+    fname=os.path.join(base_report_dir,output_file_name)
+    f = h5py.File(fname, 'w')
+    f.attrs['num_groups'] = num_groups
+    f.attrs['num_trials'] = num_trials
+    f.attrs['trial_duration'] = trial_duration
+    f['p_b_e_range']=np.array(p_b_e_range)
+    f['p_x_e_range']=np.array(p_x_e_range)
+    f['p_e_e_range']=np.array(p_e_e_range)
+    f['p_e_i_range']=np.array(p_e_i_range)
+    f['p_i_i_range']=np.array(p_i_i_range)
+    f['p_i_e_range']=np.array(p_i_e_range)
+    f['input_contrast']=input_contrast
+    f['max_bold']=max_bold
+    f['auc']=auc
+
+    f.close()
+
+
+def create_marginal_report(param_name, param_range, param_prior, param_likelihood, param_posterior, reports_dir):
+    if len(param_range) > 1:
+        fig = plt.figure()
+        plt.bar(np.array(param_range) - .005, param_prior, .01)
+        plt.xlabel(param_name)
+        plt.ylabel('p(%s|M)' % param_name)
+        prior_furl = 'img/bayes_marginal_prior_%s.png' % param_name
+        fname = os.path.join(reports_dir, prior_furl)
+        save_to_png(fig, fname)
+        plt.close()
+
+        fig = plt.figure()
+        plt.bar(np.array(param_range) - .005, param_likelihood, .01)
+        plt.xlabel(param_name)
+        plt.ylabel('p(WTA|%s,M)' % param_name)
+        likelihood_furl = 'img/bayes_marginal_likelihood_%s.png' % param_name
+        fname = os.path.join(reports_dir, likelihood_furl)
+        save_to_png(fig, fname)
+        plt.close()
+
+        fig = plt.figure()
+        plt.bar(np.array(param_range) - .005, param_posterior, .01)
+        plt.xlabel(param_name)
+        plt.ylabel('p(%s|WTA,M)' % param_name)
+        posterior_furl = 'img/bayes_marginal_posterior_%s.png' % param_name
+        fname = os.path.join(reports_dir, posterior_furl)
+        save_to_png(fig, fname)
+        plt.close()
+
+        return prior_furl, likelihood_furl, posterior_furl
+    return None, None, None
+
+
+def create_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, reports_dir):
+    if len(param1_range) > 1 < len(param2_range):
+        fig = plt.figure()
+        im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), max(param1_range),
+                                                 min(param1_range)], interpolation='nearest')
+        fig.colorbar(im)
+        plt.xlabel(param2_name)
+        plt.ylabel(param1_name)
+        furl = 'img/bayes_joint_marginal_%s_%s.png' % (param1_name, param2_name)
+        fname = os.path.join(reports_dir, furl)
+        save_to_png(fig, fname)
+        plt.close()
+        return furl
+    return None
+
+
 def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                           p_i_e_range, reports_dir):
+                           p_i_e_range, reports_dir, likelihood_threshold=0.80):
     report_info=Struct()
     bayes_analysis=run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range, p_e_e_range,
-        p_e_i_range, p_i_i_range, p_i_e_range)
+        p_e_i_range, p_i_i_range, p_i_e_range, likelihood_threshold=likelihood_threshold)
 
-    report_info.marginal_prior_p_b_e_url=None
-    report_info.marginal_likelihood_p_b_e_url=None
-    report_info.marginal_posterior_p_b_e_url=None
-    if len(p_b_e_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_b_e_range)-.005, bayes_analysis.marginal_prior_p_b_e,.01)
-        plt.xlabel('p_b_e')
-        plt.ylabel('p(p_b_e|M)')
-        furl='img/bayes_marginal_prior_p_b_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_b_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_b_e_url,\
+    report_info.marginal_likelihood_p_b_e_url,\
+    report_info.marginal_posterior_p_b_e_url=create_marginal_report('p_b_e', p_b_e_range,
+        bayes_analysis.marginal_prior_p_b_e, bayes_analysis.marginal_likelihood_p_b_e,
+        bayes_analysis.marginal_posterior_p_b_e, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_b_e_range)-.005, bayes_analysis.marginal_likelihood_p_b_e,.01)
-        plt.xlabel('p_b_e')
-        plt.ylabel('p(WTA|p_b_e,M)')
-        furl='img/bayes_marginal_likelihood_p_b_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_b_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_x_e_url,\
+    report_info.marginal_likelihood_p_x_e_url,\
+    report_info.marginal_posterior_p_x_e_url=create_marginal_report('p_x_e', p_x_e_range,
+        bayes_analysis.marginal_prior_p_x_e, bayes_analysis.marginal_likelihood_p_x_e,
+        bayes_analysis.marginal_posterior_p_x_e, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_b_e_range)-.005, bayes_analysis.marginal_posterior_p_b_e,.01)
-        plt.xlabel('p_b_e')
-        plt.ylabel('p(p_b_e|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_b_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_b_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_e_e_url,\
+    report_info.marginal_likelihood_p_e_e_url,\
+    report_info.marginal_posterior_p_e_e_url=create_marginal_report('p_e_e', p_e_e_range,
+        bayes_analysis.marginal_prior_p_e_e, bayes_analysis.marginal_likelihood_p_e_e,
+        bayes_analysis.marginal_posterior_p_e_e, reports_dir)
 
-    report_info.marginal_prior_p_x_e_url=None
-    report_info.marginal_likelihood_p_x_e_url=None
-    report_info.marginal_posterior_p_x_e_url=None
-    if len(p_x_e_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_x_e_range)-.005, bayes_analysis.marginal_prior_p_x_e,.01)
-        plt.xlabel('p_x_e')
-        plt.ylabel('p(p_x_e|M)')
-        furl='img/bayes_marginal_prior_p_x_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_x_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_e_i_url,\
+    report_info.marginal_likelihood_p_e_i_url,\
+    report_info.marginal_posterior_p_e_i_url=create_marginal_report('p_e_i', p_e_i_range,
+        bayes_analysis.marginal_prior_p_e_i, bayes_analysis.marginal_likelihood_p_e_i,
+        bayes_analysis.marginal_posterior_p_e_i, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_x_e_range)-.005, bayes_analysis.marginal_likelihood_p_x_e,.01)
-        plt.xlabel('p_x_e')
-        plt.ylabel('p(WTA|p_x_e,M)')
-        furl='img/bayes_marginal_likelihood_p_x_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_x_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_i_i_url,\
+    report_info.marginal_likelihood_p_i_i_url,\
+    report_info.marginal_posterior_p_i_i_url=create_marginal_report('p_i_i', p_i_i_range,
+        bayes_analysis.marginal_prior_p_i_i, bayes_analysis.marginal_likelihood_p_i_i,
+        bayes_analysis.marginal_posterior_p_i_i, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_x_e_range)-.005, bayes_analysis.marginal_posterior_p_x_e,.01)
-        plt.xlabel('p_x_e')
-        plt.ylabel('p(p_x_e|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_x_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_x_e_url=furl
-        plt.close()
+    report_info.marginal_prior_p_i_e_url,\
+    report_info.marginal_likelihood_p_i_e_url,\
+    report_info.marginal_posterior_p_i_e_url=create_marginal_report('p_i_e', p_i_e_range,
+        bayes_analysis.marginal_prior_p_i_e, bayes_analysis.marginal_likelihood_p_i_e,
+        bayes_analysis.marginal_posterior_p_i_e, reports_dir)
 
-    report_info.marginal_prior_p_e_e_url=None
-    report_info.marginal_likelihood_p_e_e_url=None
-    report_info.marginal_posterior_p_e_e_url=None
-    if len(p_e_e_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_e_e_range)-.005, bayes_analysis.marginal_prior_p_e_e,.01)
-        plt.xlabel('p_e_e')
-        plt.ylabel('p(p_e_e|M)')
-        furl='img/bayes_marginal_prior_p_e_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_e_e_url=furl
-        plt.close()
 
-        fig=plt.figure()
-        plt.bar(np.array(p_e_e_range)-.005, bayes_analysis.marginal_likelihood_p_e_e,.01)
-        plt.xlabel('p_e_e')
-        plt.ylabel('p(WTA|p_e_e,M)')
-        furl='img/bayes_marginal_likelihood_p_e_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_e_e_url=furl
-        plt.close()
+    report_info.joint_marginal_p_b_e_p_x_e_url = create_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
+        bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_e_e_range)-.005, bayes_analysis.marginal_posterior_p_e_e,.01)
-        plt.xlabel('p_e_e')
-        plt.ylabel('p(p_e_e|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_e_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_e_e_url=furl
-        plt.close()
+    report_info.joint_marginal_p_e_e_p_e_i_url = create_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
+        bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i, reports_dir)
 
-    report_info.marginal_prior_p_e_i_url=None
-    report_info.marginal_likelihood_p_e_i_url=None
-    report_info.marginal_posterior_p_e_i_url=None
-    if len(p_e_i_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_e_i_range)-.005, bayes_analysis.marginal_prior_p_e_i,.01)
-        plt.xlabel('p_e_i')
-        plt.ylabel('p(p_e_i)')
-        furl='img/bayes_marginal_prior_p_e_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_e_i_url=furl
-        plt.close()
+    report_info.joint_marginal_p_e_e_p_i_i_url = create_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
+        bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_e_i_range)-.005, bayes_analysis.marginal_likelihood_p_e_i,.01)
-        plt.xlabel('p_e_i')
-        plt.ylabel('p(WTA|p_e_i,M)')
-        furl='img/bayes_marginal_likelihood_p_e_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_e_i_url=furl
-        plt.close()
+    report_info.joint_marginal_p_e_e_p_i_e_url = create_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
+        bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_e_i_range)-.005, bayes_analysis.marginal_posterior_p_e_i,.01)
-        plt.xlabel('p_e_i')
-        plt.ylabel('p(p_e_i|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_e_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_e_i_url=furl
-        plt.close()
+    report_info.joint_marginal_p_e_i_p_i_i_url = create_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
+        bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i, reports_dir)
 
-    report_info.marginal_prior_p_i_i_url=None
-    report_info.marginal_likelihood_p_i_i_url=None
-    report_info.marginal_posterior_p_i_i_url=None
-    if len(p_i_i_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_i_i_range)-.005, bayes_analysis.marginal_prior_p_i_i,.01)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p(p_i_i|M)')
-        furl='img/bayes_marginal_prior_p_i_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_i_i_url=furl
-        plt.close()
+    report_info.joint_marginal_p_e_i_p_i_e_url = create_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
+        bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e, reports_dir)
 
-        fig=plt.figure()
-        plt.bar(np.array(p_i_i_range)-.005, bayes_analysis.marginal_likelihood_p_i_i,.01)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p(WTA|p_i_i,M)')
-        furl='img/bayes_marginal_likelihood_p_i_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_i_i_url=furl
-        plt.close()
-
-        fig=plt.figure()
-        plt.bar(np.array(p_i_i_range)-.005, bayes_analysis.marginal_posterior_p_i_i,.01)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p(p_i_i|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_i_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_i_i_url=furl
-        plt.close()
-
-    report_info.marginal_prior_p_i_e_url=None
-    report_info.marginal_likelihood_p_i_e_url=None
-    report_info.marginal_posterior_p_i_e_url=None
-    if len(p_i_e_range)>1:
-        fig=plt.figure()
-        plt.bar(np.array(p_i_e_range)-.005, bayes_analysis.marginal_prior_p_i_e,.01)
-        plt.xlabel('p_i_e')
-        plt.ylabel('p(p_i_e|M)')
-        furl='img/bayes_marginal_prior_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_prior_p_i_e_url=furl
-        plt.close()
-
-        fig=plt.figure()
-        plt.bar(np.array(p_i_e_range)-.005, bayes_analysis.marginal_likelihood_p_i_e,.01)
-        plt.xlabel('p_i_e')
-        plt.ylabel('p(WTA|p_i_e,M)')
-        furl='img/bayes_marginal_likelihood_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_likelihood_p_i_e_url=furl
-        plt.close()
-
-        fig=plt.figure()
-        plt.bar(np.array(p_i_e_range)-.005, bayes_analysis.marginal_posterior_p_i_e,.01)
-        plt.xlabel('p_i_e')
-        plt.ylabel('p(p_i_e|WTA,M)')
-        furl='img/bayes_marginal_posterior_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.marginal_posterior_p_i_e_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_b_e_p_x_e_url=None
-    if len(p_b_e_range) > 1 < len(p_x_e_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e, extent=[min(p_x_e_range),max(p_x_e_range),
-                                                                                   max(p_b_e_range),min(p_b_e_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_x_e')
-        plt.ylabel('p_b_e')
-        furl='img/bayes_joint_marginal_p_b_e_p_x_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_b_e_p_x_e_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_e_e_p_e_i_url=None
-    if len(p_e_e_range) > 1 < len(p_e_i_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i, extent=[min(p_e_i_range),max(p_e_i_range),
-                                                                                   max(p_e_e_range),min(p_e_e_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_e_i')
-        plt.ylabel('p_e_e')
-        furl='img/bayes_joint_marginal_p_e_e_p_e_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_e_e_p_e_i_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_e_e_p_i_i_url=None
-    if len(p_e_e_range) > 1 < len(p_i_i_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),
-                                                                                   max(p_e_e_range),min(p_e_e_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p_e_e')
-        furl='img/bayes_joint_marginal_p_e_e_p_i_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_e_e_p_i_i_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_e_e_p_i_e_url=None
-    if len(p_e_e_range) > 1 < len(p_i_e_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),
-                                                                                   max(p_e_e_range),min(p_e_e_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_i_e')
-        plt.ylabel('p_e_e')
-        furl='img/bayes_joint_marginal_p_e_e_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_e_e_p_i_e_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_e_i_p_i_i_url=None
-    if len(p_e_i_range) > 1 < len(p_i_i_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i, extent=[min(p_i_i_range),max(p_i_i_range),
-                                                                                   max(p_e_i_range),min(p_e_i_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p_e_i')
-        furl='img/bayes_joint_marginal_p_e_i_p_i_i.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_e_i_p_i_i_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_e_i_p_i_e_url=None
-    if len(p_e_i_range) > 1 < len(p_i_e_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e, extent=[min(p_i_e_range),max(p_i_e_range),
-                                                                                   max(p_e_i_range),min(p_e_i_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_i_e')
-        plt.ylabel('p_e_i')
-        furl='img/bayes_joint_marginal_p_e_i_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_e_i_p_i_e_url=furl
-        plt.close()
-
-    report_info.joint_marginal_p_i_i_p_i_e_url=None
-    if len(p_i_i_range) > 1 < len(p_i_e_range):
-        fig=plt.figure()
-        im=plt.imshow(bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e, extent=[min(p_i_i_range),max(p_i_i_range),
-                                                                                   max(p_i_e_range),min(p_i_e_range)],
-            interpolation='nearest')
-        fig.colorbar(im)
-        plt.xlabel('p_i_i')
-        plt.ylabel('p_e_i')
-        furl='img/bayes_joint_marginal_p_i_i_p_i_e.png'
-        fname=os.path.join(reports_dir, furl)
-        save_to_png(fig, fname)
-        report_info.joint_marginal_p_i_i_p_i_e_url=furl
-        plt.close()
+    report_info.joint_marginal_p_i_i_p_i_e_url = create_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
+        bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e, reports_dir)
 
     return report_info
 
