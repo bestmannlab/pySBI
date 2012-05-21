@@ -240,9 +240,19 @@ def get_lfp_signal(wta_data, plot=False):
 
 
 def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                          p_i_e_range):
+                          p_i_e_range, likelihood_threshold=0.80):
     bayes_analysis=Struct()
-    bayes_analysis.posterior=(likelihood*priors)/evidence
+    bayes_analysis.posterior=np.zeros(likelihood.shape)
+
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        for n,p_i_e in enumerate(p_i_e_range):
+                            if likelihood[i,j,k,l,m,n]>likelihood_threshold:
+                                bayes_analysis.posterior[i,j,k,l,m,n]=priors[i,j,k,l,m,n]/evidence
+    #bayes_analysis.posterior=(likelihood*priors)/evidence
 
     bayes_analysis.marginal_posterior_p_b_e=np.zeros([len(p_b_e_range)])
     bayes_analysis.marginal_posterior_p_x_e=np.zeros([len(p_x_e_range)])
