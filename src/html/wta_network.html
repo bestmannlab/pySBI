@@ -63,6 +63,8 @@
     </tbody>
 </table>
 
+<h3>Level 1 Bayesian Analysis</h3>
+Evidence={{ rinfo.bayesian_report.l1_evidence }}
 <h4>Marginal Distributions</h4>
 <table border="1">
     <tr>
@@ -71,84 +73,264 @@
         <td>Likelihood</td>
         <td>Posterior</td>
     </tr>
-    {% if rinfo.bayesian_report.marginal_prior_p_b_e_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_b_e_url %}
     <tr>
         <td>p_b_e</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_b_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_b_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_b_e_url }}"/></td>
     </tr>
     {% endif %}
-    {% if rinfo.bayesian_report.marginal_prior_p_x_e_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_x_e_url %}
     <tr>
         <td>p_x_e</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_x_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_x_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_x_e_url }}"/></td>
     </tr>
     {% endif %}
-    {% if rinfo.bayesian_report.marginal_prior_p_e_e_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_e_e_url %}
     <tr>
         <td>p_e_e</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_e_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_e_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_e_e_url }}"/></td>
     </tr>
     {% endif %}
-    {% if rinfo.bayesian_report.marginal_prior_p_e_i_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_e_i_url %}
     <tr>
         <td>p_e_i</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_e_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_e_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_e_i_url }}"/></td>
     </tr>
     {% endif %}
-    {% if rinfo.bayesian_report.marginal_prior_p_i_i_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_i_i_url %}
     <tr>
         <td>p_i_i</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_i_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_i_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_i_i_url }}"/></td>
     </tr>
     {% endif %}
-    {% if rinfo.bayesian_report.marginal_prior_p_i_e_url %}
+    {% if rinfo.bayesian_report.l1_marginal_prior_p_i_e_url %}
     <tr>
         <td>p_i_e</td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_prior_p_i_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_likelihood_p_i_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.bayesian_report.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_prior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_likelihood_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l1_marginal_posterior_p_i_e_url }}"/></td>
     </tr>
     {% endif %}
 </table>
 
 <h4>Joint Marginal Distributions</h4>
-{% if rinfo.bayesian_report.joint_marginal_p_b_e_p_x_e_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_b_e_p_x_e_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_b_e_p_x_e_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_b_e_p_x_e_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_e_e_p_e_i_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_e_e_p_e_i_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_e_i_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_e_i_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_e_e_p_i_i_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_e_e_p_i_i_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_i_i_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_i_i_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_e_e_p_i_e_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_e_e_p_i_e_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_i_e_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_e_e_p_i_e_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_e_i_p_i_i_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_e_i_p_i_i_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_e_i_p_i_i_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_e_i_p_i_i_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_e_i_p_i_e_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_e_i_p_i_e_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_e_i_p_i_e_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_e_i_p_i_e_url }}"/>
     <br>
 {% endif %}
-{% if rinfo.bayesian_report.joint_marginal_p_i_i_p_i_e_url %}
-    <img src="{{ rinfo.bayesian_report.joint_marginal_p_i_i_p_i_e_url }}"/>
+{% if rinfo.bayesian_report.l1_joint_marginal_p_i_i_p_i_e_url %}
+    <img src="{{ rinfo.bayesian_report.l1_joint_marginal_p_i_i_p_i_e_url }}"/>
     <br>
+{% endif %}
+
+<h3>Level 2 - Negative BOLD-Contrast Slope - Bayesian Analysis</h3>
+Evidence={{ rinfo.bayesian_report.l2_neg_evidence }}
+<h4>Marginal Distributions</h4>
+<table border="1">
+    <tr>
+        <td>Parameter</td>
+        <td>Prior</td>
+        <td>Likelihood</td>
+        <td>Posterior</td>
+    </tr>
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_b_e_url %}
+    <tr>
+        <td>p_b_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_b_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_x_e_url %}
+    <tr>
+        <td>p_x_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_x_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_e_e_url %}
+    <tr>
+        <td>p_e_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_e_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_e_i_url %}
+    <tr>
+        <td>p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_e_i_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_i_i_url %}
+    <tr>
+        <td>p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_i_i_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_neg_marginal_prior_p_i_e_url %}
+    <tr>
+        <td>p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_prior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_likelihood_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_neg_marginal_posterior_p_i_e_url }}"/></td>
+    </tr>
+    {% endif %}
+</table>
+
+<h4>Joint Marginal Distributions</h4>
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_b_e_p_x_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_b_e_p_x_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_e_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_e_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_i_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_i_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_e_e_p_i_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_e_i_p_i_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_e_i_p_i_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_e_i_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_e_i_p_i_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_neg_joint_marginal_p_i_i_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_neg_joint_marginal_p_i_i_p_i_e_url }}"/>
+<br>
+{% endif %}
+
+<h3>Level 2 - Positive BOLD-Contrast Slope - Bayesian Analysis</h3>
+Evidence={{ rinfo.bayesian_report.l2_pos_evidence }}
+<h4>Marginal Distributions</h4>
+<table border="1">
+    <tr>
+        <td>Parameter</td>
+        <td>Prior</td>
+        <td>Likelihood</td>
+        <td>Posterior</td>
+    </tr>
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_b_e_url %}
+    <tr>
+        <td>p_b_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_b_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_b_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_x_e_url %}
+    <tr>
+        <td>p_x_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_x_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_x_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_e_e_url %}
+    <tr>
+        <td>p_e_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_e_e_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_e_i_url %}
+    <tr>
+        <td>p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_e_i_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_i_i_url %}
+    <tr>
+        <td>p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_i_i_url }}"/></td>
+    </tr>
+    {% endif %}
+    {% if rinfo.bayesian_report.l2_pos_marginal_prior_p_i_e_url %}
+    <tr>
+        <td>p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_prior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_likelihood_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.bayesian_report.l2_pos_marginal_posterior_p_i_e_url }}"/></td>
+    </tr>
+    {% endif %}
+</table>
+
+<h4>Joint Marginal Distributions</h4>
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_b_e_p_x_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_b_e_p_x_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_e_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_e_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_i_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_i_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_e_e_p_i_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_e_i_p_i_i_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_e_i_p_i_i_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_e_i_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_e_i_p_i_e_url }}"/>
+<br>
+{% endif %}
+{% if rinfo.bayesian_report.l2_pos_joint_marginal_p_i_i_p_i_e_url %}
+<img src="{{ rinfo.bayesian_report.l2_pos_joint_marginal_p_i_i_p_i_e_url }}"/>
+<br>
 {% endif %}
 </body>
 </html>

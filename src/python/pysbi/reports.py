@@ -189,67 +189,190 @@ def create_bayesian_report(auc, input_contrast, max_bold, num_trials, p_b_e_rang
     bayes_analysis=run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range,
         p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
 
-    report_info.marginal_prior_p_b_e_url,\
-    report_info.marginal_likelihood_p_b_e_url,\
-    report_info.marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
+    report_info.l1_evidence=bayes_analysis.l1_evidence
+
+    report_info.l1_marginal_prior_p_b_e_url,\
+    report_info.l1_marginal_likelihood_p_b_e_url,\
+    report_info.l1_marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
         bayes_analysis.l1_marginals.prior_p_b_e, bayes_analysis.l1_marginals.likelihood_p_b_e,
-        bayes_analysis.l1_marginals.posterior_p_b_e, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_b_e, 'l1', reports_dir)
 
-    report_info.marginal_prior_p_x_e_url,\
-    report_info.marginal_likelihood_p_x_e_url,\
-    report_info.marginal_posterior_p_x_e_url=render_marginal_report('p_x_e', p_x_e_range,
+    report_info.l1_marginal_prior_p_x_e_url,\
+    report_info.l1_marginal_likelihood_p_x_e_url,\
+    report_info.l1_marginal_posterior_p_x_e_url=render_marginal_report('p_x_e', p_x_e_range,
         bayes_analysis.l1_marginals.prior_p_x_e, bayes_analysis.l1_marginals.likelihood_p_x_e,
-        bayes_analysis.l1_marginals.posterior_p_x_e, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_x_e, 'l1', reports_dir)
 
-    report_info.marginal_prior_p_e_e_url,\
-    report_info.marginal_likelihood_p_e_e_url,\
-    report_info.marginal_posterior_p_e_e_url=render_marginal_report('p_e_e', p_e_e_range,
+    report_info.l1_marginal_prior_p_e_e_url,\
+    report_info.l1_marginal_likelihood_p_e_e_url,\
+    report_info.l1_marginal_posterior_p_e_e_url=render_marginal_report('p_e_e', p_e_e_range,
         bayes_analysis.l1_marginals.prior_p_e_e, bayes_analysis.l1_marginals.likelihood_p_e_e,
-        bayes_analysis.l1_marginals.posterior_p_e_e, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_e_e, 'l1', reports_dir)
 
-    report_info.marginal_prior_p_e_i_url,\
-    report_info.marginal_likelihood_p_e_i_url,\
-    report_info.marginal_posterior_p_e_i_url=render_marginal_report('p_e_i', p_e_i_range,
+    report_info.l1_marginal_prior_p_e_i_url,\
+    report_info.l1_marginal_likelihood_p_e_i_url,\
+    report_info.l1_marginal_posterior_p_e_i_url=render_marginal_report('p_e_i', p_e_i_range,
         bayes_analysis.l1_marginals.prior_p_e_i, bayes_analysis.l1_marginals.likelihood_p_e_i,
-        bayes_analysis.l1_marginals.posterior_p_e_i, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_e_i, 'l1', reports_dir)
 
-    report_info.marginal_prior_p_i_i_url,\
-    report_info.marginal_likelihood_p_i_i_url,\
-    report_info.marginal_posterior_p_i_i_url=render_marginal_report('p_i_i', p_i_i_range,
+    report_info.l1_marginal_prior_p_i_i_url,\
+    report_info.l1_marginal_likelihood_p_i_i_url,\
+    report_info.l1_marginal_posterior_p_i_i_url=render_marginal_report('p_i_i', p_i_i_range,
         bayes_analysis.l1_marginals.prior_p_i_i, bayes_analysis.l1_marginals.likelihood_p_i_i,
-        bayes_analysis.l1_marginals.posterior_p_i_i, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_i_i, 'l1', reports_dir)
 
-    report_info.marginal_prior_p_i_e_url,\
-    report_info.marginal_likelihood_p_i_e_url,\
-    report_info.marginal_posterior_p_i_e_url=render_marginal_report('p_i_e', p_i_e_range,
+    report_info.l1_marginal_prior_p_i_e_url,\
+    report_info.l1_marginal_likelihood_p_i_e_url,\
+    report_info.l1_marginal_posterior_p_i_e_url=render_marginal_report('p_i_e', p_i_e_range,
         bayes_analysis.l1_marginals.prior_p_i_e, bayes_analysis.l1_marginals.likelihood_p_i_e,
-        bayes_analysis.l1_marginals.posterior_p_i_e, reports_dir)
+        bayes_analysis.l1_marginals.posterior_p_i_e, 'l1', reports_dir)
 
 
-    report_info.joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
-        bayes_analysis.l1_marginals.posterior_p_b_e_p_x_e, reports_dir)
+    report_info.l1_joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
+        bayes_analysis.l1_marginals.posterior_p_b_e_p_x_e, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
-        bayes_analysis.l1_marginals.posterior_p_e_e_p_e_i, reports_dir)
+    report_info.l1_joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_e_i, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
-        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_i, reports_dir)
+    report_info.l1_joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_i, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
-        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_e, reports_dir)
+    report_info.l1_joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_e, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
-        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_i, reports_dir)
+    report_info.l1_joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_i, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
-        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_e, reports_dir)
+    report_info.l1_joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_e, 'l1', reports_dir)
 
-    report_info.joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
-        bayes_analysis.l1_marginals.posterior_p_i_i_p_i_e, reports_dir)
+    report_info.l1_joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_i_i_p_i_e, 'l1', reports_dir)
 
+
+    report_info.l2_neg_evidence=bayes_analysis.l2_neg_evidence
+
+    report_info.l2_neg_marginal_prior_p_b_e_url,\
+    report_info.l2_neg_marginal_likelihood_p_b_e_url,\
+    report_info.l2_neg_marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
+        bayes_analysis.l2_neg_marginals.prior_p_b_e, bayes_analysis.l2_neg_marginals.likelihood_p_b_e,
+        bayes_analysis.l2_neg_marginals.posterior_p_b_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_marginal_prior_p_x_e_url,\
+    report_info.l2_neg_marginal_likelihood_p_x_e_url,\
+    report_info.l2_neg_marginal_posterior_p_x_e_url=render_marginal_report('p_x_e', p_x_e_range,
+        bayes_analysis.l2_neg_marginals.prior_p_x_e, bayes_analysis.l2_neg_marginals.likelihood_p_x_e,
+        bayes_analysis.l2_neg_marginals.posterior_p_x_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_marginal_prior_p_e_e_url,\
+    report_info.l2_neg_marginal_likelihood_p_e_e_url,\
+    report_info.l2_neg_marginal_posterior_p_e_e_url=render_marginal_report('p_e_e', p_e_e_range,
+        bayes_analysis.l2_neg_marginals.prior_p_e_e, bayes_analysis.l2_neg_marginals.likelihood_p_e_e,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_marginal_prior_p_e_i_url,\
+    report_info.l2_neg_marginal_likelihood_p_e_i_url,\
+    report_info.l2_neg_marginal_posterior_p_e_i_url=render_marginal_report('p_e_i', p_e_i_range,
+        bayes_analysis.l2_neg_marginals.prior_p_e_i, bayes_analysis.l2_neg_marginals.likelihood_p_e_i,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_i, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_marginal_prior_p_i_i_url,\
+    report_info.l2_neg_marginal_likelihood_p_i_i_url,\
+    report_info.l2_neg_marginal_posterior_p_i_i_url=render_marginal_report('p_i_i', p_i_i_range,
+        bayes_analysis.l2_neg_marginals.prior_p_i_i, bayes_analysis.l2_neg_marginals.likelihood_p_i_i,
+        bayes_analysis.l2_neg_marginals.posterior_p_i_i, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_marginal_prior_p_i_e_url,\
+    report_info.l2_neg_marginal_likelihood_p_i_e_url,\
+    report_info.l2_neg_marginal_posterior_p_i_e_url=render_marginal_report('p_i_e', p_i_e_range,
+        bayes_analysis.l2_neg_marginals.prior_p_i_e, bayes_analysis.l2_neg_marginals.likelihood_p_i_e,
+        bayes_analysis.l2_neg_marginals.posterior_p_i_e, 'l2_neg', reports_dir)
+
+
+    report_info.l2_neg_joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_b_e_p_x_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_e_p_e_i, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_e_p_i_i, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_e_p_i_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_i_p_i_i, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_e_i_p_i_e, 'l2_neg', reports_dir)
+
+    report_info.l2_neg_joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
+        bayes_analysis.l2_neg_marginals.posterior_p_i_i_p_i_e, 'l2_neg', reports_dir)
+
+
+    report_info.l2_pos_evidence=bayes_analysis.l2_pos_evidence
+
+    report_info.l2_pos_marginal_prior_p_b_e_url,\
+    report_info.l2_pos_marginal_likelihood_p_b_e_url,\
+    report_info.l2_pos_marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
+        bayes_analysis.l2_pos_marginals.prior_p_b_e, bayes_analysis.l2_pos_marginals.likelihood_p_b_e,
+        bayes_analysis.l2_pos_marginals.posterior_p_b_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_marginal_prior_p_x_e_url,\
+    report_info.l2_pos_marginal_likelihood_p_x_e_url,\
+    report_info.l2_pos_marginal_posterior_p_x_e_url=render_marginal_report('p_x_e', p_x_e_range,
+        bayes_analysis.l2_pos_marginals.prior_p_x_e, bayes_analysis.l2_pos_marginals.likelihood_p_x_e,
+        bayes_analysis.l2_pos_marginals.posterior_p_x_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_marginal_prior_p_e_e_url,\
+    report_info.l2_pos_marginal_likelihood_p_e_e_url,\
+    report_info.l2_pos_marginal_posterior_p_e_e_url=render_marginal_report('p_e_e', p_e_e_range,
+        bayes_analysis.l2_pos_marginals.prior_p_e_e, bayes_analysis.l2_pos_marginals.likelihood_p_e_e,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_marginal_prior_p_e_i_url,\
+    report_info.l2_pos_marginal_likelihood_p_e_i_url,\
+    report_info.l2_pos_marginal_posterior_p_e_i_url=render_marginal_report('p_e_i', p_e_i_range,
+        bayes_analysis.l2_pos_marginals.prior_p_e_i, bayes_analysis.l2_pos_marginals.likelihood_p_e_i,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_i, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_marginal_prior_p_i_i_url,\
+    report_info.l2_pos_marginal_likelihood_p_i_i_url,\
+    report_info.l2_pos_marginal_posterior_p_i_i_url=render_marginal_report('p_i_i', p_i_i_range,
+        bayes_analysis.l2_pos_marginals.prior_p_i_i, bayes_analysis.l2_pos_marginals.likelihood_p_i_i,
+        bayes_analysis.l2_pos_marginals.posterior_p_i_i, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_marginal_prior_p_i_e_url,\
+    report_info.l2_pos_marginal_likelihood_p_i_e_url,\
+    report_info.l2_pos_marginal_posterior_p_i_e_url=render_marginal_report('p_i_e', p_i_e_range,
+        bayes_analysis.l2_pos_marginals.prior_p_i_e, bayes_analysis.l2_pos_marginals.likelihood_p_i_e,
+        bayes_analysis.l2_pos_marginals.posterior_p_i_e, 'l2_pos', reports_dir)
+
+
+    report_info.l2_pos_joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_b_e_p_x_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_e_p_e_i, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_e_p_i_i, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_e_p_i_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_i_p_i_i, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_e_i_p_i_e, 'l2_pos', reports_dir)
+
+    report_info.l2_pos_joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
+        bayes_analysis.l2_pos_marginals.posterior_p_i_i_p_i_e, 'l2_pos', reports_dir)
     return report_info
 
-def render_marginal_report(param_name, param_range, param_prior, param_likelihood, param_posterior, reports_dir):
+def render_marginal_report(param_name, param_range, param_prior, param_likelihood, param_posterior, file_prefix, reports_dir):
     if len(param_range) > 1:
         param_step=param_range[1]-param_range[0]
 
@@ -258,7 +381,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.bar(np.array(param_range) - .5*param_step, param_prior, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(%s|M)' % param_name)
-        prior_furl = 'img/bayes_marginal_prior_%s.png' % param_name
+        prior_furl = 'img/bayes_%s_marginal_prior_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, prior_furl)
         save_to_png(fig, fname)
         plt.close()
@@ -268,7 +391,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.bar(np.array(param_range) - .5*param_step, param_likelihood, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(WTA|%s,M)' % param_name)
-        likelihood_furl = 'img/bayes_marginal_likelihood_%s.png' % param_name
+        likelihood_furl = 'img/bayes_%s_marginal_likelihood_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, likelihood_furl)
         save_to_png(fig, fname)
         plt.close()
@@ -278,7 +401,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.bar(np.array(param_range) - .5*param_step, param_posterior, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(%s|WTA,M)' % param_name)
-        posterior_furl = 'img/bayes_marginal_posterior_%s.png' % param_name
+        posterior_furl = 'img/bayes_%s_marginal_posterior_%s.png' % (file_prefix, param_name)
         fname = os.path.join(reports_dir, posterior_furl)
         save_to_png(fig, fname)
         plt.close()
@@ -287,7 +410,8 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
     return None, None, None
 
 
-def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, reports_dir):
+def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, file_prefix,
+                                 reports_dir):
     if len(param1_range) > 1 < len(param2_range):
         fig = plt.figure()
         im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), max(param1_range),
@@ -295,7 +419,7 @@ def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_
         fig.colorbar(im)
         plt.xlabel(param2_name)
         plt.ylabel(param1_name)
-        furl = 'img/bayes_joint_marginal_%s_%s.png' % (param1_name, param2_name)
+        furl = 'img/bayes_%s_joint_marginal_%s_%s.png' % (file_prefix, param1_name, param2_name)
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
         plt.close()
