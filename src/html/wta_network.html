@@ -27,9 +27,6 @@
             <th>p_e_i</th>
             <th>p_i_i</th>
             <th>p_i_e</th>
-            <th>I-O Slope</th>
-            <th>I-O Intercept</th>
-            <th>I-O R^2</th>
             <th>AUC</th>
             <th>Bold-Contrast Slope</th>
             <th>Bold-Contrast Intercept</th>
@@ -51,9 +48,6 @@
                                     <td>{{ p_e_i|round(3) }}</td>
                                     <td>{{ p_i_i|round(3) }}</td>
                                     <td>{{ p_i_e|round(3) }}</td>
-                                    <td>{{ rinfo.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                    <td>{{ rinfo.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                    <td>{{ rinfo.io_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
                                     <td>{{ rinfo.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
                                     <td>{{ rinfo.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
                                     <td>{{ rinfo.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>

@@ -1,3 +1,4 @@
+import copy
 import os
 from brian.stdunits import Hz
 from brian.units import second, farad, siemens, volt, amp
@@ -10,6 +11,7 @@ from pysbi.config import DATA_DIR
 from pysbi.utils import Struct
 from pysbi.voxel import  get_bold_signal
 from pysbi.wta import  run_wta
+from scikits.learn.linear_model.base import LinearRegression
 
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
@@ -197,35 +199,206 @@ def is_valid(high_contrast_e_rates, low_contrast_e_rates):
 
     return True
 
-def run_bold_analysis(num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                      p_i_e_range,priors):
-    contrast=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                       len(p_i_e_range)])
+
+def run_posthoc_bayes_analysis(summary_file_name, perf_threshold, r_sqr_threshold):
+    f=h5py.File(summary_file_name)
+    num_groups=int(f.attrs['num_groups'])
+    num_trials=int(f.attrs['num_trials'])
+    trial_duration=float(f.attrs['trial_duration'])
+    p_b_e_range=np.array(f['p_b_e_range'])
+    p_x_e_range=np.array(f['p_x_e_range'])
+    p_e_e_range=np.array(f['p_e_e_range'])
+    p_e_i_range=np.array(f['p_e_i_range'])
+    p_i_i_range=np.array(f['p_i_i_range'])
+    p_i_e_range=np.array(f['p_i_e_range'])
+    input_contrast=np.array(f['input_contrast'])
+    max_bold=np.array(f['max_bold'])
+    auc=np.array(f['auc'])
+    f.close()
+
+    return run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range, p_e_i_range,
+        p_i_e_range, p_i_i_range, p_x_e_range, perf_threshold, r_sqr_threshold)
+
+
+def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
+                          p_i_i_range, p_x_e_range, perf_threshold=0.9, r_sqr_threshold=0.2):
+    bayes_analysis = Struct()
+    # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
+    # p(AUC | theta, M)
+    bayes_analysis.l1_likelihood = np.zeros(auc.shape)
+    for i, p_b_e in enumerate(p_b_e_range):
+        for j, p_x_e in enumerate(p_x_e_range):
+            for k, p_e_e in enumerate(p_e_e_range):
+                for l, p_e_i in enumerate(p_e_i_range):
+                    for m, p_i_i in enumerate(p_i_i_range):
+                        for n, p_i_e in enumerate(p_i_e_range):
+                            if auc[i, j, k, l, m, n] >= perf_threshold:
+                                bayes_analysis.l1_likelihood[i, j, k, l, m, n] = 1.0
+
+    # Number of parameter values tested
+    n_param_vals = len(p_b_e_range) * len(p_x_e_range) * len(p_e_e_range) * len(p_e_i_range) * len(p_i_i_range) * len(
+        p_i_e_range)
+    # Priors are uniform
+    # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | M)
+    # p(theta | M)
+    bayes_analysis.l1_priors = np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                                        len(p_i_i_range), len(p_i_e_range)]) * 1.0 / float(n_param_vals)
+    # p(AUC | M) = INT( p(AUC | theta, M)*p(theta | M) d theta
+    bayes_analysis.l1_evidence = np.sum(bayes_analysis.l1_likelihood * bayes_analysis.l1_priors)
+    # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | AUC, M)
+    bayes_analysis.l1_posterior = (bayes_analysis.l1_likelihood * bayes_analysis.l1_priors) / bayes_analysis.l1_evidence
+    bayes_analysis.l1_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_priors, bayes_analysis.l1_likelihood,
+        bayes_analysis.l1_posterior, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l2_priors = bayes_analysis.l1_posterior
+    bayes_analysis.l2_neg_likelihood = np.zeros(bayes_analysis.l1_likelihood.shape)
+    bayes_analysis.l2_pos_likelihood = np.zeros(bayes_analysis.l1_likelihood.shape)
+    for i, p_b_e in enumerate(p_b_e_range):
+        for j, p_x_e in enumerate(p_x_e_range):
+            for k, p_e_e in enumerate(p_e_e_range):
+                for l, p_e_i in enumerate(p_e_i_range):
+                    for m, p_i_i in enumerate(p_i_i_range):
+                        for n, p_i_e in enumerate(p_i_e_range):
+                            combo_contrast = input_contrast[i, j, k, l, m, n, :]
+                            combo_max_bold = max_bold[i, j, k, l, m, n, :]
+                            clf = LinearRegression()
+                            clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                            slope = clf.coef_[0]
+                            if clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold) > r_sqr_threshold:
+                                if slope > 0.0:
+                                    bayes_analysis.l2_pos_likelihood[i, j, k, l, m, n] = 1.0
+                                elif slope < 0.0:
+                                    bayes_analysis.l2_neg_likelihood[i, j, k, l, m, n] = 1.0
+    bayes_analysis.l2_pos_evidence = np.sum(bayes_analysis.l2_pos_likelihood * bayes_analysis.l2_priors)
+    bayes_analysis.l2_neg_evidence = np.sum(bayes_analysis.l2_neg_likelihood * bayes_analysis.l2_priors)
+    bayes_analysis.l2_pos_posterior = (
+                                      bayes_analysis.l2_pos_likelihood * bayes_analysis.l2_priors) / bayes_analysis.l2_pos_evidence
+    bayes_analysis.l2_neg_posterior = (
+                                      bayes_analysis.l2_neg_likelihood * bayes_analysis.l2_priors) / bayes_analysis.l2_neg_evidence
+    bayes_analysis.l2_neg_marginals = run_bayesian_marginal_analysis(bayes_analysis.l2_priors,
+        bayes_analysis.l2_neg_likelihood, bayes_analysis.l2_neg_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l2_pos_marginals = run_bayesian_marginal_analysis(bayes_analysis.l2_priors,
+        bayes_analysis.l2_pos_likelihood, bayes_analysis.l2_pos_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    return bayes_analysis
+
+
+def run_bayesian_marginal_analysis(priors, likelihood, posterior, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
+                                   p_i_i_range, p_i_e_range):
+    marginal_analysis=Struct()
+
+    marginal_analysis.posterior_p_b_e=np.zeros([len(p_b_e_range)])
+    marginal_analysis.posterior_p_x_e=np.zeros([len(p_x_e_range)])
+    marginal_analysis.posterior_p_e_e=np.zeros([len(p_e_e_range)])
+    marginal_analysis.posterior_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_analysis.posterior_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_analysis.posterior_p_i_e=np.zeros([len(p_i_e_range)])
+    marginal_analysis.prior_p_b_e=np.zeros([len(p_b_e_range)])
+    marginal_analysis.prior_p_x_e=np.zeros([len(p_x_e_range)])
+    marginal_analysis.prior_p_e_e=np.zeros([len(p_e_e_range)])
+    marginal_analysis.prior_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_analysis.prior_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_analysis.prior_p_i_e=np.zeros([len(p_i_e_range)])
+    marginal_analysis.likelihood_p_b_e=np.zeros([len(p_b_e_range)])
+    marginal_analysis.likelihood_p_x_e=np.zeros([len(p_x_e_range)])
+    marginal_analysis.likelihood_p_e_e=np.zeros([len(p_e_e_range)])
+    marginal_analysis.likelihood_p_e_i=np.zeros([len(p_e_i_range)])
+    marginal_analysis.likelihood_p_i_i=np.zeros([len(p_i_i_range)])
+    marginal_analysis.likelihood_p_i_e=np.zeros([len(p_i_e_range)])
+    for j,p_x_e in enumerate(p_x_e_range):
+        for k,p_e_e in enumerate(p_e_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_analysis.posterior_p_b_e+=posterior[:,j,k,l,m,n]
+                        marginal_analysis.prior_p_b_e+=priors[:,j,k,l,m,n]
+                        marginal_analysis.likelihood_p_b_e+=likelihood[:,j,k,l,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for k,p_e_e in enumerate(p_e_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_analysis.posterior_p_x_e+=posterior[i,:,k,l,m,n]
+                        marginal_analysis.prior_p_x_e+=priors[i,:,k,l,m,n]
+                        marginal_analysis.likelihood_p_x_e+=likelihood[i,:,k,l,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_analysis.posterior_p_e_e+=posterior[i,j,:,l,m,n]
+                        marginal_analysis.prior_p_e_e+=priors[i,j,:,l,m,n]
+                        marginal_analysis.likelihood_p_e_e+=likelihood[i,j,:,l,m,n]
     for i,p_b_e in enumerate(p_b_e_range):
         for j,p_x_e in enumerate(p_x_e_range):
             for k,p_e_e in enumerate(p_e_e_range):
                 for l,p_e_i in enumerate(p_e_i_range):
                     for m,p_i_i in enumerate(p_i_i_range):
-                        for n,p_i_e in enumerate(p_i_e_range):
-                            low_contrast_file='wta.groups.%d.input.low.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
-                                              '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
-                                              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
-                            low_contrast_path=os.path.join(DATA_DIR,'wta-output',low_contrast_file)
-                            high_contrast_file='wta.groups.%d.input.high.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.' \
-                                               '%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.h5' %\
-                                               (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i,p_i_e)
-                            high_contrast_path=os.path.join(DATA_DIR,'wta-output',high_contrast_file)
-                            try:
-                                low_contrast_data=FileInfo(low_contrast_path)
-                                low_contrast_bold=get_bold_signal(low_contrast_data, [500,2500])
+                        marginal_analysis.posterior_p_i_e+=posterior[i,j,k,l,m,:]
+                        marginal_analysis.prior_p_i_e+=priors[i,j,k,l,m,:]
+                        marginal_analysis.likelihood_p_i_e+=likelihood[i,j,k,l,m,:]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_analysis.posterior_p_i_i+=posterior[i,j,k,l,:,n]
+                        marginal_analysis.prior_p_i_i+=priors[i,j,k,l,:,n]
+                        marginal_analysis.likelihood_p_i_i+=likelihood[i,j,k,l,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    for n,p_i_e in enumerate(p_i_e_range):
+                        marginal_analysis.posterior_p_e_i+=posterior[i,j,k,:,m,n]
+                        marginal_analysis.prior_p_e_i+=priors[i,j,k,:,m,n]
+                        marginal_analysis.likelihood_p_e_i+=likelihood[i,j,k,:,m,n]
 
-                                high_contrast_data=FileInfo(high_contrast_path)
-                                high_contrast_bold=get_bold_signal(high_contrast_data, [500,2500])
+    marginal_analysis.posterior_p_b_e_p_x_e=np.zeros([len(p_b_e_range), len(p_x_e_range)])
+    marginal_analysis.posterior_p_e_e_p_e_i=np.zeros([len(p_e_e_range), len(p_e_i_range)])
+    marginal_analysis.posterior_p_e_e_p_i_i=np.zeros([len(p_e_e_range), len(p_i_i_range)])
+    marginal_analysis.posterior_p_e_e_p_i_e=np.zeros([len(p_e_e_range), len(p_i_e_range)])
+    marginal_analysis.posterior_p_e_i_p_i_i=np.zeros([len(p_e_i_range), len(p_i_i_range)])
+    marginal_analysis.posterior_p_e_i_p_i_e=np.zeros([len(p_e_i_range), len(p_i_e_range)])
+    marginal_analysis.posterior_p_i_i_p_i_e=np.zeros([len(p_i_i_range), len(p_i_e_range)])
+    for k,p_e_e in enumerate(p_e_e_range):
+        for l,p_e_i in enumerate(p_e_i_range):
+            for m,p_i_i in enumerate(p_i_i_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    marginal_analysis.posterior_p_b_e_p_x_e+=posterior[:,:,k,l,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for m,p_i_i in enumerate(p_i_i_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    marginal_analysis.posterior_p_e_e_p_e_i+=posterior[i,j,:,:,m,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    marginal_analysis.posterior_p_e_e_p_i_i+=posterior[i,j,:,l,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for l,p_e_i in enumerate(p_e_i_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    marginal_analysis.posterior_p_e_e_p_i_e+=posterior[i,j,:,l,m,:]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for n,p_i_e in enumerate(p_i_e_range):
+                    marginal_analysis.posterior_p_e_i_p_i_i+=posterior[i,j,k,:,:,n]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for m,p_i_i in enumerate(p_i_i_range):
+                    marginal_analysis.posterior_p_e_i_p_i_e+=posterior[i,j,k,:,m,:]
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    marginal_analysis.posterior_p_i_i_p_i_e+=posterior[i,j,k,l,:,:]
 
-                                contrast[i,j,k,l,m,n]=max(high_contrast_bold)-max(low_contrast_bold)
-                            except Exception:
-                                pass
-    return contrast
+    return marginal_analysis
+
 
 def get_lfp_signal(wta_data, plot=False):
     [b,a]=butter(4.0,1.0/500.0,'high')
@@ -237,134 +410,6 @@ def get_lfp_signal(wta_data, plot=False):
         plt.plot(lfp)
         plt.show()
     return lfp
-
-
-def run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                          p_i_e_range, likelihood_threshold=0.80):
-    bayes_analysis=Struct()
-    bayes_analysis.posterior=np.zeros(likelihood.shape)
-
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    for m,p_i_i in enumerate(p_i_i_range):
-                        for n,p_i_e in enumerate(p_i_e_range):
-                            if likelihood[i,j,k,l,m,n]>likelihood_threshold:
-                                bayes_analysis.posterior[i,j,k,l,m,n]=priors[i,j,k,l,m,n]/evidence
-    #bayes_analysis.posterior=(likelihood*priors)/evidence
-
-    bayes_analysis.marginal_posterior_p_b_e=np.zeros([len(p_b_e_range)])
-    bayes_analysis.marginal_posterior_p_x_e=np.zeros([len(p_x_e_range)])
-    bayes_analysis.marginal_posterior_p_e_e=np.zeros([len(p_e_e_range)])
-    bayes_analysis.marginal_posterior_p_e_i=np.zeros([len(p_e_i_range)])
-    bayes_analysis.marginal_posterior_p_i_i=np.zeros([len(p_i_i_range)])
-    bayes_analysis.marginal_posterior_p_i_e=np.zeros([len(p_i_e_range)])
-    bayes_analysis.marginal_prior_p_b_e=np.zeros([len(p_b_e_range)])
-    bayes_analysis.marginal_prior_p_x_e=np.zeros([len(p_x_e_range)])
-    bayes_analysis.marginal_prior_p_e_e=np.zeros([len(p_e_e_range)])
-    bayes_analysis.marginal_prior_p_e_i=np.zeros([len(p_e_i_range)])
-    bayes_analysis.marginal_prior_p_i_i=np.zeros([len(p_i_i_range)])
-    bayes_analysis.marginal_prior_p_i_e=np.zeros([len(p_i_e_range)])
-    bayes_analysis.marginal_likelihood_p_b_e=np.zeros([len(p_b_e_range)])
-    bayes_analysis.marginal_likelihood_p_x_e=np.zeros([len(p_x_e_range)])
-    bayes_analysis.marginal_likelihood_p_e_e=np.zeros([len(p_e_e_range)])
-    bayes_analysis.marginal_likelihood_p_e_i=np.zeros([len(p_e_i_range)])
-    bayes_analysis.marginal_likelihood_p_i_i=np.zeros([len(p_i_i_range)])
-    bayes_analysis.marginal_likelihood_p_i_e=np.zeros([len(p_i_e_range)])
-    for j,p_x_e in enumerate(p_x_e_range):
-        for k,p_e_e in enumerate(p_e_e_range):
-            for l,p_e_i in enumerate(p_e_i_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    for n,p_i_e in enumerate(p_i_e_range):
-                        bayes_analysis.marginal_posterior_p_b_e+=bayes_analysis.posterior[:,j,k,l,m,n]
-                        bayes_analysis.marginal_prior_p_b_e+=priors[:,j,k,l,m,n]
-                        bayes_analysis.marginal_likelihood_p_b_e+=likelihood[:,j,k,l,m,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for k,p_e_e in enumerate(p_e_e_range):
-            for l,p_e_i in enumerate(p_e_i_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    for n,p_i_e in enumerate(p_i_e_range):
-                        bayes_analysis.marginal_posterior_p_x_e+=bayes_analysis.posterior[i,:,k,l,m,n]
-                        bayes_analysis.marginal_prior_p_x_e+=priors[i,:,k,l,m,n]
-                        bayes_analysis.marginal_likelihood_p_x_e+=likelihood[i,:,k,l,m,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for l,p_e_i in enumerate(p_e_i_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    for n,p_i_e in enumerate(p_i_e_range):
-                        bayes_analysis.marginal_posterior_p_e_e+=bayes_analysis.posterior[i,j,:,l,m,n]
-                        bayes_analysis.marginal_prior_p_e_e+=priors[i,j,:,l,m,n]
-                        bayes_analysis.marginal_likelihood_p_e_e+=likelihood[i,j,:,l,m,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    for m,p_i_i in enumerate(p_i_i_range):
-                        bayes_analysis.marginal_posterior_p_i_e+=bayes_analysis.posterior[i,j,k,l,m,:]
-                        bayes_analysis.marginal_prior_p_i_e+=priors[i,j,k,l,m,:]
-                        bayes_analysis.marginal_likelihood_p_i_e+=likelihood[i,j,k,l,m,:]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    for n,p_i_e in enumerate(p_i_e_range):
-                        bayes_analysis.marginal_posterior_p_i_i+=bayes_analysis.posterior[i,j,k,l,:,n]
-                        bayes_analysis.marginal_prior_p_i_i+=priors[i,j,k,l,:,n]
-                        bayes_analysis.marginal_likelihood_p_i_i+=likelihood[i,j,k,l,:,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    for n,p_i_e in enumerate(p_i_e_range):
-                        bayes_analysis.marginal_posterior_p_e_i+=bayes_analysis.posterior[i,j,k,:,m,n]
-                        bayes_analysis.marginal_prior_p_e_i+=priors[i,j,k,:,m,n]
-                        bayes_analysis.marginal_likelihood_p_e_i+=likelihood[i,j,k,:,m,n]
-
-    bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e=np.zeros([len(p_b_e_range), len(p_x_e_range)])
-    bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i=np.zeros([len(p_e_e_range), len(p_e_i_range)])
-    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i=np.zeros([len(p_e_e_range), len(p_i_i_range)])
-    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e=np.zeros([len(p_e_e_range), len(p_i_e_range)])
-    bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i=np.zeros([len(p_e_i_range), len(p_i_i_range)])
-    bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e=np.zeros([len(p_e_i_range), len(p_i_e_range)])
-    bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e=np.zeros([len(p_i_i_range), len(p_i_e_range)])
-    for k,p_e_e in enumerate(p_e_e_range):
-        for l,p_e_i in enumerate(p_e_i_range):
-            for m,p_i_i in enumerate(p_i_i_range):
-                for n,p_i_e in enumerate(p_i_e_range):
-                    bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e+=bayes_analysis.posterior[:,:,k,l,m,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for m,p_i_i in enumerate(p_i_i_range):
-                for n,p_i_e in enumerate(p_i_e_range):
-                    bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i+=bayes_analysis.posterior[i,j,:,:,m,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for l,p_e_i in enumerate(p_e_i_range):
-                for n,p_i_e in enumerate(p_i_e_range):
-                    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i+=bayes_analysis.posterior[i,j,:,l,:,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for l,p_e_i in enumerate(p_e_i_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e+=bayes_analysis.posterior[i,j,:,l,m,:]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for n,p_i_e in enumerate(p_i_e_range):
-                    bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i+=bayes_analysis.posterior[i,j,k,:,:,n]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for m,p_i_i in enumerate(p_i_i_range):
-                    bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e+=bayes_analysis.posterior[i,j,k,:,m,:]
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e+=bayes_analysis.posterior[i,j,k,l,:,:]
-
-    return bayes_analysis
 
 
 def get_roc_init(num_trials, num_extra_trials, option_idx, prefix):

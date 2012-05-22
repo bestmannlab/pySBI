@@ -12,24 +12,81 @@ from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_sin
 from pysbi.config import TEMPLATE_DIR
 from pysbi.utils import save_to_png, Struct
 
+def create_summary_report(summary_file_name, base_report_dir):
+    make_report_dirs(base_report_dir)
+    f=h5py.File(summary_file_name)
+    num_groups=int(f.attrs['num_groups'])
+    num_trials=int(f.attrs['num_trials'])
+    trial_duration=float(f.attrs['trial_duration'])
+    p_b_e_range=np.array(f['p_b_e_range'])
+    p_x_e_range=np.array(f['p_x_e_range'])
+    p_e_e_range=np.array(f['p_e_e_range'])
+    p_e_i_range=np.array(f['p_e_i_range'])
+    p_i_i_range=np.array(f['p_i_i_range'])
+    p_i_e_range=np.array(f['p_i_e_range'])
+    input_contrast=np.array(f['input_contrast'])
+    max_bold=np.array(f['max_bold'])
+    auc=np.array(f['auc'])
+    f.close()
+
+    report_info=Struct()
+    report_info.roc_auc={}
+    report_info.io_slope={}
+    report_info.io_intercept={}
+    report_info.io_r_sqr={}
+    report_info.bc_slope={}
+    report_info.bc_intercept={}
+    report_info.bc_r_sqr={}
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        for n,p_i_e in enumerate(p_i_e_range):
+                            if auc[i,j,k,l,m,n]>0:
+                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=auc[i,j,k,l,m,n]
+                                combo_contrast = input_contrast[i, j, k, l, m, n, :]
+                                combo_max_bold = max_bold[i, j, k, l, m, n, :]
+                                clf = LinearRegression()
+                                clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                                a = clf.coef_[0]
+                                b = clf.intercept_
+                                rsqr=clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=a
+                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=b
+                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=rsqr
+                            else:
+                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+
+    report_info.num_groups=num_groups
+    report_info.trial_duration=trial_duration
+    report_info.num_trials=num_trials
+    report_info.p_b_e_range=p_b_e_range
+    report_info.p_x_e_range=p_x_e_range
+    report_info.p_e_e_range=p_e_e_range
+    report_info.p_e_i_range=p_e_i_range
+    report_info.p_i_i_range=p_i_i_range
+    report_info.p_i_e_range=p_i_e_range
+
+    report_info.bayesian_report=create_bayesian_report(auc, input_contrast, max_bold, num_trials, p_b_e_range,
+        p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, base_report_dir)
+
+    template_file='wta_network.html'
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    template=env.get_template(template_file)
+
+    output_file='wta_network.html'
+    fname=os.path.join(base_report_dir,output_file)
+    stream=template.stream(rinfo=report_info)
+    stream.dump(fname)
+
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                        p_i_e_range, num_trials, base_report_dir, regenerate_network_plots=True, regenerate_trial_plots=True):
 
     make_report_dirs(base_report_dir)
-
-    # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
-    # p(AUC | theta, M)
-    likelihood=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
-                         len(p_i_i_range), len(p_i_e_range)])
-
-    # Number of parameter values tested
-    n_param_vals=len(p_b_e_range)*len(p_x_e_range)*len(p_e_e_range)*len(p_e_i_range)*len(p_i_i_range)*len(p_i_e_range)
-
-    # Priors are uniform
-    # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | M)
-    # p(theta | M)
-    priors=np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                    len(p_i_e_range)])*1.0/float(n_param_vals)
 
     max_bold=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
                        len(p_i_e_range), num_trials])
@@ -40,9 +97,6 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
 
     report_info=Struct()
     report_info.roc_auc={}
-    report_info.io_slope={}
-    report_info.io_intercept={}
-    report_info.io_r_sqr={}
     report_info.bc_slope={}
     report_info.bc_intercept={}
     report_info.bc_r_sqr={}
@@ -62,26 +116,17 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                                     regenerate_network_plots=regenerate_network_plots,
                                     regenerate_trial_plots=regenerate_trial_plots)
 
-                                # Update likelihood for this param value combination
-                                likelihood[i,j,k,l,m,n]=wta_report.roc.auc
-
                                 for o in range(num_trials):
                                     max_bold[i,j,k,l,m,n,o]=wta_report.trials[o].max_bold
                                     input_contrast[i,j,k,l,m,n,o]=wta_report.trials[o].input_contrast
                                 auc[i,j,k,l,m,n]=wta_report.roc.auc
 
                                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
-                                report_info.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_slope
-                                report_info.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_intercept
-                                report_info.io_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.io_r_sqr
                                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
                                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
                                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
                             else:
                                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.io_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.io_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.io_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
@@ -99,11 +144,8 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
         p_i_i_range, p_i_e_range, input_contrast, max_bold, auc, base_report_dir)
 
-    # p(AUC | M) = INT( p(AUC | theta, M)*p(theta | M) d theta
-    evidence=np.sum(likelihood*priors)
-
-    report_info.bayesian_report=create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_range,
-        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, base_report_dir)
+    report_info.bayesian_report=create_bayesian_report(auc, input_contrast, max_bold, num_trials, p_b_e_range,
+        p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, base_report_dir)
 
     template_file='wta_network.html'
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -141,10 +183,79 @@ def save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e
     f.close()
 
 
-def create_marginal_report(param_name, param_range, param_prior, param_likelihood, param_posterior, reports_dir):
+def create_bayesian_report(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
+                           p_i_e_range, reports_dir, likelihood_threshold=0.80):
+    report_info=Struct()
+    bayes_analysis=run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range,
+        p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
+
+    report_info.marginal_prior_p_b_e_url,\
+    report_info.marginal_likelihood_p_b_e_url,\
+    report_info.marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
+        bayes_analysis.l1_marginals.prior_p_b_e, bayes_analysis.l1_marginals.likelihood_p_b_e,
+        bayes_analysis.l1_marginals.posterior_p_b_e, reports_dir)
+
+    report_info.marginal_prior_p_x_e_url,\
+    report_info.marginal_likelihood_p_x_e_url,\
+    report_info.marginal_posterior_p_x_e_url=render_marginal_report('p_x_e', p_x_e_range,
+        bayes_analysis.l1_marginals.prior_p_x_e, bayes_analysis.l1_marginals.likelihood_p_x_e,
+        bayes_analysis.l1_marginals.posterior_p_x_e, reports_dir)
+
+    report_info.marginal_prior_p_e_e_url,\
+    report_info.marginal_likelihood_p_e_e_url,\
+    report_info.marginal_posterior_p_e_e_url=render_marginal_report('p_e_e', p_e_e_range,
+        bayes_analysis.l1_marginals.prior_p_e_e, bayes_analysis.l1_marginals.likelihood_p_e_e,
+        bayes_analysis.l1_marginals.posterior_p_e_e, reports_dir)
+
+    report_info.marginal_prior_p_e_i_url,\
+    report_info.marginal_likelihood_p_e_i_url,\
+    report_info.marginal_posterior_p_e_i_url=render_marginal_report('p_e_i', p_e_i_range,
+        bayes_analysis.l1_marginals.prior_p_e_i, bayes_analysis.l1_marginals.likelihood_p_e_i,
+        bayes_analysis.l1_marginals.posterior_p_e_i, reports_dir)
+
+    report_info.marginal_prior_p_i_i_url,\
+    report_info.marginal_likelihood_p_i_i_url,\
+    report_info.marginal_posterior_p_i_i_url=render_marginal_report('p_i_i', p_i_i_range,
+        bayes_analysis.l1_marginals.prior_p_i_i, bayes_analysis.l1_marginals.likelihood_p_i_i,
+        bayes_analysis.l1_marginals.posterior_p_i_i, reports_dir)
+
+    report_info.marginal_prior_p_i_e_url,\
+    report_info.marginal_likelihood_p_i_e_url,\
+    report_info.marginal_posterior_p_i_e_url=render_marginal_report('p_i_e', p_i_e_range,
+        bayes_analysis.l1_marginals.prior_p_i_e, bayes_analysis.l1_marginals.likelihood_p_i_e,
+        bayes_analysis.l1_marginals.posterior_p_i_e, reports_dir)
+
+
+    report_info.joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
+        bayes_analysis.l1_marginals.posterior_p_b_e_p_x_e, reports_dir)
+
+    report_info.joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_e_i, reports_dir)
+
+    report_info.joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_i, reports_dir)
+
+    report_info.joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_e_e_p_i_e, reports_dir)
+
+    report_info.joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
+        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_i, reports_dir)
+
+    report_info.joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_e_i_p_i_e, reports_dir)
+
+    report_info.joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
+        bayes_analysis.l1_marginals.posterior_p_i_i_p_i_e, reports_dir)
+
+    return report_info
+
+def render_marginal_report(param_name, param_range, param_prior, param_likelihood, param_posterior, reports_dir):
     if len(param_range) > 1:
+        param_step=param_range[1]-param_range[0]
+
         fig = plt.figure()
-        plt.bar(np.array(param_range) - .005, param_prior, .01)
+        param_prior[param_prior==0]=1e-7
+        plt.bar(np.array(param_range) - .5*param_step, param_prior, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(%s|M)' % param_name)
         prior_furl = 'img/bayes_marginal_prior_%s.png' % param_name
@@ -153,7 +264,8 @@ def create_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.close()
 
         fig = plt.figure()
-        plt.bar(np.array(param_range) - .005, param_likelihood, .01)
+        param_likelihood[param_likelihood==0]=1e-7
+        plt.bar(np.array(param_range) - .5*param_step, param_likelihood, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(WTA|%s,M)' % param_name)
         likelihood_furl = 'img/bayes_marginal_likelihood_%s.png' % param_name
@@ -162,7 +274,8 @@ def create_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.close()
 
         fig = plt.figure()
-        plt.bar(np.array(param_range) - .005, param_posterior, .01)
+        param_posterior[param_posterior==0]=1e-7
+        plt.bar(np.array(param_range) - .5*param_step, param_posterior, param_step)
         plt.xlabel(param_name)
         plt.ylabel('p(%s|WTA,M)' % param_name)
         posterior_furl = 'img/bayes_marginal_posterior_%s.png' % param_name
@@ -174,7 +287,7 @@ def create_marginal_report(param_name, param_range, param_prior, param_likelihoo
     return None, None, None
 
 
-def create_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, reports_dir):
+def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, reports_dir):
     if len(param1_range) > 1 < len(param2_range):
         fig = plt.figure()
         im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), max(param1_range),
@@ -189,72 +302,6 @@ def create_joint_marginal_report(param1_name, param2_name, param1_range, param2_
         return furl
     return None
 
-
-def create_bayesian_report(priors, evidence, likelihood, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                           p_i_e_range, reports_dir, likelihood_threshold=0.80):
-    report_info=Struct()
-    bayes_analysis=run_bayesian_analysis(priors, likelihood, evidence, p_b_e_range, p_x_e_range, p_e_e_range,
-        p_e_i_range, p_i_i_range, p_i_e_range, likelihood_threshold=likelihood_threshold)
-
-    report_info.marginal_prior_p_b_e_url,\
-    report_info.marginal_likelihood_p_b_e_url,\
-    report_info.marginal_posterior_p_b_e_url=create_marginal_report('p_b_e', p_b_e_range,
-        bayes_analysis.marginal_prior_p_b_e, bayes_analysis.marginal_likelihood_p_b_e,
-        bayes_analysis.marginal_posterior_p_b_e, reports_dir)
-
-    report_info.marginal_prior_p_x_e_url,\
-    report_info.marginal_likelihood_p_x_e_url,\
-    report_info.marginal_posterior_p_x_e_url=create_marginal_report('p_x_e', p_x_e_range,
-        bayes_analysis.marginal_prior_p_x_e, bayes_analysis.marginal_likelihood_p_x_e,
-        bayes_analysis.marginal_posterior_p_x_e, reports_dir)
-
-    report_info.marginal_prior_p_e_e_url,\
-    report_info.marginal_likelihood_p_e_e_url,\
-    report_info.marginal_posterior_p_e_e_url=create_marginal_report('p_e_e', p_e_e_range,
-        bayes_analysis.marginal_prior_p_e_e, bayes_analysis.marginal_likelihood_p_e_e,
-        bayes_analysis.marginal_posterior_p_e_e, reports_dir)
-
-    report_info.marginal_prior_p_e_i_url,\
-    report_info.marginal_likelihood_p_e_i_url,\
-    report_info.marginal_posterior_p_e_i_url=create_marginal_report('p_e_i', p_e_i_range,
-        bayes_analysis.marginal_prior_p_e_i, bayes_analysis.marginal_likelihood_p_e_i,
-        bayes_analysis.marginal_posterior_p_e_i, reports_dir)
-
-    report_info.marginal_prior_p_i_i_url,\
-    report_info.marginal_likelihood_p_i_i_url,\
-    report_info.marginal_posterior_p_i_i_url=create_marginal_report('p_i_i', p_i_i_range,
-        bayes_analysis.marginal_prior_p_i_i, bayes_analysis.marginal_likelihood_p_i_i,
-        bayes_analysis.marginal_posterior_p_i_i, reports_dir)
-
-    report_info.marginal_prior_p_i_e_url,\
-    report_info.marginal_likelihood_p_i_e_url,\
-    report_info.marginal_posterior_p_i_e_url=create_marginal_report('p_i_e', p_i_e_range,
-        bayes_analysis.marginal_prior_p_i_e, bayes_analysis.marginal_likelihood_p_i_e,
-        bayes_analysis.marginal_posterior_p_i_e, reports_dir)
-
-
-    report_info.joint_marginal_p_b_e_p_x_e_url = create_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
-        bayes_analysis.joint_marginal_posterior_p_b_e_p_x_e, reports_dir)
-
-    report_info.joint_marginal_p_e_e_p_e_i_url = create_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
-        bayes_analysis.joint_marginal_posterior_p_e_e_p_e_i, reports_dir)
-
-    report_info.joint_marginal_p_e_e_p_i_i_url = create_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
-        bayes_analysis.joint_marginal_posterior_p_e_e_p_i_i, reports_dir)
-
-    report_info.joint_marginal_p_e_e_p_i_e_url = create_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
-        bayes_analysis.joint_marginal_posterior_p_e_e_p_i_e, reports_dir)
-
-    report_info.joint_marginal_p_e_i_p_i_i_url = create_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
-        bayes_analysis.joint_marginal_posterior_p_e_i_p_i_i, reports_dir)
-
-    report_info.joint_marginal_p_e_i_p_i_e_url = create_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
-        bayes_analysis.joint_marginal_posterior_p_e_i_p_i_e, reports_dir)
-
-    report_info.joint_marginal_p_i_i_p_i_e_url = create_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
-        bayes_analysis.joint_marginal_posterior_p_i_i_p_i_e, reports_dir)
-
-    return report_info
 
 def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_network_plots=True, regenerate_trial_plots=True):
 
