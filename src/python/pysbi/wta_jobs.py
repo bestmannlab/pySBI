@@ -83,3 +83,30 @@ def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
                                     p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, record_lfp=True, record_voxel=True,
                                     record_neuron_state=False, record_firing_rate=True, record_spikes=True)
                                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+                          num_trials, data_path, start_instances=True):
+    num_groups=2
+    trial_duration=1*second
+    launcher=Launcher(instances)
+    if start_instances:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_instances()
+    for p_b_e in p_b_e_range:
+        for p_x_e in p_x_e_range:
+            for p_e_e in p_e_e_range:
+                for p_e_i in p_e_i_range:
+                    for p_i_i in p_i_i_range:
+                        for p_i_e in p_i_e_range:
+                            for t in range(num_trials):
+                                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
+                                          (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
+                                if not os.path.exists(os.path.join(data_path,file_desc)):
+                                    inputs=np.zeros(2)
+                                    inputs[0]=np.random.rand()*40
+                                    inputs[1]=40-inputs[0]
+                                    inputs+=10
+                                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                                        p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, record_lfp=True, record_voxel=True,
+                                        record_neuron_state=False, record_firing_rate=True, record_spikes=True)
+                                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
