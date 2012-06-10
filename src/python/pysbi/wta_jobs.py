@@ -104,6 +104,7 @@ def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_
                                           (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
                                 recreate=False
                                 file_name=os.path.join(data_path,file_desc)
+                                print('Checking %s' % file_name)
                                 if not os.path.exists(file_name):
                                     recreate=True
                                 else:
@@ -112,7 +113,7 @@ def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_
                                     except Exception:
                                         recreate=True
                                 if recreate:
-                                    print('Recreating %s' % file_desc)
+                                    print('*** Recreating %s ***' % file_desc)
                                     os.remove(file_name)
                                     inputs=np.zeros(2)
                                     inputs[0]=np.random.rand()*40
