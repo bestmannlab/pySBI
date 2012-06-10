@@ -2,6 +2,7 @@ import os
 import numpy as np
 from brian.units import second
 from ezrcluster.launcher import Launcher
+from pysbi.analysis import FileInfo
 from pysbi.config import SRC_DIR
 
 def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, trial,
@@ -101,7 +102,18 @@ def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_
                             for t in range(num_trials):
                                 file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
                                           (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
-                                if not os.path.exists(os.path.join(data_path,file_desc)):
+                                recreate=False
+                                file_name=os.path.join(data_path,file_desc)
+                                if not os.path.exists(file_name):
+                                    recreate=True
+                                else:
+                                    try:
+                                        data=FileInfo(file_name)
+                                    except Exception:
+                                        recreate=True
+                                if recreate:
+                                    print('Recreating %s' % file_desc)
+                                    os.remove(file_name)
                                     inputs=np.zeros(2)
                                     inputs[0]=np.random.rand()*40
                                     inputs[1]=40-inputs[0]
