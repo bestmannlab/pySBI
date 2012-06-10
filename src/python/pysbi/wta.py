@@ -20,6 +20,7 @@ from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show
 from numpy.matlib import randn
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 
+# Default parameters for a WTA network with multiple inhibitory populations
 default_params=Parameters(
     # Neuron parameters
     C = 200 * pF,
@@ -58,6 +59,7 @@ default_params=Parameters(
     p_i_i=0.01,
     p_i_e=0.02)
 
+# Default parameters for a WTA network with a single inhibitory population
 single_inh_pop_params=Parameters(
     # Neuron parameters
     C = 200 * pF,
@@ -96,10 +98,25 @@ single_inh_pop_params=Parameters(
     p_i_i=0.0,
     p_i_e=0.03)
 
+# WTA network class - extends Brian's NeuronGroup
 class WTANetworkGroup(NeuronGroup):
+
+    ### Constructor
+    #       N = total number of neurons per input group
+    #       num_groups = number of input groups
+    #       params = network parameters
+    #       background_input = background input source
+    #       task_inputs = task input sources
+    #       single_inh_pop = single inhibitory population if true
     def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None, single_inh_pop=False):
+        self.N=N
         self.num_groups=num_groups
         self.params=params
+        self.background_input=background_input
+        self.task_inputs=task_inputs
+        self.single_inh_pop=single_inh_pop
+
+        ## Set up equations
 
         # Exponential integrate-and-fire neuron
         eqs = exp_IF(params.C, params.gL, params.EL, params.VT, params.DeltaT)
@@ -137,15 +154,18 @@ class WTANetworkGroup(NeuronGroup):
 
         NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL, compile=True)
 
-        self.init_subpopulations(N, single_inh_pop)
+        self.init_subpopulations()
 
-        self.init_connectivity(single_inh_pop, background_input, task_inputs)
+        self.init_connectivity()
 
-    def init_subpopulations(self, N, single_inh_pop):
+
+    ## Initialize excitatory and inhibitory subpopulations
+    def init_subpopulations(self):
         self.groups_e=[]
         self.groups_i=[]
 
-        self.group_e=self.subgroup(int(4*N*self.num_groups/5))
+        # Main excitatory subpopulation
+        self.group_e=self.subgroup(int(4*self.N*self.num_groups/5))
         # regular spiking params (from Naud et al., 2008)
         self.group_e.C=104*pF
         self.group_e.gL=4.3*nS
@@ -153,7 +173,8 @@ class WTANetworkGroup(NeuronGroup):
         self.group_e.VT=-52*mV
         self.group_e.DeltaT=0.8*mV
 
-        self.group_i=self.subgroup(int(N*self.num_groups/5))
+        # Main inhibitory subpopulation
+        self.group_i=self.subgroup(int(self.N*self.num_groups/5))
         # fast-spiking interneuron params (from Naud et al., 2008)
         self.group_i.C=59*pF
         self.group_i.gL=2.9*nS
@@ -161,37 +182,41 @@ class WTANetworkGroup(NeuronGroup):
         self.group_i.VT=-42*mV
         self.group_i.DeltaT=3.0*mV
 
+        # Input-specific sub-subpopulations
         for i in range(self.num_groups):
-            subgroup_e=self.group_e.subgroup(int(4*N/5))
+            subgroup_e=self.group_e.subgroup(int(4*self.N/5))
             self.groups_e.append(subgroup_e)
 
-            if not single_inh_pop:
-                subgroup_i=self.group_i.subgroup(int(N/5))
+            if not self.single_inh_pop:
+                subgroup_i=self.group_i.subgroup(int(self.N/5))
                 self.groups_i.append(subgroup_i)
 
-        self.vm = self.params.EL+randn(N*self.num_groups)*10*mV
-        self.g_ampa_r = randn(N*self.num_groups)*self.params.w_ampa_r*.1
-        self.g_ampa_b = randn(N*self.num_groups)*self.params.w_ampa_b*.1
-        self.g_ampa_x = randn(N*self.num_groups)*self.params.w_ampa_x*.1
-        self.g_nmda = randn(N*self.num_groups)*self.params.w_nmda*.1
-        self.g_gaba_a = randn(N*self.num_groups)*self.params.w_gaba_a*.1
+        # Initialize state variables
+        self.vm = self.params.EL+randn(self.N*self.num_groups)*10*mV
+        self.g_ampa_r = randn(self.N*self.num_groups)*self.params.w_ampa_r*.1
+        self.g_ampa_b = randn(self.N*self.num_groups)*self.params.w_ampa_b*.1
+        self.g_ampa_x = randn(self.N*self.num_groups)*self.params.w_ampa_x*.1
+        self.g_nmda = randn(self.N*self.num_groups)*self.params.w_nmda*.1
+        self.g_gaba_a = randn(self.N*self.num_groups)*self.params.w_gaba_a*.1
 
 
-    def init_connectivity(self, single_inh_pop, background_input, task_inputs):
+    ## Initialize network connectivity
+    def init_connectivity(self):
         self.connections=[]
+
+        # Iterate over input groups
         for i in range(self.num_groups):
+
             # E population - recurrent connections
             self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa_r',
                 sparseness=self.params.p_e_e, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
             self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda',
                 sparseness=self.params.p_e_e, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
 
-            if not single_inh_pop:
+            if not self.single_inh_pop:
                 # I population - recurrent connections
                 self.connections.append(DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a',
                     sparseness=self.params.p_i_i, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
-                #self.connections.append(DelayConnection(self.input_groups_i[i], self.input_groups_i[i], 'g_gaba_b',
-                #    sparseness=params.p_i_i, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
 
                 # E -> I excitatory connections
                 self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
@@ -204,8 +229,6 @@ class WTANetworkGroup(NeuronGroup):
                     if not i==j:
                         self.connections.append(DelayConnection(self.groups_i[i], self.groups_e[j], 'g_gaba_a',
                             sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
-                        #self.connections.append(DelayConnection(self.input_groups_i[i], self.input_groups_e[j], 'g_gaba_b',
-                        #    sparseness=params.p_i_e, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
 
             else:
                 # E -> I excitatory connections
@@ -218,30 +241,40 @@ class WTANetworkGroup(NeuronGroup):
                 self.connections.append(DelayConnection(self.group_i, self.groups_e[i], 'g_gaba_a',
                     sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
 
-        if single_inh_pop:
+        if self.single_inh_pop:
             # I population - recurrent connections
             self.connections.append(DelayConnection(self.group_i, self.group_i, 'g_gaba_a',
                 sparseness=self.params.p_i_i, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
-            #self.connections.append(DelayConnection(self.input_groups_i[0], self.input_groups_i[0], 'g_gaba_b',
-            #    sparseness=params.p_i_i, weight=params.w_gaba_b, delay=(0*ms, 5*ms)))
 
-        if background_input is not None:
+        if self.background_input is not None:
             # Background -> E+I population connectinos
-            self.connections.append(DelayConnection(background_input, self, 'g_ampa_b', sparseness=self.params.p_b_e,
+            self.connections.append(DelayConnection(self.background_input, self, 'g_ampa_b', sparseness=self.params.p_b_e,
                 weight=self.params.w_ampa_b, delay=(0*ms, 5*ms)))
 
-        if task_inputs is not None:
+        if self.task_inputs is not None:
             # Task input -> E population connections
             for i in range(self.num_groups):
-                self.connections.append(DelayConnection(task_inputs[i], self.groups_e[i], 'g_ampa_x',
+                self.connections.append(DelayConnection(self.task_inputs[i], self.groups_e[i], 'g_ampa_x',
                     sparseness=self.params.p_x_e, weight=self.params.w_ampa_x, delay=(0*ms, 5*ms)))
 
+
+# Collection of monitors for WTA network
 class WTAMonitor():
-    def __init__(self, network, N, num_groups, lfp_source, voxel, background_input, task_inputs, record_lfp=True,
-                 record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
-                 record_inputs=False):
-        self.num_groups=num_groups
-        self.N=N
+
+    ## Constructor
+    #       network = network to monitor
+    #       lfp_source = LFP source to monitor
+    #       voxel = voxel to monitor
+    #       record_lfp = record LFP signals if true
+    #       record_voxel = record voxel signals if true
+    #       record_neuron_state = record neuron state signals if true
+    #       record_spikes = record spikes if true
+    #       record_firing_rate = record firing rate if true
+    #       record_inputs = record inputs if true
+    def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
+                 record_spikes=True, record_firing_rate=True, record_inputs=False):
+        self.num_groups=network.num_groups
+        self.N=network.N
         self.monitors=[]
 
         # LFP monitor
@@ -261,9 +294,9 @@ class WTAMonitor():
         # Network monitor
         if record_neuron_state:
             self.record_idx=[]
-            for i in range(num_groups):
-                e_idx=i*int(4*N/5)
-                i_idx=int(4*N*self.num_groups/5)+i*int(N/5)
+            for i in range(self.num_groups):
+                e_idx=i*int(4*self.N/5)
+                i_idx=int(4*self.N*self.num_groups/5)+i*int(self.N/5)
                 self.record_idx.extend([e_idx, i_idx])
             self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a','g_nmda'],#,'g_gaba_b'],
                 record=self.record_idx)
@@ -291,11 +324,12 @@ class WTAMonitor():
         else:
             self.population_rate_monitors=None
 
+        # Input rate monitors
         if record_inputs:
-            self.background_rate_monitor=PopulationRateMonitor(background_input)
+            self.background_rate_monitor=PopulationRateMonitor(network.background_input)
             self.monitors.append(self.background_rate_monitor)
             self.task_rate_monitors=[]
-            for task_input in task_inputs:
+            for task_input in network.task_inputs:
                 task_monitor=PopulationRateMonitor(task_input)
                 self.task_rate_monitors.append(task_monitor)
                 self.monitors.append(task_monitor)
@@ -320,13 +354,18 @@ class WTAMonitor():
         else:
             self.spike_monitors=None
 
+    # Plot monitor data
     def plot(self):
+
+        # Spike raster plots
         if self.spike_monitors is not None:
             figure()
             subplot(211)
             raster_plot(*self.spike_monitors['excitatory'],newfigure=False)
             subplot(212)
             raster_plot(*self.spike_monitors['inhibitory'],newfigure=False)
+
+        # Network firing rate plots
         if self.population_rate_monitors is not None:
             figure()
             ax=subplot(211)
@@ -335,41 +374,60 @@ class WTAMonitor():
             ax=subplot(212)
             for pop_rate_monitor in self.population_rate_monitors['inhibitory']:
                 ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
+
+        # Input firing rate plots
         if self.background_rate_monitor is not None and self.task_rate_monitors is not None:
             figure()
             ax=subplot(111)
             ax.plot(self.background_rate_monitor.times/ms, self.background_rate_monitor.smooth_rate(width=5*ms)/hertz)
             for task_monitor in self.task_rate_monitors:
                 ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+
+        # Network state plots
         if self.network_monitor is not None:
             figure()
             for i in range(self.num_groups):
                 ax=subplot(self.num_groups*100+20+(i*2+1))
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][self.record_idx[i*2]]/nA, label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][self.record_idx[i*2]]/nA, label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][self.record_idx[i*2]]/nA, label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][self.record_idx[i*2]]/nA, label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][self.record_idx[i*2]]/nA, label='GABA_A')
-                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][0]/nA, label='GABA_B')
+                neuron_idx=self.record_idx[i*2]
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nA,
+                    label='AMPA-recurrent')
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nA,
+                    label='AMPA-task')
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nA,
+                    label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nA,
+                    label='NMDA')
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nA,
+                    label='GABA_A')
                 xlabel('Time (ms)')
                 ylabel('Conductance (nA)')
                 legend()
+
                 ax=subplot(self.num_groups*100+20+(i*2+2))
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][self.record_idx[i*2+1]]/nA, label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][self.record_idx[i*2+1]]/nA, label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][self.record_idx[i*2+1]]/nA, label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][self.record_idx[i*2+1]]/nA, label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][self.record_idx[i*2+1]]/nA, label='GABA_A')
-                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][0]/nA, label='GABA_B')
+                neuron_idx=self.record_idx[i*2+1]
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nA,
+                    label='AMPA-recurrent')
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nA,
+                    label='AMPA-task')
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nA,
+                    label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nA,
+                    label='NMDA')
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nA,
+                    label='GABA_A')
                 xlabel('Time (ms)')
                 ylabel('Conductance (nA)')
                 legend()
+
+        # LFP plot
         if self.lfp_monitor is not None:
             figure()
             ax=subplot(111)
             ax.plot(self.lfp_monitor.times / ms, self.lfp_monitor[0] / mA)
             xlabel('Time (ms)')
             ylabel('LFP (mA)')
+
+        # Voxel activity plots
         if self.voxel_monitor is not None:
             figure()
             ax=subplot(211)
@@ -382,11 +440,33 @@ class WTAMonitor():
             ylabel('BOLD')
         show()
 
-
+## Write monitor data to HDF5 file
+#       background_input_size = number of background inputs
+#       bacground rate = background firing rate
+#       input_freq = input firing rates
+#       network_group_size = number of neurons per input group
+#       num_groups = number of input groups
+#       output_file = filename to write to
+#       record_firing_rate = write network firing rate data when true
+#       record_neuron_stae = write neuron state data when true
+#       record_spikes = write spike data when true
+#       record_voxel = write voxel data when true
+#       record_lfp = write LFP data when true
+#       record_inputs = write input firing rates when true
+#       stim_end_time = stimulation end time
+#       stim_start_time = stimulation start time
+#       task_input_size = number of neurons in each task input group
+#       trial_duration = duration of the trial
+#       voxel = voxel for network
+#       wta_monitor = network monitor
+#       wta_params = network parameters
 def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
                  record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
                  stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params):
+
     f = h5py.File(output_file, 'w')
+
+    # Write basic parameters
     f.attrs['num_groups'] = num_groups
     f.attrs['input_freq'] = input_freq
     f.attrs['trial_duration'] = trial_duration
@@ -405,28 +485,28 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.attrs['E_ampa'] = wta_params.E_ampa
     f.attrs['E_nmda'] = wta_params.E_nmda
     f.attrs['E_gaba_a'] = wta_params.E_gaba_a
-    #f.attrs['E_gaba_b'] = wta_params.E_gaba_b
     f.attrs['tau_ampa'] = wta_params.tau_ampa
     f.attrs['tau1_nmda'] = wta_params.tau1_nmda
     f.attrs['tau2_nmda'] = wta_params.tau2_nmda
     f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
-    #f.attrs['tau1_gaba_b'] = wta_params.tau1_gaba_b
-    #f.attrs['tau2_gaba_b'] = wta_params.tau2_gaba_b
     f.attrs['w_ampa_b'] = wta_params.w_ampa_b
     f.attrs['w_ampa_x'] = wta_params.w_ampa_x
     f.attrs['w_ampa_r'] = wta_params.w_ampa_r
     f.attrs['w_nmda'] = wta_params.w_nmda
     f.attrs['w_gaba_a'] = wta_params.w_gaba_a
-    #f.attrs['w_gaba_b'] = wta_params.w_gaba_b
     f.attrs['p_b_e'] = wta_params.p_b_e
     f.attrs['p_x_e'] = wta_params.p_x_e
     f.attrs['p_e_e'] = wta_params.p_e_e
     f.attrs['p_e_i'] = wta_params.p_e_i
     f.attrs['p_i_i'] = wta_params.p_i_i
     f.attrs['p_i_e'] = wta_params.p_i_e
+
+    # Write LFP data
     if record_lfp:
         f_lfp = f.create_group('lfp')
         f_lfp['lfp']=wta_monitor.lfp_monitor.values
+
+    # Write voxel data
     if record_voxel:
         f_vox = f.create_group('voxel')
         f_vox.attrs['eta'] = voxel.eta
@@ -454,6 +534,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         f_vox['v'] = wta_monitor.voxel_monitor['v'].values
         f_vox['q'] = wta_monitor.voxel_monitor['q'].values
         f_vox['y'] = wta_monitor.voxel_monitor['y'].values
+
+    # Write neuron state data
     if record_neuron_state:
         f_state = f.create_group('neuron_state')
         f_state['g_ampa_r'] = wta_monitor.network_monitor['g_ampa_r'].values
@@ -461,9 +543,10 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         f_state['g_ampa_b'] = wta_monitor.network_monitor['g_ampa_b'].values
         f_state['g_nmda'] = wta_monitor.network_monitor['g_nmda'].values
         f_state['g_gaba_a'] = wta_monitor.network_monitor['g_gaba_a'].values
-        #f_state['g_gaba_b'] = wta_monitor.network_monitor['g_gaba_b'].values
         f_state['vm'] = wta_monitor.network_monitor['vm'].values
         f_state['record_idx'] = np.array(wta_monitor.record_idx)
+
+    # Write network firing rate data
     if record_firing_rate:
         f_rates = f.create_group('firing_rates')
         e_rates = []
@@ -475,6 +558,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         for rate_monitor in wta_monitor.population_rate_monitors['inhibitory']:
             i_rates.append(rate_monitor.smooth_rate(width=5 * ms, filter='gaussian'))
         f_rates['i_rates'] = np.array(i_rates)
+
+    # Write input firing rate data
     if record_inputs:
         back_rate=f.create_group('background_rate')
         back_rate['firing_rate']=wta_monitor.background_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')
@@ -483,6 +568,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
         for task_monitor in wta_monitor.task_rate_monitors:
             t_rates.append(task_monitor.smooth_rate(width=5*ms,filter='gaussian'))
         task_rates['firing_rates']=np.array(t_rates)
+
+    # Write spike data
     if record_spikes:
         f_spikes = f.create_group('spikes')
         for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['excitatory']):
@@ -497,9 +584,25 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.close()
 
 
+## Run WTA network
+#       wta_params = network parameters
+#       num_groups = number of input groups
+#       input_freq = mean firing rate of each input group
+#       trial_duration = how long to simulate
+#       ouput_file = ouput file to write to
+#       record_lfp = record LFP data if true
+#       record_voxel = record voxel data if true
+#       record_neuron_state = record neuron state data if true
+#       record_spikes = record spike data if true
+#       record_firing_rate = record network firing rates if true
+#       record_inputs = record input firing rates if true
+#       plot_output = plot outputs if true
+#       single_inh_pop = single inhibitory population if true
 def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, record_lfp=True, record_voxel=True,
             record_neuron_state=False, record_spikes=True, record_firing_rate=True, record_inputs=False, plot_output=False,
             single_inh_pop=False):
+
+    # Init simulation parameters
     background_rate=10*Hz
     stim_start_time=.25*second
     stim_end_time=.75*second
@@ -512,12 +615,11 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     task_inputs=[]
     def make_rate_function(rate):
         return lambda t: ((stim_start_time<t<stim_end_time and rate) or background_rate)
-
     for i in range(num_groups):
         rate=input_freq[i]
         task_inputs.append(PoissonGroup(task_input_size, rates=make_rate_function(rate)))
 
-    # Create network
+    # Create WTA network
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
         task_inputs=task_inputs, single_inh_pop=single_inh_pop)
 
@@ -527,19 +629,25 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     # Create voxel
     voxel=Voxel(network=wta_network)
 
-    wta_monitor=WTAMonitor(wta_network, network_group_size, num_groups, lfp_source, voxel, background_input,
-        task_inputs, record_lfp=record_lfp, record_voxel=record_voxel, record_neuron_state=record_neuron_state,
-        record_spikes=record_spikes, record_firing_rate=record_firing_rate, record_inputs=record_inputs)
+    # Create network monitor
+    wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, record_lfp=record_lfp, record_voxel=record_voxel,
+        record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate,
+        record_inputs=record_inputs)
 
+    # Create Brian network and reset clock
     net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
         wta_monitor.monitors)
     reinit_default_clock()
 
+    # Run simulation
     start_time = time()
     net.run(trial_duration, report='text')
     print "Simulation time:", time() - start_time
 
+    # Compute BOLD signal
     wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params, [500, 2500])
+
+    # Write output to file
     if output_file is not None:
         write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
             record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
@@ -547,6 +655,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
 
         print 'Wrote output to %s' % output_file
 
+    # Plot outputs
     if plot_output:
         wta_monitor.plot()
 
