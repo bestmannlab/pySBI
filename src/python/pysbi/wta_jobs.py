@@ -112,9 +112,9 @@ def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_
                                         data=FileInfo(file_name)
                                     except Exception:
                                         recreate=True
+                                        os.remove(file_name)
                                 if recreate:
                                     print('*** Recreating %s ***' % file_desc)
-                                    os.remove(file_name)
                                     inputs=np.zeros(2)
                                     inputs[0]=np.random.rand()*40
                                     inputs[1]=40-inputs[0]
