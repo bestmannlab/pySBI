@@ -1,4 +1,3 @@
-import copy
 import os
 from brian.stdunits import Hz
 from brian.units import second, farad, siemens, volt, amp
@@ -9,7 +8,6 @@ import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
 from pysbi.utils import Struct
-from pysbi.voxel import  get_bold_signal
 from pysbi.wta import  run_wta
 from scikits.learn.linear_model.base import LinearRegression
 
@@ -31,6 +29,7 @@ class FileInfo():
         self.file_name=file_name
         f = h5py.File(file_name)
 
+        self.single_inh_pop=int(f.attrs['single_inh_pop'])
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
@@ -525,11 +524,11 @@ def get_roc(prefix, num_trials, num_extra_trials):
 
 def test_roc(wta_params, prefix, num_trials):
     inputs=[]
+    input_sum=40.0
     for i in range(num_trials):
         input=np.zeros(2)
-        input[0]=np.random.rand()*40
-        input[1]=40-input[0]
-        input+=10
+        input[0]=np.random.rand()*input_sum
+        input[1]=input_sum-input[0]
         inputs.append(input)
 
     for i,input in enumerate(inputs):
