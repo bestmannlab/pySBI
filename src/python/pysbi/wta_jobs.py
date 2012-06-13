@@ -227,7 +227,7 @@ def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=
         p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
 
     samples=[]
-    posterior=bayes_analysis.l1_posterior
+    posterior=bayes_analysis.l1_pos_posterior
     while len(samples)<num_samples:
         p_b_e_posterior=np.sum(np.sum(np.sum(np.sum(np.sum(posterior,axis=1),axis=1),axis=1),axis=1),axis=1)
         i, p_b_e = sample(p_b_e_posterior, p_b_e_range)
