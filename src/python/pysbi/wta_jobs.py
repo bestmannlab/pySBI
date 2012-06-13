@@ -217,11 +217,11 @@ def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=
                                 clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
                                 bc_slope[i,j,k,l,m,n] = clf.coef_[0]
                                 bc_intercept[i,j,k,l,m,n] = clf.intercept_
-                                bc_rsqr=clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                                bc_rsqr[i,j,k,l,m,n]=clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
                             else:
                                 bc_slope[i,j,k,l,m,n] = 0
                                 bc_intercept[i,j,k,l,m,n] = 0
-                                bc_rsqr=0
+                                bc_rsqr[i,j,k,l,m,n]=0
 
     bayes_analysis=run_bayesian_analysis(auc, bc_slope, bc_intercept, bc_rsqr, num_trials, p_b_e_range, p_e_e_range,
         p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
