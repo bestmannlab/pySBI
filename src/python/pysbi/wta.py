@@ -213,9 +213,9 @@ class WTANetworkGroup(NeuronGroup):
             nmda_conn=DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda', sparseness=self.params.p_e_e,
                 weight=self.params.w_nmda, delay=(0*ms, 5*ms))
             # don't allow loops to self
-            for j in xrange(len(self.groups_e[i])):
-                ampa_conn[j,j]=0
-                nmda_conn[j,j]=0
+#            for j in range(len(self.groups_e[i])):
+#                ampa_conn[j,j]=0.0
+#                nmda_conn[j,j]=0.0
             self.connections.append(ampa_conn)
             self.connections.append(nmda_conn)
 
@@ -224,8 +224,8 @@ class WTANetworkGroup(NeuronGroup):
                 gaba_a_conn=DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a', sparseness=self.params.p_i_i,
                     weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
                 # don't allow loops to self
-                for j in xrange(len(self.groups_i[i])):
-                    gaba_a_conn[j,j]=0
+#                for j in range(len(self.groups_i[i])):
+#                    gaba_a_conn[j,j]=0.0
                 self.connections.append(gaba_a_conn)
 
                 # E -> I excitatory connections
@@ -256,8 +256,8 @@ class WTANetworkGroup(NeuronGroup):
             gaba_a_conn=DelayConnection(self.group_i, self.group_i, 'g_gaba_a', sparseness=self.params.p_i_i,
                 weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
             # dont allow loops to self
-            for j in xrange(len(self.group_i)):
-                gaba_a_conn[j,j]=0
+#            for j in range(len(self.group_i)):
+#                gaba_a_conn[j,j]=0.0
             self.connections.append(gaba_a_conn)
 
         if self.background_input is not None:
