@@ -175,9 +175,8 @@ def remove_probabilistic_sample_files(data_path, p_b_e_range, p_x_e_range, p_e_e
 
 def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=False, start_instances=True, num_samples=0,
                          post_jobs=True):
-    launcher=None
+    launcher=Launcher(instances)
     if start_instances:
-        launcher=Launcher(instances)
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_instances()
     if not num_samples:
