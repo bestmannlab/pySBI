@@ -460,6 +460,7 @@ class WTAMonitor():
 #       input_freq = input firing rates
 #       network_group_size = number of neurons per input group
 #       num_groups = number of input groups
+#       single_inh_pop = single inhibitory population
 #       output_file = filename to write to
 #       record_firing_rate = write network firing rate data when true
 #       record_neuron_stae = write neuron state data when true
@@ -474,13 +475,15 @@ class WTAMonitor():
 #       voxel = voxel for network
 #       wta_monitor = network monitor
 #       wta_params = network parameters
-def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
-                 record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
-                 stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params):
+def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
+                 output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp,
+                 record_inputs, stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor,
+                 wta_params):
 
     f = h5py.File(output_file, 'w')
 
     # Write basic parameters
+    f.attrs['single_inh_pop']=single_inh_pop
     f.attrs['num_groups'] = num_groups
     f.attrs['input_freq'] = input_freq
     f.attrs['trial_duration'] = trial_duration
@@ -663,8 +666,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
 
     # Write output to file
     if output_file is not None:
-        write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, output_file,
-            record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
+        write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
+            output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
             stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params)
 
         print 'Wrote output to %s' % output_file
@@ -689,6 +692,7 @@ if __name__=='__main__':
     ap.add_argument('--p_i_e', type=float, default=0.01, help='Connection prob from inhibitory neurons to excitatory ' \
                                                               'neurons in other groups')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
+    ap.add_argument('--single_inh_pop', type=int, default=0, help='Single inhibitory population')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \
@@ -715,4 +719,5 @@ if __name__=='__main__':
     run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second, output_file=argvals.output_file,
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
-        record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs)
+        record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
+        single_inh_pop=argvals.single_inh_pop)
