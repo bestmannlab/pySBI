@@ -631,9 +631,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     background_input=PoissonGroup(background_input_size, rates=background_rate)
     task_inputs=[]
     def make_rate_function(rate):
-        return lambda t: ((stim_start_time<t<stim_end_time and (rate+background_rate)) or background_rate)
+        return lambda t: ((stim_start_time<t<stim_end_time and (background_rate+rate)) or background_rate)
     for i in range(num_groups):
-        rate=input_freq[i]
+        rate=input_freq[i]*Hz
         task_inputs.append(PoissonGroup(task_input_size, rates=make_rate_function(rate)))
 
     # Create WTA network
