@@ -85,50 +85,91 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     template = env.get_template(template_file)
 
 
-    report_info.l1_report_info = create_bayesian_report('Level 1', report_info.num_groups, report_info.trial_duration,
+    report_info.l1_pos_report_info = create_bayesian_report('Level 1 - Positive', report_info.num_groups, report_info.trial_duration,
         report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept, report_info.bc_r_sqr,
-        bayes_analysis.l1_evidence, bayes_analysis.l1_posterior, bayes_analysis.l1_marginals, p_b_e_range, p_x_e_range,
-        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1', base_report_dir)
-    output_file = 'l1_bayes_analysis.html'
-    report_info.l1_url = output_file
+        bayes_analysis.l1_pos_evidence, bayes_analysis.l1_pos_posterior, bayes_analysis.l1_pos_marginals, p_b_e_range, p_x_e_range,
+        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_pos', base_report_dir)
+    output_file = 'l1_pos_bayes_analysis.html'
+    report_info.l1_pos_url = output_file
     fname = os.path.join(base_report_dir, output_file)
-    stream = template.stream(rinfo=report_info.l1_report_info)
+    stream = template.stream(rinfo=report_info.l1_pos_report_info)
+    stream.dump(fname)
+
+    report_info.l1_neg_report_info = create_bayesian_report('Level 1 - Negative', report_info.num_groups, report_info.trial_duration,
+        report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept, report_info.bc_r_sqr,
+        bayes_analysis.l1_neg_evidence, bayes_analysis.l1_neg_posterior, bayes_analysis.l1_neg_marginals, p_b_e_range, p_x_e_range,
+        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_neg', base_report_dir)
+    output_file = 'l1_neg_bayes_analysis.html'
+    report_info.l1_neg_url = output_file
+    fname = os.path.join(base_report_dir, output_file)
+    stream = template.stream(rinfo=report_info.l1_neg_report_info)
     stream.dump(fname)
 
 
-    report_info.l2_neg_report_info = create_bayesian_report('Level 2 - Negative Bold-Contrast Slope', report_info.num_groups,
-        report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
-        report_info.bc_r_sqr, bayes_analysis.l2_neg_evidence, bayes_analysis.l2_neg_posterior,
-        bayes_analysis.l2_neg_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
-        'l2_neg', base_report_dir)
-    output_file = 'l2_neg_bayes_analysis.html'
-    report_info.l2_neg_url = output_file
+    report_info.l1_pos_l2_neg_report_info = create_bayesian_report('Level 1 - Positive, Level 2 - Negative Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_pos_l2_neg_evidence, bayes_analysis.l1_pos_l2_neg_posterior,
+        bayes_analysis.l1_pos_l2_neg_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_pos_l2_neg', base_report_dir)
+    output_file = 'l1_pos_l2_neg_bayes_analysis.html'
+    report_info.l1_pos_l2_neg_url = output_file
     fname = os.path.join(base_report_dir, output_file)
-    stream = template.stream(rinfo=report_info.l2_neg_report_info)
+    stream = template.stream(rinfo=report_info.l1_pos_l2_neg_report_info)
     stream.dump(fname)
 
-
-    report_info.l2_pos_report_info = create_bayesian_report('Level 2 - Positive Bold-Contrast Slope', report_info.num_groups,
-        report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
-        report_info.bc_r_sqr, bayes_analysis.l2_pos_evidence, bayes_analysis.l2_pos_posterior,
-        bayes_analysis.l2_pos_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
-        'l2_pos', base_report_dir)
-    output_file = 'l2_pos_bayes_analysis.html'
-    report_info.l2_pos_url = output_file
+    report_info.l1_neg_l2_neg_report_info = create_bayesian_report('Level 1 - Negative, Level 2 - Negative Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_neg_l2_neg_evidence, bayes_analysis.l1_neg_l2_neg_posterior,
+        bayes_analysis.l1_neg_l2_neg_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_neg_l2_neg', base_report_dir)
+    output_file = 'l1_neg_l2_neg_bayes_analysis.html'
+    report_info.l1_neg_l2_neg_url = output_file
     fname = os.path.join(base_report_dir, output_file)
-    stream = template.stream(rinfo=report_info.l2_pos_report_info)
+    stream = template.stream(rinfo=report_info.l1_neg_l2_neg_report_info)
     stream.dump(fname)
 
-
-    report_info.l2_zero_report_info = create_bayesian_report('Level 2 - Zero Bold-Contrast Slope', report_info.num_groups,
-        report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
-        report_info.bc_r_sqr, bayes_analysis.l2_zero_evidence, bayes_analysis.l2_zero_posterior,
-        bayes_analysis.l2_zero_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
-        'l2_zero', base_report_dir)
-    output_file = 'l2_zero_bayes_analysis.html'
-    report_info.l2_zero_url = output_file
+    report_info.l1_pos_l2_pos_report_info = create_bayesian_report('Level 1- Positive, Level 2 - Positive Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_pos_l2_pos_evidence, bayes_analysis.l1_pos_l2_pos_posterior,
+        bayes_analysis.l1_pos_l2_pos_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_pos_l2_pos', base_report_dir)
+    output_file = 'l1_pos_l2_pos_bayes_analysis.html'
+    report_info.l1_pos_l2_pos_url = output_file
     fname = os.path.join(base_report_dir, output_file)
-    stream = template.stream(rinfo=report_info.l2_zero_report_info)
+    stream = template.stream(rinfo=report_info.l1_pos_l2_pos_report_info)
+    stream.dump(fname)
+
+    report_info.l1_neg_l2_pos_report_info = create_bayesian_report('Level 1- Negative, Level 2 - Positive Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_neg_l2_pos_evidence, bayes_analysis.l1_neg_l2_pos_posterior,
+        bayes_analysis.l1_neg_l2_pos_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_neg_l2_pos', base_report_dir)
+    output_file = 'l1_neg_l2_pos_bayes_analysis.html'
+    report_info.l1_neg_l2_pos_url = output_file
+    fname = os.path.join(base_report_dir, output_file)
+    stream = template.stream(rinfo=report_info.l1_neg_l2_pos_report_info)
+    stream.dump(fname)
+
+    report_info.l1_pos_l2_zero_report_info = create_bayesian_report('Level 1 - Positive, Level 2 - Zero Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_pos_l2_zero_evidence, bayes_analysis.l1_pos_l2_zero_posterior,
+        bayes_analysis.l1_pos_l2_zero_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_pos_l2_zero', base_report_dir)
+    output_file = 'l1_pos_l2_zero_bayes_analysis.html'
+    report_info.l1_pos_l2_zero_url = output_file
+    fname = os.path.join(base_report_dir, output_file)
+    stream = template.stream(rinfo=report_info.l1_pos_l2_zero_report_info)
+    stream.dump(fname)
+
+    report_info.l1_neg_l2_zero_report_info = create_bayesian_report('Level 1 - Negative, Level 2 - Zero Bold-Contrast Slope',
+        report_info.num_groups, report_info.trial_duration, report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept,
+        report_info.bc_r_sqr, bayes_analysis.l1_neg_l2_zero_evidence, bayes_analysis.l1_neg_l2_zero_posterior,
+        bayes_analysis.l1_neg_l2_zero_marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+        'l1_neg_l2_zero', base_report_dir)
+    output_file = 'l1_neg_l2_zero_bayes_analysis.html'
+    report_info.l1_neg_l2_zero_url = output_file
+    fname = os.path.join(base_report_dir, output_file)
+    stream = template.stream(rinfo=report_info.l1_neg_l2_zero_report_info)
     stream.dump(fname)
 
 
