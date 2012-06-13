@@ -210,16 +210,17 @@ def run_posthoc_bayes_analysis(summary_file_name, perf_threshold, r_sqr_threshol
     p_e_i_range=np.array(f['p_e_i_range'])
     p_i_i_range=np.array(f['p_i_i_range'])
     p_i_e_range=np.array(f['p_i_e_range'])
-    input_contrast=np.array(f['input_contrast'])
-    max_bold=np.array(f['max_bold'])
+    bc_slope=np.array(f['bold_contrast_slope'])
+    bc_intercept=np.array(f['bold_contrast_intercept'])
+    bc_r_sqr=np.array(f['bold_contrast_r_sqr'])
     auc=np.array(f['auc'])
     f.close()
 
-    return run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range, p_e_i_range,
+    return run_bayesian_analysis(auc, bc_slope, bc_intercept, bc_r_sqr, num_trials, p_b_e_range, p_e_e_range, p_e_i_range,
         p_i_e_range, p_i_i_range, p_x_e_range, perf_threshold, r_sqr_threshold)
 
 
-def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
+def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
                           p_i_i_range, p_x_e_range, perf_threshold=0.9, r_sqr_threshold=0.2):
     bayes_analysis = Struct()
     # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
@@ -273,16 +274,11 @@ def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range
                 for l, p_e_i in enumerate(p_e_i_range):
                     for m, p_i_i in enumerate(p_i_i_range):
                         for n, p_i_e in enumerate(p_i_e_range):
-                            combo_contrast = input_contrast[i, j, k, l, m, n, :]
-                            combo_max_bold = max_bold[i, j, k, l, m, n, :]
-                            clf = LinearRegression()
-                            clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
-                            slope = clf.coef_[0]
-                            if clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold) > r_sqr_threshold:
-                                if slope > 0.0:
+                            if r_sqr[i,j,k,l,m,n] > r_sqr_threshold:
+                                if slope[i,j,k,l,m,n] > 0.0:
                                     bayes_analysis.l1_pos_l2_pos_likelihood[i, j, k, l, m, n] = 1.0
                                     bayes_analysis.l1_neg_l2_pos_likelihood[i, j, k, l, m, n] = 1.0
-                                elif slope < 0.0:
+                                elif slope[i,j,k,l,m,n] < 0.0:
                                     bayes_analysis.l1_pos_l2_neg_likelihood[i, j, k, l, m, n] = 1.0
                                     bayes_analysis.l1_neg_l2_neg_likelihood[i, j, k, l, m, n] = 1.0
                                 else:

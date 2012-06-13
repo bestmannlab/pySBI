@@ -182,53 +182,91 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     stream.dump(fname)
 
 
+def get_tested_param_combos(data_dir, num_groups, trial_duration, num_trials):
+    param_combos=[]
+    for file in os.listdir(data_dir):
+        if file.endswith('.h5'):
+            file_split=file.split('.')
+            p_b_e=float('%s.%s' % (file_split[7],file_split[8]))
+            p_x_e=float('%s.%s' % (file_split[10],file_split[11]))
+            p_e_e=float('%s.%s' % (file_split[13],file_split[14]))
+            p_e_i=float('%s.%s' % (file_split[16],file_split[17]))
+            p_i_i=float('%s.%s' % (file_split[19],file_split[20]))
+            p_i_e=float('%s.%s' % (file_split[22],file_split[23]))
+            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
+                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+            file_prefix=os.path.join(data_dir,file_desc)
+            param_tuple=(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)
+            if not param_tuple in param_combos and all_trials_exist(file_prefix, num_trials):
+                param_combos.append(param_tuple)
+    return param_combos
+
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
                        p_i_e_range, num_trials, base_report_dir, regenerate_network_plots=True, regenerate_trial_plots=True):
 
     make_report_dirs(base_report_dir)
 
-    max_bold=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                       len(p_i_e_range), num_trials])
-    input_contrast=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                       len(p_i_e_range), num_trials])
+    bc_slope=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range)])
+    bc_slope_dict={}
+    bc_intercept=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range)])
+    bc_intercept_dict={}
+    bc_r_sqr=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                           len(p_i_e_range)])
+    bc_r_sqr_dict={}
     auc=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
                   len(p_i_e_range)])
+    auc_dict={}
+
+    param_combos=get_tested_param_combos(data_dir, num_groups, trial_duration, num_trials)
 
     report_info=Struct()
     report_info.roc_auc={}
     report_info.bc_slope={}
     report_info.bc_intercept={}
     report_info.bc_r_sqr={}
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    for m,p_i_i in enumerate(p_i_i_range):
-                        for n,p_i_e in enumerate(p_i_e_range):
-                            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
-                                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
-                            file_prefix=os.path.join(data_dir,file_desc)
-                            reports_dir=os.path.join(base_report_dir,file_desc)
-                            if all_trials_exist(file_prefix, num_trials):
-                                print('Creating report for %s' % file_desc)
-                                wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir,
-                                    regenerate_network_plots=regenerate_network_plots,
-                                    regenerate_trial_plots=regenerate_trial_plots)
 
-                                for o in range(num_trials):
-                                    max_bold[i,j,k,l,m,n,o]=wta_report.trials[o].max_bold
-                                    input_contrast[i,j,k,l,m,n,o]=wta_report.trials[o].input_contrast
-                                auc[i,j,k,l,m,n]=wta_report.roc.auc
+    for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in param_combos:
+        i=p_b_e_range.index(round(p_b_e,2))
+        j=p_x_e_range.index(round(p_x_e,2))
+        k=p_e_e_range.index(round(p_e_e,2))
+        l=p_e_i_range.index(round(p_e_i,2))
+        m=p_i_i_range.index(round(p_i_i,2))
+        n=p_i_e_range.index(round(p_i_e,2))
 
-                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
-                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
-                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
-                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
-                            else:
-                                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-                                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+        file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
+                  (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+        file_prefix=os.path.join(data_dir,file_desc)
+        reports_dir=os.path.join(base_report_dir,file_desc)
+        if all_trials_exist(file_prefix, num_trials):
+            print('Creating report for %s' % file_desc)
+            wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir,
+                regenerate_network_plots=regenerate_network_plots,
+                regenerate_trial_plots=regenerate_trial_plots)
+
+            if not (i,j,k,l,m,n) in bc_slope_dict:
+                bc_slope_dict[(i,j,k,l,m,n)]=[]
+            bc_slope_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_slope)
+            if not (i,j,k,l,m,n) in bc_intercept_dict:
+                bc_intercept_dict[(i,j,k,l,m,n)]=[]
+            bc_intercept_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_intercept)
+            if not (i,j,k,l,m,n) in bc_r_sqr_dict:
+                bc_r_sqr_dict[(i,j,k,l,m,n)]=[]
+            bc_r_sqr_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_r_sqr)
+            if not (i,j,k,l,m,n) in auc_dict:
+                auc_dict[(i,j,k,l,m,n)]=[]
+            auc_dict[(i,j,k,l,m,n)].append(wta_report.roc.auc)
+
+            report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
+            report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
+            report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
+            report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
+        else:
+            report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+            report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+            report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+            report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
 
     report_info.num_groups=num_groups
     report_info.trial_duration=trial_duration
@@ -240,10 +278,21 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     report_info.p_i_i_range=p_i_i_range
     report_info.p_i_e_range=p_i_e_range
 
-    save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
-        p_i_i_range, p_i_e_range, input_contrast, max_bold, auc, base_report_dir)
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        for n,p_i_e in enumerate(p_i_e_range):
+                            bc_slope[i,j,k,l,m,n]=np.mean(bc_slope_dict[(i,j,k,l,m,n)])
+                            bc_intercept[i,j,k,l,m,n]=np.mean(bc_intercept_dict[(i,j,k,l,m,n)])
+                            bc_r_sqr[i,j,k,l,m,n]=np.mean(bc_r_sqr_dict[(i,j,k,l,m,n)])
+                            auc[i,j,k,l,m,n]=np.mean(auc_dict[(i,j,k,l,m,n)])
 
-    bayes_analysis=run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range,
+    save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
+        p_i_i_range, p_i_e_range, bc_slope, bc_intercept, bc_r_sqr, auc, base_report_dir)
+
+    bayes_analysis=run_bayesian_analysis(auc, bc_slope, bc_intercept, bc_r_sqr, num_trials, p_b_e_range, p_e_e_range,
         p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
 
     render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
@@ -257,7 +306,7 @@ def all_trials_exist(file_prefix, num_trials):
     return True
 
 def save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
-                      p_i_i_range, p_i_e_range, input_contrast, max_bold, auc, base_report_dir):
+                      p_i_i_range, p_i_e_range, bc_slope, bc_intercept, bc_r_sqr, auc, base_report_dir):
     output_file_name='wta_network_summary.h5'
     fname=os.path.join(base_report_dir,output_file_name)
     f = h5py.File(fname, 'w')
@@ -270,8 +319,9 @@ def save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e
     f['p_e_i_range']=np.array(p_e_i_range)
     f['p_i_i_range']=np.array(p_i_i_range)
     f['p_i_e_range']=np.array(p_i_e_range)
-    f['input_contrast']=input_contrast
-    f['max_bold']=max_bold
+    f['bold_contrast_slope']=bc_slope
+    f['bold_contrast_intercept']=bc_intercept
+    f['bold_contrast_r_sqr']=bc_r_sqr
     f['auc']=auc
 
     f.close()
