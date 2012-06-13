@@ -4,7 +4,7 @@ cd /tmp
 rm -Rf pySBI
 rm pySBI.tgz
 rm -R /tmp/wta-output
-scp jbonaiuto@tarsier:/data/projects/pySBI/pySBI.tgz pySBI.tgz
+scp #USER#@#HOST#:/data/projects/pySBI/pySBI.tgz pySBI.tgz
 tar xvzf pySBI.tgz
 
 mkdir /tmp/wta-output
