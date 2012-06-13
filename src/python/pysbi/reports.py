@@ -478,6 +478,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
     trial_max_rate=np.zeros([num_trials])
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
+        print('opening %s' % file_name)
         data=FileInfo(file_name)
 
         if not i:
