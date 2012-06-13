@@ -29,7 +29,9 @@ class FileInfo():
         self.file_name=file_name
         f = h5py.File(file_name)
 
-        self.single_inh_pop=int(f.attrs['single_inh_pop'])
+        self.single_inh_pop=0
+        if 'single_inh_pop' in f.attrs:
+            self.single_inh_pop=int(f.attrs['single_inh_pop'])
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
