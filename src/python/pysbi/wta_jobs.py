@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 from brian.units import second
 from ezrcluster.launcher import Launcher
+from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
 from pysbi.random_distributions import make_distribution_curve
@@ -197,7 +198,32 @@ def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=
     auc=np.array(f['auc'])
     f.close()
 
-    bayes_analysis=run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range, p_e_e_range,
+    bc_slope=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range)])
+    bc_intercept=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                           len(p_i_e_range)])
+    bc_rsqr=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                       len(p_i_e_range)])
+    for i,p_b_e in enumerate(p_b_e_range):
+        for j,p_x_e in enumerate(p_x_e_range):
+            for k,p_e_e in enumerate(p_e_e_range):
+                for l,p_e_i in enumerate(p_e_i_range):
+                    for m,p_i_i in enumerate(p_i_i_range):
+                        for n,p_i_e in enumerate(p_i_e_range):
+                            if auc[i,j,k,l,m,n]>0:
+                                combo_contrast = input_contrast[i, j, k, l, m, n, :]
+                                combo_max_bold = max_bold[i, j, k, l, m, n, :]
+                                clf = LinearRegression()
+                                clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                                bc_slope[i,j,k,l,m,n] = clf.coef_[0]
+                                bc_intercept[i,j,k,l,m,n] = clf.intercept_
+                                bc_rsqr=clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
+                            else:
+                                bc_slope[i,j,k,l,m,n] = 0
+                                bc_intercept[i,j,k,l,m,n] = 0
+                                bc_rsqr=0
+
+    bayes_analysis=run_bayesian_analysis(auc, bc_slope, bc_intercept, bc_rsqr, num_trials, p_b_e_range, p_e_e_range,
         p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
 
     samples=[]
