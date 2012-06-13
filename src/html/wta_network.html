@@ -64,8 +64,8 @@
     </tbody>
 </table>
 
-<h4>Bayesian Analyses</h4>
-<table class="tablesorter" id="bayes_table">
+<h4>Bayesian Analyses - Level 1</h4>
+<table class="tablesorter" id="bayes_table_l1">
     <thead>
         <tr>
             <th>&nbsp;</th>
@@ -74,20 +74,58 @@
     </thead>
     <tbody>
         <tr>
-            <td><a href="{{ rinfo.l1_url }}">Level 1 Bayesian Analysis</a></td>
-            <td>{{ rinfo.l1_report_info.evidence }}</td>
+            <td><a href="{{ rinfo.l1_pos_url }}">Level 1 Bayesian Analysis - Positive</a></td>
+            <td>{{ rinfo.l1_pos_report_info.evidence }}</td>
         </tr>
         <tr>
-            <td><a href="{{ rinfo.l2_neg_url }}">Level 2 - Negative BOLD-Contrast Slope - Bayesian Analysis</a></td>
-            <td>{{ rinfo.l2_neg_report_info.evidence }}</td>
+            <td><a href="{{ rinfo.l1_neg_url }}">Level 1 Bayesian Analysis - Negative</a></td>
+            <td>{{ rinfo.l1_neg_report_info.evidence }}</td>
+        </tr>
+    </tbody>
+</table>
+<h4>Bayesian Analyses - Level 1 Positive, Level 2</h4>
+<table class="tablesorter" id="bayes_table_l1_pos">
+    <thead>
+    <tr>
+        <th>&nbsp;</th>
+        <th>Evidence</th>
+    </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><a href="{{ rinfo.l1_pos_l2_neg_url }}">Level 2 - Negative BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_pos_l2_neg_report_info.evidence }}</td>
         </tr>
         <tr>
-            <td><a href="{{ rinfo.l2_pos_url }}">Level 2 - Positive BOLD-Contrast Slope - Bayesian Analysis</a></td>
-            <td>{{ rinfo.l2_pos_report_info.evidence }}</td>
+            <td><a href="{{ rinfo.l1_pos_l2_pos_url }}">Level 2 - Positive BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_pos_l2_pos_report_info.evidence }}</td>
         </tr>
         <tr>
-            <td><a href="{{ rinfo.l2_zero_url }}">Level 2 - Zero BOLD-Contrast Slope - Bayesian Analysis</a></td>
-            <td>{{ rinfo.l2_zero_report_info.evidence }}</td>
+            <td><a href="{{ rinfo.l1_pos_l2_zero_url }}">Level 2 - Zero BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_pos_l2_zero_report_info.evidence }}</td>
+        </tr>
+    </tbody>
+</table>
+<h4>Bayesian Analyses - Level 1 Negative, Level 2</h4>
+<table class="tablesorter" id="bayes_table_l1_neg">
+    <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th>Evidence</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><a href="{{ rinfo.l1_neg_l2_neg_url }}">Level 2 - Negative BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_neg_l2_neg_report_info.evidence }}</td>
+        </tr>
+        <tr>
+            <td><a href="{{ rinfo.l1_neg_l2_pos_url }}">Level 2 - Positive BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_neg_l2_pos_report_info.evidence }}</td>
+        </tr>
+        <tr>
+            <td><a href="{{ rinfo.l1_neg_l2_zero_url }}">Level 2 - Zero BOLD-Contrast Slope - Bayesian Analysis</a></td>
+            <td>{{ rinfo.l1_neg_l2_zero_report_info.evidence }}</td>
         </tr>
     </tbody>
 </table>
@@ -95,80 +133,194 @@
 <table>
     <tr>
         <td>Parameter</td>
-        <td>L1 Posterior</td>
-        <td>L2 Negative Posterior</td>
-        <td>L2 Positive Posterior</td>
-        <td>L2 Zero Posterior</td>
+        <td>L1 Positive Posterior</td>
+        <td>L1 Negative Posterior</td>
     </tr>
     <tr>
         <td>p_e_e</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.marginal_posterior_p_e_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.marginal_posterior_p_e_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.marginal_posterior_p_e_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.marginal_posterior_p_e_e_url }}"/></td>
     </tr>
     <tr>
         <td>p_e_i</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.marginal_posterior_p_e_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.marginal_posterior_p_e_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.marginal_posterior_p_e_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.marginal_posterior_p_e_i_url }}"/></td>
     </tr>
     <tr>
         <td>p_i_i</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.marginal_posterior_p_i_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.marginal_posterior_p_i_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.marginal_posterior_p_i_i_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.marginal_posterior_p_i_i_url }}"/></td>
     </tr>
     <tr>
         <td>p_i_e</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.marginal_posterior_p_i_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.marginal_posterior_p_i_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.marginal_posterior_p_i_e_url }}"/></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.marginal_posterior_p_i_e_url }}"/></td>
     </tr>
     <tr>
         <td>p_e_e - p_e_i</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
     </tr>
     <tr>
         <td>p_e_e - p_i_i</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
     </tr>
     <tr>
         <td>p_e_e - p_i_e</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
     </tr>
     <tr>
         <td>p_e_i - p_i_i</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
     </tr>
     <tr>
         <td>p_e_i - p_i_e</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
     </tr>
     <tr>
         <td>p_i_i - p_i_e</td>
-        <td><img width="75%" src="{{ rinfo.l1_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_neg_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_pos_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
-        <td><img width="75%" src="{{ rinfo.l2_zero_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <td>Parameter</td>
+        <td>L1 Positive, L2 Negative Posterior</td>
+        <td>L1 Positive, L2 Positive Posterior</td>
+        <td>L1 Positive, L2 Zero Posterior</td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.marginal_posterior_p_e_e_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.marginal_posterior_p_e_i_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.marginal_posterior_p_i_i_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.marginal_posterior_p_i_e_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_i - p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_i - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_i_i - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_neg_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_pos_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_pos_l2_zero_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <td>Parameter</td>
+        <td>L1 Negative, L2 Negative Posterior</td>
+        <td>L1 Negative, L2 Positive Posterior</td>
+        <td>L1 Negative, L2 Zero Posterior</td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.marginal_posterior_p_e_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.marginal_posterior_p_e_e_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.marginal_posterior_p_e_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.marginal_posterior_p_e_i_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.marginal_posterior_p_i_i_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.marginal_posterior_p_i_i_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.marginal_posterior_p_i_e_url }}"/></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.marginal_posterior_p_i_e_url }}"/></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_e_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_e_e_p_e_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_e_e_p_i_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_e - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_e_e_p_i_e_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_i - p_i_i</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_e_i_p_i_i_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_e_i - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_e_i_p_i_e_url }}"></td>
+    </tr>
+    <tr>
+        <td>p_i_i - p_i_e</td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_neg_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_pos_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
+        <td><img width="75%" src="{{ rinfo.l1_neg_l2_zero_report_info.joint_marginal_p_i_i_p_i_e_url }}"></td>
     </tr>
 </table>
 </body>

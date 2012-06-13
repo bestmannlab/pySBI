@@ -224,7 +224,8 @@ def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range
     bayes_analysis = Struct()
     # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
     # p(AUC | theta, M)
-    bayes_analysis.l1_likelihood = np.zeros(auc.shape)
+    bayes_analysis.l1_pos_likelihood = np.zeros(auc.shape)
+    bayes_analysis.l1_neg_likelihood = np.zeros(auc.shape)
     for i, p_b_e in enumerate(p_b_e_range):
         for j, p_x_e in enumerate(p_x_e_range):
             for k, p_e_e in enumerate(p_e_e_range):
@@ -232,7 +233,9 @@ def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range
                     for m, p_i_i in enumerate(p_i_i_range):
                         for n, p_i_e in enumerate(p_i_e_range):
                             if auc[i, j, k, l, m, n] >= perf_threshold:
-                                bayes_analysis.l1_likelihood[i, j, k, l, m, n] = 1.0
+                                bayes_analysis.l1_pos_likelihood[i, j, k, l, m, n] = 1.0
+                            else:
+                                bayes_analysis.l1_neg_likelihood[i, j, k, l, m, n] = 1.0
 
     # Number of parameter values tested
     n_param_vals = len(p_b_e_range) * len(p_x_e_range) * len(p_e_e_range) * len(p_e_i_range) * len(p_i_i_range) * len(
@@ -240,18 +243,30 @@ def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range
     # Priors are uniform
     # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | M)
     # p(theta | M)
-    bayes_analysis.l1_priors = np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
-                                        len(p_i_i_range), len(p_i_e_range)]) * 1.0 / float(n_param_vals)
+    bayes_analysis.l1_pos_priors = np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                                            len(p_i_i_range), len(p_i_e_range)]) * 1.0 / float(n_param_vals)
+    bayes_analysis.l1_neg_priors = np.ones([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                                            len(p_i_i_range), len(p_i_e_range)]) * 1.0 / float(n_param_vals)
     # p(AUC | M) = INT( p(AUC | theta, M)*p(theta | M) d theta
-    bayes_analysis.l1_evidence = np.sum(bayes_analysis.l1_likelihood * bayes_analysis.l1_priors)
+    bayes_analysis.l1_pos_evidence = np.sum(bayes_analysis.l1_pos_likelihood * bayes_analysis.l1_pos_priors)
+    bayes_analysis.l1_neg_evidence = np.sum(bayes_analysis.l1_neg_likelihood * bayes_analysis.l1_neg_priors)
     # p(p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e | AUC, M)
-    bayes_analysis.l1_posterior = (bayes_analysis.l1_likelihood * bayes_analysis.l1_priors) / bayes_analysis.l1_evidence
-    bayes_analysis.l1_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_priors, bayes_analysis.l1_likelihood,
-        bayes_analysis.l1_posterior, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
-    bayes_analysis.l2_priors = bayes_analysis.l1_posterior
-    bayes_analysis.l2_neg_likelihood = np.zeros(bayes_analysis.l1_likelihood.shape)
-    bayes_analysis.l2_pos_likelihood = np.zeros(bayes_analysis.l1_likelihood.shape)
-    bayes_analysis.l2_zero_likelihood = np.zeros(bayes_analysis.l1_likelihood.shape)
+    bayes_analysis.l1_pos_posterior = (bayes_analysis.l1_pos_likelihood * bayes_analysis.l1_pos_priors) / bayes_analysis.l1_pos_evidence
+    bayes_analysis.l1_neg_posterior = (bayes_analysis.l1_neg_likelihood * bayes_analysis.l1_neg_priors) / bayes_analysis.l1_neg_evidence
+    bayes_analysis.l1_pos_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_pos_priors, bayes_analysis.l1_pos_likelihood,
+        bayes_analysis.l1_pos_posterior, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l1_neg_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_neg_priors, bayes_analysis.l1_neg_likelihood,
+        bayes_analysis.l1_neg_posterior, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range)
+
+    bayes_analysis.l1_pos_l2_priors = bayes_analysis.l1_pos_posterior
+    bayes_analysis.l1_neg_l2_priors = bayes_analysis.l1_neg_posterior
+
+    bayes_analysis.l1_pos_l2_neg_likelihood = np.zeros(bayes_analysis.l1_pos_likelihood.shape)
+    bayes_analysis.l1_pos_l2_pos_likelihood = np.zeros(bayes_analysis.l1_pos_likelihood.shape)
+    bayes_analysis.l1_pos_l2_zero_likelihood = np.zeros(bayes_analysis.l1_pos_likelihood.shape)
+    bayes_analysis.l1_neg_l2_neg_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
+    bayes_analysis.l1_neg_l2_pos_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
+    bayes_analysis.l1_neg_l2_zero_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
     for i, p_b_e in enumerate(p_b_e_range):
         for j, p_x_e in enumerate(p_x_e_range):
             for k, p_e_e in enumerate(p_e_e_range):
@@ -265,27 +280,49 @@ def run_bayesian_analysis(auc, input_contrast, max_bold, num_trials, p_b_e_range
                             slope = clf.coef_[0]
                             if clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold) > r_sqr_threshold:
                                 if slope > 0.0:
-                                    bayes_analysis.l2_pos_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_pos_l2_pos_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_neg_l2_pos_likelihood[i, j, k, l, m, n] = 1.0
                                 elif slope < 0.0:
-                                    bayes_analysis.l2_neg_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_pos_l2_neg_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_neg_l2_neg_likelihood[i, j, k, l, m, n] = 1.0
                                 else:
-                                    bayes_analysis.l2_zero_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_pos_l2_zero_likelihood[i, j, k, l, m, n] = 1.0
+                                    bayes_analysis.l1_neg_l2_zero_likelihood[i, j, k, l, m, n] = 1.0
                             else:
-                                bayes_analysis.l2_zero_likelihood[i, j, k, l, m, n] = 1.0
-    bayes_analysis.l2_pos_evidence = np.sum(bayes_analysis.l2_pos_likelihood * bayes_analysis.l2_priors)
-    bayes_analysis.l2_neg_evidence = np.sum(bayes_analysis.l2_neg_likelihood * bayes_analysis.l2_priors)
-    bayes_analysis.l2_zero_evidence = np.sum(bayes_analysis.l2_zero_likelihood * bayes_analysis.l2_priors)
-    bayes_analysis.l2_pos_posterior = (bayes_analysis.l2_pos_likelihood * bayes_analysis.l2_priors) / bayes_analysis.l2_pos_evidence
-    bayes_analysis.l2_neg_posterior = (bayes_analysis.l2_neg_likelihood * bayes_analysis.l2_priors) / bayes_analysis.l2_neg_evidence
-    bayes_analysis.l2_zero_posterior = (bayes_analysis.l2_zero_likelihood * bayes_analysis.l2_priors) / bayes_analysis.l2_zero_evidence
-    bayes_analysis.l2_neg_marginals = run_bayesian_marginal_analysis(bayes_analysis.l2_priors,
-        bayes_analysis.l2_neg_likelihood, bayes_analysis.l2_neg_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+                                bayes_analysis.l1_pos_l2_zero_likelihood[i, j, k, l, m, n] = 1.0
+                                bayes_analysis.l1_neg_l2_zero_likelihood[i, j, k, l, m, n] = 1.0
+
+    bayes_analysis.l1_pos_l2_pos_evidence = np.sum(bayes_analysis.l1_pos_l2_pos_likelihood * bayes_analysis.l1_pos_l2_priors)
+    bayes_analysis.l1_pos_l2_neg_evidence = np.sum(bayes_analysis.l1_pos_l2_neg_likelihood * bayes_analysis.l1_pos_l2_priors)
+    bayes_analysis.l1_pos_l2_zero_evidence = np.sum(bayes_analysis.l1_pos_l2_zero_likelihood * bayes_analysis.l1_pos_l2_priors)
+    bayes_analysis.l1_neg_l2_pos_evidence = np.sum(bayes_analysis.l1_neg_l2_pos_likelihood * bayes_analysis.l1_neg_l2_priors)
+    bayes_analysis.l1_neg_l2_neg_evidence = np.sum(bayes_analysis.l1_neg_l2_neg_likelihood * bayes_analysis.l1_neg_l2_priors)
+    bayes_analysis.l1_neg_l2_zero_evidence = np.sum(bayes_analysis.l1_neg_l2_zero_likelihood * bayes_analysis.l1_neg_l2_priors)
+
+    bayes_analysis.l1_pos_l2_pos_posterior = (bayes_analysis.l1_pos_l2_pos_likelihood * bayes_analysis.l1_pos_l2_priors) / bayes_analysis.l1_pos_l2_pos_evidence
+    bayes_analysis.l1_pos_l2_neg_posterior = (bayes_analysis.l1_pos_l2_neg_likelihood * bayes_analysis.l1_pos_l2_priors) / bayes_analysis.l1_pos_l2_neg_evidence
+    bayes_analysis.l1_pos_l2_zero_posterior = (bayes_analysis.l1_pos_l2_zero_likelihood * bayes_analysis.l1_pos_l2_priors) / bayes_analysis.l1_pos_l2_zero_evidence
+    bayes_analysis.l1_neg_l2_pos_posterior = (bayes_analysis.l1_neg_l2_pos_likelihood * bayes_analysis.l1_neg_l2_priors) / bayes_analysis.l1_neg_l2_pos_evidence
+    bayes_analysis.l1_neg_l2_neg_posterior = (bayes_analysis.l1_neg_l2_neg_likelihood * bayes_analysis.l1_neg_l2_priors) / bayes_analysis.l1_neg_l2_neg_evidence
+    bayes_analysis.l1_neg_l2_zero_posterior = (bayes_analysis.l1_neg_l2_zero_likelihood * bayes_analysis.l1_neg_l2_priors) / bayes_analysis.l1_neg_l2_zero_evidence
+
+    bayes_analysis.l1_pos_l2_neg_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_pos_l2_priors,
+        bayes_analysis.l1_pos_l2_neg_likelihood, bayes_analysis.l1_pos_l2_neg_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
         p_e_i_range, p_i_i_range, p_i_e_range)
-    bayes_analysis.l2_pos_marginals = run_bayesian_marginal_analysis(bayes_analysis.l2_priors,
-        bayes_analysis.l2_pos_likelihood, bayes_analysis.l2_pos_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+    bayes_analysis.l1_pos_l2_pos_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_pos_l2_priors,
+        bayes_analysis.l1_pos_l2_pos_likelihood, bayes_analysis.l1_pos_l2_pos_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
         p_e_i_range, p_i_i_range, p_i_e_range)
-    bayes_analysis.l2_zero_marginals = run_bayesian_marginal_analysis(bayes_analysis.l2_priors,
-        bayes_analysis.l2_zero_likelihood, bayes_analysis.l2_zero_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+    bayes_analysis.l1_pos_l2_zero_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_pos_l2_priors,
+        bayes_analysis.l1_pos_l2_zero_likelihood, bayes_analysis.l1_pos_l2_zero_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l1_neg_l2_neg_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_neg_l2_priors,
+        bayes_analysis.l1_neg_l2_neg_likelihood, bayes_analysis.l1_neg_l2_neg_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l1_neg_l2_pos_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_neg_l2_priors,
+        bayes_analysis.l1_neg_l2_pos_likelihood, bayes_analysis.l1_neg_l2_pos_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
+        p_e_i_range, p_i_i_range, p_i_e_range)
+    bayes_analysis.l1_neg_l2_zero_marginals = run_bayesian_marginal_analysis(bayes_analysis.l1_neg_l2_priors,
+        bayes_analysis.l1_neg_l2_zero_likelihood, bayes_analysis.l1_neg_l2_zero_posterior, p_b_e_range, p_x_e_range, p_e_e_range,
         p_e_i_range, p_i_i_range, p_i_e_range)
     return bayes_analysis
 
