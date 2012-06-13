@@ -151,6 +151,27 @@ def sample(param_marginal_posterior, param_range, alpha=0.1, precision=3):
     return idx, param_val
 
 
+def remove_probabilistic_sample_files(data_path, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
+                                      num_trials, num_groups, trial_duration):
+    for file in os.listdir(data_path):
+        if file.endswith('.h5'):
+            file_split=file.split('.')
+            p_b_e=float('%s.%s' % (file_split[7],file_split[8]))
+            p_x_e=float('%s.%s' % (file_split[10],file_split[11]))
+            p_e_e=float('%s.%s' % (file_split[13],file_split[14]))
+            p_e_i=float('%s.%s' % (file_split[16],file_split[17]))
+            p_i_i=float('%s.%s' % (file_split[19],file_split[20]))
+            p_i_e=float('%s.%s' % (file_split[22],file_split[23]))
+
+            if not (p_b_e in p_b_e_range and p_x_e in p_x_e_range and p_e_e in p_e_e_range and p_e_i in p_e_i_range and
+                p_i_i in p_i_i_range and p_i_e in p_i_e_range):
+                for i in range(num_trials):
+                    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
+                              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, i)
+                    file_prefix=os.path.join(data_path,file_desc)
+                    if os.path.exists(file_prefix):
+                        os.remove(file_prefix)
+
 def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=False, start_instances=True, num_samples=0,
                          post_jobs=True):
     launcher=None
@@ -213,6 +234,7 @@ def probabilistic_sample(instances, summary_filename, data_path, single_inh_pop=
                     inputs=np.zeros(2)
                     inputs[0]=(input_sum*(contrast+1.0)/2.0)
                     inputs[1]=input_sum-inputs[0]
+                    np.random.shuffle(inputs)
                     cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
                         p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop, record_lfp=True,
                         record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True)
