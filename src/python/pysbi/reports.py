@@ -284,10 +284,15 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                 for l,p_e_i in enumerate(p_e_i_range):
                     for m,p_i_i in enumerate(p_i_i_range):
                         for n,p_i_e in enumerate(p_i_e_range):
-                            bc_slope[i,j,k,l,m,n]=np.mean(bc_slope_dict[(i,j,k,l,m,n)])
-                            bc_intercept[i,j,k,l,m,n]=np.mean(bc_intercept_dict[(i,j,k,l,m,n)])
-                            bc_r_sqr[i,j,k,l,m,n]=np.mean(bc_r_sqr_dict[(i,j,k,l,m,n)])
-                            auc[i,j,k,l,m,n]=np.mean(auc_dict[(i,j,k,l,m,n)])
+                            if (i,j,k,l,m,n) in auc_dict:
+                                auc[i,j,k,l,m,n]=np.mean(auc_dict[(i,j,k,l,m,n)])
+                            if (i,j,k,l,m,n) in bc_slope_dict:
+                                bc_slope[i,j,k,l,m,n]=np.mean(bc_slope_dict[(i,j,k,l,m,n)])
+                            if (i,j,k,l,m,n) in bc_intercept_dict:
+                                bc_intercept[i,j,k,l,m,n]=np.mean(bc_intercept_dict[(i,j,k,l,m,n)])
+                            if (i,j,k,l,m,n) in bc_r_sqr_dict:
+                                bc_r_sqr[i,j,k,l,m,n]=np.mean(bc_r_sqr_dict[(i,j,k,l,m,n)])
+
 
     save_summary_data(num_groups, num_trials, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
         p_i_i_range, p_i_e_range, bc_slope, bc_intercept, bc_r_sqr, auc, base_report_dir)
@@ -768,5 +773,6 @@ def plot_raster(group_spike_neurons, group_spike_times, group_sizes):
 
 
 if __name__=='__main__':
-    param_range=[float(x)*.01 for x in range(1,11)]
-    create_all_reports('../../data/wta-output',2,1.0,param_range,param_range,[0.0],[0.0],[0.0],[0.0],20,'../../data/reports')
+    param_range=[float(x)*.01 for x in range(0,11)]
+    create_all_reports('../../data/wta-output',2,1.0,[0.1],[0.03],param_range,param_range,param_range,param_range,20,
+        '../../data/reports',regenerate_network_plots=False,regenerate_trial_plots=False)
