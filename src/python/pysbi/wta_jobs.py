@@ -8,6 +8,7 @@ from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
 from pysbi.random_distributions import make_distribution_curve
+from pysbi.reports import get_tested_param_combos
 
 def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, trial, single_inh_pop=False,
                  record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
@@ -94,6 +95,43 @@ def post_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
                                     record_voxel=True, record_neuron_state=False, record_firing_rate=True,
                                     record_spikes=True)
                                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+def post_broken_wta_jobs(instances, num_trials, data_path, single_inh_pop=False, start_instances=True):
+    num_groups=2
+    trial_duration=1*second
+    input_sum=40.0
+    launcher=Launcher(instances)
+    contrast_range=[float(x)*(1.0/(num_trials-1)) for x in range(0,num_trials)]
+    if start_instances:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_instances()
+    param_combos=get_tested_param_combos(data_path, num_groups, trial_duration, num_trials)
+    for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in param_combos:
+        for t,contrast in enumerate(contrast_range):
+            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
+                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
+            recreate=False
+            file_name=os.path.join(data_path,file_desc)
+            print('Checking %s' % file_name)
+            if not os.path.exists(file_name):
+                recreate=True
+            else:
+                try:
+                    data=FileInfo(file_name)
+                except Exception:
+                    recreate=True
+                    os.remove(file_name)
+            if recreate:
+                print('*** Recreating %s ***' % file_desc)
+                inputs=np.zeros(2)
+                inputs[0]=(input_sum*(contrast+1.0)/2.0)
+                inputs[1]=input_sum-inputs[0]
+                np.random.shuffle(inputs)
+                cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                    p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop,
+                    record_lfp=True, record_voxel=True, record_neuron_state=False,
+                    record_firing_rate=True, record_spikes=True)
+                launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 def post_missing_wta_jobs(instances, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
                           num_trials, data_path, single_inh_pop=False, start_instances=True):
