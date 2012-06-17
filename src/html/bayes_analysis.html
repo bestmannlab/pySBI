@@ -35,32 +35,20 @@ Evidence={{ rinfo.evidence }}
         </tr>
     </thead>
     <tbody>
-        {% for p_b_e in rinfo.p_b_e_range %}
-            {% for p_x_e in rinfo.p_x_e_range %}
-                {% for p_e_e in rinfo.p_e_e_range %}
-                    {% for p_e_i in rinfo.p_e_i_range %}
-                        {% for p_i_i in rinfo.p_i_i_range %}
-                            {% for p_i_e in rinfo.p_i_e_range %}
-                                {% if rinfo.posterior[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] %}
-                                    <tr>
-                                        <td>{{ p_b_e|round(3) }}</td>
-                                        <td>{{ p_x_e|round(3) }}</td>
-                                        <td>{{ p_e_e|round(3) }}</td>
-                                        <td>{{ p_e_i|round(3) }}</td>
-                                        <td>{{ p_i_i|round(3) }}</td>
-                                        <td>{{ p_i_e|round(3) }}</td>
-                                        <td>{{ rinfo.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                        <td>{{ rinfo.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                        <td>{{ rinfo.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                        <td>{{ rinfo.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
-                                        <td><a href="wta.groups.{{ rinfo.num_groups }}.duration.{{ '%0.3f'|format(rinfo.trial_duration) }}.p_b_e.{{ '%0.3f'|format(p_b_e) }}.p_x_e.{{ '%0.3f'|format(p_x_e) }}.p_e_e.{{ '%0.3f'|format(p_e_e) }}.p_e_i.{{ '%0.3f'|format(p_e_i) }}.p_i_i.{{ '%0.3f'|format(p_i_i) }}.p_i_e.{{ '%0.3f'|format(p_i_e) }}/wta_network.wta.groups.{{ rinfo.num_groups }}.duration.{{ '%0.3f'|format(rinfo.trial_duration) }}.p_b_e.{{ '%0.3f'|format(p_b_e) }}.p_x_e.{{ '%0.3f'|format(p_x_e) }}.p_e_e.{{ '%0.3f'|format(p_e_e) }}.p_e_i.{{ '%0.3f'|format(p_e_i) }}.p_i_i.{{ '%0.3f'|format(p_i_i) }}.p_i_e.{{ '%0.3f'|format(p_i_e) }}.html">report</a></td>
-                                    </tr>
-                                {% endif %}
-                            {% endfor %}
-                        {% endfor %}
-                    {% endfor %}
-                {% endfor %}
-            {% endfor %}
+        {% for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in rinfo.posterior.iterkeys() %}
+            <tr>
+                <td>{{ p_b_e|round(3) }}</td>
+                <td>{{ p_x_e|round(3) }}</td>
+                <td>{{ p_e_e|round(3) }}</td>
+                <td>{{ p_e_i|round(3) }}</td>
+                <td>{{ p_i_i|round(3) }}</td>
+                <td>{{ p_i_e|round(3) }}</td>
+                <td>{{ rinfo.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
+                <td>{{ rinfo.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
+                <td>{{ rinfo.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
+                <td>{{ rinfo.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)] }}</td>
+                <td><a href="wta.groups.{{ rinfo.num_groups }}.duration.{{ '%0.3f'|format(rinfo.trial_duration) }}.p_b_e.{{ '%0.3f'|format(p_b_e) }}.p_x_e.{{ '%0.3f'|format(p_x_e) }}.p_e_e.{{ '%0.3f'|format(p_e_e) }}.p_e_i.{{ '%0.3f'|format(p_e_i) }}.p_i_i.{{ '%0.3f'|format(p_i_i) }}.p_i_e.{{ '%0.3f'|format(p_i_e) }}/wta_network.wta.groups.{{ rinfo.num_groups }}.duration.{{ '%0.3f'|format(rinfo.trial_duration) }}.p_b_e.{{ '%0.3f'|format(p_b_e) }}.p_x_e.{{ '%0.3f'|format(p_x_e) }}.p_e_e.{{ '%0.3f'|format(p_e_e) }}.p_e_i.{{ '%0.3f'|format(p_e_i) }}.p_i_i.{{ '%0.3f'|format(p_i_i) }}.p_i_e.{{ '%0.3f'|format(p_i_e) }}.html">report</a></td>
+            </tr>
         {% endfor %}
     </tbody>
 </table>
