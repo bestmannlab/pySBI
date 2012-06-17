@@ -12,11 +12,11 @@ def get_local_average(dict, param_array):
         new_array=copy.copy(param_array)
         new_array[i]=idx-1
         if tuple(new_array) in dict:
-            values.append(dict[tuple(new_array)])
+            values.extend(dict[tuple(new_array)])
         new_array=copy.copy(param_array)
         new_array[i]=idx+1
         if tuple(new_array) in dict:
-            values.append(dict[tuple(new_array)])
+            values.extend(dict[tuple(new_array)])
     return np.mean(values)
 
 
