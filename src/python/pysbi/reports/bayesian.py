@@ -29,7 +29,8 @@ def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope,
                 for l,p_e_i in enumerate(p_e_i_range):
                     for m,p_i_i in enumerate(p_i_i_range):
                         for n,p_i_e in enumerate(p_i_e_range):
-                            report_info.posterior[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=posterior[i,j,k,l,m,n]
+                            if posterior[i,j,k,l,m,n]>0:
+                                report_info.posterior[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=posterior[i,j,k,l,m,n]
     report_info.marginal_prior_p_b_e_url,\
     report_info.marginal_likelihood_p_b_e_url,\
     report_info.marginal_posterior_p_b_e_url=render_marginal_report('p_b_e', p_b_e_range,
@@ -127,8 +128,8 @@ def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_
                                  reports_dir):
     if len(param1_range) > 1 < len(param2_range):
         fig = plt.figure()
-        im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), max(param1_range),
-                                                 min(param1_range)], interpolation='nearest')
+        im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), min(param1_range),
+                                                 max(param1_range)], interpolation='nearest', origin='lower')
         fig.colorbar(im)
         plt.xlabel(param2_name)
         plt.ylabel(param1_name)
