@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 from pysbi.analysis import run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
-from pysbi.reports.bayesian import create_bayesian_report
+from pysbi.reports.bayesian import create_bayesian_report, render_joint_marginal_report
 from pysbi.reports.utils import get_local_average, make_report_dirs
 from pysbi.utils import Struct
 
@@ -235,3 +235,47 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     fname = os.path.join(base_report_dir, output_file)
     stream = template.stream(rinfo=report_info)
     stream.dump(fname)
+
+
+def regenerate_bayesian_figures(summary_filename, reports_dir):
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_filename)
+    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+        summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
+
+    p_b_e_range=summary_data.p_b_e_range
+    p_x_e_range=summary_data.p_x_e_range
+    p_e_e_range=summary_data.p_e_e_range
+    p_e_i_range=summary_data.p_e_i_range
+    p_i_i_range=summary_data.p_i_i_range
+    p_i_e_range=summary_data.p_i_e_range
+
+    marginal_list=[bayes_analysis.l1_pos_marginals, bayes_analysis.l1_neg_marginals,
+                   bayes_analysis.l1_pos_l2_neg_marginals, bayes_analysis.l1_neg_l2_neg_marginals,
+                   bayes_analysis.l1_pos_l2_pos_marginals, bayes_analysis.l1_neg_l2_pos_marginals,
+                   bayes_analysis.l1_pos_l2_zero_marginals, bayes_analysis.l1_neg_l2_zero_marginals]
+    file_prefix_list=['l1_pos','l1_neg','l1_pos_l2_neg','l1_neg_l2_neg','l1_pos_l2_pos','l1_neg_l2_pos','l1_pos_l2_zero',
+                      'l1_neg_l2_zero']
+
+    for(marginals,file_prefix) in zip(marginal_list,file_prefix_list):
+        render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range, marginals.posterior_p_b_e_p_x_e, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range, marginals.posterior_p_e_e_p_e_i, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range, marginals.posterior_p_e_e_p_i_i, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range, marginals.posterior_p_e_e_p_i_e, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range, marginals.posterior_p_e_i_p_i_i, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range, marginals.posterior_p_e_i_p_i_e, file_prefix,
+            reports_dir)
+
+        render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range, marginals.posterior_p_i_i_p_i_e, file_prefix,
+            reports_dir)
