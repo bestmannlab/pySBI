@@ -35,7 +35,7 @@ Evidence={{ rinfo.evidence }}
         </tr>
     </thead>
     <tbody>
-        {% for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in rinfo.posterior.iterkeys() %}
+        {% for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in rinfo.roc_auc.iterkeys() %}
             <tr>
                 <td>{{ p_b_e|round(3) }}</td>
                 <td>{{ p_x_e|round(3) }}</td>
