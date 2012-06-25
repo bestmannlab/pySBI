@@ -8,6 +8,7 @@ from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
 from pysbi.random_distributions import make_distribution_curve
+from pysbi.reports.summary import SummaryData
 from pysbi.reports.utils import get_tested_param_combos
 
 def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, trial, single_inh_pop=False,
@@ -220,85 +221,49 @@ def probabilistic_sample(nodes, summary_filename, data_path, single_inh_pop=Fals
     if not num_samples:
         num_samples=len(nodes)
 
-    f=h5py.File(summary_filename)
-    num_groups=int(f.attrs['num_groups'])
-    num_trials=int(f.attrs['num_trials'])
-    trial_duration=float(f.attrs['trial_duration'])
-    p_b_e_range=np.array(f['p_b_e_range'])
-    p_x_e_range=np.array(f['p_x_e_range'])
-    p_e_e_range=np.array(f['p_e_e_range'])
-    p_e_i_range=np.array(f['p_e_i_range'])
-    p_i_i_range=np.array(f['p_i_i_range'])
-    p_i_e_range=np.array(f['p_i_e_range'])
-    input_contrast=np.array(f['input_contrast'])
-    max_bold=np.array(f['max_bold'])
-    auc=np.array(f['auc'])
-    f.close()
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_filename)
 
-    bc_slope=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                       len(p_i_e_range)])
-    bc_intercept=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                           len(p_i_e_range)])
-    bc_rsqr=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
-                       len(p_i_e_range)])
-    for i,p_b_e in enumerate(p_b_e_range):
-        for j,p_x_e in enumerate(p_x_e_range):
-            for k,p_e_e in enumerate(p_e_e_range):
-                for l,p_e_i in enumerate(p_e_i_range):
-                    for m,p_i_i in enumerate(p_i_i_range):
-                        for n,p_i_e in enumerate(p_i_e_range):
-                            if auc[i,j,k,l,m,n]>0:
-                                combo_contrast = input_contrast[i, j, k, l, m, n, :]
-                                combo_max_bold = max_bold[i, j, k, l, m, n, :]
-                                clf = LinearRegression()
-                                clf.fit(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
-                                bc_slope[i,j,k,l,m,n] = clf.coef_[0]
-                                bc_intercept[i,j,k,l,m,n] = clf.intercept_
-                                bc_rsqr[i,j,k,l,m,n]=clf.score(combo_contrast.reshape([num_trials, 1]), combo_max_bold)
-                            else:
-                                bc_slope[i,j,k,l,m,n] = 0
-                                bc_intercept[i,j,k,l,m,n] = 0
-                                bc_rsqr[i,j,k,l,m,n]=0
-
-    bayes_analysis=run_bayesian_analysis(auc, bc_slope, bc_intercept, bc_rsqr, num_trials, p_b_e_range, p_e_e_range,
-        p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
+    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+        summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
 
     samples=[]
     posterior=bayes_analysis.l1_pos_posterior
     while len(samples)<num_samples:
         p_b_e_posterior=np.sum(np.sum(np.sum(np.sum(np.sum(posterior,axis=1),axis=1),axis=1),axis=1),axis=1)
-        i, p_b_e = sample(p_b_e_posterior, p_b_e_range)
+        i, p_b_e = sample(p_b_e_posterior, summary_data.p_b_e_range)
 
         p_x_e_posterior=np.sum(np.sum(np.sum(np.sum(posterior[i,:,:,:,:,:],axis=1),axis=1),axis=1),axis=1)
-        j,p_x_e = sample(p_x_e_posterior, p_x_e_range)
+        j,p_x_e = sample(p_x_e_posterior, summary_data.p_x_e_range)
 
         p_e_e_posterior=np.sum(np.sum(np.sum(posterior[i,j,:,:,:,:],axis=1),axis=1),axis=1)
-        k,p_e_e = sample(p_e_e_posterior, p_e_e_range)
+        k,p_e_e = sample(p_e_e_posterior, summary_data.p_e_e_range)
 
         p_e_i_posterior=np.sum(np.sum(posterior[i,j,k,:,:,:],axis=1),axis=1)
-        l,p_e_i=sample(p_e_i_posterior, p_e_i_range)
+        l,p_e_i=sample(p_e_i_posterior, summary_data.p_e_i_range)
 
         p_i_i_posterior=np.sum(posterior[i,j,k,l,:,:],axis=1)
-        m,p_i_i=sample(p_i_i_posterior, p_i_i_range)
+        m,p_i_i=sample(p_i_i_posterior, summary_data.p_i_i_range)
 
         p_i_e_posterior=posterior[i,j,k,l,m,:]
-        n,p_i_e=sample(p_i_e_posterior, p_i_e_range)
+        n,p_i_e=sample(p_i_e_posterior, summary_data.p_i_e_range)
 
         file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.0.h5' %\
-                  (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+                  (summary_data.num_groups, summary_data.trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
         file_name=os.path.join(data_path,file_desc)
         if not os.path.exists(file_name) and not (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in samples:
             print('p_b_e=%0.3f, p_x_e=%0.3f, p_e_e=%0.3f, p_e_i=%0.3f, p_i_i=%0.3f, p_i_e=%0.3f' % (p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e))
             samples.append((p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e))
             if post_jobs:
                 input_sum=40.0
-                contrast_range=[float(x)*(1.0/(num_trials-1)) for x in range(0,num_trials)]
+                contrast_range=[float(x)*(1.0/(summary_data.num_trials-1)) for x in range(0,summary_data.num_trials)]
                 for t,contrast in enumerate(contrast_range):
                     inputs=np.zeros(2)
                     inputs[0]=(input_sum*(contrast+1.0)/2.0)
                     inputs[1]=input_sum-inputs[0]
                     np.random.shuffle(inputs)
-                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, summary_data.trial_duration, p_b_e,
                         p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop, record_lfp=True,
                         record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True)
                     launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
