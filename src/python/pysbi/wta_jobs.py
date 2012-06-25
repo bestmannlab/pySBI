@@ -263,7 +263,7 @@ def probabilistic_sample(nodes, summary_filename, data_path, single_inh_pop=Fals
                     inputs[0]=(input_sum*(contrast+1.0)/2.0)
                     inputs[1]=input_sum-inputs[0]
                     np.random.shuffle(inputs)
-                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, summary_data.trial_duration, p_b_e,
+                    cmds,log_file_template,out_file=get_wta_cmds(summary_data.num_groups, inputs, summary_data.trial_duration, p_b_e,
                         p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop, record_lfp=True,
                         record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True)
                     launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
