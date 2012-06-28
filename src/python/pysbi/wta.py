@@ -16,7 +16,7 @@ from brian.units import siemens, hertz, second
 import h5py
 import argparse
 import numpy as np
-from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show
+from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show, ylim
 from numpy.matlib import randn
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 
@@ -208,25 +208,15 @@ class WTANetworkGroup(NeuronGroup):
         for i in range(self.num_groups):
 
             # E population - recurrent connections
-            ampa_conn=DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa_r', sparseness=self.params.p_e_e,
-                weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-            nmda_conn=DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda', sparseness=self.params.p_e_e,
-                weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-            # don't allow loops to self
-#            for j in range(len(self.groups_e[i])):
-#                ampa_conn[j,j]=0.0
-#                nmda_conn[j,j]=0.0
-            self.connections.append(ampa_conn)
-            self.connections.append(nmda_conn)
+            self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa_r', sparseness=self.params.p_e_e,
+                weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
+            self.connections.append(DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda', sparseness=self.params.p_e_e,
+                weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
 
             if not self.single_inh_pop:
                 # I population - recurrent connections
-                gaba_a_conn=DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a', sparseness=self.params.p_i_i,
-                    weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-                # don't allow loops to self
-#                for j in range(len(self.groups_i[i])):
-#                    gaba_a_conn[j,j]=0.0
-                self.connections.append(gaba_a_conn)
+                self.connections.append(DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a', sparseness=self.params.p_i_i,
+                    weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
 
                 # E -> I excitatory connections
                 self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
@@ -253,12 +243,8 @@ class WTANetworkGroup(NeuronGroup):
 
         if self.single_inh_pop:
             # I population - recurrent connections
-            gaba_a_conn=DelayConnection(self.group_i, self.group_i, 'g_gaba_a', sparseness=self.params.p_i_i,
-                weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-            # dont allow loops to self
-#            for j in range(len(self.group_i)):
-#                gaba_a_conn[j,j]=0.0
-            self.connections.append(gaba_a_conn)
+            self.connections.append(DelayConnection(self.group_i, self.group_i, 'g_gaba_a', sparseness=self.params.p_i_i,
+                weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
 
         if self.background_input is not None:
             # Background -> E+I population connectinos
@@ -312,7 +298,7 @@ class WTAMonitor():
                 e_idx=i*int(4*self.N/5)
                 i_idx=int(4*self.N*self.num_groups/5)+i*int(self.N/5)
                 self.record_idx.extend([e_idx, i_idx])
-            self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a','g_nmda'],#,'g_gaba_b'],
+            self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a','g_nmda','I_ampa_r','I_ampa_x','I_ampa_b','I_gaba_a','I_nmda'],#,'g_gaba_b'],
                 record=self.record_idx)
             self.monitors.append(self.network_monitor)
         else:
@@ -385,9 +371,11 @@ class WTAMonitor():
             ax=subplot(211)
             for pop_rate_monitor in self.population_rate_monitors['excitatory']:
                 ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
+                ylim(0,100)
             ax=subplot(212)
             for pop_rate_monitor in self.population_rate_monitors['inhibitory']:
                 ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
+                ylim(0,100)
 
         # Input firing rate plots
         if self.background_rate_monitor is not None and self.task_rate_monitors is not None:
@@ -403,34 +391,71 @@ class WTAMonitor():
             for i in range(self.num_groups):
                 ax=subplot(self.num_groups*100+20+(i*2+1))
                 neuron_idx=self.record_idx[i*2]
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
                     label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
                     label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
                     label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
                     label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
                     label='GABA_A')
+                ylim(0,90)
                 xlabel('Time (ms)')
-                ylabel('Conductance (nA)')
+                ylabel('Conductance (nS)')
                 legend()
 
                 ax=subplot(self.num_groups*100+20+(i*2+2))
                 neuron_idx=self.record_idx[i*2+1]
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
                     label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
                     label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
                     label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
                     label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nA,
+                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
                     label='GABA_A')
+                ylim(0,90)
                 xlabel('Time (ms)')
-                ylabel('Conductance (nA)')
+                ylabel('Conductance (nS)')
+                legend()
+            figure()
+            for i in range(self.num_groups):
+                ax=subplot(self.num_groups*100+20+(i*2+1))
+                neuron_idx=self.record_idx[i*2]
+                ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
+                    label='AMPA-recurrent')
+                ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
+                    label='AMPA-task')
+                ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
+                    label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
+                    label='NMDA')
+                ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
+                    label='GABA_A')
+                ylim(-1.0,1.5)
+                xlabel('Time (ms)')
+                ylabel('Current (nA)')
+                legend()
+
+                ax=subplot(self.num_groups*100+20+(i*2+2))
+                neuron_idx=self.record_idx[i*2+1]
+                ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
+                    label='AMPA-recurrent')
+                ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
+                    label='AMPA-task')
+                ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
+                    label='AMPA-backgrnd')
+                ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
+                    label='NMDA')
+                ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
+                    label='GABA_A')
+                ylim(-1.0,1.5)
+                xlabel('Time (ms)')
+                ylabel('Current (nA)')
                 legend()
 
         # LFP plot
@@ -445,9 +470,9 @@ class WTAMonitor():
         if self.voxel_monitor is not None:
             figure()
             ax=subplot(211)
-            ax.plot(self.voxel_monitor['G_total'].times / ms, self.voxel_monitor['G_total'][0] / nA)
+            ax.plot(self.voxel_monitor['G_total'].times / ms, self.voxel_monitor['G_total'][0] / nS)
             xlabel('Time (ms)')
-            ylabel('Total Synaptic Activity (nA)')
+            ylabel('Total Synaptic Activity (nS)')
             ax=subplot(212)
             ax.plot(self.voxel_monitor['y'].times / ms, self.voxel_monitor['y'][0])
             xlabel('Time (ms)')
