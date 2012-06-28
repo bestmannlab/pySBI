@@ -1,13 +1,11 @@
 import os
 import random
-import h5py
 import numpy as np
 from brian.units import second
 from ezrcluster.launcher import Launcher
-from scikits.learn.linear_model.base import LinearRegression
 from pysbi.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
-from pysbi.random_distributions import make_distribution_curve
+from pysbi.util.random_distributions import make_distribution_curve
 from pysbi.reports.summary import SummaryData
 from pysbi.reports.utils import get_tested_param_combos
 

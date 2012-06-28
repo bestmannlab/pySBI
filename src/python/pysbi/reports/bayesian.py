@@ -1,7 +1,7 @@
 import os
 import matplotlib.pylab as plt
 import numpy as np
-from pysbi.utils import Struct, save_to_png
+from pysbi.util.utils import Struct, save_to_png
 
 def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope, bc_intercept, bc_r_sqr, evidence,
                            posterior, marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,

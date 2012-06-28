@@ -9,7 +9,7 @@ from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_sin
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.summary import render_summary_report, SummaryData
 from pysbi.reports.utils import all_trials_exist, get_tested_param_combos, make_report_dirs
-from pysbi.utils import save_to_png, Struct, plot_raster
+from pysbi.util.utils import save_to_png, Struct, plot_raster
 
 
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,

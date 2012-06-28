@@ -7,9 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysbi import wta, voxel
 from pysbi.config import DATA_DIR
-from pysbi.utils import Struct
+from pysbi.util.utils import Struct
 from pysbi.wta import  run_wta
-from scikits.learn.linear_model.base import LinearRegression
 
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
