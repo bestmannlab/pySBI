@@ -7,6 +7,7 @@ from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.bayesian import create_bayesian_report, render_joint_marginal_report
 from pysbi.reports.utils import get_local_average, make_report_dirs
 from pysbi.utils import Struct
+import matplotlib.pylab as plt
 
 class SummaryData:
     def __init__(self, num_groups=0, num_trials=0, trial_duration=0, p_b_e_range=np.zeros([1]),
@@ -132,6 +133,129 @@ def create_summary_report(summary_file_name, base_report_dir):
         summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range,
         report_info)
 
+
+def plot_l1_pos_bayes_marginals(summary_file_name, y_max=0.3):
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_file_name)
+    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+        summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_e_range[1]-summary_data.p_e_e_range[0]
+    bayes_analysis.l1_pos_marginals.posterior_p_e_e[bayes_analysis.l1_pos_marginals.posterior_p_e_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_e_range) - .5*param_step, bayes_analysis.l1_pos_marginals.posterior_p_e_e, param_step)
+    plt.xlabel('p_e_e')
+    plt.ylabel('p(p_e_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_i_range[1]-summary_data.p_e_i_range[0]
+    bayes_analysis.l1_pos_marginals.posterior_p_e_i[bayes_analysis.l1_pos_marginals.posterior_p_e_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_i_range) - .5*param_step, bayes_analysis.l1_pos_marginals.posterior_p_e_i, param_step)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(p_e_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_i_range[1]-summary_data.p_i_i_range[0]
+    bayes_analysis.l1_pos_marginals.posterior_p_i_i[bayes_analysis.l1_pos_marginals.posterior_p_i_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_i_range) - .5*param_step, bayes_analysis.l1_pos_marginals.posterior_p_i_i, param_step)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(p_i_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_e_range[1]-summary_data.p_i_e_range[0]
+    bayes_analysis.l1_pos_marginals.posterior_p_i_e[bayes_analysis.l1_pos_marginals.posterior_p_i_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_e_range) - .5*param_step, bayes_analysis.l1_pos_marginals.posterior_p_i_e, param_step)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(p_i_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    plt.show()
+
+def plot_l1_pos_l2_pos_bayes_marginals(summary_file_name, y_max=0.3):
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_file_name)
+    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+        summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_e_range[1]-summary_data.p_e_e_range[0]
+    bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_e[bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_e_range) - .5*param_step, bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_e, param_step)
+    plt.xlabel('p_e_e')
+    plt.ylabel('p(p_e_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_i_range[1]-summary_data.p_e_i_range[0]
+    bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_i[bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_i_range) - .5*param_step, bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_e_i, param_step)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(p_e_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_i_range[1]-summary_data.p_i_i_range[0]
+    bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_i[bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_i_range) - .5*param_step, bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_i, param_step)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(p_i_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_e_range[1]-summary_data.p_i_e_range[0]
+    bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_e[bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_e_range) - .5*param_step, bayes_analysis.l1_pos_l2_pos_marginals.posterior_p_i_e, param_step)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(p_i_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    plt.show()
+
+def plot_l1_pos_l2_zero_bayes_marginals(summary_file_name, y_max=0.3):
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_file_name)
+    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+        summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_e_range[1]-summary_data.p_e_e_range[0]
+    bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_e[bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_e_range) - .5*param_step, bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_e, param_step)
+    plt.xlabel('p_e_e')
+    plt.ylabel('p(p_e_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_e_i_range[1]-summary_data.p_e_i_range[0]
+    bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_i[bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_e_i_range) - .5*param_step, bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_e_i, param_step)
+    plt.xlabel('p_e_i')
+    plt.ylabel('p(p_e_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_i_range[1]-summary_data.p_i_i_range[0]
+    bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_i[bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_i==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_i_range) - .5*param_step, bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_i, param_step)
+    plt.xlabel('p_i_i')
+    plt.ylabel('p(p_i_i|A,M)')
+    plt.ylim(0.0,y_max)
+
+    fig = plt.figure()
+    param_step=summary_data.p_i_e_range[1]-summary_data.p_i_e_range[0]
+    bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_e[bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_e==0]=1e-7
+    plt.bar(np.array(summary_data.p_i_e_range) - .5*param_step, bayes_analysis.l1_pos_l2_zero_marginals.posterior_p_i_e, param_step)
+    plt.xlabel('p_i_e')
+    plt.ylabel('p(p_i_e|A,M)')
+    plt.ylim(0.0,y_max)
+
+    plt.show()
 
 def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
                           p_i_i_range, p_x_e_range, report_info):
