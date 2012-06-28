@@ -343,6 +343,47 @@ def create_roc_report(file_prefix, num_groups, num_trials, reports_dir, regenera
         plt.close()
     return roc_report
 
+def plot_roc(data_dir, num_groups, trial_duration, num_trials, p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e,num_extra_trials=10):
+    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
+              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+    file_prefix=os.path.join(data_dir,file_desc)
+
+    fig=plt.figure()
+    for i in range(num_groups):
+        roc=get_roc_single_option(file_prefix, num_trials, num_extra_trials, i)
+        plt.plot(roc[:,0],roc[:,1],'x-',label='option %d' % i)
+    plt.plot([0,1],[0,1],'--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.show()
+
+def plot_bold_contrast(data_dir, num_groups, trial_duration, num_trials, p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e):
+    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
+              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+    file_prefix=os.path.join(data_dir,file_desc)
+    trial_contrast=np.zeros([num_trials,1])
+    trial_max_bold=np.zeros(num_trials)
+    for i in range(num_trials):
+        file_name='%s.trial.%d.h5' % (file_prefix, i)
+        print('opening %s' % file_name)
+        data=FileInfo(file_name)
+        trial_contrast[i]=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
+        trial_max_bold[i]=np.max(data.voxel_rec['y'][0])
+
+    clf=LinearRegression()
+    clf.fit(trial_contrast,trial_max_bold)
+    a=clf.coef_[0]
+    b=clf.intercept_
+
+    fig=plt.figure()
+    plt.plot(trial_contrast, trial_max_bold, 'x')
+    x_min=np.min(trial_contrast)
+    x_max=np.max(trial_contrast)
+    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+    plt.xlabel('Input Contrast')
+    plt.ylabel('Max BOLD')
+    plt.show()
+
 if __name__=='__main__':
     param_range=[float(x)*.01 for x in range(0,11)]
     create_all_reports('../../data/wta-output',2,1.0,[0.1],[0.03],param_range,param_range,param_range,param_range,20,
