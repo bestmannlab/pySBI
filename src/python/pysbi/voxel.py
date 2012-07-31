@@ -2,10 +2,10 @@ from math import exp
 from brian import Equations, NeuronGroup, Parameters, second, network_operation, defaultclock, Network, reinit_default_clock
 from brian.monitor import MultiStateMonitor
 from brian.neurongroup import linked_var
-from brian.stdunits import nA
+from brian.stdunits import nA, nS
 
 default_params=Parameters(
-    G_base=28670*nA,
+    G_base=28670*nS,
     # synaptic efficacy (value from Zheng et al., 2002)
     eta=0.5 * second,
     # signal decay time constant (value from Zheng et al., 2002)
@@ -55,7 +55,8 @@ class LFPSource(NeuronGroup):
 class Voxel(NeuronGroup):
     def __init__(self, params=default_params, network=None):
         eqs=Equations('''
-        G_total                                                       : amp
+        G_total                                                       : siemens
+        G_total_exc                                                   : siemens
         ds/dt=eta*(G_total-G_base)/G_base-s/tau_s-(f_in-1.0)/tau_f    : 1
         df_in/dt=s/second                                             : 1
         dv/dt=1/tau_o*(f_in-f_out)                                    : 1
@@ -63,7 +64,7 @@ class Voxel(NeuronGroup):
         o_e=1-(1-e_base)**(1/f_in)                                    : 1
         dq/dt=1/tau_o*((f_in*o_e/e_base)-f_out*q/v)                   : 1
         y=v_base*((k1+k2)*(1-q)-(k2+k3)*(1-v))                        : 1
-        G_base                                                        : amp
+        G_base                                                        : siemens
         eta                                                           : 1/second
         tau_s                                                         : second
         tau_f                                                         : second
@@ -102,7 +103,7 @@ class Voxel(NeuronGroup):
 
         if network is not None:
             self.G_total = linked_var(network, 'g_syn', func=sum)
-
+            self.G_total_exc = linked_var(network, 'g_syn_exc', func=sum)
 
 def get_bold_signal(g_total, voxel_params, baseline_range):
     voxel=Voxel(params=voxel_params)
