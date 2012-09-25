@@ -122,6 +122,6 @@ def get_bold_signal(g_total, voxel_params, baseline_range):
 
     net=Network(voxel, get_input, voxel_monitor)
     reinit_default_clock()
-    net.run(6*second)
+    net.run(10*second)
 
     return voxel_monitor
