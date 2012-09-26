@@ -1,57 +1,12 @@
-from brian import pF, nS, mV, DelayConnection, ms, NeuronGroup, siemens, Current, Equations, Parameters
+from brian import pF, nS, mV, DelayConnection, ms, NeuronGroup, siemens, Current, Equations
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 
 # Default parameters
 from numpy.matlib import randn
 
-default_params=Parameters(
-    # Neuron parameters
-    C = 200 * pF,
-    gL = 20 * nS,
-    EL = -70 * mV,
-    VT = -55 * mV,
-    DeltaT = 3 * mV,
-    # Magnesium concentration
-    Mg = 1,
-    # Synapse parameters
-    E_ampa = 0 * mV,
-    E_nmda = 0 * mV,
-    E_gaba_a = -70 * mV,
-    E_gaba_b = -95 * mV,
-    tau_ampa = 2.5*ms,
-    tau1_nmda = 10*ms,
-    tau2_nmda = 100*ms,
-    tau_gaba_a = 2.5*ms,
-    tau1_gaba_b = 10*ms,
-    tau2_gaba_b =100*ms,
-    w_ampa_b = 2.0 * nS,
-    w_ampa_x = 2.0 * nS,
-    w_ampa_g = 0.5 * nS,
-    w_ampa_r=1.0*nS,
-    w_nmda=0.01*nS,
-    w_gaba_a=1.0*nS,
-    w_gaba_b=0.01*nS,
-
-    # Connection probabilities
-    p_g_e=0.0,
-    p_b_e=0.02,
-    p_v_ec_vis=0.03,
-    p_ec_vis_ec_vis=0.001,
-    p_ec_mem_ec_mem=0.023,
-    p_ec_vis_ec_mem=0.001,
-    p_ii_ec=0.02,
-    p_ec_ei=0.03,
-    p_ei_vis_ei_vis=0.001,
-    p_ei_mem_ei_mem=0.023,
-    p_ei_vis_ei_mem=0.001,
-    p_ic_ei=0.02,
-    p_ei_ii=0.03,
-    p_ec_ii=0.01,
-    p_ec_ic=0.02)
-
 class LIP():
-    def __init__(self, neuron_group, params=default_params):
+    def __init__(self, neuron_group, params):
         self.neuron_group=neuron_group
         self.N=len(neuron_group)
         self.e_contra_size=int(self.N/1.5625)
@@ -212,7 +167,7 @@ class BrainNetworkGroup(NeuronGroup):
     #       background_input = background input source
     #       task_inputs = task input sources
     #       single_inh_pop = single inhibitory population if true
-    def __init__(self, lip_size, params=default_params, background_inputs=None, visual_cortex_input=None,
+    def __init__(self, lip_size, params, background_inputs=None, visual_cortex_input=None,
                  go_input=None):
         self.lip_size=lip_size
         self.N=2*self.lip_size

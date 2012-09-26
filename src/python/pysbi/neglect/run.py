@@ -1,6 +1,6 @@
 from math import exp
 from time import time
-from brian import ms, hertz, raster_plot, Hz, second, PoissonGroup, Network, reinit_default_clock
+from brian import ms, hertz, raster_plot, Hz, second, PoissonGroup, Network, reinit_default_clock, Parameters
 from brian.globalprefs import set_global_preferences
 from matplotlib.pyplot import figure, subplot, legend, xlabel, ylabel, title
 import numpy as np
@@ -9,6 +9,51 @@ from pysbi.neglect.network import BrainNetworkGroup
 from pysbi.voxel import LFPSource, Voxel, get_bold_signal
 
 set_global_preferences(useweave=True)
+
+default_params=Parameters(
+    # Neuron parameters
+    C = 200 * pF,
+    gL = 20 * nS,
+    EL = -70 * mV,
+    VT = -55 * mV,
+    DeltaT = 3 * mV,
+    # Magnesium concentration
+    Mg = 1,
+    # Synapse parameters
+    E_ampa = 0 * mV,
+    E_nmda = 0 * mV,
+    E_gaba_a = -70 * mV,
+    E_gaba_b = -95 * mV,
+    tau_ampa = 2.5*ms,
+    tau1_nmda = 10*ms,
+    tau2_nmda = 100*ms,
+    tau_gaba_a = 2.5*ms,
+    tau1_gaba_b = 10*ms,
+    tau2_gaba_b =100*ms,
+    w_ampa_b = 2.0 * nS,
+    w_ampa_x = 2.0 * nS,
+    w_ampa_g = 0.5 * nS,
+    w_ampa_r=1.0*nS,
+    w_nmda=0.01*nS,
+    w_gaba_a=1.0*nS,
+    w_gaba_b=0.01*nS,
+
+    # Connection probabilities
+    p_g_e=0.0,
+    p_b_e=0.025,
+    p_v_ec_vis=0.03,
+    p_ec_vis_ec_vis=0.001,
+    p_ec_mem_ec_mem=0.025,
+    p_ec_vis_ec_mem=0.002,
+    p_ii_ec=0.02,
+    p_ec_ei=0.03,
+    p_ei_vis_ei_vis=0.001,
+    p_ei_mem_ei_mem=0.025,
+    p_ei_vis_ei_mem=0.002,
+    p_ic_ei=0.02,
+    p_ei_ii=0.03,
+    p_ec_ii=0.01,
+    p_ec_ic=0.02)
 
 def test_neglect(net_params, input_level, trial_duration, output_base, record_lfp=True, record_voxel=True,
                  record_neuron_state=True, record_spikes=True, record_pop_firing_rate=True, record_neuron_firing_rate=False,
@@ -160,7 +205,7 @@ def test_neglect(net_params, input_level, trial_duration, output_base, record_lf
             ylabel('Right II')
 
 
-def run_neglect(net_params, input_freq, trial_duration, output_file=None, record_lfp=True, record_voxel=True,
+def run_neglect(input_freq, trial_duration, net_params=default_params, output_file=None, record_lfp=True, record_voxel=True,
                 record_neuron_state=False, record_spikes=True, record_pop_firing_rate=True, record_neuron_firing_rate=False,
                 record_inputs=False, plot_output=False, mem_trial=False):
 
