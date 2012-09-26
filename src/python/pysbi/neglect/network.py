@@ -1,4 +1,4 @@
-from brian import pF, nS, mV, DelayConnection, ms, NeuronGroup, siemens, Current, Equations
+from brian import pF, nS, mV, DelayConnection, ms, NeuronGroup, siemens, Current, Equations, Parameters
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 

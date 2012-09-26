@@ -4,7 +4,6 @@ from brian import ms, hertz, raster_plot, Hz, second, PoissonGroup, Network, rei
 from brian.globalprefs import set_global_preferences
 from matplotlib.pyplot import figure, subplot, legend, xlabel, ylabel, title
 import numpy as np
-from pysbi.neglect import run_neglect
 from pysbi.neglect.monitor import BrainMonitor
 from pysbi.neglect.network import BrainNetworkGroup
 from pysbi.voxel import LFPSource, Voxel, get_bold_signal
