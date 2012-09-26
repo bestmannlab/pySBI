@@ -215,18 +215,18 @@ class BrainMonitor():
         if self.population_rate_monitors is not None:
             figure()
             ax=subplot(211)
-            ax.plot(self.population_rate_monitors['left_ec_vis'].times[50:]/ms,
-                self.population_rate_monitors['left_ec_vis'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP EC vis')
-            ax.plot(self.population_rate_monitors['left_ec_mem'].times[50:]/ms,
-                self.population_rate_monitors['left_ec_mem'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP EC mem')
-            ax.plot(self.population_rate_monitors['left_ei_vis'].times[50:]/ms,
-                self.population_rate_monitors['left_ei_vis'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP EI vis')
-            ax.plot(self.population_rate_monitors['left_ei_mem'].times[50:]/ms,
-                self.population_rate_monitors['left_ei_mem'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP EI mem')
-            ax.plot(self.population_rate_monitors['left_ic'].times[50:]/ms,
-                self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP IC')
-            ax.plot(self.population_rate_monitors['left_ii'].times[50:]/ms,
-                self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)[50:]/hertz, label='left LIP II')
+            ax.plot(self.population_rate_monitors['left_ec_vis'].times/ms,
+                self.population_rate_monitors['left_ec_vis'].smooth_rate(width=5*ms)/hertz, label='left LIP EC vis')
+            ax.plot(self.population_rate_monitors['left_ec_mem'].times/ms,
+                self.population_rate_monitors['left_ec_mem'].smooth_rate(width=5*ms)/hertz, label='left LIP EC mem')
+            ax.plot(self.population_rate_monitors['left_ei_vis'].times/ms,
+                self.population_rate_monitors['left_ei_vis'].smooth_rate(width=5*ms)/hertz, label='left LIP EI vis')
+            ax.plot(self.population_rate_monitors['left_ei_mem'].times/ms,
+                self.population_rate_monitors['left_ei_mem'].smooth_rate(width=5*ms)/hertz, label='left LIP EI mem')
+            ax.plot(self.population_rate_monitors['left_ic'].times/ms,
+                self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)/hertz, label='left LIP IC')
+            ax.plot(self.population_rate_monitors['left_ii'].times/ms,
+                self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)/hertz, label='left LIP II')
             legend()
             xlabel('Time (ms)')
             ylabel('Population Firing Rate (Hz)')
@@ -353,17 +353,17 @@ class BrainMonitor():
                 max_currents.append(np.max(self.right_network_monitor['I_ampa_r'][idx]/nA))
                 max_currents.append(np.max(self.right_network_monitor['I_ampa_x'][idx]/nA))
                 max_currents.append(np.max(self.right_network_monitor['I_ampa_b'][idx]/nA))
-                max_currents.append(np.max(self.right_network_monitor['g_ampa_g'][idx]/nA))
-                max_currents.append(np.max(self.right_network_monitor['g_nmda'][idx]/nA))
-                max_currents.append(np.max(self.right_network_monitor['g_gaba_a'][idx]/nA))
-                max_currents.append(np.max(self.right_network_monitor['g_gaba_b'][idx]/nA))
+                max_currents.append(np.max(self.right_network_monitor['I_ampa_g'][idx]/nA))
+                max_currents.append(np.max(self.right_network_monitor['I_nmda'][idx]/nA))
+                max_currents.append(np.max(self.right_network_monitor['I_gaba_a'][idx]/nA))
+                max_currents.append(np.max(self.right_network_monitor['I_gaba_b'][idx]/nA))
                 min_currents.append(np.min(self.right_network_monitor['I_ampa_r'][idx]/nA))
                 min_currents.append(np.min(self.right_network_monitor['I_ampa_x'][idx]/nA))
                 min_currents.append(np.min(self.right_network_monitor['I_ampa_b'][idx]/nA))
-                min_currents.append(np.min(self.right_network_monitor['g_ampa_g'][idx]/nA))
-                min_currents.append(np.min(self.right_network_monitor['g_nmda'][idx]/nA))
-                min_currents.append(np.min(self.right_network_monitor['g_gaba_a'][idx]/nA))
-                min_currents.append(np.min(self.right_network_monitor['g_gaba_b'][idx]/nA))
+                min_currents.append(np.min(self.right_network_monitor['I_ampa_g'][idx]/nA))
+                min_currents.append(np.min(self.right_network_monitor['I_nmda'][idx]/nA))
+                min_currents.append(np.min(self.right_network_monitor['I_gaba_a'][idx]/nA))
+                min_currents.append(np.min(self.right_network_monitor['I_gaba_b'][idx]/nA))
             max_current=np.max(max_currents)
             min_current=np.min(min_currents)
 
