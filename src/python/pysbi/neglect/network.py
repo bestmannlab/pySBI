@@ -3,6 +3,8 @@ from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 
 # Default parameters
+from numpy.matlib import randn
+
 default_params=Parameters(
     # Neuron parameters
     C = 200 * pF,
