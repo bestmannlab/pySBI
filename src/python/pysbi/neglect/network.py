@@ -299,13 +299,14 @@ class BrainNetworkGroup(NeuronGroup):
         self.right_lip=LIP(self.subgroup(self.lip_size), params=self.params)
 
         # Initialize state variables
-        self.vm = self.params.EL+randn(self.N*self.num_groups)*10*mV
-        self.g_ampa_r = randn(self.N*self.num_groups)*self.params.w_ampa_r*.1
-        self.g_ampa_b = randn(self.N*self.num_groups)*self.params.w_ampa_b*.1
-        self.g_ampa_x = randn(self.N*self.num_groups)*self.params.w_ampa_x*.1
-        self.g_nmda = randn(self.N*self.num_groups)*self.params.w_nmda*.1
-        self.g_gaba_a = randn(self.N*self.num_groups)*self.params.w_gaba_a*.1
-        self.g_gaba_b = randn(self.N*self.num_groups)*self.params.w_gaba_b*.1
+        self.vm = self.params.EL+randn(self.N)*10*mV
+        self.g_ampa_r = randn(self.N)*self.params.w_ampa_r*.1
+        self.g_ampa_b = randn(self.N)*self.params.w_ampa_b*.1
+        self.g_ampa_g = randn(self.N)*self.params.w_ampa_g*.1
+        self.g_ampa_x = randn(self.N)*self.params.w_ampa_x*.1
+        self.g_nmda = randn(self.N)*self.params.w_nmda*.1
+        self.g_gaba_a = randn(self.N)*self.params.w_gaba_a*.1
+        self.g_gaba_b = randn(self.N)*self.params.w_gaba_b*.1
 
     def init_connectivity(self):
         # Init connections from contralaterally tuned neurons in the opposite
