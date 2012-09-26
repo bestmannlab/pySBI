@@ -2,6 +2,7 @@ from math import exp
 from time import time
 from brian import ms, hertz, raster_plot, Hz, second, PoissonGroup, Network, reinit_default_clock, Parameters
 from brian.globalprefs import set_global_preferences
+from brian.stdunits import pF, nS, mV
 from matplotlib.pyplot import figure, subplot, legend, xlabel, ylabel, title
 import numpy as np
 from pysbi.neglect.monitor import BrainMonitor
