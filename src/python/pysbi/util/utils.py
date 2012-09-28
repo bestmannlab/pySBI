@@ -1,4 +1,6 @@
+from time import time
 from brian import ms
+from brian.connections.delayconnection import DelayConnection
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pylab as plt
 import numpy as np
@@ -35,5 +37,18 @@ def plot_raster(group_spike_neurons, group_spike_times, group_sizes):
         plt.ylabel('Group number')
         plt.xlabel('Time (ms)')
         return fig
+
+def init_connection(pop1, pop2, target_name, min_weight, max_weight, p, delay, allow_recurrent=True):
+    conn=DelayConnection(pop1, pop2, target_name, sparseness=p,
+        weight=lambda:min_weight+np.random.rand()*(max_weight-min_weight),
+        delay=delay)
+    if not allow_recurrent and len(pop1)==len(pop2):
+        for j in xrange(len(pop1)):
+            conn[j,j]=0.0
+            conn.delay[j,j]=0.0
+            conn[j,j]=0.0
+            conn.delay[j,j]=0.0
+    return conn
+
 
 

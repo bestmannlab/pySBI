@@ -3,14 +3,15 @@ from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 
 # Default parameters
-from numpy.matlib import randn
+from pysbi.util.utils import init_connection
+import numpy as np
 
 class LIP():
     def __init__(self, neuron_group, params):
         self.neuron_group=neuron_group
         self.N=len(neuron_group)
         self.e_contra_size=int(self.N/1.5625)
-        self.e_contra_mem_size=int(self.e_contra_size/4)
+        self.e_contra_mem_size=int(self.e_contra_size/2)
         self.e_contra_vis_size=self.e_contra_size-self.e_contra_mem_size
         self.e_ipsi_size=int(self.e_contra_size/4)
         self.e_ipsi_mem_size=int(self.e_ipsi_size/4)
@@ -57,105 +58,75 @@ class LIP():
     def init_connectivity(self):
         # Init connections from contralaterally tuned pyramidal cells to other
         # contralaterally tuned pyramidal cells in the same hemisphere
-        ec_vis_ec_vis_ampa=DelayConnection(self.e_contra_vis, self.e_contra_vis, 'g_ampa_r', sparseness=self.params.p_ec_vis_ec_vis,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ec_vis_ec_vis_nmda=DelayConnection(self.e_contra_vis, self.e_contra_vis, 'g_nmda', sparseness=self.params.p_ec_vis_ec_vis,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-        for j in xrange(len(self.e_contra_vis)):
-            ec_vis_ec_vis_ampa[j,j]=0.0
-            ec_vis_ec_vis_ampa.delay[j,j]=0.0
-            ec_vis_ec_vis_nmda[j,j]=0.0
-            ec_vis_ec_vis_nmda.delay[j,j]=0.0
-        self.connections.append(ec_vis_ec_vis_ampa)
-        self.connections.append(ec_vis_ec_vis_nmda)
-
-        ec_mem_ec_mem_ampa=DelayConnection(self.e_contra_mem, self.e_contra_mem, 'g_ampa_r', sparseness=self.params.p_ec_mem_ec_mem,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ec_mem_ec_mem_nmda=DelayConnection(self.e_contra_mem, self.e_contra_mem, 'g_nmda', sparseness=self.params.p_ec_mem_ec_mem,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-        for j in xrange(len(self.e_contra_mem)):
-            ec_mem_ec_mem_ampa[j,j]=0.0
-            ec_mem_ec_mem_ampa.delay[j,j]=0.0
-            ec_mem_ec_mem_nmda[j,j]=0.0
-            ec_mem_ec_mem_nmda.delay[j,j]=0.0
+        ec_mem_ec_mem_ampa=init_connection(self.e_contra_mem, self.e_contra_mem, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_recurrent=False)
+        ec_mem_ec_mem_nmda=init_connection(self.e_contra_mem, self.e_contra_mem, 'g_nmda', self.params.w_nmda_min,
+            self.params.w_nmda_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_recurrent=False)
         self.connections.append(ec_mem_ec_mem_ampa)
         self.connections.append(ec_mem_ec_mem_nmda)
 
-        ec_vis_ec_mem_ampa=DelayConnection(self.e_contra_vis, self.e_contra_mem, 'g_ampa_r', sparseness=self.params.p_ec_vis_ec_mem,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ec_vis_ec_mem_nmda=DelayConnection(self.e_contra_vis, self.e_contra_mem, 'g_nmda', sparseness=self.params.p_ec_vis_ec_mem,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
+        ec_vis_ec_mem_ampa=init_connection(self.e_contra_vis, self.e_contra_mem, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ec_vis_ec_mem, (0*ms, 5*ms))
+        ec_vis_ec_mem_nmda=init_connection(self.e_contra_vis, self.e_contra_mem, 'g_nmda', self.params.w_nmda_min,
+            self.params.w_nmda_max, self.params.p_ec_vis_ec_mem, (0*ms, 5*ms))
         self.connections.append(ec_vis_ec_mem_ampa)
         self.connections.append(ec_vis_ec_mem_nmda)
 
         # Init connections from ipsilaterally tuned interneurons to contralaterally
         # tuned pyramidal cells in the same hemisphere
-        ii_ec_gabaa=DelayConnection(self.i_ipsi, self.e_contra, 'g_gaba_a', sparseness=self.params.p_ii_ec,
-            weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-        ii_ec_gabab=DelayConnection(self.i_ipsi, self.e_contra, 'g_gaba_b', sparseness=self.params.p_ii_ec,
-            weight=self.params.w_gaba_b, delay=(0*ms, 5*ms))
+        ii_ec_gabaa=init_connection(self.i_ipsi, self.e_contra, 'g_gaba_a', self.params.w_gaba_a_min,
+            self.params.w_gaba_a_max, self.params.p_ii_ec, (0*ms, 5*ms))
+        ii_ec_gabab=init_connection(self.i_ipsi, self.e_contra, 'g_gaba_b', self.params.w_gaba_b_min,
+            self.params.w_gaba_b_max, self.params.p_ii_ec, (0*ms, 5*ms))
         self.connections.append(ii_ec_gabaa)
         self.connections.append(ii_ec_gabab)
 
         # Init connections from ipsilaterally tuned pyramidal cells to other
         # ipsilaterally tuned pyramidal cells in the same hemisphere
-        ei_vis_ei_vis_ampa=DelayConnection(self.e_ipsi_vis, self.e_ipsi_vis, 'g_ampa_r', sparseness=self.params.p_ei_vis_ei_vis,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ei_vis_ei_vis_nmda=DelayConnection(self.e_ipsi_vis, self.e_ipsi_vis, 'g_nmda', sparseness=self.params.p_ei_vis_ei_vis,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-        for j in xrange(len(self.e_ipsi_vis)):
-            ei_vis_ei_vis_ampa[j,j]=0.0
-            ei_vis_ei_vis_ampa.delay[j,j]=0.0
-            ei_vis_ei_vis_nmda[j,j]=0.0
-            ei_vis_ei_vis_nmda.delay[j,j]=0.0
-        self.connections.append(ei_vis_ei_vis_ampa)
-        self.connections.append(ei_vis_ei_vis_nmda)
-
-        ei_mem_ei_mem_ampa=DelayConnection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_ampa_r', sparseness=self.params.p_ei_mem_ei_mem,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ei_mem_ei_mem_nmda=DelayConnection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_nmda', sparseness=self.params.p_ei_mem_ei_mem,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-        for j in xrange(len(self.e_ipsi_mem)):
-            ei_mem_ei_mem_ampa[j,j]=0.0
-            ei_mem_ei_mem_ampa.delay[j,j]=0.0
-            ei_mem_ei_mem_nmda[j,j]=0.0
-            ei_mem_ei_mem_nmda.delay[j,j]=0.0
+        ei_mem_ei_mem_ampa=init_connection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_recurrent=False)
+        ei_mem_ei_mem_nmda=init_connection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_nmda', self.params.w_nmda_min,
+            self.params.w_nmda_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_recurrent=False)
         self.connections.append(ei_mem_ei_mem_ampa)
         self.connections.append(ei_mem_ei_mem_nmda)
 
-        ei_vis_ei_mem_ampa=DelayConnection(self.e_ipsi_vis, self.e_ipsi_mem, 'g_ampa_r', sparseness=self.params.p_ei_vis_ei_mem,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ei_vis_ei_mem_nmda=DelayConnection(self.e_ipsi_vis, self.e_ipsi_mem, 'g_nmda', sparseness=self.params.p_ei_vis_ei_mem,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
+        ei_vis_ei_mem_ampa=init_connection(self.e_ipsi_vis, self.e_ipsi_mem, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ei_vis_ei_mem, (0*ms, 5*ms))
+        ei_vis_ei_mem_nmda=init_connection(self.e_ipsi_vis, self.e_ipsi_mem, 'g_nmda', self.params.w_nmda_min,
+            self.params.w_nmda_max, self.params.p_ei_vis_ei_mem, (0*ms, 5*ms))
         self.connections.append(ei_vis_ei_mem_ampa)
         self.connections.append(ei_vis_ei_mem_nmda)
 
         # Init connections from contralaterally tuned interneurons to ipsilaterally
         # tuned pyramidal cells in the same hemisphere
-        ic_ei_gabaa=DelayConnection(self.i_contra, self.e_ipsi, 'g_gaba_a', sparseness=self.params.p_ic_ei,
-            weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-        ic_ei_gabab=DelayConnection(self.i_contra, self.e_ipsi, 'g_gaba_b', sparseness=self.params.p_ic_ei,
-            weight=self.params.w_gaba_b, delay=(0*ms, 5*ms))
+        ic_ei_gabaa=init_connection(self.i_contra, self.e_ipsi, 'g_gaba_a', self.params.w_gaba_a_min,
+            self.params.w_gaba_a_max, self.params.p_ic_ei, (0*ms, 5*ms))
+        ic_ei_gabab=init_connection(self.i_contra, self.e_ipsi, 'g_gaba_b', self.params.w_gaba_b_min,
+            self.params.w_gaba_b_max, self.params.p_ic_ei, (0*ms, 5*ms))
         self.connections.append(ic_ei_gabaa)
         self.connections.append(ic_ei_gabab)
 
         # Init connections from ipsilaterally tuned pyramidal cells to ipsilaterally
         # tuned interneurons in the same hemisphere
-        ei_ii_ampa=DelayConnection(self.e_ipsi, self.i_ipsi, 'g_ampa_r', sparseness=self.params.p_ei_ii,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ei_ii_nmda=DelayConnection(self.e_ipsi, self.i_ipsi, 'g_nmda', sparseness=self.params.p_ei_ii,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
+        ei_ii_ampa=init_connection(self.e_ipsi, self.i_ipsi, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ei_ii, (0*ms, 5*ms))
+        #ei_ii_nmda=DelayConnection(self.e_ipsi, self.i_ipsi, 'g_nmda', sparseness=self.params.p_ei_ii,
+        #    weight=self.params.w_nmda_max, delay=(0*ms, 5*ms))
+        #ei_ii_nmda=process_connection(ei_ii_nmda, self.e_ipsi, self.i_ipsi, self.params.w_nmda_min,
+        #    self.params.w_nmda_max)
         self.connections.append(ei_ii_ampa)
-        self.connections.append(ei_ii_nmda)
+        #self.connections.append(ei_ii_nmda)
 
         # Init connections from contralaterally tuned pyramidal cells to
         # contralaterally tuned interneurons in the same hemisphere
-        ec_ic_ampa=DelayConnection(self.e_contra, self.i_contra, 'g_ampa_r', sparseness=self.params.p_ec_ic,
-            weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-        ec_ic_nmda=DelayConnection(self.e_contra, self.i_contra, 'g_nmda', sparseness=self.params.p_ec_ic,
-            weight=self.params.w_nmda, delay=(0*ms, 5*ms))
+        ec_ic_ampa=init_connection(self.e_contra, self.i_contra, 'g_ampa_r', self.params.w_ampa_min,
+            self.params.w_ampa_max, self.params.p_ec_ic, (0*ms, 5*ms))
+        #ec_ic_nmda=DelayConnection(self.e_contra, self.i_contra, 'g_nmda', sparseness=self.params.p_ec_ic,
+        #    weight=self.params.w_nmda_max, delay=(0*ms, 5*ms))
+        #ec_ic_nmda=process_connection(ec_ic_nmda, self.e_contra, self.i_contra, self.params.w_nmda_min,
+        #    self.params.w_nmda_max)
         self.connections.append(ec_ic_ampa)
-        self.connections.append(ec_ic_nmda)
+        #self.connections.append(ec_ic_nmda)
 
 
 class BrainNetworkGroup(NeuronGroup):
@@ -226,25 +197,30 @@ class BrainNetworkGroup(NeuronGroup):
         self.init_connectivity()
 
         if self.background_inputs is not None:
-            # Background -> E+I population connectinos
-            self.connections.append(DelayConnection(self.background_inputs[0], self.left_lip.neuron_group, 'g_ampa_b',
-                sparseness=self.params.p_b_e, weight=self.params.w_ampa_b, delay=(0*ms, 5*ms)))
-            self.connections.append(DelayConnection(self.background_inputs[1], self.right_lip.neuron_group, 'g_ampa_b',
-                sparseness=self.params.p_b_e, weight=self.params.w_ampa_b, delay=(0*ms, 5*ms)))
+            # Background -> E+I population connections
+            background_left_ampa=init_connection(self.background_inputs[0], self.left_lip.neuron_group, 'g_ampa_b',
+                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_b_e, (0*ms, 5*ms))
+            background_right_ampa=init_connection(self.background_inputs[1], self.right_lip.neuron_group, 'g_ampa_b',
+                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_b_e, (0*ms, 5*ms))
+            self.connections.append(background_left_ampa)
+            self.connections.append(background_right_ampa)
 
         if self.visual_cortex_input is not None:
             # Task input -> E population connections
-            self.connections.append(DelayConnection(self.visual_cortex_input[0], self.left_lip.e_contra_vis, 'g_ampa_x',
-                sparseness=self.params.p_v_ec_vis, weight=self.params.w_ampa_x, delay=(50*ms, 270*ms)))
-
-            self.connections.append(DelayConnection(self.visual_cortex_input[1], self.right_lip.e_contra_vis, 'g_ampa_x',
-                sparseness=self.params.p_v_ec_vis, weight=self.params.w_ampa_x, delay=(50*ms, 270*ms)))
+            vc_left_lip_ampa=init_connection(self.visual_cortex_input[0], self.left_lip.e_contra_vis, 'g_ampa_x',
+                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_v_ec_vis, (50*ms, 270*ms))
+            vc_right_lip_ampa=init_connection(self.visual_cortex_input[1], self.right_lip.e_contra_vis, 'g_ampa_x',
+                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_v_ec_vis, (50*ms, 270*ms))
+            self.connections.append(vc_left_lip_ampa)
+            self.connections.append(vc_right_lip_ampa)
 
         if self.go_input is not None:
-            self.connections.append(DelayConnection(self.go_input, self.left_lip.i_group, 'g_ampa_g',
-                sparseness=self.params.p_g_e, weight=self.params.w_ampa_g, delay=(0*ms, 5*ms)))
-            self.connections.append(DelayConnection(self.go_input, self.right_lip.i_group, 'g_ampa_g',
-                sparseness=self.params.p_g_e, weight=self.params.w_ampa_g, delay=(0*ms, 5*ms)))
+            go_left_lip_ampa=init_connection(self.go_input, self.left_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+                self.params.w_ampa_max, self.params.p_g_e, (0*ms, 5*ms))
+            go_right_lip_ampa=init_connection(self.go_input, self.right_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+                self.params.w_ampa_max, self.params.p_g_e, (0*ms, 5*ms))
+            self.connections.append(go_left_lip_ampa)
+            self.connections.append(go_right_lip_ampa)
 
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
@@ -254,51 +230,60 @@ class BrainNetworkGroup(NeuronGroup):
         self.right_lip=LIP(self.subgroup(self.lip_size), params=self.params)
 
         # Initialize state variables
-        self.vm = self.params.EL+randn(self.N)*10*mV
-        self.g_ampa_r = randn(self.N)*self.params.w_ampa_r*.1
-        self.g_ampa_b = randn(self.N)*self.params.w_ampa_b*.1
-        self.g_ampa_g = randn(self.N)*self.params.w_ampa_g*.1
-        self.g_ampa_x = randn(self.N)*self.params.w_ampa_x*.1
-        self.g_nmda = randn(self.N)*self.params.w_nmda*.1
-        self.g_gaba_a = randn(self.N)*self.params.w_gaba_a*.1
-        self.g_gaba_b = randn(self.N)*self.params.w_gaba_b*.1
+        self.vm = self.params.EL+np.random.randn(self.N)*10*mV
+        self.g_ampa_r = np.random.randn(self.N)*self.params.w_ampa_min*.1
+        self.g_ampa_b = np.random.randn(self.N)*self.params.w_ampa_min*.1
+        self.g_ampa_g = np.random.randn(self.N)*self.params.w_ampa_min*.1
+        self.g_ampa_x = np.random.randn(self.N)*self.params.w_ampa_min*.1
+        self.g_nmda = np.random.randn(self.N)*self.params.w_nmda_min*.1
+        self.g_gaba_a = np.random.randn(self.N)*self.params.w_gaba_a_min*.1
+        self.g_gaba_b = np.random.randn(self.N)*self.params.w_gaba_b_min*.1
 
     def init_connectivity(self):
         # Init connections from contralaterally tuned neurons in the opposite
         # hemisphere to ipsilaterally tuned neurons in this hemisphere
-        left_ec_ei_ampa=DelayConnection(self.right_lip.e_contra, self.left_lip.e_ipsi, 'g_ampa_r',
-            sparseness=self.params.p_ec_ei, weight=self.params.w_ampa_r, delay=(10*ms, 20*ms))
-        left_ec_ei_nmda=DelayConnection(self.right_lip.e_contra, self.left_lip.e_ipsi, 'g_nmda',
-            sparseness=self.params.p_ec_ei, weight=self.params.w_nmda, delay=(10*ms, 20*ms))
-        self.connections.append(left_ec_ei_ampa)
-        self.connections.append(left_ec_ei_nmda)
+        left_ec_vis_ei_vis_ampa=init_connection(self.right_lip.e_contra_vis, self.left_lip.e_ipsi_vis, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_vis_ei_vis, (10*ms, 20*ms))
+        #left_ec_ei_nmda=DelayConnection(self.right_lip.e_contra, self.left_lip.e_ipsi, 'g_nmda',
+        #    sparseness=self.params.p_ec_ei, weight=self.params.w_nmda_max, delay=(10*ms, 20*ms))
+        self.connections.append(left_ec_vis_ei_vis_ampa)
+        #self.connections.append(left_ec_ei_nmda)
+
+        left_ec_mem_ei_mem_ampa=init_connection(self.right_lip.e_contra_mem, self.left_lip.e_ipsi_mem, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_mem_ei_mem, (10*ms, 20*ms))
+        self.connections.append(left_ec_mem_ei_mem_ampa)
+
 
         # Init connections from contralaterally tuned pyramidal cells in the opposite
         # hemisphere to ipsilaterally tuned interneurons in this hemisphere
-        left_ec_ii_ampa=DelayConnection(self.right_lip.e_contra, self.left_lip.i_ipsi, 'g_ampa_r',
-            sparseness=self.params.p_ec_ii, weight=self.params.w_ampa_r, delay=(10*ms, 20*ms))
-        left_ec_ii_nmda=DelayConnection(self.right_lip.e_contra, self.left_lip.i_ipsi, 'g_nmda',
-            sparseness=self.params.p_ec_ii, weight=self.params.w_nmda, delay=(10*ms, 20*ms))
+        left_ec_ii_ampa=init_connection(self.right_lip.e_contra, self.left_lip.i_ipsi, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_ii, (10*ms, 20*ms))
+        #left_ec_ii_nmda=DelayConnection(self.right_lip.e_contra, self.left_lip.i_ipsi, 'g_nmda',
+        #    sparseness=self.params.p_ec_ii, weight=self.params.w_nmda_max, delay=(10*ms, 20*ms))
         self.connections.append(left_ec_ii_ampa)
-        self.connections.append(left_ec_ii_nmda)
+        #self.connections.append(left_ec_ii_nmda)
 
         # Init connections from contralaterally tuned neurons in the opposite
         # hemisphere to ipsilaterally tuned neurons in this hemisphere
-        right_ec_ei_ampa=DelayConnection(self.left_lip.e_contra, self.right_lip.e_ipsi, 'g_ampa_r',
-            sparseness=self.params.p_ec_ei, weight=self.params.w_ampa_r, delay=(10*ms, 20*ms))
-        right_ec_ei_nmda=DelayConnection(self.left_lip.e_contra, self.right_lip.e_ipsi, 'g_nmda',
-            sparseness=self.params.p_ec_ei, weight=self.params.w_nmda, delay=(10*ms, 20*ms))
-        self.connections.append(right_ec_ei_ampa)
-        self.connections.append(right_ec_ei_nmda)
+        right_ec_vis_ei_vis_ampa=init_connection(self.left_lip.e_contra_vis, self.right_lip.e_ipsi_vis, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_vis_ei_vis, (10*ms, 20*ms))
+        #right_ec_ei_nmda=DelayConnection(self.left_lip.e_contra, self.right_lip.e_ipsi, 'g_nmda',
+        #    sparseness=self.params.p_ec_ei, weight=self.params.w_nmda_max, delay=(10*ms, 20*ms))
+        self.connections.append(right_ec_vis_ei_vis_ampa)
+        #self.connections.append(right_ec_ei_nmda)
+
+        right_ec_mem_ei_mem_ampa=init_connection(self.left_lip.e_contra_mem, self.right_lip.e_ipsi_mem, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_mem_ei_mem, (10*ms, 20*ms))
+        self.connections.append(right_ec_mem_ei_mem_ampa)
 
         # Init connections from contralaterally tuned pyramidal cells in the opposite
         # hemisphere to ipsilaterally tuned interneurons in this hemisphere
-        right_ec_ii_ampa=DelayConnection(self.left_lip.e_contra, self.right_lip.i_ipsi, 'g_ampa_r',
-            sparseness=self.params.p_ec_ii, weight=self.params.w_ampa_r, delay=(10*ms, 20*ms))
-        right_ec_ii_nmda=DelayConnection(self.left_lip.e_contra, self.right_lip.i_ipsi, 'g_nmda',
-            sparseness=self.params.p_ec_ii, weight=self.params.w_nmda, delay=(10*ms, 20*ms))
+        right_ec_ii_ampa=init_connection(self.left_lip.e_contra, self.right_lip.i_ipsi, 'g_ampa_r',
+            self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_ec_ii, (10*ms, 20*ms))
+        #right_ec_ii_nmda=DelayConnection(self.left_lip.e_contra, self.right_lip.i_ipsi, 'g_nmda',
+        #    sparseness=self.params.p_ec_ii, weight=self.params.w_nmda_max, delay=(10*ms, 20*ms))
         self.connections.append(right_ec_ii_ampa)
-        self.connections.append(right_ec_ii_nmda)
+        #self.connections.append(right_ec_ii_nmda)
 
         self.connections.extend(self.left_lip.connections)
         self.connections.extend(self.right_lip.connections)
