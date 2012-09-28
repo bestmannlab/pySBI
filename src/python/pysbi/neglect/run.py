@@ -3,6 +3,7 @@ from time import time
 from brian import ms, hertz, raster_plot, Hz, second, PoissonGroup, Network, reinit_default_clock, Parameters
 from brian.globalprefs import set_global_preferences
 from brian.stdunits import pF, nS, mV
+import h5py
 from matplotlib.pyplot import figure, subplot, legend, xlabel, ylabel, title
 import numpy as np
 from pysbi.neglect.monitor import BrainMonitor
@@ -31,30 +32,30 @@ default_params=Parameters(
     tau_gaba_a = 2.5*ms,
     tau1_gaba_b = 10*ms,
     tau2_gaba_b =100*ms,
-    w_ampa_b = 2.0 * nS,
-    w_ampa_x = 2.0 * nS,
-    w_ampa_g = 0.5 * nS,
-    w_ampa_r=1.0*nS,
-    w_nmda=0.01*nS,
-    w_gaba_a=1.0*nS,
-    w_gaba_b=0.01*nS,
+    w_ampa_min=0.35*nS,
+    w_ampa_max=1.0*nS,
+    w_nmda_min=0.01*nS,
+    w_nmda_max=0.6*nS,
+    w_gaba_a_min=0.25*nS,
+    w_gaba_a_max=1.2*nS,
+    w_gaba_b_min=0.1*nS,
+    w_gaba_b_max=1.0*nS,
 
     # Connection probabilities
-    p_g_e=0.0,
-    p_b_e=0.025,
-    p_v_ec_vis=0.03,
-    p_ec_vis_ec_vis=0.001,
-    p_ec_mem_ec_mem=0.025,
-    p_ec_vis_ec_mem=0.002,
-    p_ii_ec=0.02,
-    p_ec_ei=0.03,
-    p_ei_vis_ei_vis=0.001,
-    p_ei_mem_ei_mem=0.025,
-    p_ei_vis_ei_mem=0.002,
-    p_ic_ei=0.02,
-    p_ei_ii=0.03,
-    p_ec_ii=0.01,
-    p_ec_ic=0.02)
+    p_g_e=0.05,
+    p_b_e=0.1,
+    p_v_ec_vis=0.05,
+    p_ec_mem_ec_mem=0.007,
+    p_ec_vis_ec_mem=0.005,
+    p_ii_ec=0.015,
+    p_ec_vis_ei_vis=0.05,
+    p_ec_mem_ei_mem=0.03,
+    p_ei_mem_ei_mem=0.007,
+    p_ei_vis_ei_mem=0.005,
+    p_ic_ei=0.015,
+    p_ei_ii=0.01,
+    p_ec_ii=0.0075,
+    p_ec_ic=0.01)
 
 def test_neglect(net_params, input_level, trial_duration, output_base, record_lfp=True, record_voxel=True,
                  record_neuron_state=True, record_spikes=True, record_pop_firing_rate=True, record_neuron_firing_rate=False,
@@ -210,28 +211,35 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
                 record_neuron_state=False, record_spikes=True, record_pop_firing_rate=True, record_neuron_firing_rate=False,
                 record_inputs=False, plot_output=False, mem_trial=False):
 
+    start_time=time()
+
     # Init simulation parameters
-    background_input_size=2000
-    background_rate=10*Hz
+    background_input_size=1000
+    #background_rate=20*Hz
+    #background_rate=30*Hz
+    background_rate=25*Hz
 
     visual_input_size=1000
-    visual_background_rate=5*Hz
-    visual_stim_min_rate=10*Hz
+    visual_background_rate=10*Hz
+    visual_stim_min_rate=20*Hz
     visual_stim_tau=0.5
 
     go_input_size=500
-    go_rate=0*Hz
-    #go_rate=0*Hz
+    go_rate=20*Hz
     #go_background_rate=1*Hz
     go_background_rate=0*Hz
 
-    lip_size=8000
+    lip_size=6250
 
-    stim_start_time=1.8*second
-    stim_end_time=2*second
+    #stim_start_time=1.8*second
+    #stim_end_time=2*second
+    stim_start_time=.3*second
+    stim_end_time=.5*second
 
-    go_start_time=3*second
-    go_end_time=3.2*second
+    #go_start_time=3*second
+    #go_end_time=3.1*second
+    go_start_time=1.5*second
+    go_end_time=1.6*second
 
     # Create network inputs
     background_inputs=[PoissonGroup(background_input_size, rates=background_rate), PoissonGroup(background_input_size, rates=background_rate)]
@@ -280,6 +288,8 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
         left_lip_voxel, right_lip_voxel, brain_network.connections, brain_monitor.monitors)
     reinit_default_clock()
 
+    print "Initialization time:", time() - start_time
+
     # Run simulation
     start_time = time()
     net.run(trial_duration, report='text')
@@ -301,4 +311,186 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
     if plot_output:
         brain_monitor.plot(trial_duration)
 
+    if output_file is not None:
+        write_output(brain_network, output_file, record_firing_rate, record_neuron_state, record_spikes,
+            record_voxel, record_lfp, record_inputs, stim_end_time, stim_start_time, trial_duration,
+            left_voxel, right_voxel, brain_monitor)
+
     return brain_monitor
+
+## Write monitor data to HDF5 file
+#       background_input_size = number of background inputs
+#       bacground rate = background firing rate
+#       input_freq = input firing rates
+#       network_group_size = number of neurons per input group
+#       num_groups = number of input groups
+#       single_inh_pop = single inhibitory population
+#       output_file = filename to write to
+#       record_firing_rate = write network firing rate data when true
+#       record_neuron_stae = write neuron state data when true
+#       record_spikes = write spike data when true
+#       record_voxel = write voxel data when true
+#       record_lfp = write LFP data when true
+#       record_inputs = write input firing rates when true
+#       stim_end_time = stimulation end time
+#       stim_start_time = stimulation start time
+#       task_input_size = number of neurons in each task input group
+#       trial_duration = duration of the trial
+#       voxel = voxel for network
+#       wta_monitor = network monitor
+#       wta_params = network parameters
+def write_output(brain_network, background_input_size, background_rate, vc_size, vc_rates, trial_duration, stim_start_time,
+                 stim_end_time, go_start_time, go_end_time, record_firing_rate, record_neuron_state, record_spikes,
+                 record_voxel, record_lfp, record_inputs, output_file, left_voxel, right_voxel, brain_monitor):
+
+    f = h5py.File(output_file, 'w')
+
+    # Write basic parameters
+    param_group=f.create_group('parameters')
+    param_group.attrs['background_input_size'] = background_input_size
+    param_group.attrs['background_rate'] = background_rate
+    param_group.attrs['vc_size'] = vc_size
+    param_group.attrs['vc_rates'] = vc_rates
+    param_group.attrs['trial_duration'] = trial_duration
+    param_group.attrs['stim_start_time'] = stim_start_time
+    param_group.attrs['stim_end_time'] = stim_end_time
+    param_group.attrs['go_start_time'] = go_start_time
+    param_group.attrs['go_end_time'] = go_end_time
+    param_group.attrs['lip_size'] = brain_network.lip_size
+    param_group.attrs['C'] = brain_network.params.C
+    param_group.attrs['gL'] = brain_network.params.gL
+    param_group.attrs['EL'] = brain_network.params.EL
+    param_group.attrs['VT'] = brain_network.params.VT
+    param_group.attrs['Mg'] = brain_network.params.Mg
+    param_group.attrs['DeltaT'] = brain_network.params.DeltaT
+    param_group.attrs['E_ampa'] = brain_network.params.E_ampa
+    param_group.attrs['E_nmda'] = brain_network.params.E_nmda
+    param_group.attrs['E_gaba_a'] = brain_network.params.E_gaba_a
+    param_group.attrs['tau_ampa'] = brain_network.params.tau_ampa
+    param_group.attrs['tau1_nmda'] = brain_network.params.tau1_nmda
+    param_group.attrs['tau2_nmda'] = brain_network.params.tau2_nmda
+    param_group.attrs['tau_gaba_a'] = brain_network.params.tau_gaba_a
+    param_group.attrs['tau1_gaba_b'] = brain_network.params.tau1_gaba_b
+    param_group.attrs['tau2_gaba_b'] = brain_network.params.tau2_gaba_b
+    param_group.attrs['w_ampa_min'] = brain_network.params.w_ampa_b
+    param_group.attrs['w_ampa_max'] = brain_network.params.w_ampa_x
+    param_group.attrs['w_nmda_min'] = brain_network.params.w_nmda
+    param_group.attrs['w_nmda_max'] = brain_network.params.w_nmda
+    param_group.attrs['w_gaba_a_min'] = brain_network.params.w_gaba_a
+    param_group.attrs['w_gaba_a_max'] = brain_network.params.w_gaba_a
+    param_group.attrs['w_gaba_b_min'] = brain_network.params.w_gaba_a
+    param_group.attrs['w_gaba_b_max'] = brain_network.params.w_gaba_a
+    param_group.attrs['p_g_e'] = brain_network.params.p_g_e
+    param_group.attrs['p_b_e'] = brain_network.params.p_b_e
+    param_group.attrs['p_v_ec_vis'] = brain_network.params.p_v_ec_vis
+    param_group.attrs['p_ec_mem_ec_mem'] = brain_network.params.p_ec_mem_ec_mem
+    param_group.attrs['p_ec_vis_ec_mem'] = brain_network.params.p_ec_vis_ec_mem
+    param_group.attrs['p_ii_ec'] = brain_network.params.p_ii_ec
+    param_group.attrs['p_ec_ei'] = brain_network.params.p_ec_ei
+    param_group.attrs['p_ei_mem_ei_mem'] = brain_network.params.p_ei_mem_ei_mem
+    param_group.attrs['p_ei_vis_ei_mem'] = brain_network.params.p_ei_vis_ei_mem
+    param_group.attrs['p_ic_ei'] = brain_network.params.p_ic_ei
+    param_group.attrs['p_ei_ii'] = brain_network.params.p_ei_ii
+    param_group.attrs['p_ec_ii'] = brain_network.params.p_ec_ii
+    param_group.attrs['p_ec_ic'] = brain_network.params.p_ec_ic
+
+
+    # Write LFP data
+    if record_lfp:
+        lfp_group = f.create_group('lfp')
+        lfp_group['left_lfp']=brain_monitor.left_lfp_monitor.values
+        lfp_group['right_lfp']=brain_monitor.right_lfp_monitor.values
+
+    # Write voxel data
+    if record_voxel:
+        voxel_group = f.create_group('voxel')
+        f_vox.attrs['eta'] = voxel.eta
+        f_vox.attrs['G_base'] = voxel.G_base
+        f_vox.attrs['tau_f'] = voxel.tau_f
+        f_vox.attrs['tau_s'] = voxel.tau_s
+        f_vox.attrs['tau_o'] = voxel.tau_o
+        f_vox.attrs['e_base'] = voxel.e_base
+        f_vox.attrs['v_base'] = voxel.v_base
+        f_vox.attrs['alpha'] = voxel.alpha
+        f_vox.attrs['T_2E'] = voxel.params.T_2E
+        f_vox.attrs['T_2I'] = voxel.params.T_2I
+        f_vox.attrs['s_e_0'] = voxel.params.s_e_0
+        f_vox.attrs['s_i_0'] = voxel.params.s_i_0
+        f_vox.attrs['B0'] = voxel.params.B0
+        f_vox.attrs['TE'] = voxel.params.TE
+        f_vox.attrs['s_e'] = voxel.params.s_e
+        f_vox.attrs['s_i'] = voxel.params.s_i
+        f_vox.attrs['beta'] = voxel.params.beta
+        f_vox.attrs['k2'] = voxel.k2
+        f_vox.attrs['k3'] = voxel.k3
+
+        f_vox_total=f_vox.create_group('total_syn')
+        f_vox_total['G_total'] = wta_monitor.voxel_monitor['G_total'].values
+        f_vox_total['s'] = wta_monitor.voxel_monitor['s'].values
+        f_vox_total['f_in'] = wta_monitor.voxel_monitor['f_in'].values
+        f_vox_total['v'] = wta_monitor.voxel_monitor['v'].values
+        f_vox_total['q'] = wta_monitor.voxel_monitor['q'].values
+        f_vox_total['y'] = wta_monitor.voxel_monitor['y'].values
+
+        f_vox_exc=f_vox.create_group('exc_syn')
+        f_vox_exc['G_total'] = wta_monitor.voxel_exc_monitor['G_total'].values
+        f_vox_exc['s'] = wta_monitor.voxel_exc_monitor['s'].values
+        f_vox_exc['f_in'] = wta_monitor.voxel_exc_monitor['f_in'].values
+        f_vox_exc['v'] = wta_monitor.voxel_exc_monitor['v'].values
+        f_vox_exc['q'] = wta_monitor.voxel_exc_monitor['q'].values
+        f_vox_exc['y'] = wta_monitor.voxel_exc_monitor['y'].values
+
+    # Write neuron state data
+    if record_neuron_state:
+        f_state = f.create_group('neuron_state')
+        f_state['g_ampa_r'] = wta_monitor.network_monitor['g_ampa_r'].values
+        f_state['g_ampa_x'] = wta_monitor.network_monitor['g_ampa_x'].values
+        f_state['g_ampa_b'] = wta_monitor.network_monitor['g_ampa_b'].values
+        f_state['g_nmda'] = wta_monitor.network_monitor['g_nmda'].values
+        f_state['g_gaba_a'] = wta_monitor.network_monitor['g_gaba_a'].values
+        f_state['g_gaba_b'] = wta_monitor.network_monitor['g_gaba_b'].values
+        f_state['I_ampa_r'] = wta_monitor.network_monitor['I_ampa_r'].values
+        f_state['I_ampa_x'] = wta_monitor.network_monitor['I_ampa_x'].values
+        f_state['I_ampa_b'] = wta_monitor.network_monitor['I_ampa_b'].values
+        f_state['I_nmda'] = wta_monitor.network_monitor['I_nmda'].values
+        f_state['I_gaba_a'] = wta_monitor.network_monitor['I_gaba_a'].values
+        f_state['I_gaba_b'] = wta_monitor.network_monitor['I_gaba_b'].values
+        f_state['vm'] = wta_monitor.network_monitor['vm'].values
+        f_state['record_idx'] = np.array(wta_monitor.record_idx)
+
+    # Write network firing rate data
+    if record_firing_rate:
+        f_rates = f.create_group('firing_rates')
+        e_rates = []
+        for rate_monitor in wta_monitor.population_rate_monitors['excitatory']:
+            e_rates.append(rate_monitor.smooth_rate(width=5 * ms, filter='gaussian'))
+        f_rates['e_rates'] = np.array(e_rates)
+
+        i_rates = []
+        for rate_monitor in wta_monitor.population_rate_monitors['inhibitory']:
+            i_rates.append(rate_monitor.smooth_rate(width=5 * ms, filter='gaussian'))
+        f_rates['i_rates'] = np.array(i_rates)
+
+    # Write input firing rate data
+    if record_inputs:
+        back_rate=f.create_group('background_rate')
+        back_rate['firing_rate']=wta_monitor.background_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')
+        task_rates=f.create_group('task_rates')
+        t_rates=[]
+        for task_monitor in wta_monitor.task_rate_monitors:
+            t_rates.append(task_monitor.smooth_rate(width=5*ms,filter='gaussian'))
+        task_rates['firing_rates']=np.array(t_rates)
+
+    # Write spike data
+    if record_spikes:
+        f_spikes = f.create_group('spikes')
+        for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['excitatory']):
+            if len(spike_monitor.spikes):
+                f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
+                f_spikes['e.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
+
+        for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['inhibitory']):
+            if len(spike_monitor.spikes):
+                f_spikes['i.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
+                f_spikes['i.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
+    f.close()
