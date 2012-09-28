@@ -1,5 +1,5 @@
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA
-from matplotlib.pyplot import figure, subplot, xlim, ylim, ylabel, legend, xlabel, show
+from matplotlib.pyplot import figure, subplot, xlim, ylim, ylabel, legend, xlabel, show, title
 import numpy as np
 
 class BrainMonitor():
@@ -213,6 +213,18 @@ class BrainMonitor():
 
         # Network firing rate plots
         if self.population_rate_monitors is not None:
+            max_rate=np.max([np.max(self.population_rate_monitors['left_ec_vis'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['left_ec_mem'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['left_ei_vis'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['left_ei_mem'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ec_vis'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ec_mem'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ei_vis'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ei_mem'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ic'].smooth_rate(width=5*ms)/hertz),
+                             np.max(self.population_rate_monitors['right_ii'].smooth_rate(width=5*ms)/hertz)])
             figure()
             ax=subplot(211)
             ax.plot(self.population_rate_monitors['left_ec_vis'].times/ms,
@@ -227,6 +239,7 @@ class BrainMonitor():
                 self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)/hertz, label='left LIP IC')
             ax.plot(self.population_rate_monitors['left_ii'].times/ms,
                 self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)/hertz, label='left LIP II')
+            ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
             ylabel('Population Firing Rate (Hz)')
@@ -244,6 +257,7 @@ class BrainMonitor():
                 self.population_rate_monitors['right_ic'].smooth_rate(width=5*ms)/hertz, label='right LIP IC')
             ax.plot(self.population_rate_monitors['right_ii'].times/ms,
                 self.population_rate_monitors['right_ii'].smooth_rate(width=5*ms)/hertz, label='right LIP II')
+            ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
             ylabel('Population Firing Rate (Hz)')
@@ -289,26 +303,29 @@ class BrainMonitor():
             max_conductance=np.max(max_conductances)
 
             figure()
+            labels=['e_contra_vis','e_contra_mem','e_ipsi_vis','e_ipsi_mem','i_contra','i_ipsi']
             for i,idx in enumerate(self.left_record_idx):
                 ax=subplot(len(self.left_record_idx),1,i+1)
                 ax.plot(self.left_network_monitor['g_ampa_r'].times/ms, self.left_network_monitor['g_ampa_r'][idx]/nS,
-                    label='Left AMPA recurrent')
+                    label='AMPA recurrent')
                 ax.plot(self.left_network_monitor['g_ampa_x'].times/ms, self.left_network_monitor['g_ampa_x'][idx]/nS,
-                    label='Left AMPA task')
+                    label='AMPA task')
                 ax.plot(self.left_network_monitor['g_ampa_b'].times/ms, self.left_network_monitor['g_ampa_b'][idx]/nS,
-                    label='Left AMPA backgrnd')
+                    label='AMPA backgrnd')
                 ax.plot(self.left_network_monitor['g_ampa_g'].times/ms, self.left_network_monitor['g_ampa_g'][idx]/nS,
-                    label='Left AMPA go')
+                    label='AMPA go')
                 ax.plot(self.left_network_monitor['g_nmda'].times/ms, self.left_network_monitor['g_nmda'][idx]/nS,
-                    label='Left NMDA')
+                    label='NMDA')
                 ax.plot(self.left_network_monitor['g_gaba_a'].times/ms, self.left_network_monitor['g_gaba_a'][idx]/nS,
-                    label='Left GABA_A')
+                    label='GABA_A')
                 ax.plot(self.left_network_monitor['g_gaba_b'].times/ms, self.left_network_monitor['g_gaba_b'][idx]/nS,
-                    label='Left GABA_B')
+                    label='GABA_B')
                 ylim(0,max_conductance)
-                xlabel('Time (ms)')
-                ylabel('Conductance (nS)')
-                legend()
+                ylabel(labels[i])
+                if not i:
+                    title('Left LIP - Conductance (nS)')
+                    legend()
+            xlabel('Time (ms)')
 
             figure()
             for i,idx in enumerate(self.right_record_idx):
@@ -328,9 +345,11 @@ class BrainMonitor():
                 ax.plot(self.right_network_monitor['g_gaba_b'].times/ms, self.right_network_monitor['g_gaba_b'][idx]/nS,
                     label='GABA_B')
                 ylim(0,max_conductance)
-                xlabel('Time (ms)')
-                ylabel('Conductance (nS)')
-                legend()
+                ylabel(labels[i])
+                if not i:
+                    title('Right LIP - Conductance (nS)')
+                    legend()
+            xlabel('Time (ms)')
 
             min_currents=[]
             max_currents=[]
@@ -385,9 +404,11 @@ class BrainMonitor():
                 ax.plot(self.left_network_monitor['I_gaba_b'].times/ms, self.left_network_monitor['I_gaba_b'][neuron_idx]/nA,
                     label='GABA_B')
                 ylim(min_current,max_current)
-                xlabel('Time (ms)')
-                ylabel('Current (nA)')
-                legend()
+                ylabel(labels[i])
+                if not i:
+                    title('Left LIP - Current (nA)')
+                    legend()
+            xlabel('Time (ms)')
 
             figure()
             for i,neuron_idx in enumerate(self.right_record_idx):
@@ -407,9 +428,11 @@ class BrainMonitor():
                 ax.plot(self.right_network_monitor['I_gaba_b'].times/ms, self.right_network_monitor['I_gaba_b'][neuron_idx]/nA,
                     label='GABA_B')
                 ylim(min_current,max_current)
-                xlabel('Time (ms)')
-                ylabel('Current (nA)')
-                legend()
+                ylabel(labels[i])
+                if not i:
+                    title('Right LIP - Current (nA)')
+                    legend()
+            xlabel('Time (ms)')
 
         # LFP plot
         if self.left_lfp_monitor is not None and self.right_lfp_monitor is not None:
