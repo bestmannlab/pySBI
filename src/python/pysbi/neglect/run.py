@@ -45,12 +45,19 @@ default_params=Parameters(
     p_g_e=0.05,
     p_b_e=0.1,
     p_v_ec_vis=0.05,
-    p_ec_mem_ec_mem=0.007,
+    #p_ec_mem_ec_mem=0.007,
+    #p_ec_mem_ec_mem=0.008,
+    p_ec_mem_ec_mem=0.0075,
     p_ec_vis_ec_mem=0.005,
     p_ii_ec=0.015,
-    p_ec_vis_ei_vis=0.05,
-    p_ec_mem_ei_mem=0.03,
-    p_ei_mem_ei_mem=0.007,
+    #p_ec_vis_ei_vis=0.05,
+    #p_ec_vis_ei_vis=0.06,
+    p_ec_vis_ei_vis=0.055,
+    #p_ec_mem_ei_mem=0.03,
+    p_ec_mem_ei_mem=0.04,
+    #p_ei_mem_ei_mem=0.007,
+    #p_ei_mem_ei_mem=0.008,
+    p_ei_mem_ei_mem=0.0075,
     p_ei_vis_ei_mem=0.005,
     p_ic_ei=0.015,
     p_ei_ii=0.01,
@@ -231,15 +238,15 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
 
     lip_size=6250
 
-    #stim_start_time=1.8*second
-    #stim_end_time=2*second
-    stim_start_time=.3*second
-    stim_end_time=.5*second
+    stim_start_time=1.8*second
+    stim_end_time=2*second
+    #stim_start_time=.3*second
+    #stim_end_time=.5*second
 
-    #go_start_time=3*second
-    #go_end_time=3.1*second
-    go_start_time=1.5*second
-    go_end_time=1.6*second
+    go_start_time=3*second
+    go_end_time=3.1*second
+    #go_start_time=1.5*second
+    #go_end_time=1.6*second
 
     # Create network inputs
     background_inputs=[PoissonGroup(background_input_size, rates=background_rate), PoissonGroup(background_input_size, rates=background_rate)]
