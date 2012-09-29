@@ -41,24 +41,19 @@ default_params=Parameters(
     w_gaba_b_min=0.1*nS,
     w_gaba_b_max=1.0*nS,
 
+
     # Connection probabilities
     p_g_e=0.05,
     p_b_e=0.1,
-    p_v_ec_vis=0.05,
-    #p_ec_mem_ec_mem=0.007,
-    #p_ec_mem_ec_mem=0.008,
+    p_v_ec_vis=0.075,
     p_ec_mem_ec_mem=0.0075,
     p_ec_vis_ec_mem=0.005,
     p_ii_ec=0.015,
-    #p_ec_vis_ei_vis=0.05,
-    #p_ec_vis_ei_vis=0.06,
     p_ec_vis_ei_vis=0.055,
-    #p_ec_mem_ei_mem=0.03,
-    p_ec_mem_ei_mem=0.04,
-    #p_ei_mem_ei_mem=0.007,
-    #p_ei_mem_ei_mem=0.008,
-    p_ei_mem_ei_mem=0.0075,
-    p_ei_vis_ei_mem=0.005,
+    p_ec_mem_ei_mem=0.045,
+    #p_ei_mem_ei_mem=0.0075,
+    p_ei_mem_ei_mem=0.007,
+    p_ei_vis_ei_mem=0.0045,
     p_ic_ei=0.015,
     p_ei_ii=0.01,
     p_ec_ii=0.0075,
@@ -214,7 +209,7 @@ def test_neglect(net_params, input_level, trial_duration, output_base, record_lf
             ylabel('Right II')
 
 
-def run_neglect(input_freq, trial_duration, net_params=default_params, output_file=None, record_lfp=True, record_voxel=True,
+def run_neglect(input_freq, delay_duration, net_params=default_params, output_file=None, record_lfp=True, record_voxel=True,
                 record_neuron_state=False, record_spikes=True, record_pop_firing_rate=True, record_neuron_firing_rate=False,
                 record_inputs=False, plot_output=False, mem_trial=False):
 
@@ -227,9 +222,12 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
     background_rate=25*Hz
 
     visual_input_size=1000
-    visual_background_rate=10*Hz
-    visual_stim_min_rate=20*Hz
-    visual_stim_tau=0.5
+    #visual_background_rate=10*Hz
+    visual_background_rate=5*Hz
+    #visual_stim_min_rate=15*Hz
+    #visual_stim_min_rate=10*Hz
+    visual_stim_min_rate=7.5*Hz
+    visual_stim_tau=0.15
 
     go_input_size=500
     go_rate=20*Hz
@@ -238,18 +236,23 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
 
     lip_size=6250
 
-    stim_start_time=1.8*second
-    stim_end_time=2*second
-    #stim_start_time=.3*second
-    #stim_end_time=.5*second
+    #stim_start_time=1.8*second
+    #stim_end_time=2*second
+    stim_start_time=.5*second
+    stim_end_time=.7*second
 
-    go_start_time=3*second
-    go_end_time=3.1*second
-    #go_start_time=1.5*second
-    #go_end_time=1.6*second
+    #go_start_time=3*second
+    #go_end_time=3.1*second
+    #go_start_time=1.7*second
+    go_start_time=stim_end_time+delay_duration
+    #go_end_time=1.8*second
+    go_end_time=go_start_time+.1*second
+
+    trial_duration=go_end_time+.5*second
 
     # Create network inputs
-    background_inputs=[PoissonGroup(background_input_size, rates=background_rate), PoissonGroup(background_input_size, rates=background_rate)]
+    background_inputs=[PoissonGroup(background_input_size, rates=background_rate),
+                       PoissonGroup(background_input_size, rates=background_rate)]
 
     def make_mem_rate_function(rate):
         return lambda t: ((stim_start_time<t<stim_end_time and np.max([visual_background_rate,rate*exp(-(t-stim_start_time)/visual_stim_tau)])) or visual_background_rate)
@@ -304,6 +307,7 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
 
     # Compute BOLD signal
     if record_voxel:
+        start_time=time()
         brain_monitor.left_voxel_exc_monitor=get_bold_signal(brain_monitor.left_voxel_monitor['G_total_exc'].values[0],
             left_lip_voxel.params, [500, 1500])
         brain_monitor.left_voxel_monitor=get_bold_signal(brain_monitor.left_voxel_monitor['G_total'].values[0],
@@ -313,6 +317,8 @@ def run_neglect(input_freq, trial_duration, net_params=default_params, output_fi
             right_lip_voxel.params, [500, 1500])
         brain_monitor.right_voxel_monitor=get_bold_signal(brain_monitor.right_voxel_monitor['G_total'].values[0],
             right_lip_voxel.params, [500, 1500])
+
+        print 'Time to compute BOLD:', time() - start_time
 
     # Plot outputs
     if plot_output:
