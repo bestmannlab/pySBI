@@ -228,17 +228,17 @@ class BrainMonitor():
             figure()
             ax=subplot(211)
             ax.plot(self.population_rate_monitors['left_ec_vis'].times/ms,
-                self.population_rate_monitors['left_ec_vis'].smooth_rate(width=5*ms)/hertz, label='left LIP EC vis')
+                self.population_rate_monitors['left_ec_vis'].smooth_rate(width=10*ms)/hertz, label='left LIP EC vis')
             ax.plot(self.population_rate_monitors['left_ec_mem'].times/ms,
-                self.population_rate_monitors['left_ec_mem'].smooth_rate(width=5*ms)/hertz, label='left LIP EC mem')
+                self.population_rate_monitors['left_ec_mem'].smooth_rate(width=10*ms)/hertz, label='left LIP EC mem')
             ax.plot(self.population_rate_monitors['left_ei_vis'].times/ms,
-                self.population_rate_monitors['left_ei_vis'].smooth_rate(width=5*ms)/hertz, label='left LIP EI vis')
+                self.population_rate_monitors['left_ei_vis'].smooth_rate(width=10*ms)/hertz, label='left LIP EI vis')
             ax.plot(self.population_rate_monitors['left_ei_mem'].times/ms,
-                self.population_rate_monitors['left_ei_mem'].smooth_rate(width=5*ms)/hertz, label='left LIP EI mem')
+                self.population_rate_monitors['left_ei_mem'].smooth_rate(width=10*ms)/hertz, label='left LIP EI mem')
             ax.plot(self.population_rate_monitors['left_ic'].times/ms,
-                self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)/hertz, label='left LIP IC')
+                self.population_rate_monitors['left_ic'].smooth_rate(width=10*ms)/hertz, label='left LIP IC')
             ax.plot(self.population_rate_monitors['left_ii'].times/ms,
-                self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)/hertz, label='left LIP II')
+                self.population_rate_monitors['left_ii'].smooth_rate(width=10*ms)/hertz, label='left LIP II')
             ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
@@ -246,17 +246,17 @@ class BrainMonitor():
 
             ax=subplot(212)
             ax.plot(self.population_rate_monitors['right_ec_vis'].times/ms,
-                self.population_rate_monitors['right_ec_vis'].smooth_rate(width=5*ms)/hertz, label='right LIP EC vis')
+                self.population_rate_monitors['right_ec_vis'].smooth_rate(width=10*ms)/hertz, label='right LIP EC vis')
             ax.plot(self.population_rate_monitors['right_ec_mem'].times/ms,
-                self.population_rate_monitors['right_ec_mem'].smooth_rate(width=5*ms)/hertz, label='right LIP EC mem')
+                self.population_rate_monitors['right_ec_mem'].smooth_rate(width=10*ms)/hertz, label='right LIP EC mem')
             ax.plot(self.population_rate_monitors['right_ei_vis'].times/ms,
-                self.population_rate_monitors['right_ei_vis'].smooth_rate(width=5*ms)/hertz, label='right LIP EI vis')
+                self.population_rate_monitors['right_ei_vis'].smooth_rate(width=10*ms)/hertz, label='right LIP EI vis')
             ax.plot(self.population_rate_monitors['right_ei_mem'].times/ms,
-                self.population_rate_monitors['right_ei_mem'].smooth_rate(width=5*ms)/hertz, label='right LIP EI mem')
+                self.population_rate_monitors['right_ei_mem'].smooth_rate(width=10*ms)/hertz, label='right LIP EI mem')
             ax.plot(self.population_rate_monitors['right_ic'].times/ms,
-                self.population_rate_monitors['right_ic'].smooth_rate(width=5*ms)/hertz, label='right LIP IC')
+                self.population_rate_monitors['right_ic'].smooth_rate(width=10*ms)/hertz, label='right LIP IC')
             ax.plot(self.population_rate_monitors['right_ii'].times/ms,
-                self.population_rate_monitors['right_ii'].smooth_rate(width=5*ms)/hertz, label='right LIP II')
+                self.population_rate_monitors['right_ii'].smooth_rate(width=10*ms)/hertz, label='right LIP II')
             ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
