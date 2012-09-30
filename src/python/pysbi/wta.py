@@ -1,6 +1,5 @@
 from time import time
 from brian.clock import reinit_default_clock
-from brian.connections.delayconnection import DelayConnection
 from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
 from brian.library.IF import exp_IF
@@ -18,6 +17,7 @@ import argparse
 import numpy as np
 from matplotlib.pyplot import figure, subplot, xlabel, ylabel, legend, show, ylim
 from numpy.matlib import randn
+from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 
 # Default parameters for a WTA network with multiple inhibitory populations
@@ -41,12 +41,14 @@ default_params=Parameters(
     tau_gaba_a = 2.5*ms,
     tau1_gaba_b = 10*ms,
     tau2_gaba_b =100*ms,
-    w_ampa_b = 1.0 * nS,
-    w_ampa_x = 1.0 * nS,
-    w_ampa_r=1.0*nS,
-    w_nmda=0.01*nS,
-    w_gaba_a=1.0*nS,
-    w_gaba_b=0.01*nS,
+    w_ampa_min=0.35*nS,
+    w_ampa_max=1.0*nS,
+    w_nmda_min=0.01*nS,
+    w_nmda_max=0.6*nS,
+    w_gaba_a_min=0.25*nS,
+    w_gaba_a_max=1.2*nS,
+    w_gaba_b_min=0.1*nS,
+    w_gaba_b_max=1.0*nS,
     # Connection probabilities
     p_b_e=0.075,
     p_x_e=0.075,
@@ -167,83 +169,64 @@ class WTANetworkGroup(NeuronGroup):
         for i in range(self.num_groups):
 
             # E population - recurrent connections
-            e_e_ampa=DelayConnection(self.groups_e[i], self.groups_e[i], 'g_ampa_r', sparseness=self.params.p_e_e,
-                weight=self.params.w_ampa_r, delay=(0*ms, 5*ms))
-            e_e_nmda=DelayConnection(self.groups_e[i], self.groups_e[i], 'g_nmda', sparseness=self.params.p_e_e,
-                weight=self.params.w_nmda, delay=(0*ms, 5*ms))
-            for j in xrange(len(self.groups_e[i])):
-                e_e_ampa[j,j]=0.0
-                e_e_ampa.delay[j,j]=0.0
-                e_e_nmda[j,j]=0.0
-                e_e_nmda.delay[j,j]=0.0
-            self.connections.append(e_e_ampa)
-            self.connections.append(e_e_nmda)
+            self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_ampa_r',
+                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_e, (0*ms, 5*ms), allow_self_conn=False))
+            self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_nmda',
+                self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_e, (0*ms, 5*ms), allow_self_conn=False))
 
             if not self.single_inh_pop:
                 # I -> I population - recurrent connections
-                i_i_gaba_a=DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_a', sparseness=self.params.p_i_i,
-                    weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-                i_i_gaba_b=DelayConnection(self.groups_i[i], self.groups_i[i], 'g_gaba_b', sparseness=self.params.p_i_i,
-                    weight=self.params.w_gaba_b, delay=(0*ms, 5*ms))
-                for j in xrange(len(self.groups_i[i])):
-                    i_i_gaba_a[j,j]=0.0
-                    i_i_gaba_a.delay[j,j]=0.0
-                    i_i_gaba_b[j,j]=0.0
-                    i_i_gaba_b.delay[j,j]=0.0
-                self.connections.append(i_i_gaba_a)
-                self.connections.append(i_i_gaba_b)
+                self.connections.append(init_connection(self.groups_i[i], self.groups_i[i], 'g_gaba_a',
+                    self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_i, (0*ms, 5*ms),
+                    allow_self_conn=False))
+                self.connections.append(init_connection(self.groups_i[i], self.groups_i[i], 'g_gaba_b',
+                    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms),
+                    allow_self_conn=False))
 
                 # E -> I excitatory connections
-                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
-                    sparseness=self.params.p_e_i, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
-                self.connections.append(DelayConnection(self.groups_e[i], self.groups_i[i], 'g_nmda',
-                    sparseness=self.params.p_e_i, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
+                self.connections.append(init_connection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
+                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_i, (0*ms, 5*ms)))
+                self.connections.append(init_connection(self.groups_e[i], self.groups_i[i], 'g_nmda',
+                    self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_i, (0*ms, 5*ms)))
 
                 # I -> E - inhibitory connections
                 for j in range(self.num_groups):
                     if not i==j:
-                        self.connections.append(DelayConnection(self.groups_i[i], self.groups_e[j], 'g_gaba_a',
-                            sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
-                        self.connections.append(DelayConnection(self.groups_i[i], self.groups_e[j], 'g_gaba_b',
-                            sparseness=self.params.p_i_e, weight=self.params.w_gaba_b, delay=(0*ms, 5*ms)))
+                        self.connections.append(init_connection(self.groups_i[i], self.groups_e[j], 'g_gaba_a',
+                            self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_e, (0*ms, 5*ms)))
+                        self.connections.append(init_connection(self.groups_i[i], self.groups_e[j], 'g_gaba_b',
+                            self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
 
             else:
                 # E -> I excitatory connections
-                self.connections.append(DelayConnection(self.groups_e[i], self.group_i, 'g_ampa_r',
-                    sparseness=self.params.p_e_i, weight=self.params.w_ampa_r, delay=(0*ms, 5*ms)))
-                self.connections.append(DelayConnection(self.groups_e[i], self.group_i, 'g_nmda',
-                    sparseness=self.params.p_e_i, weight=self.params.w_nmda, delay=(0*ms, 5*ms)))
+                self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
+                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_i, (0*ms, 5*ms)))
+                self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_nmda',
+                    self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_i, (0*ms, 5*ms)))
 
                 # I -> E - inhibitory connections
-                self.connections.append(DelayConnection(self.group_i, self.groups_e[i], 'g_gaba_a',
-                    sparseness=self.params.p_i_e, weight=self.params.w_gaba_a, delay=(0*ms, 5*ms)))
-                self.connections.append(DelayConnection(self.group_i, self.groups_e[i], 'g_gaba_b',
-                    sparseness=self.params.p_i_e, weight=self.params.w_gaba_b, delay=(0*ms, 5*ms)))
+                self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
+                    self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_e, (0*ms, 5*ms)))
+                self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_b',
+                    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
 
         if self.single_inh_pop:
             # I population - recurrent connections
-            i_i_gaba_a=DelayConnection(self.group_i, self.group_i, 'g_gaba_a', sparseness=self.params.p_i_i,
-                weight=self.params.w_gaba_a, delay=(0*ms, 5*ms))
-            i_i_gaba_b=DelayConnection(self.group_i, self.group_i, 'g_gaba_b', sparseness=self.params.p_i_i,
-                weight=self.params.w_gaba_b, delay=(0*ms, 5*ms))
-            for j in xrange(len(self.group_i)):
-                i_i_gaba_a[j,j]=0.0
-                i_i_gaba_a.delay[j,j]=0.0
-                i_i_gaba_b[j,j]=0.0
-                i_i_gaba_b.delay[j,j]=0.0
-            self.connections.append(i_i_gaba_a)
-            self.connections.append(i_i_gaba_b)
+            self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.w_gaba_a_min,
+                self.params.w_gaba_a_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
+            self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_b', self.params.w_gaba_b_min,
+                self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
 
         if self.background_input is not None:
             # Background -> E+I population connectinos
-            self.connections.append(DelayConnection(self.background_input, self, 'g_ampa_b',
-                sparseness=self.params.p_b_e, weight=self.params.w_ampa_b, delay=(0*ms, 5*ms)))
+            self.connections.append(init_connection(self.background_input, self, 'g_ampa_b', self.params.w_ampa_min,
+                self.params.w_ampa_max, self.params.p_b_e, (0*ms, 5*ms)))
 
         if self.task_inputs is not None:
             # Task input -> E population connections
             for i in range(self.num_groups):
-                self.connections.append(DelayConnection(self.task_inputs[i], self.groups_e[i], 'g_ampa_x',
-                    sparseness=self.params.p_x_e, weight=self.params.w_ampa_x, delay=(0*ms, 5*ms)))
+                self.connections.append(init_connection(self.task_inputs[i], self.groups_e[i], 'g_ampa_x',
+                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_x_e, (0*ms, 5*ms)))
 
 
 # Collection of monitors for WTA network
@@ -798,9 +781,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     # Compute BOLD signal
     if record_voxel:
         wta_monitor.voxel_exc_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total_exc'].values[0], voxel.params,
-            [500, 2500])
+            [500, 2500], trial_duration)
         wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
-            [500, 2500])
+            [500, 2500], trial_duration)
 
     # Write output to file
     if output_file is not None:
