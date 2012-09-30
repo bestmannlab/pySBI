@@ -124,7 +124,9 @@ def get_bold_signal(g_total, voxel_params, baseline_range, trial_duration):
 
     net=Network(voxel, get_input, voxel_monitor)
     reinit_default_clock()
-    bold_trial_duration=np.max([10*second, trial_duration+6*second])
-    net.run(10*second)
+    bold_trial_duration=10*second
+    if trial_duration+6*second>bold_trial_duration:
+        bold_trial_duration=trial_duration+6*second
+    net.run(bold_trial_duration)
 
     return voxel_monitor
