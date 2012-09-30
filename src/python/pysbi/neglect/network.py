@@ -59,9 +59,9 @@ class LIP():
         # Init connections from contralaterally tuned pyramidal cells to other
         # contralaterally tuned pyramidal cells in the same hemisphere
         ec_mem_ec_mem_ampa=init_connection(self.e_contra_mem, self.e_contra_mem, 'g_ampa_r', self.params.w_ampa_min,
-            self.params.w_ampa_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_recurrent=False)
+            self.params.w_ampa_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_self_conn=False)
         ec_mem_ec_mem_nmda=init_connection(self.e_contra_mem, self.e_contra_mem, 'g_nmda', self.params.w_nmda_min,
-            self.params.w_nmda_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_recurrent=False)
+            self.params.w_nmda_max, self.params.p_ec_mem_ec_mem, (0*ms, 5*ms), allow_self_conn=False)
         self.connections.append(ec_mem_ec_mem_ampa)
         self.connections.append(ec_mem_ec_mem_nmda)
 
@@ -84,9 +84,9 @@ class LIP():
         # Init connections from ipsilaterally tuned pyramidal cells to other
         # ipsilaterally tuned pyramidal cells in the same hemisphere
         ei_mem_ei_mem_ampa=init_connection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_ampa_r', self.params.w_ampa_min,
-            self.params.w_ampa_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_recurrent=False)
+            self.params.w_ampa_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_self_conn=False)
         ei_mem_ei_mem_nmda=init_connection(self.e_ipsi_mem, self.e_ipsi_mem, 'g_nmda', self.params.w_nmda_min,
-            self.params.w_nmda_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_recurrent=False)
+            self.params.w_nmda_max, self.params.p_ei_mem_ei_mem, (0*ms, 5*ms), allow_self_conn=False)
         self.connections.append(ei_mem_ei_mem_ampa)
         self.connections.append(ei_mem_ei_mem_nmda)
 
@@ -215,9 +215,11 @@ class BrainNetworkGroup(NeuronGroup):
             self.connections.append(vc_right_lip_ampa)
 
         if self.go_input is not None:
-            go_left_lip_ampa=init_connection(self.go_input, self.left_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+            #go_left_lip_ampa=init_connection(self.go_input, self.left_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+            go_left_lip_ampa=init_connection(self.go_input, self.left_lip.i_group, 'g_ampa_g', self.params.w_ampa_min,
                 self.params.w_ampa_max, self.params.p_g_e, (0*ms, 5*ms))
-            go_right_lip_ampa=init_connection(self.go_input, self.right_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+            #go_right_lip_ampa=init_connection(self.go_input, self.right_lip.neuron_group, 'g_ampa_g', self.params.w_ampa_min,
+            go_right_lip_ampa=init_connection(self.go_input, self.right_lip.i_group, 'g_ampa_g', self.params.w_ampa_min,
                 self.params.w_ampa_max, self.params.p_g_e, (0*ms, 5*ms))
             self.connections.append(go_left_lip_ampa)
             self.connections.append(go_right_lip_ampa)
