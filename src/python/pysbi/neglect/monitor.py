@@ -99,14 +99,18 @@ class BrainMonitor():
         if record_pop_firing_rate:
             self.population_rate_monitors={'left_ec_vis':PopulationRateMonitor(brain_network.left_lip.e_contra_vis),
                                            'left_ec_mem':PopulationRateMonitor(brain_network.left_lip.e_contra_mem),
+                                           'left_ec':PopulationRateMonitor(brain_network.left_lip.e_contra),
                                            'left_ei_vis':PopulationRateMonitor(brain_network.left_lip.e_ipsi_vis),
                                            'left_ei_mem':PopulationRateMonitor(brain_network.left_lip.e_ipsi_mem),
+                                           'left_ei':PopulationRateMonitor(brain_network.left_lip.e_ipsi),
                                            'left_ic':PopulationRateMonitor(brain_network.left_lip.i_contra),
                                            'left_ii':PopulationRateMonitor(brain_network.left_lip.i_ipsi),
                                            'right_ec_vis':PopulationRateMonitor(brain_network.right_lip.e_contra_vis),
                                            'right_ec_mem':PopulationRateMonitor(brain_network.right_lip.e_contra_mem),
+                                           'right_ec':PopulationRateMonitor(brain_network.right_lip.e_contra),
                                            'right_ei_vis':PopulationRateMonitor(brain_network.right_lip.e_ipsi_vis),
                                            'right_ei_mem':PopulationRateMonitor(brain_network.right_lip.e_ipsi_mem),
+                                           'right_ei':PopulationRateMonitor(brain_network.right_lip.e_ipsi),
                                            'right_ic':PopulationRateMonitor(brain_network.right_lip.i_contra),
                                            'right_ii':PopulationRateMonitor(brain_network.right_lip.i_ipsi)}
             for mon_name, mon in self.population_rate_monitors.iteritems():
@@ -213,50 +217,75 @@ class BrainMonitor():
 
         # Network firing rate plots
         if self.population_rate_monitors is not None:
-            max_rate=np.max([np.max(self.population_rate_monitors['left_ec_vis'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['left_ec_mem'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['left_ei_vis'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['left_ei_mem'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['left_ic'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['left_ii'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ec_vis'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ec_mem'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ei_vis'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ei_mem'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ic'].smooth_rate(width=5*ms)/hertz),
-                             np.max(self.population_rate_monitors['right_ii'].smooth_rate(width=5*ms)/hertz)])
+            smooth_width=10*ms
+            left_ec_vis_rate=self.population_rate_monitors['left_ec_vis'].smooth_rate(width=smooth_width)/hertz
+            left_ec_mem_rate=self.population_rate_monitors['left_ec_mem'].smooth_rate(width=smooth_width)/hertz
+            left_ec_rate=self.population_rate_monitors['left_ec'].smooth_rate(width=smooth_width)/hertz
+            left_ei_vis_rate=self.population_rate_monitors['left_ei_vis'].smooth_rate(width=smooth_width)/hertz
+            left_ei_mem_rate=self.population_rate_monitors['left_ei_mem'].smooth_rate(width=smooth_width)/hertz
+            left_ei_rate=self.population_rate_monitors['left_ei'].smooth_rate(width=smooth_width)/hertz
+            left_ic_rate=self.population_rate_monitors['left_ic'].smooth_rate(width=smooth_width)/hertz
+            left_ii_rate=self.population_rate_monitors['left_ii'].smooth_rate(width=smooth_width)/hertz
+            
+            right_ec_vis_rate=self.population_rate_monitors['right_ec_vis'].smooth_rate(width=smooth_width)/hertz
+            right_ec_mem_rate=self.population_rate_monitors['right_ec_mem'].smooth_rate(width=smooth_width)/hertz
+            right_ec_rate=self.population_rate_monitors['right_ec'].smooth_rate(width=smooth_width)/hertz
+            right_ei_vis_rate=self.population_rate_monitors['right_ei_vis'].smooth_rate(width=smooth_width)/hertz
+            right_ei_mem_rate=self.population_rate_monitors['right_ei_mem'].smooth_rate(width=smooth_width)/hertz
+            right_ei_rate=self.population_rate_monitors['right_ei'].smooth_rate(width=smooth_width)/hertz
+            right_ic_rate=self.population_rate_monitors['right_ic'].smooth_rate(width=smooth_width)/hertz
+            right_ii_rate=self.population_rate_monitors['right_ii'].smooth_rate(width=smooth_width)/hertz
+            
+            max_rate=np.max([np.max(left_ec_vis_rate), np.max(left_ec_mem_rate), np.max(left_ec_rate), 
+                             np.max(left_ei_vis_rate), np.max(left_ei_mem_rate), np.max(left_ic_rate),
+                             np.max(left_ii_rate), 
+                             np.max(right_ec_vis_rate), np.max(right_ec_mem_rate), np.max(right_ec_rate),
+                             np.max(right_ei_vis_rate), np.max(right_ei_mem_rate), np.max(right_ei_rate),
+                             np.max(right_ic_rate), np.max(right_ii_rate)])
+            
+            times_ms=self.population_rate_monitors['left_ec_vis'].times/ms
+            
             figure()
             ax=subplot(211)
-            ax.plot(self.population_rate_monitors['left_ec_vis'].times/ms,
-                self.population_rate_monitors['left_ec_vis'].smooth_rate(width=10*ms)/hertz, label='left LIP EC vis')
-            ax.plot(self.population_rate_monitors['left_ec_mem'].times/ms,
-                self.population_rate_monitors['left_ec_mem'].smooth_rate(width=10*ms)/hertz, label='left LIP EC mem')
-            ax.plot(self.population_rate_monitors['left_ei_vis'].times/ms,
-                self.population_rate_monitors['left_ei_vis'].smooth_rate(width=10*ms)/hertz, label='left LIP EI vis')
-            ax.plot(self.population_rate_monitors['left_ei_mem'].times/ms,
-                self.population_rate_monitors['left_ei_mem'].smooth_rate(width=10*ms)/hertz, label='left LIP EI mem')
-            ax.plot(self.population_rate_monitors['left_ic'].times/ms,
-                self.population_rate_monitors['left_ic'].smooth_rate(width=10*ms)/hertz, label='left LIP IC')
-            ax.plot(self.population_rate_monitors['left_ii'].times/ms,
-                self.population_rate_monitors['left_ii'].smooth_rate(width=10*ms)/hertz, label='left LIP II')
+            ax.plot(times_ms, left_ec_vis_rate, label='left LIP EC vis')
+            ax.plot(times_ms, left_ec_mem_rate, label='left LIP EC mem')
+            #ax.plot(times_ms, left_ec_rate, label='left LIP EC')
+            ax.plot(times_ms, left_ei_vis_rate, label='left LIP EI vis')
+            ax.plot(times_ms, left_ei_mem_rate, label='left LIP EI mem')
+            #ax.plot(times_ms, left_ei_rate, label='left LIP EI')
+            ax.plot(times_ms, left_ic_rate, label='left LIP IC')
+            ax.plot(times_ms, left_ii_rate, label='left LIP II')
             ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
             ylabel('Population Firing Rate (Hz)')
 
             ax=subplot(212)
-            ax.plot(self.population_rate_monitors['right_ec_vis'].times/ms,
-                self.population_rate_monitors['right_ec_vis'].smooth_rate(width=10*ms)/hertz, label='right LIP EC vis')
-            ax.plot(self.population_rate_monitors['right_ec_mem'].times/ms,
-                self.population_rate_monitors['right_ec_mem'].smooth_rate(width=10*ms)/hertz, label='right LIP EC mem')
-            ax.plot(self.population_rate_monitors['right_ei_vis'].times/ms,
-                self.population_rate_monitors['right_ei_vis'].smooth_rate(width=10*ms)/hertz, label='right LIP EI vis')
-            ax.plot(self.population_rate_monitors['right_ei_mem'].times/ms,
-                self.population_rate_monitors['right_ei_mem'].smooth_rate(width=10*ms)/hertz, label='right LIP EI mem')
-            ax.plot(self.population_rate_monitors['right_ic'].times/ms,
-                self.population_rate_monitors['right_ic'].smooth_rate(width=10*ms)/hertz, label='right LIP IC')
-            ax.plot(self.population_rate_monitors['right_ii'].times/ms,
-                self.population_rate_monitors['right_ii'].smooth_rate(width=10*ms)/hertz, label='right LIP II')
+            ax.plot(times_ms, right_ec_vis_rate, label='right LIP EC vis')
+            ax.plot(times_ms, right_ec_mem_rate, label='right LIP EC mem')
+            #ax.plot(times_ms, right_ec_rate, label='right LIP EC')
+            ax.plot(times_ms, right_ei_vis_rate, label='right LIP EI vis')
+            ax.plot(times_ms, right_ei_mem_rate, label='right LIP EI mem')
+            #ax.plot(times_ms, right_ei_rate, label='right LIP EI')
+            ax.plot(times_ms, right_ic_rate, label='right LIP IC')
+            ax.plot(times_ms, right_ii_rate, label='right LIP II')
+            ylim(0,max_rate)
+            legend()
+            xlabel('Time (ms)')
+            ylabel('Population Firing Rate (Hz)')
+
+            figure()
+            ax=subplot(211)
+            ax.plot(times_ms, left_ec_rate, label='left LIP EC')
+            ax.plot(times_ms, left_ei_rate, label='left LIP EI')
+            ylim(0,max_rate)
+            legend()
+            xlabel('Time (ms)')
+            ylabel('Population Firing Rate (Hz)')
+
+            ax=subplot(212)
+            ax.plot(times_ms, right_ec_rate, label='right LIP EC')
+            ax.plot(times_ms, right_ei_rate, label='right LIP EI')
             ylim(0,max_rate)
             legend()
             xlabel('Time (ms)')
@@ -478,7 +507,7 @@ class BrainMonitor():
             legend()
             xlabel('Time (ms)')
             ylabel('BOLD')
-            ylim(y_min, y_max)
+            ylim(y_min, y_max*2.0)
             if self.left_voxel_exc_monitor is not None and self.right_voxel_exc_monitor is not None:
                 ax=subplot(223)
                 ax.plot(self.left_voxel_exc_monitor['G_total'].times / ms,
