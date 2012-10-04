@@ -52,7 +52,7 @@ default_params=Parameters(
     # Connection probabilities
     p_b_e=0.075,
     p_x_e=0.075,
-    p_e_e=0.01,
+    p_e_e=0.075,
     p_e_i=0.1,
     p_i_i=0.01,
     p_i_e=0.02)
@@ -834,6 +834,8 @@ if __name__=='__main__':
                                                               'neurons in other groups')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
     ap.add_argument('--single_inh_pop', type=int, default=0, help='Single inhibitory population')
+    ap.add_argument('--muscimol_amount', type=float, default=0.0, help='Amount of muscimol to inject')
+    ap.add_argument('--injection_site', type=int, default=0, help='Site of muscimol injection (group index)')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \
@@ -861,4 +863,5 @@ if __name__=='__main__':
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
-        single_inh_pop=argvals.single_inh_pop)
+        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount,
+        injection_site=argvals.injection_site)

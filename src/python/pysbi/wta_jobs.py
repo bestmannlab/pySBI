@@ -1,5 +1,6 @@
 import os
 import random
+from brian.stdunits import nS
 import numpy as np
 from brian.units import second
 from ezrcluster.launcher import Launcher
@@ -9,12 +10,12 @@ from pysbi.util.random_distributions import make_distribution_curve
 from pysbi.reports.summary import SummaryData
 from pysbi.reports.utils import get_tested_param_combos
 
-def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, trial, single_inh_pop=False,
-                 record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
+def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast,trial, single_inh_pop=False,
+                 muscimol_amount=0*nS, injection_site=0, record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
                  record_firing_rate=True):
     cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta.py']
-    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d' %\
-              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, trial)
+    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.contrast.%0.4f.trial.%d' %\
+              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast, trial)
     log_file_template='%s.log' % file_desc
     output_file='/tmp/wta-output/%s.h5' % file_desc
     cmds.append('--num_groups')
@@ -42,6 +43,11 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('1')
     else:
         cmds.append('0')
+    if muscimol_amount>0:
+        cmds.append('--muscimol_amount')
+        cmds.append('%0.4f' % muscimol_amount/nS)
+        cmds.append('--injection_site')
+        cmds.append('%d' % injection_site)
     cmds.append('--record_lfp')
     if record_lfp:
         cmds.append('1')
@@ -79,21 +85,26 @@ def post_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
+
+    contrast_range=[0.0, 0.0625, 0.125, 0.25, 0.5, 1.0]
+
     for p_b_e in p_b_e_range:
         for p_x_e in p_x_e_range:
             for p_e_e in p_e_e_range:
                 for p_e_i in p_e_i_range:
                     for p_i_i in p_i_i_range:
                         for p_i_e in p_i_e_range:
-                            for t in range(num_trials):
+                            for i,contrast in enumerate(contrast_range):
                                 inputs=np.zeros(2)
-                                inputs[0]=np.random.rand()*input_sum
+                                inputs[0]=(input_sum*(contrast+1.0)/2.0)
                                 inputs[1]=input_sum-inputs[0]
-                                cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
-                                    p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop, record_lfp=True,
-                                    record_voxel=True, record_neuron_state=False, record_firing_rate=True,
-                                    record_spikes=True)
-                                launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+                                for t in range(num_trials):
+                                    np.random.shuffle(inputs)
+                                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                                        p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop, record_lfp=True,
+                                        record_voxel=True, record_neuron_state=False, record_firing_rate=True,
+                                        record_spikes=True)
+                                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 def post_broken_wta_jobs(nodes, num_trials, data_path, single_inh_pop=False, start_nodes=True):
     num_groups=2
@@ -133,7 +144,8 @@ def post_broken_wta_jobs(nodes, num_trials, data_path, single_inh_pop=False, sta
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 def post_missing_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
-                          num_trials, data_path, single_inh_pop=False, start_nodes=True):
+                          num_trials, data_path, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0,
+                          start_nodes=True):
     num_groups=2
     trial_duration=1*second
     input_sum=40.0
@@ -148,8 +160,8 @@ def post_missing_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_ra
                     for p_i_i in p_i_i_range:
                         for p_i_e in p_i_e_range:
                             for t in range(num_trials):
-                                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
-                                          (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
+                                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.muscimol.%0.4f.injection.%d.trial.%d.h5' %\
+                                          (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, muscimol_amount/nS, injection_site, t)
                                 recreate=False
                                 file_name=os.path.join(data_path,file_desc)
                                 print('Checking %s' % file_name)
@@ -168,6 +180,7 @@ def post_missing_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_ra
                                     inputs[1]=input_sum-inputs[0]
                                     cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
                                         p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop,
+                                        muscimol_amount=muscimol_amount, injection_site=injection_site,
                                         record_lfp=True, record_voxel=True, record_neuron_state=False,
                                         record_firing_rate=True, record_spikes=True)
                                     launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
