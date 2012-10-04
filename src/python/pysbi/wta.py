@@ -111,9 +111,10 @@ class WTANetworkGroup(NeuronGroup):
         eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a+g_gaba_b : siemens')
         eqs += Equations('g_syn_exc=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda : siemens')
         # Total synaptic current
-        eqs += Equations('I_abs=abs(I_ampa_r)+abs(I_ampa_b)+abs(I_ampa_x)+abs(I_nmda)+abs(I_gaba_a) : amp')
+        eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5+(I_gaba_b**2)**.5 : amp')
 
-        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL)
+        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL, compile=True,
+            freeze=True)
 
         self.init_subpopulations()
 
@@ -588,7 +589,7 @@ class WTAMonitor():
 def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
                  output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp,
                  record_inputs, stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor,
-                 wta_params):
+                 wta_params, muscimol_amount, injection_site):
 
     f = h5py.File(output_file, 'w')
 
@@ -629,6 +630,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.attrs['p_e_i'] = wta_params.p_e_i
     f.attrs['p_i_i'] = wta_params.p_i_i
     f.attrs['p_i_e'] = wta_params.p_i_e
+    f.attrs['muscimol_amount'] = muscimol_amount
+    f.attrs['injection_site'] = injection_site
 
     # Write LFP data
     if record_lfp:
@@ -807,7 +810,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     if output_file is not None:
         write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
             output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
-            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params)
+            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params, muscimol_amount,
+            injection_site)
 
         print 'Wrote output to %s' % output_file
 
@@ -863,5 +867,5 @@ if __name__=='__main__':
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
-        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount,
+        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount*nS,
         injection_site=argvals.injection_site)
