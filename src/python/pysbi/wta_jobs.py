@@ -46,7 +46,7 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('0')
     if muscimol_amount>0:
         cmds.append('--muscimol_amount')
-        cmds.append('%0.4f' % muscimol_amount/nS)
+        cmds.append('%0.4f' % (muscimol_amount/nS))
         cmds.append('--injection_site')
         cmds.append('%d' % injection_site)
     cmds.append('--record_lfp')
