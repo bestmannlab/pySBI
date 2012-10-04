@@ -52,7 +52,7 @@ default_params=Parameters(
     # Connection probabilities
     p_b_e=0.075,
     p_x_e=0.075,
-    p_e_e=0.075,
+    p_e_e=0.0075,
     p_e_i=0.1,
     p_i_i=0.01,
     p_i_e=0.02)
