@@ -6,7 +6,7 @@ from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current
 from brian.monitor import MultiStateMonitor, StateMonitor, PopulationRateMonitor, SpikeMonitor
-from brian.network import Network
+from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
 from brian.plotting import raster_plot
 from brian.stdunits import pF, nS, mV, ms, nA, mA, Hz
@@ -81,6 +81,7 @@ class WTANetworkGroup(NeuronGroup):
         # Exponential integrate-and-fire neuron
         eqs = exp_IF(params.C, params.gL, params.EL, params.VT, params.DeltaT)
 
+        eqs += Equations('g_muscimol : nS')
         # AMPA conductance - recurrent input current
         eqs += exp_synapse('g_ampa_r', params.tau_ampa, siemens)
         eqs += Current('I_ampa_r=g_ampa_r*(E-vm): amp', E=params.E_ampa)
@@ -100,7 +101,7 @@ class WTANetworkGroup(NeuronGroup):
 
         # GABA-A conductance
         eqs += exp_synapse('g_gaba_a', params.tau_gaba_a, siemens)
-        eqs += Current('I_gaba_a=g_gaba_a*(E-vm): amp', E=params.E_gaba_a)
+        eqs += Current('I_gaba_a=(g_gaba_a+g_muscimol)*(E-vm): amp', E=params.E_gaba_a)
 
         # GABA-B conductance
         eqs += biexp_synapse('g_gaba_b', params.tau1_gaba_b, params.tau2_gaba_b, siemens)
@@ -112,12 +113,17 @@ class WTANetworkGroup(NeuronGroup):
         # Total synaptic current
         eqs += Equations('I_abs=abs(I_ampa_r)+abs(I_ampa_b)+abs(I_ampa_x)+abs(I_nmda)+abs(I_gaba_a) : amp')
 
-        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL, compile=True)
+        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL)
 
         self.init_subpopulations()
 
         self.init_connectivity()
 
+#    def inject_muscimol(self, group_idx, amount):
+#        self.groups_e[group_idx].gL+=amount
+#        print('e %d muscimol=%.4f nS' % (group_idx,self.groups_e[group_idx].gL/nS))
+#        self.groups_i[group_idx].gL+=amount
+#        print('i %d muscimol=%.4f nS' % (group_idx,self.groups_i[group_idx].gL/nS))
 
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
@@ -153,12 +159,12 @@ class WTANetworkGroup(NeuronGroup):
 
         # Initialize state variables
         self.vm = self.params.EL+randn(self.N*self.num_groups)*10*mV
-        self.g_ampa_r = randn(self.N*self.num_groups)*self.params.w_ampa_r*.1
-        self.g_ampa_b = randn(self.N*self.num_groups)*self.params.w_ampa_b*.1
-        self.g_ampa_x = randn(self.N*self.num_groups)*self.params.w_ampa_x*.1
-        self.g_nmda = randn(self.N*self.num_groups)*self.params.w_nmda*.1
-        self.g_gaba_a = randn(self.N*self.num_groups)*self.params.w_gaba_a*.1
-        self.g_gaba_b = randn(self.N*self.num_groups)*self.params.w_gaba_b*.1
+        self.g_ampa_r = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
+        self.g_ampa_b = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
+        self.g_ampa_x = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
+        self.g_nmda = self.params.w_nmda_min+randn(self.N*self.num_groups)*(self.params.w_nmda_max-self.params.w_nmda_min)*.1
+        self.g_gaba_a = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
+        self.g_gaba_b = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
 
 
     ## Initialize network connectivity
@@ -353,13 +359,19 @@ class WTAMonitor():
                               self.population_rate_monitors['inhibitory']])
             max_rate=np.max(max_rates)
 
-            for pop_rate_monitor in self.population_rate_monitors['excitatory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
+            for idx,pop_rate_monitor in enumerate(self.population_rate_monitors['excitatory']):
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
                 ylim(0,max_rate)
+            legend()
+            ylabel('Firing rate (Hz)')
+
             ax=subplot(212)
-            for pop_rate_monitor in self.population_rate_monitors['inhibitory']:
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz)
+            for idx,pop_rate_monitor in enumerate(self.population_rate_monitors['inhibitory']):
+                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i %d' % idx)
                 ylim(0,max_rate)
+            legend()
+            ylabel('Firing rate (Hz)')
+            xlabel('Time (ms)')
 
         # Input firing rate plots
         if self.background_rate_monitor is not None and self.task_rate_monitors is not None:
@@ -734,7 +746,7 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
 #       single_inh_pop = single inhibitory population if true
 def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, record_lfp=True, record_voxel=True,
             record_neuron_state=False, record_spikes=True, record_firing_rate=True, record_inputs=False,
-            plot_output=False, single_inh_pop=False):
+            plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0):
 
     # Init simulation parameters
     background_rate=10*Hz
@@ -768,9 +780,15 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
         record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate,
         record_inputs=record_inputs)
 
+    @network_operation(when='start')
+    def inject_muscimol():
+        if muscimol_amount>0:
+            wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
+            wta_network.groups_i[injection_site].g_muscimol=muscimol_amount
+
     # Create Brian network and reset clock
     net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-        wta_monitor.monitors)
+        wta_monitor.monitors, inject_muscimol)
     reinit_default_clock()
 
     # Run simulation
