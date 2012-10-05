@@ -14,9 +14,12 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
                  muscimol_amount=0*nS, injection_site=0, record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
                  record_firing_rate=True):
     cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta.py']
-    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.muscimol.%0.4f.injection.%d.contrast.%0.4f.trial.%d' %\
-              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, muscimol_amount, injection_site,
-               contrast, trial)
+    if muscimol_amount>0:
+        e_desc='lesioned'
+    else:
+        e_desc='control'
+    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d' %\
+              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, e_desc, contrast, trial)
     log_file_template='%s.log' % file_desc
     output_file='/tmp/wta-output/%s.h5' % file_desc
     cmds.append('--num_groups')
@@ -46,7 +49,7 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('0')
     if muscimol_amount>0:
         cmds.append('--muscimol_amount')
-        cmds.append('%0.4f' % (muscimol_amount/nS))
+        cmds.append(str(muscimol_amount))
         cmds.append('--injection_site')
         cmds.append('%d' % injection_site)
     cmds.append('--record_lfp')
