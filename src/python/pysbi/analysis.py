@@ -40,6 +40,8 @@ class FileInfo():
         self.network_group_size=int(f.attrs['network_group_size'])
         self.background_input_size=int(f.attrs['background_input_size'])
         self.task_input_size=int(f.attrs['task_input_size'])
+        self.muscimol_amount=float(f.attrs['muscimol_amount'])*siemens
+        self.injection_site=int(f.attrs['injection_site'])
 
         self.wta_params=wta.default_params()
         self.wta_params.C=float(f.attrs['C'])*farad
@@ -52,19 +54,21 @@ class FileInfo():
         self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
         self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
         self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
-        #self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
+        self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
         self.wta_params.tau_ampa=float(f.attrs['tau_ampa'])*second
         self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
         self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
         self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
-        #self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
-        #self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
-        self.wta_params.w_ampa_x=float(f.attrs['w_ampa_x'])*siemens
-        self.wta_params.w_ampa_b=float(f.attrs['w_ampa_b'])*siemens
-        self.wta_params.w_ampa_r=float(f.attrs['w_ampa_r'])*siemens
-        self.wta_params.w_nmda=float(f.attrs['w_nmda'])*siemens
-        self.wta_params.w_gaba_a=float(f.attrs['w_gaba_a'])*siemens
-        #self.wta_params.w_gaba_b=float(f.attrs['w_gaba_b'])*siemens
+        self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
+        self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
+        self.wta_params.w_ampa_min=float(f.attrs['w_ampa_min'])*siemens
+        self.wta_params.w_ampa_max=float(f.attrs['w_ampa_max'])*siemens
+        self.wta_params.w_nmda_min=float(f.attrs['w_nmda_min'])*siemens
+        self.wta_params.w_nmda_max=float(f.attrs['w_nmda_max'])*siemens
+        self.wta_params.w_gaba_a_min=float(f.attrs['w_gaba_a_min'])*siemens
+        self.wta_params.w_gaba_a_max=float(f.attrs['w_gaba_a_max'])*siemens
+        self.wta_params.w_gaba_b_min=float(f.attrs['w_gaba_b_min'])*siemens
+        self.wta_params.w_gaba_b_max=float(f.attrs['w_gaba_b_max'])*siemens
         self.wta_params.p_b_e=float(f.attrs['p_b_e'])
         self.wta_params.p_x_e=float(f.attrs['p_x_e'])
         self.wta_params.p_e_e=float(f.attrs['p_e_e'])
@@ -112,18 +116,36 @@ class FileInfo():
                 self.voxel_params.k3=float(f_vox.attrs['k3'])
 
             self.voxel_rec={}
-            if 'G_total' in f_vox:
-                self.voxel_rec['G_total']=np.array(f_vox['G_total'])
-            if 'G_total' in f_vox:
-                self.voxel_rec['s']=np.array(f_vox['s'])
-            if 'G_total' in f_vox:
-                self.voxel_rec['f_in']=np.array(f_vox['f_in'])
-            if 'G_total' in f_vox:
-                self.voxel_rec['v']=np.array(f_vox['v'])
-            if 'G_total' in f_vox:
-                self.voxel_rec['q']=np.array(f_vox['q'])
-            if 'G_total' in f_vox:
-                self.voxel_rec['y']=np.array(f_vox['y'])
+            if 'total_syn' in f_vox:
+                total_vox=f_vox['total_syn']
+                if 'G_total' in total_vox:
+                    self.voxel_rec['G_total']=np.array(total_vox['G_total'])
+                if 's' in total_vox:
+                    self.voxel_rec['s']=np.array(total_vox['s'])
+                if 'f_in' in total_vox:
+                    self.voxel_rec['f_in']=np.array(total_vox['f_in'])
+                if 'v' in total_vox:
+                    self.voxel_rec['v']=np.array(total_vox['v'])
+                if 'q' in total_vox:
+                    self.voxel_rec['q']=np.array(total_vox['q'])
+                if 'y' in total_vox:
+                    self.voxel_rec['y']=np.array(total_vox['y'])
+
+            self.voxel_exc_rec={}
+            if 'exc_syn' in f_vox:
+                exc_vox=f_vox['exc_syn']
+                if 'G_total' in exc_vox:
+                    self.voxel_exc_rec['G_total']=np.array(exc_vox['G_total'])
+                if 's' in exc_vox:
+                    self.voxel_exc_rec['s']=np.array(exc_vox['s'])
+                if 'f_in' in exc_vox:
+                    self.voxel_exc_rec['f_in']=np.array(exc_vox['f_in'])
+                if 'v' in exc_vox:
+                    self.voxel_exc_rec['v']=np.array(exc_vox['v'])
+                if 'q' in exc_vox:
+                    self.voxel_exc_rec['q']=np.array(exc_vox['q'])
+                if 'y' in exc_vox:
+                    self.voxel_exc_rec['y']=np.array(exc_vox['y'])
 
         self.neural_state_rec=None
         if 'neuron_state' in f:
