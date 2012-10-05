@@ -154,7 +154,7 @@ def test_contrast_lesion(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, musc
             for k in range(num_groups):
                 input_freq[k]=float(inputs[k])*Hz
 
-            file='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.contrast.%0.4f.trial.%d.h5' %\
+            file='lesioned.wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.contrast.%0.4f.trial.%d.h5' %\
                  (num_groups, trial_duration, wta_params.p_b_e, wta_params.p_x_e, wta_params.p_e_e, wta_params.p_e_i,
                   wta_params.p_i_i, wta_params.p_i_e, contrast, j)
 
