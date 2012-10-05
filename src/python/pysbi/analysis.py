@@ -139,10 +139,12 @@ class FileInfo():
 
         self.e_firing_rates=None
         self.i_firing_rates=None
+        self.rt=None
         if 'firing_rates' in f:
             f_rates=f['firing_rates']
             self.e_firing_rates=np.array(f_rates['e_rates'])
             self.i_firing_rates=np.array(f_rates['i_rates'])
+            self.rt=get_response_time(self.e_firing_rates, self.stim_start_time)
 
         self.background_rate=None
         if 'background_rate' in f:
@@ -451,6 +453,27 @@ def get_lfp_signal(wta_data, plot=False):
         plt.plot(lfp)
         plt.show()
     return lfp
+
+def get_response_time(e_firing_rates, stim_start_time):
+    rate_1=e_firing_rates[0]
+    rate_2=e_firing_rates[1]
+    times=np.array(range(len(rate_1)))*.1
+    rt=None
+    winner=None
+    for idx,time in enumerate(times):
+        if time>stim_start_time:
+            if rt is None:
+                if rate_1[idx]>=2*rate_2[idx]:
+                    winner=1
+                    rt=time-stim_start_time
+                if rate_2[idx]>=2*rate_1[idx]:
+                    winner=2
+                    rt=time-stim_start_time
+            else:
+                if (winner==1 and rate_1[idx]<2*rate_2[idx]) or (winner==2 and rate_2[idx]<2*rate_1[idx]):
+                    winner=None
+                    rt=None
+    return rt
 
 
 def get_roc_init(num_trials, num_extra_trials, option_idx, prefix):

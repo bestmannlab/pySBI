@@ -112,6 +112,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
     trial_max_bold=np.zeros(num_trials)
     trial_max_input=np.zeros([num_trials,1])
     trial_max_rate=np.zeros([num_trials])
+    trial_rt=np.zeros([num_trials])
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         print('opening %s' % file_name)
@@ -134,6 +135,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
         trial_max_bold[i]=trial.max_bold
         trial_max_input[i]=trial.max_input
         trial_max_rate[i]=trial.max_rate
+        trial_rt[i]=trial.rt
         report_info.trials.append(trial)
 
     clf=LinearRegression()
@@ -159,7 +161,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
         save_to_png(fig, fname)
         plt.close()
 
-    report_info.bold=create_bold_report(reports_dir, trial_contrast, trial_max_bold,
+    report_info.bold=create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_rate, trial_rt,
         regenerate_plot=regenerate_network_plots)
 
     report_info.roc=create_roc_report(file_prefix, report_info.num_groups, num_trials, reports_dir,
@@ -178,7 +180,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
     return report_info
 
 
-def create_bold_report(reports_dir, trial_contrast, trial_max_bold, regenerate_plot=True):
+def create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_rate, trial_rt, regenerate_plot=True):
 
     report_info=Struct()
 
@@ -204,12 +206,57 @@ def create_bold_report(reports_dir, trial_contrast, trial_max_bold, regenerate_p
         save_to_png(fig, fname)
         plt.close()
 
+    clf=LinearRegression()
+    clf.fit(trial_max_rate,trial_max_bold)
+    a=clf.coef_[0]
+    b=clf.intercept_
+    report_info.bold_firing_rate_slope=a
+    report_info.bold_firing_rate_intercept=b
+    report_info.bold_firing_rate_r_sqr=clf.score(trial_max_rate,trial_max_bold)
+
+    furl='img/firing_rate_bold.png'
+    fname=os.path.join(reports_dir, furl)
+    report_info.firing_rate_bold_url=furl
+    if regenerate_plot or not os.path.exists(fname):
+        fig=plt.figure()
+        plt.plot(trial_max_rate, trial_max_bold, 'x')
+        x_min=np.min(trial_max_rate)
+        x_max=np.max(trial_max_rate)
+        plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+        plt.xlabel('Max Firing Rate')
+        plt.ylabel('Max BOLD')
+        save_to_png(fig, fname)
+        plt.close()
+
+    clf=LinearRegression()
+    clf.fit(trial_rt,trial_max_bold)
+    a=clf.coef_[0]
+    b=clf.intercept_
+    report_info.bold_rt_slope=a
+    report_info.bold_rt_intercept=b
+    report_info.bold_rt_r_sqr=clf.score(trial_rt,trial_max_bold)
+
+    furl='img/response_time_bold.png'
+    fname=os.path.join(reports_dir, furl)
+    report_info.response_time_bold_url=furl
+    if regenerate_plot or not os.path.exists(fname):
+        fig=plt.figure()
+        plt.plot(trial_rt, trial_max_bold, 'x')
+        x_min=np.min(trial_rt)
+        x_max=np.max(trial_rt)
+        plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+        plt.xlabel('Response Time')
+        plt.ylabel('Max BOLD')
+        save_to_png(fig, fname)
+        plt.close()
+
     return report_info
 
 def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
     trial = Struct()
     trial.input_freq=data.input_freq
     trial.input_contrast=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
+    trial.rt=data.rt
 
     max_input_idx=np.where(trial.input_freq==np.max(trial.input_freq))[0][0]
     trial.max_input=trial.input_freq[max_input_idx]

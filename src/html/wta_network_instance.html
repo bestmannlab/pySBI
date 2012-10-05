@@ -242,6 +242,24 @@ Intercept={{ rinfo.io_intercept }}
 <br>
 R^2={{ rinfo.io_r_sqr }}
 
+<h4>BOLD as a Function of Firing Rate</h4>
+<img src="{{ rinfo.bold.firing_rate_bold_url }}"/>
+<br>
+Slope={{ rinfo.bold_firing_rate_slope }}
+<br>
+Intercept={{ rinfo.bold_firing_rate_intercept }}
+<br>
+R^2={{ rinfo.bold_firing_rate_r_sqr }}
+
+<h4>BOLD as a Function of Response Time</h4>
+<img src="{{ rinfo.bold.response_time_bold_url }}"/>
+<br>
+Slope={{ rinfo.bold_rt_slope }}
+<br>
+Intercept={{ rinfo.bold_rt_intercept }}
+<br>
+R^2={{ rinfo.bold_rt_r_sqr }}
+
 <h4>BOLD as a Function of Input Contrast</h4>
 <img src="{{ rinfo.bold.contrast_bold_url }}"/>
 <br>
@@ -266,9 +284,10 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
         <tr>
             <th>Trial</th>
             <th>Inputs</th>
+            <th>Response Time</th>
             <th>Input Contrast</th>
             <th>Max Input Rate</th>
-            <th>Max Output Rate</th>
+            <th>Max Firing Rate</th>
             <th>Max Bold</th>
         </tr>
     </thead>
@@ -277,6 +296,7 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
         <tr>
             <td><a href="#trial.{{ loop.index }}">{{ loop.index }}</a></td>
             <td>[{% for input in trial.input_freq %} {{ input|round(2) }}Hz {% endfor %}]</td>
+            <td>{{ trial.tr }}</td>
             <td>{{ trial.input_contrast|round(3) }}</td>
             <td>{{ trial.max_input|round(2) }}Hz</td>
             <td>{{ trial.max_rate|round(2) }}Hz</td>
@@ -294,6 +314,8 @@ Overall AUC={{ rinfo.roc.auc|round(3) }}
                 <strong><a name="trial.{{ loop.index }}">Trial {{ loop.index }}</a></strong>
                 <br>
                 Inputs=[{% for input in trial.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+                <br>
+                Response Time={{ trial.rt }}
                 <br>
                 Input Contrast={{ trial.input_contrast|round(3) }}
                 <br>
