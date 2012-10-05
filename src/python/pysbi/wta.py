@@ -50,8 +50,10 @@ default_params=Parameters(
     w_gaba_b_min=0.1*nS,
     w_gaba_b_max=1.0*nS,
     # Connection probabilities
-    p_b_e=0.075,
-    p_x_e=0.075,
+    p_b_e=0.1,
+    p_x_e=0.05,
+    #p_b_e=0.075,
+    #p_x_e=0.075,
     p_e_e=0.0075,
     p_e_i=0.1,
     p_i_i=0.01,
@@ -870,5 +872,5 @@ if __name__=='__main__':
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
-        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount*nS,
+        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount*siemens,
         injection_site=argvals.injection_site)
