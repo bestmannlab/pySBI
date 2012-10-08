@@ -58,8 +58,11 @@ def test_contrast(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, muscimol_am
                  (num_groups, trial_duration, wta_params.p_b_e, wta_params.p_x_e, wta_params.p_e_e, wta_params.p_e_i,
                   wta_params.p_i_i, wta_params.p_i_e, contrast, j)
 
+            out_file=None
+            if data_path is not None:
+                out_file=os.path.join(data_path,file)
             wta_monitor=run_wta(wta_params, num_groups, input_freq, trial_duration, record_neuron_state=True,
-                output_file=os.path.join(data_path,file), muscimol_amount=muscimol_amount, injection_site=injection_site)
+                output_file=out_file, muscimol_amount=muscimol_amount, injection_site=injection_site)
 
             trial_max_bold[i*num_trials+j]=np.max(wta_monitor.voxel_monitor['y'].values)
             trial_max_exc_bold[i*num_trials+j]=np.max(wta_monitor.voxel_exc_monitor['y'].values)
@@ -171,40 +174,40 @@ def test_contrast_lesion(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, musc
     x_max=np.max(contrast_range)
 
     fig=plt.figure()
-    clf=LinearRegression()
-    clf.fit(trial_contrast,trial_max_bold)
-    a=clf.coef_[0]
-    b=clf.intercept_
+    control_clf=LinearRegression()
+    control_clf.fit(trial_contrast,trial_max_bold)
+    control_a=control_clf.coef_[0]
+    control_b=control_clf.intercept_
 
-    clf_l=LinearRegression()
-    clf_l.fit(trial_contrast,lesioned_trial_max_bold)
-    a_l=clf_l.coef_[0]
-    b_l=clf_l.intercept_
+    lesion_clf=LinearRegression()
+    lesion_clf.fit(trial_contrast,lesioned_trial_max_bold)
+    lesion_a=lesion_clf.coef_[0]
+    lesion_b=lesion_clf.intercept_
 
     plt.plot(trial_contrast, trial_max_bold, 'xb')
     plt.plot(trial_contrast, lesioned_trial_max_bold, 'xr')
-    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--b',label='Control')
-    plt.plot([x_min,x_max],[a_l*x_min+b_l,a_l*x_max+b_l],'--r',label='Lesioned')
+    plt.plot([x_min,x_max],[control_a*x_min+control_b,control_a*x_max+control_b],'--b',label='Control')
+    plt.plot([x_min,x_max],[lesion_a*x_min+lesion_b,lesion_a*x_max+lesion_b],'--r',label='Lesioned')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
     plt.legend()
     plt.show()
 
     fig=plt.figure()
-    clf=LinearRegression()
-    clf.fit(trial_contrast,trial_max_exc_bold)
-    a=clf.coef_[0]
-    b=clf.intercept_
+    control_exc_clf=LinearRegression()
+    control_exc_clf.fit(trial_contrast,trial_max_exc_bold)
+    control_exc_a=control_exc_clf.coef_[0]
+    control_exc_b=control_exc_clf.intercept_
 
-    clf_l=LinearRegression()
-    clf_l.fit(trial_contrast,lesioned_trial_max_exc_bold)
-    a_l=clf_l.coef_[0]
-    b_l=clf_l.intercept_
+    lesion_exc_clf=LinearRegression()
+    lesion_exc_clf.fit(trial_contrast,lesioned_trial_max_exc_bold)
+    lesion_exc_a=lesion_exc_clf.coef_[0]
+    lesion_exc_b=lesion_exc_clf.intercept_
 
     plt.plot(trial_contrast, trial_max_exc_bold, 'ob')
     plt.plot(trial_contrast, lesioned_trial_max_exc_bold, 'or')
-    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--b',label='Control')
-    plt.plot([x_min,x_max],[a_l*x_min+b_l,a_l*x_max+b_l],'--r',label='Lesioned')
+    plt.plot([x_min,x_max],[control_exc_a*x_min+control_exc_b,control_exc_a*x_max+control_exc_b],'--b',label='Control')
+    plt.plot([x_min,x_max],[lesion_exc_a*x_min+lesion_exc_b,lesion_exc_a*x_max+lesion_exc_b],'--r',label='Lesioned')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD (exc only)')
     plt.legend()
