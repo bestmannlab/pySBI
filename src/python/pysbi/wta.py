@@ -56,7 +56,8 @@ default_params=Parameters(
     #p_x_e=0.075,
     p_e_e=0.0075,
     #p_e_i=0.1,
-    p_e_i=0.05,
+    #p_e_i=0.05,
+    p_e_i=0.04,
     p_i_i=0.01,
     p_i_e=0.02)
 
