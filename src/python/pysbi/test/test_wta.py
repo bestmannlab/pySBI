@@ -1,7 +1,7 @@
 import os
 from brian.stdunits import Hz, nS
 from brian.units import second
-from scikits.learn.linear_model.base import LinearRegression
+#from scikits.learn.linear_model.base import LinearRegression
 from pysbi.wta import default_params, run_wta
 import numpy as np
 import matplotlib.pylab as plt
@@ -67,32 +67,32 @@ def test_contrast(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, muscimol_am
             trial_max_bold[i*num_trials+j]=np.max(wta_monitor.voxel_monitor['y'].values)
             trial_max_exc_bold[i*num_trials+j]=np.max(wta_monitor.voxel_exc_monitor['y'].values)
 
-    x_min=np.min(contrast_range)
-    x_max=np.max(contrast_range)
-
-    fig=plt.figure()
-    clf=LinearRegression()
-    clf.fit(trial_contrast,trial_max_bold)
-    a=clf.coef_[0]
-    b=clf.intercept_
-
-    plt.plot(trial_contrast, trial_max_bold, 'x')
-    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
-    plt.xlabel('Input Contrast')
-    plt.ylabel('Max BOLD')
-    plt.show()
-
-    fig=plt.figure()
-    clf=LinearRegression()
-    clf.fit(trial_contrast,trial_max_exc_bold)
-    a=clf.coef_[0]
-    b=clf.intercept_
-
-    plt.plot(trial_contrast, trial_max_exc_bold, 'o')
-    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
-    plt.xlabel('Input Contrast')
-    plt.ylabel('Max BOLD (exc only)')
-    plt.show()
+#    x_min=np.min(contrast_range)
+#    x_max=np.max(contrast_range)
+#
+#    fig=plt.figure()
+#    clf=LinearRegression()
+#    clf.fit(trial_contrast,trial_max_bold)
+#    a=clf.coef_[0]
+#    b=clf.intercept_
+#
+#    plt.plot(trial_contrast, trial_max_bold, 'x')
+#    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+#    plt.xlabel('Input Contrast')
+#    plt.ylabel('Max BOLD')
+#    plt.show()
+#
+#    fig=plt.figure()
+#    clf=LinearRegression()
+#    clf.fit(trial_contrast,trial_max_exc_bold)
+#    a=clf.coef_[0]
+#    b=clf.intercept_
+#
+#    plt.plot(trial_contrast, trial_max_exc_bold, 'o')
+#    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+#    plt.xlabel('Input Contrast')
+#    plt.ylabel('Max BOLD (exc only)')
+#    plt.show()
 
 
 def test_contrast_lesion(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, muscimol_amount=0*nS, injection_site=0):
@@ -170,45 +170,45 @@ def test_contrast_lesion(p_e_e, p_e_i, p_i_i, p_i_e, num_trials, data_path, musc
             lesioned_trial_max_bold[i*num_trials+j]=np.max(wta_monitor.voxel_monitor['y'].values)
             lesioned_trial_max_exc_bold[i*num_trials+j]=np.max(wta_monitor.voxel_exc_monitor['y'].values)
 
-    x_min=np.min(contrast_range)
-    x_max=np.max(contrast_range)
-
-    fig=plt.figure()
-    control_clf=LinearRegression()
-    control_clf.fit(trial_contrast,trial_max_bold)
-    control_a=control_clf.coef_[0]
-    control_b=control_clf.intercept_
-
-    lesion_clf=LinearRegression()
-    lesion_clf.fit(trial_contrast,lesioned_trial_max_bold)
-    lesion_a=lesion_clf.coef_[0]
-    lesion_b=lesion_clf.intercept_
-
-    plt.plot(trial_contrast, trial_max_bold, 'xb')
-    plt.plot(trial_contrast, lesioned_trial_max_bold, 'xr')
-    plt.plot([x_min,x_max],[control_a*x_min+control_b,control_a*x_max+control_b],'--b',label='Control')
-    plt.plot([x_min,x_max],[lesion_a*x_min+lesion_b,lesion_a*x_max+lesion_b],'--r',label='Lesioned')
-    plt.xlabel('Input Contrast')
-    plt.ylabel('Max BOLD')
-    plt.legend()
-    plt.show()
-
-    fig=plt.figure()
-    control_exc_clf=LinearRegression()
-    control_exc_clf.fit(trial_contrast,trial_max_exc_bold)
-    control_exc_a=control_exc_clf.coef_[0]
-    control_exc_b=control_exc_clf.intercept_
-
-    lesion_exc_clf=LinearRegression()
-    lesion_exc_clf.fit(trial_contrast,lesioned_trial_max_exc_bold)
-    lesion_exc_a=lesion_exc_clf.coef_[0]
-    lesion_exc_b=lesion_exc_clf.intercept_
-
-    plt.plot(trial_contrast, trial_max_exc_bold, 'ob')
-    plt.plot(trial_contrast, lesioned_trial_max_exc_bold, 'or')
-    plt.plot([x_min,x_max],[control_exc_a*x_min+control_exc_b,control_exc_a*x_max+control_exc_b],'--b',label='Control')
-    plt.plot([x_min,x_max],[lesion_exc_a*x_min+lesion_exc_b,lesion_exc_a*x_max+lesion_exc_b],'--r',label='Lesioned')
-    plt.xlabel('Input Contrast')
-    plt.ylabel('Max BOLD (exc only)')
-    plt.legend()
-    plt.show()
+#    x_min=np.min(contrast_range)
+#    x_max=np.max(contrast_range)
+#
+#    fig=plt.figure()
+#    control_clf=LinearRegression()
+#    control_clf.fit(trial_contrast,trial_max_bold)
+#    control_a=control_clf.coef_[0]
+#    control_b=control_clf.intercept_
+#
+#    lesion_clf=LinearRegression()
+#    lesion_clf.fit(trial_contrast,lesioned_trial_max_bold)
+#    lesion_a=lesion_clf.coef_[0]
+#    lesion_b=lesion_clf.intercept_
+#
+#    plt.plot(trial_contrast, trial_max_bold, 'xb')
+#    plt.plot(trial_contrast, lesioned_trial_max_bold, 'xr')
+#    plt.plot([x_min,x_max],[control_a*x_min+control_b,control_a*x_max+control_b],'--b',label='Control')
+#    plt.plot([x_min,x_max],[lesion_a*x_min+lesion_b,lesion_a*x_max+lesion_b],'--r',label='Lesioned')
+#    plt.xlabel('Input Contrast')
+#    plt.ylabel('Max BOLD')
+#    plt.legend()
+#    plt.show()
+#
+#    fig=plt.figure()
+#    control_exc_clf=LinearRegression()
+#    control_exc_clf.fit(trial_contrast,trial_max_exc_bold)
+#    control_exc_a=control_exc_clf.coef_[0]
+#    control_exc_b=control_exc_clf.intercept_
+#
+#    lesion_exc_clf=LinearRegression()
+#    lesion_exc_clf.fit(trial_contrast,lesioned_trial_max_exc_bold)
+#    lesion_exc_a=lesion_exc_clf.coef_[0]
+#    lesion_exc_b=lesion_exc_clf.intercept_
+#
+#    plt.plot(trial_contrast, trial_max_exc_bold, 'ob')
+#    plt.plot(trial_contrast, lesioned_trial_max_exc_bold, 'or')
+#    plt.plot([x_min,x_max],[control_exc_a*x_min+control_exc_b,control_exc_a*x_max+control_exc_b],'--b',label='Control')
+#    plt.plot([x_min,x_max],[lesion_exc_a*x_min+lesion_exc_b,lesion_exc_a*x_max+lesion_exc_b],'--r',label='Lesioned')
+#    plt.xlabel('Input Contrast')
+#    plt.ylabel('Max BOLD (exc only)')
+#    plt.legend()
+#    plt.show()
