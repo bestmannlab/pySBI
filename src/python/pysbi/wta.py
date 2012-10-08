@@ -55,7 +55,8 @@ default_params=Parameters(
     #p_b_e=0.075,
     #p_x_e=0.075,
     p_e_e=0.0075,
-    p_e_i=0.1,
+    #p_e_i=0.1,
+    p_e_i=0.05,
     p_i_i=0.01,
     p_i_e=0.02)
 
@@ -615,6 +616,7 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.attrs['E_ampa'] = wta_params.E_ampa
     f.attrs['E_nmda'] = wta_params.E_nmda
     f.attrs['E_gaba_a'] = wta_params.E_gaba_a
+    f.attrs['E_gaba_b'] = wta_params.E_gaba_b
     f.attrs['tau_ampa'] = wta_params.tau_ampa
     f.attrs['tau1_nmda'] = wta_params.tau1_nmda
     f.attrs['tau2_nmda'] = wta_params.tau2_nmda
@@ -756,8 +758,10 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
             record_neuron_state=False, record_spikes=True, record_firing_rate=True, record_inputs=False,
             plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0):
 
+    start_time = time()
+
     # Init simulation parameters
-    background_rate=10*Hz
+    background_rate=15*Hz
     stim_start_time=.25*second
     stim_end_time=.75*second
     network_group_size=2000
@@ -798,6 +802,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
         wta_monitor.monitors, inject_muscimol)
     reinit_default_clock()
+    print "Initialization time:", time() - start_time
 
     # Run simulation
     start_time = time()
@@ -806,19 +811,22 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
 
     # Compute BOLD signal
     if record_voxel:
+        start_time = time()
         wta_monitor.voxel_exc_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total_exc'].values[0], voxel.params,
             [500, 2500], trial_duration)
         wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
             [500, 2500], trial_duration)
+        print "BOLD generation time:", time() - start_time
 
     # Write output to file
     if output_file is not None:
+        start_time = time()
         write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
             output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
             stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params, muscimol_amount,
             injection_site)
-
         print 'Wrote output to %s' % output_file
+        print "Write output time:", time() - start_time
 
     # Plot outputs
     if plot_output:
