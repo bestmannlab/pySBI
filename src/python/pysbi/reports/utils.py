@@ -20,10 +20,12 @@ def get_local_average(dict, param_array):
     return np.mean(values)
 
 
-def all_trials_exist(file_prefix, num_trials):
-    for i in range(num_trials):
-        if not os.path.exists('%s.trial.%d.h5' % (file_prefix,i)):
-            return False
+def all_trials_exist(file_prefix, contrast_range, num_trials):
+    for contrast in contrast_range:
+        for i in range(num_trials):
+            fname='%s.contrast.%0.4f.trial.%d.h5' % (file_prefix, contrast, i)
+            if not os.path.exists(fname):
+                return False
     return True
 
 
