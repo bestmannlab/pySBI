@@ -253,30 +253,22 @@ def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range,
     # p(AUC | theta, M)
     bayes_analysis.l1_pos_likelihood = np.zeros(auc.shape)
     bayes_analysis.l1_neg_likelihood = np.zeros(auc.shape)
-    l1_dist=[]
-    l1_pos_dist=[]
-    l1_neg_dist=[]
+    bayes_analysis.l1_dist=[]
+    bayes_analysis.l1_pos_dist=[]
+    bayes_analysis.l1_neg_dist=[]
     for i, p_b_e in enumerate(p_b_e_range):
         for j, p_x_e in enumerate(p_x_e_range):
             for k, p_e_e in enumerate(p_e_e_range):
                 for l, p_e_i in enumerate(p_e_i_range):
                     for m, p_i_i in enumerate(p_i_i_range):
                         for n, p_i_e in enumerate(p_i_e_range):
-                            l1_dist.append(slope[i,j,k,l,m,n])
+                            bayes_analysis.l1_dist.append(slope[i,j,k,l,m,n])
                             if auc[i, j, k, l, m, n] >= perf_threshold:
-                                l1_pos_dist.append(slope[i,j,k,l,m,n])
+                                bayes_analysis.l1_pos_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_pos_likelihood[i, j, k, l, m, n] = 1.0
                             else:
-                                l1_neg_dist.append(slope[i,j,k,l,m,n])
+                                bayes_analysis.l1_neg_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_neg_likelihood[i, j, k, l, m, n] = 1.0
-
-    fig=plt.figure()
-    ax=plt.subplot(311)
-    plt.hist(l1_dist, normed=True)
-    ax=plt.subplot(312)
-    plt.hist(l1_pos_dist, normed=True)
-    ax=plt.subplot(313)
-    plt.hist(l1_neg_dist, normed=True)
 
     # Number of parameter values tested
     n_param_vals = len(p_b_e_range) * len(p_x_e_range) * len(p_e_e_range) * len(p_e_i_range) * len(p_i_i_range) * len(

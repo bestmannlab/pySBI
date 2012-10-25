@@ -6,7 +6,7 @@ from pysbi.analysis import run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.bayesian import create_bayesian_report, render_joint_marginal_report
 from pysbi.reports.utils import get_local_average, make_report_dirs
-from pysbi.util.utils import Struct
+from pysbi.util.utils import Struct, save_to_png
 import matplotlib.pylab as plt
 
 class SummaryData:
@@ -263,6 +263,21 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     template_file = 'bayes_analysis.html'
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = env.get_template(template_file)
+
+    fig=plt.figure()
+    ax=plt.subplot(311)
+    plt.hist(bayes_analysis.l1_dist, normed=True)
+    plt.ylabel('L1 Probability')
+    ax=plt.subplot(312)
+    plt.hist(bayes_analysis.l1_pos_dist, normed=True)
+    plt.ylabel('L1 Positive - Probability')
+    ax=plt.subplot(313)
+    plt.hist(bayes_analysis.l1_neg_dist, normed=True)
+    plt.ylabel('L1 Negative - Probability')
+    plt.xlabel('BOLD - Contrast Slope')
+    fname=os.path.join('img','l1_dist.png')
+    save_to_png(fig, os.path.join(base_report_dir, fname))
+    report_info.l1_dist_url=fname
 
 
     report_info.l1_pos_report_info = create_bayesian_report('Level 1 - Positive', report_info.num_groups, report_info.trial_duration,
