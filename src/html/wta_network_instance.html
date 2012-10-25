@@ -132,6 +132,10 @@
         <td>{{ rinfo.wta_params.E_gaba_a }}</td>
     </tr>
     <tr>
+        <td>E_gaba_b</td>
+        <td>{{ rinfo.wta_params.E_gaba_b }}</td>
+    </tr>
+    <tr>
         <td>tau_ampa</td>
         <td>{{ rinfo.wta_params.tau_ampa }}</td>
     </tr>
@@ -148,24 +152,36 @@
         <td>{{ rinfo.wta_params.tau_gaba_a }}</td>
     </tr>
     <tr>
-        <td>w_ampa_b</td>
-        <td>{{ rinfo.wta_params.w_ampa_b }}</td>
+        <td>tau1_gaba_b</td>
+        <td>{{ rinfo.wta_params.tau1_gaba_b }}</td>
     </tr>
     <tr>
-        <td>w_ampa_x</td>
-        <td>{{ rinfo.wta_params.w_ampa_x }}</td>
+        <td>tau2_gaba_b</td>
+        <td>{{ rinfo.wta_params.tau2_gaba_b }}</td>
     </tr>
     <tr>
-        <td>w_ampa_r</td>
-        <td>{{ rinfo.wta_params.w_ampa_r }}</td>
+        <td>w_ampa_min</td>
+        <td>{{ rinfo.wta_params.w_ampa_min }}</td>
     </tr>
     <tr>
-        <td>w_nmda</td>
-        <td>{{ rinfo.wta_params.w_nmda }}</td>
+        <td>w_ampa_max</td>
+        <td>{{ rinfo.wta_params.w_ampa_max }}</td>
     </tr>
     <tr>
-        <td>w_gaba_a</td>
-        <td>{{ rinfo.wta_params.w_gaba_a }}</td>
+        <td>w_nmda_min</td>
+        <td>{{ rinfo.wta_params.w_nmda_min }}</td>
+    </tr>
+    <tr>
+        <td>w_nmda_max</td>
+        <td>{{ rinfo.wta_params.w_nmda_max }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba_a_min</td>
+        <td>{{ rinfo.wta_params.w_gaba_a_min }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba_a_max</td>
+        <td>{{ rinfo.wta_params.w_gaba_a_max }}</td>
     </tr>
 </table>
 
@@ -245,20 +261,20 @@ R^2={{ rinfo.io_r_sqr }}
 <h4>BOLD as a Function of Firing Rate</h4>
 <img src="{{ rinfo.bold.firing_rate_bold_url }}"/>
 <br>
-Slope={{ rinfo.bold_firing_rate_slope }}
+Slope={{ rinfo.bold.bold_firing_rate_slope }}
 <br>
-Intercept={{ rinfo.bold_firing_rate_intercept }}
+Intercept={{ rinfo.bold.bold_firing_rate_intercept }}
 <br>
-R^2={{ rinfo.bold_firing_rate_r_sqr }}
+R^2={{ rinfo.bold.bold_firing_rate_r_sqr }}
 
 <h4>BOLD as a Function of Response Time</h4>
 <img src="{{ rinfo.bold.response_time_bold_url }}"/>
 <br>
-Slope={{ rinfo.bold_rt_slope }}
+Slope={{ rinfo.bold.bold_rt_slope }}
 <br>
-Intercept={{ rinfo.bold_rt_intercept }}
+Intercept={{ rinfo.bold.bold_rt_intercept }}
 <br>
-R^2={{ rinfo.bold_rt_r_sqr }}
+R^2={{ rinfo.bold.bold_rt_r_sqr }}
 
 <h4>BOLD as a Function of Input Contrast</h4>
 <img src="{{ rinfo.bold.contrast_bold_url }}"/>

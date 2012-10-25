@@ -20,14 +20,16 @@ def get_local_average(dict, param_array):
     return np.mean(values)
 
 
-def all_trials_exist(file_prefix, num_trials):
-    for i in range(num_trials):
-        if not os.path.exists('%s.trial.%d.h5' % (file_prefix,i)):
-            return False
+def all_trials_exist(file_prefix, contrast_range, num_trials):
+    for contrast in contrast_range:
+        for i in range(num_trials):
+            fname='%s.contrast.%0.4f.trial.%d.h5' % (file_prefix, contrast, i)
+            if not os.path.exists(fname):
+                return False
     return True
 
 
-def get_tested_param_combos(data_dir, num_groups, trial_duration, num_trials):
+def get_tested_param_combos(data_dir, num_groups, trial_duration, contrast_range, num_trials, edesc):
     param_combos=[]
     for file in os.listdir(data_dir):
         if file.endswith('.h5'):
@@ -39,11 +41,11 @@ def get_tested_param_combos(data_dir, num_groups, trial_duration, num_trials):
             p_i_i=float('%s.%s' % (file_split[19],file_split[20]))
             p_i_e=float('%s.%s' % (file_split[22],file_split[23]))
 
-            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
-                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
+            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s' %\
+                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, edesc)
             file_prefix=os.path.join(data_dir,file_desc)
             param_tuple=(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)
-            if not param_tuple in param_combos and all_trials_exist(file_prefix, num_trials):
+            if not param_tuple in param_combos and all_trials_exist(file_prefix, contrast_range, num_trials):
                 param_combos.append(param_tuple)
     param_combos.sort()
     return param_combos

@@ -13,7 +13,7 @@ from pysbi.util.utils import save_to_png, Struct, plot_raster
 
 
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
-                       p_i_i_range, p_i_e_range, num_trials, base_report_dir, regenerate_network_plots=True,
+                       p_i_i_range, p_i_e_range, contrast_range, num_trials, e_desc, base_report_dir, regenerate_network_plots=True,
                        regenerate_trial_plots=True, smooth_missing_params=False,
                        summary_filename='wta_network_summary.h5'):
 
@@ -28,54 +28,55 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     bc_r_sqr_dict={}
     auc_dict={}
 
-    param_combos=get_tested_param_combos(data_dir, num_groups, trial_duration, num_trials)
+    param_combos=get_tested_param_combos(data_dir, num_groups, trial_duration, contrast_range, num_trials, e_desc)
 
     report_info=Struct()
+    report_info.edesc=e_desc
     report_info.roc_auc={}
     report_info.bc_slope={}
     report_info.bc_intercept={}
     report_info.bc_r_sqr={}
 
     for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in param_combos:
-        i=p_b_e_range.index(round(p_b_e,2))
-        j=p_x_e_range.index(round(p_x_e,2))
-        k=p_e_e_range.index(round(p_e_e,2))
-        l=p_e_i_range.index(round(p_e_i,2))
-        m=p_i_i_range.index(round(p_i_i,2))
-        n=p_i_e_range.index(round(p_i_e,2))
+        if p_b_e in p_b_e_range and p_x_e in p_x_e_range and p_e_e in p_e_e_range and p_e_i in p_e_i_range and p_i_i in p_i_i_range and p_i_e in p_i_e_range:
+            i=p_b_e_range.index(round(p_b_e,2))
+            j=p_x_e_range.index(round(p_x_e,2))
+            k=p_e_e_range.index(round(p_e_e,2))
+            l=p_e_i_range.index(round(p_e_i,2))
+            m=p_i_i_range.index(round(p_i_i,2))
+            n=p_i_e_range.index(round(p_i_e,2))
 
-        file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f' %\
-                  (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e)
-        file_prefix=os.path.join(data_dir,file_desc)
-        reports_dir=os.path.join(base_report_dir,file_desc)
-        if all_trials_exist(file_prefix, num_trials):
-            print('Creating report for %s' % file_desc)
-            wta_report=create_wta_network_report(file_prefix, num_trials, reports_dir,
-                regenerate_network_plots=regenerate_network_plots,
-                regenerate_trial_plots=regenerate_trial_plots)
+            file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s' %\
+                      (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, e_desc)
+            file_prefix=os.path.join(data_dir,file_desc)
+            reports_dir=os.path.join(base_report_dir,file_desc)
+            if all_trials_exist(file_prefix, contrast_range, num_trials):
+                print('Creating report for %s' % file_desc)
+                wta_report=create_wta_network_report(file_prefix, contrast_range, num_trials, reports_dir,
+                    e_desc, regenerate_network_plots=regenerate_network_plots, regenerate_trial_plots=regenerate_trial_plots)
 
-            if not (i,j,k,l,m,n) in bc_slope_dict:
-                bc_slope_dict[(i,j,k,l,m,n)]=[]
-            bc_slope_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_slope)
-            if not (i,j,k,l,m,n) in bc_intercept_dict:
-                bc_intercept_dict[(i,j,k,l,m,n)]=[]
-            bc_intercept_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_intercept)
-            if not (i,j,k,l,m,n) in bc_r_sqr_dict:
-                bc_r_sqr_dict[(i,j,k,l,m,n)]=[]
-            bc_r_sqr_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_r_sqr)
-            if not (i,j,k,l,m,n) in auc_dict:
-                auc_dict[(i,j,k,l,m,n)]=[]
-            auc_dict[(i,j,k,l,m,n)].append(wta_report.roc.auc)
+                if not (i,j,k,l,m,n) in bc_slope_dict:
+                    bc_slope_dict[(i,j,k,l,m,n)]=[]
+                bc_slope_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_slope)
+                if not (i,j,k,l,m,n) in bc_intercept_dict:
+                    bc_intercept_dict[(i,j,k,l,m,n)]=[]
+                bc_intercept_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_intercept)
+                if not (i,j,k,l,m,n) in bc_r_sqr_dict:
+                    bc_r_sqr_dict[(i,j,k,l,m,n)]=[]
+                bc_r_sqr_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_r_sqr)
+                if not (i,j,k,l,m,n) in auc_dict:
+                    auc_dict[(i,j,k,l,m,n)]=[]
+                auc_dict[(i,j,k,l,m,n)].append(wta_report.roc.auc)
 
-            report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
-            report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
-            report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
-            report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
-        else:
-            report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-            report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-            report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
-            report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
+                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
+                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
+                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
+            else:
+                report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
 
     report_info.num_groups=num_groups
     report_info.trial_duration=trial_duration
@@ -99,44 +100,49 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
         p_i_i_range, p_x_e_range, report_info)
 
 
-def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_network_plots=True, regenerate_trial_plots=True):
+def create_wta_network_report(file_prefix, contrast_range, num_trials, reports_dir, edesc, regenerate_network_plots=True,
+                              regenerate_trial_plots=True):
 
     make_report_dirs(reports_dir)
 
     report_info=Struct()
+    report_info.edesc=edesc
     report_info.trials=[]
 
     (data_dir, data_file_prefix) = os.path.split(file_prefix)
 
-    trial_contrast=np.zeros([num_trials,1])
-    trial_max_bold=np.zeros(num_trials)
-    trial_max_input=np.zeros([num_trials,1])
-    trial_max_rate=np.zeros([num_trials])
-    trial_rt=np.zeros([num_trials])
-    for i in range(num_trials):
-        file_name='%s.trial.%d.h5' % (file_prefix, i)
-        print('opening %s' % file_name)
-        data=FileInfo(file_name)
+    total_trials=num_trials*len(contrast_range)
+    trial_contrast=np.zeros([total_trials,1])
+    trial_max_bold=np.zeros(total_trials)
+    trial_max_input=np.zeros([total_trials,1])
+    trial_max_rate=np.zeros([total_trials,1])
+    trial_rt=np.zeros([total_trials,1])
+    for j,contrast in enumerate(contrast_range):
+        for i in range(num_trials):
+            file_name='%s.contrast.%0.4f.trial.%d.h5' % (file_prefix, contrast, i)
+            print('opening %s' % file_name)
+            data=FileInfo(file_name)
 
-        if not i:
-            report_info.wta_params=data.wta_params
-            report_info.voxel_params=data.voxel_params
-            report_info.num_groups=data.num_groups
-            report_info.trial_duration=data.trial_duration
-            report_info.background_rate=data.background_rate
-            report_info.stim_start_time=data.stim_start_time
-            report_info.stim_end_time=data.stim_end_time
-            report_info.network_group_size=data.network_group_size
-            report_info.background_input_size=data.background_input_size
-            report_info.task_input_size=data.task_input_size
+            if not i:
+                report_info.wta_params=data.wta_params
+                report_info.voxel_params=data.voxel_params
+                report_info.num_groups=data.num_groups
+                report_info.trial_duration=data.trial_duration
+                report_info.background_rate=data.background_rate
+                report_info.stim_start_time=data.stim_start_time
+                report_info.stim_end_time=data.stim_end_time
+                report_info.network_group_size=data.network_group_size
+                report_info.background_input_size=data.background_input_size
+                report_info.task_input_size=data.task_input_size
 
-        trial = create_trial_report(data, reports_dir, i, regenerate_plots=regenerate_trial_plots)
-        trial_contrast[i]=trial.input_contrast
-        trial_max_bold[i]=trial.max_bold
-        trial_max_input[i]=trial.max_input
-        trial_max_rate[i]=trial.max_rate
-        trial_rt[i]=trial.rt
-        report_info.trials.append(trial)
+            trial_idx=j*num_trials+i
+            trial = create_trial_report(data, reports_dir, contrast, i, regenerate_plots=regenerate_trial_plots)
+            trial_contrast[trial_idx]=trial.input_contrast
+            trial_max_bold[trial_idx]=trial.max_bold
+            trial_max_input[trial_idx]=trial.max_input
+            trial_max_rate[trial_idx]=trial.max_rate
+            trial_rt[trial_idx]=trial.rt
+            report_info.trials.append(trial)
 
     clf=LinearRegression()
     clf.fit(trial_max_input,trial_max_rate)
@@ -164,7 +170,7 @@ def create_wta_network_report(file_prefix, num_trials, reports_dir, regenerate_n
     report_info.bold=create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_rate, trial_rt,
         regenerate_plot=regenerate_network_plots)
 
-    report_info.roc=create_roc_report(file_prefix, report_info.num_groups, num_trials, reports_dir,
+    report_info.roc=create_roc_report(file_prefix, report_info.num_groups, contrast_range, num_trials, reports_dir,
         regenerate_plot=regenerate_network_plots)
 
     #create report
@@ -252,7 +258,7 @@ def create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_ra
 
     return report_info
 
-def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
+def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots=True):
     trial = Struct()
     trial.input_freq=data.input_freq
     trial.input_contrast=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
@@ -265,7 +271,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
     trial.e_raster_url = None
     trial.i_raster_url = None
     if data.e_spike_neurons is not None and data.i_spike_neurons is not None:
-        furl='img/e_raster.trial.%d.png' % trial_idx
+        furl='img/e_raster.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname=os.path.join(reports_dir, furl)
         trial.e_raster_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -274,7 +280,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
             save_to_png(fig, fname)
             plt.close()
 
-        furl='img/i_raster.trial.%d.png' % trial_idx
+        furl='img/i_raster.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname=os.path.join(reports_dir, furl)
         trial.i_raster_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -285,7 +291,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
 
     trial.firing_rate_url = None
     if data.e_firing_rates is not None and data.i_firing_rates is not None:
-        furl = 'img/firing_rate.trial.%d.png' % trial_idx
+        furl = 'img/firing_rate.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname = os.path.join(reports_dir, furl)
         trial.firing_rate_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -305,7 +311,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
 
     trial.neural_state_url=None
     if data.neural_state_rec is not None:
-        furl = 'img/neural_state.trial.%d.png' % trial_idx
+        furl = 'img/neural_state.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname = os.path.join(reports_dir, furl)
         trial.neural_state_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -333,7 +339,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
 
     trial.lfp_url = None
     if data.lfp_rec is not None:
-        furl = 'img/lfp.trial.%d.png' % trial_idx
+        furl = 'img/lfp.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname = os.path.join(reports_dir, furl)
         trial.lfp_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -350,7 +356,7 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
     trial.max_bold=0
     if data.voxel_rec is not None:
         trial.max_bold=np.max(data.voxel_rec['y'][0])
-        furl = 'img/voxel.trial.%d.png' % trial_idx
+        furl = 'img/voxel.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname = os.path.join(reports_dir, furl)
         trial.voxel_url = furl
         if regenerate_plots or not os.path.exists(fname):
@@ -369,10 +375,10 @@ def create_trial_report(data, reports_dir, trial_idx, regenerate_plots=True):
     return trial
 
 
-def create_roc_report(file_prefix, num_groups, num_trials, reports_dir, regenerate_plot=True):
+def create_roc_report(file_prefix, num_groups, contrast_range, num_trials, reports_dir, regenerate_plot=True):
     num_extra_trials=10
     roc_report=Struct()
-    roc_report.auc=get_auc(file_prefix, num_trials, num_extra_trials, num_groups)
+    roc_report.auc=get_auc(file_prefix, contrast_range, num_trials, num_extra_trials, num_groups)
     roc_report.auc_single_option=[]
     roc_url = 'img/roc.png'
     fname=os.path.join(reports_dir, roc_url)
@@ -380,9 +386,9 @@ def create_roc_report(file_prefix, num_groups, num_trials, reports_dir, regenera
     if regenerate_plot or not os.path.exists(fname):
         fig=plt.figure()
         for i in range(num_groups):
-            roc=get_roc_single_option(file_prefix, num_trials, num_extra_trials, i)
+            roc=get_roc_single_option(file_prefix, contrast_range, num_trials, num_extra_trials, i)
             plt.plot(roc[:,0],roc[:,1],'x-',label='option %d' % i)
-            roc_report.auc_single_option.append(get_auc_single_option(file_prefix, num_trials, num_extra_trials, i))
+            roc_report.auc_single_option.append(get_auc_single_option(file_prefix, contrast_range, num_trials, num_extra_trials, i))
         plt.plot([0,1],[0,1],'--')
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
