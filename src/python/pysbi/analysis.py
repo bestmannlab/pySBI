@@ -1,5 +1,5 @@
 import os
-from brian.stdunits import Hz
+from brian.stdunits import Hz, ms
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
 import h5py
@@ -34,7 +34,7 @@ class FileInfo():
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
-        self.background_rate=float(f.attrs['background_rate'])*Hz
+        self.background_rate=float(f.attrs['background_rate'])*second
         self.stim_start_time=float(f.attrs['stim_start_time'])*second
         self.stim_end_time=float(f.attrs['stim_end_time'])*second
         self.network_group_size=int(f.attrs['network_group_size'])
@@ -54,7 +54,8 @@ class FileInfo():
         self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
         self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
         self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
-        self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
+        if 'E_gaba_b' in f.attrs:
+            self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
         self.wta_params.tau_ampa=float(f.attrs['tau_ampa'])*second
         self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
         self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
