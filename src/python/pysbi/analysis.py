@@ -34,7 +34,7 @@ class FileInfo():
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
-        self.background_rate=float(f.attrs['background_rate'])*second
+        self.background_rate=float(f.attrs['background_rate'])*Hz
         self.stim_start_time=float(f.attrs['stim_start_time'])*second
         self.stim_end_time=float(f.attrs['stim_end_time'])*second
         self.network_group_size=int(f.attrs['network_group_size'])
@@ -252,16 +252,30 @@ def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range,
     # p(AUC | theta, M)
     bayes_analysis.l1_pos_likelihood = np.zeros(auc.shape)
     bayes_analysis.l1_neg_likelihood = np.zeros(auc.shape)
+    l1_dist=[]
+    l1_pos_dist=[]
+    l1_neg_dist=[]
     for i, p_b_e in enumerate(p_b_e_range):
         for j, p_x_e in enumerate(p_x_e_range):
             for k, p_e_e in enumerate(p_e_e_range):
                 for l, p_e_i in enumerate(p_e_i_range):
                     for m, p_i_i in enumerate(p_i_i_range):
                         for n, p_i_e in enumerate(p_i_e_range):
+                            l1_dist.append(slope[i,j,k,l,m,n])
                             if auc[i, j, k, l, m, n] >= perf_threshold:
+                                l1_pos_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_pos_likelihood[i, j, k, l, m, n] = 1.0
                             else:
+                                l1_neg_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_neg_likelihood[i, j, k, l, m, n] = 1.0
+
+    fig=plt.figure()
+    ax=plt.subplot(311)
+    plt.hist(l1_dist, normed=True)
+    ax=plt.subplot(312)
+    plt.hist(l1_pos_dist, normed=True)
+    ax=plt.subplot(313)
+    plt.hist(l1_neg_dist, normed=True)
 
     # Number of parameter values tested
     n_param_vals = len(p_b_e_range) * len(p_x_e_range) * len(p_e_e_range) * len(p_e_i_range) * len(p_i_i_range) * len(
@@ -293,6 +307,7 @@ def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range,
     bayes_analysis.l1_neg_l2_neg_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
     bayes_analysis.l1_neg_l2_pos_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
     bayes_analysis.l1_neg_l2_zero_likelihood = np.zeros(bayes_analysis.l1_neg_likelihood.shape)
+
     for i, p_b_e in enumerate(p_b_e_range):
         for j, p_x_e in enumerate(p_x_e_range):
             for k, p_e_e in enumerate(p_e_e_range):
@@ -483,6 +498,7 @@ def get_response_time(e_firing_rates, stim_start_time):
     rt=None
     winner=None
     for idx,time in enumerate(times):
+        time=time*second
         if time>stim_start_time:
             if rt is None:
                 if rate_1[idx]>=2*rate_2[idx]:
@@ -498,41 +514,42 @@ def get_response_time(e_firing_rates, stim_start_time):
     return rt
 
 
-def get_roc_init(num_trials, num_extra_trials, option_idx, prefix):
+def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix):
     l = []
     p = 0
     n = 0
-    for trial in range(num_trials):
-        data_path = '%s.trial.%d.h5' % (prefix, trial)
-        data = FileInfo(data_path)
-        example = 0
-        if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
-            example = 1
-            for j in range(num_extra_trials):
-                p += 1
-        else:
-            for j in range(num_extra_trials):
-                n += 1
+    for contrast in contrast_range:
+        for trial in range(num_trials):
+            data_path = '%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial)
+            data = FileInfo(data_path)
+            example = 0
+            if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
+                example = 1
+                for j in range(num_extra_trials):
+                    p += 1
+            else:
+                for j in range(num_extra_trials):
+                    n += 1
 
-        # Get mean rate of pop 1 for last 100ms
-        pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
-        other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
-        for j in range(num_extra_trials):
-            f_score=.25*np.random.randn()
-            if float(pop_mean+other_pop_mean):
-                f_score+=float(pop_mean)/float(pop_mean+other_pop_mean)
-            l.append((example, f_score))
+            # Get mean rate of pop 1 for last 100ms
+            pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
+            other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+            for j in range(num_extra_trials):
+                f_score=.25*np.random.randn()
+                if float(pop_mean+other_pop_mean):
+                    f_score+=float(pop_mean)/float(pop_mean+other_pop_mean)
+                l.append((example, f_score))
     l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
     return l_sorted, n, p
 
-def get_auc(prefix, num_trials, num_extra_trials, num_groups):
+def get_auc(prefix, contrast_range, num_trials, num_extra_trials, num_groups):
     total_auc=0
     total_p=0
     single_auc=[]
     single_p=[]
     for i in range(num_groups):
-        l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, i, prefix)
-        single_auc.append(get_auc_single_option(prefix, num_trials, num_extra_trials, i))
+        l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, i, prefix)
+        single_auc.append(get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, i))
         single_p.append(p)
         total_p+=p
     for i in range(num_groups):
@@ -540,8 +557,8 @@ def get_auc(prefix, num_trials, num_extra_trials, num_groups):
 
     return total_auc
 
-def get_auc_single_option(prefix, num_trials, num_extra_trials, option_idx):
-    l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, option_idx, prefix)
+def get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx):
+    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix)
     fp=0
     tp=0
     fp_prev=0
@@ -562,9 +579,9 @@ def get_auc_single_option(prefix, num_trials, num_extra_trials, option_idx):
     a=float(a)/(float(p)*float(n))
     return a
 
-def get_roc_single_option(prefix, num_trials, num_extra_trials, option_idx):
+def get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx):
 
-    l_sorted, n, p = get_roc_init(num_trials, num_extra_trials, option_idx, prefix)
+    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix)
 
     fp=0
     tp=0
