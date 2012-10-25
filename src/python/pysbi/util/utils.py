@@ -14,6 +14,10 @@ def save_to_png(fig, output_file):
     canvas = FigureCanvasAgg(fig)
     canvas.print_png(output_file, dpi=72)
 
+def save_to_eps(fig, output_file):
+    fig.set_facecolor("#FFFFFF")
+    canvas = FigureCanvasAgg(fig)
+    canvas.print_eps(output_file, dpi=72)
 
 def plot_raster(group_spike_neurons, group_spike_times, group_sizes):
     if len(group_spike_times) and len(group_spike_neurons)==len(group_spike_times):
