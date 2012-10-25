@@ -5,9 +5,10 @@ from pysbi.util.utils import Struct, save_to_png
 
 def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope, bc_intercept, bc_r_sqr, evidence,
                            posterior, marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                           p_i_e_range, file_prefix, reports_dir):
+                           p_i_e_range, file_prefix, reports_dir, edesc):
     report_info=Struct()
     report_info.title=title
+    report_info.edesc=edesc
     report_info.evidence=evidence
     report_info.roc_auc=roc_auc
     report_info.bc_slope=bc_slope

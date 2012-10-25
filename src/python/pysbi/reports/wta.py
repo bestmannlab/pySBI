@@ -31,6 +31,7 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     param_combos=get_tested_param_combos(data_dir, num_groups, trial_duration, contrast_range, num_trials, e_desc)
 
     report_info=Struct()
+    report_info.edesc=e_desc
     report_info.roc_auc={}
     report_info.bc_slope={}
     report_info.bc_intercept={}
