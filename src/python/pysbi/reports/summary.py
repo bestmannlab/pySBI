@@ -266,6 +266,7 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
 
     fig=plt.figure()
     ax=plt.subplot(311)
+    print(bayes_analysis.l1_dist)
     plt.hist(bayes_analysis.l1_dist, normed=True)
     plt.ylabel('L1 Probability')
     ax=plt.subplot(312)
