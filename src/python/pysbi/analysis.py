@@ -3,6 +3,7 @@ from brian.stdunits import Hz, ms
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
 import h5py
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from pysbi import wta, voxel
