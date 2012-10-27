@@ -262,12 +262,15 @@ def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range,
                 for l, p_e_i in enumerate(p_e_i_range):
                     for m, p_i_i in enumerate(p_i_i_range):
                         for n, p_i_e in enumerate(p_i_e_range):
-                            bayes_analysis.l1_dist.append(slope[i,j,k,l,m,n])
+                            if not math.isnan(slope[i,j,k,l,m,n]):
+                                bayes_analysis.l1_dist.append(slope[i,j,k,l,m,n])
                             if auc[i, j, k, l, m, n] >= perf_threshold:
-                                bayes_analysis.l1_pos_dist.append(slope[i,j,k,l,m,n])
+                                if not math.isnan(slope[i,j,k,l,m,n]):
+                                    bayes_analysis.l1_pos_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_pos_likelihood[i, j, k, l, m, n] = 1.0
                             else:
-                                bayes_analysis.l1_neg_dist.append(slope[i,j,k,l,m,n])
+                                if not math.isnan(slope[i,j,k,l,m,n]):
+                                    bayes_analysis.l1_neg_dist.append(slope[i,j,k,l,m,n])
                                 bayes_analysis.l1_neg_likelihood[i, j, k, l, m, n] = 1.0
 
     # Number of parameter values tested
