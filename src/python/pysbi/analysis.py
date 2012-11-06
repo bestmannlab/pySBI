@@ -585,7 +585,7 @@ def get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, 
         else:
             fp+=1
     a+=trapezoid_area(float(fp),float(fp_prev),float(tp),float(tp_prev))
-    a=float(a)/(float(p)*float(n))
+    a=float(a)/(float(max(p,.001))*float(max(n,.001)))
     return a
 
 def get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx):
