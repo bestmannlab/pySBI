@@ -39,12 +39,12 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
 
     for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in param_combos:
         if p_b_e in p_b_e_range and p_x_e in p_x_e_range and p_e_e in p_e_e_range and p_e_i in p_e_i_range and p_i_i in p_i_i_range and p_i_e in p_i_e_range:
-            i=p_b_e_range.index(round(p_b_e,2))
-            j=p_x_e_range.index(round(p_x_e,2))
-            k=p_e_e_range.index(round(p_e_e,2))
-            l=p_e_i_range.index(round(p_e_i,2))
-            m=p_i_i_range.index(round(p_i_i,2))
-            n=p_i_e_range.index(round(p_i_e,2))
+            i=p_b_e_range.index(round(p_b_e,3))
+            j=p_x_e_range.index(round(p_x_e,3))
+            k=p_e_e_range.index(round(p_e_e,3))
+            l=p_e_i_range.index(round(p_e_i,3))
+            m=p_i_i_range.index(round(p_i_i,3))
+            n=p_i_e_range.index(round(p_i_e,3))
 
             file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s' %\
                       (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, e_desc)
