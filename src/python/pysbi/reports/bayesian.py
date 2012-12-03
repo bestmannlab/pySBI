@@ -91,6 +91,11 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
     if len(param_range) > 1:
         param_step=param_range[1]-param_range[0]
 
+        all_vals=[]
+        all_vals.extend(param_prior)
+        all_vals.extend(param_likelihood)
+        all_vals.extend(param_posterior)
+
         fig = plt.figure()
         param_prior[param_prior==0]=1e-7
         plt.bar(np.array(param_range) - .5*param_step, param_prior, param_step)
@@ -137,6 +142,7 @@ def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_
         fig.colorbar(im)
         plt.xlabel(param2_name)
         plt.ylabel(param1_name)
+        im.set_clim(0.0,0.05)
         furl = 'img/bayes_%s_joint_marginal_%s_%s.png' % (file_prefix, param1_name, param2_name)
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
