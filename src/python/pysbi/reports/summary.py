@@ -295,7 +295,7 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     report_info.l1_pos_report_info = create_bayesian_report('Level 1 - Positive', report_info.num_groups, report_info.trial_duration,
         report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept, report_info.bc_r_sqr,
         bayes_analysis.l1_pos_evidence, bayes_analysis.l1_pos_posterior, bayes_analysis.l1_pos_marginals, p_b_e_range, p_x_e_range,
-        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_pos', base_report_dir, report_info.edesc)
+        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_pos', base_report_dir, report_info.edesc, clim=.036)
     output_file = 'l1_pos_bayes_analysis.html'
     report_info.l1_pos_url = output_file
     fname = os.path.join(base_report_dir, output_file)
@@ -305,7 +305,7 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     report_info.l1_neg_report_info = create_bayesian_report('Level 1 - Negative', report_info.num_groups, report_info.trial_duration,
         report_info.roc_auc, report_info.bc_slope, report_info.bc_intercept, report_info.bc_r_sqr,
         bayes_analysis.l1_neg_evidence, bayes_analysis.l1_neg_posterior, bayes_analysis.l1_neg_marginals, p_b_e_range, p_x_e_range,
-        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_neg', base_report_dir, report_info.edesc)
+        p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range, 'l1_neg', base_report_dir, report_info.edesc, clim=.036)
     output_file = 'l1_neg_bayes_analysis.html'
     report_info.l1_neg_url = output_file
     fname = os.path.join(base_report_dir, output_file)
