@@ -269,7 +269,10 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     all_vals.extend(bayes_analysis.l1_pos_dist)
     all_vals.extend(bayes_analysis.l1_neg_dist)
 
-    fig=plt.figure()
+    dpi = 80
+    inch_width = 800 / dpi
+    inch_height = 1800 / dpi
+    fig = plt.figure(figsize=(inch_width, inch_height), dpi=dpi)
     ax=plt.subplot(311)
     bins=min(all_vals)+np.array(range(int((max(all_vals)-min(all_vals))/.005)+1))*.005
     hist=plt.hist(bayes_analysis.l1_dist, bins=bins, normed=True)
