@@ -264,16 +264,24 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = env.get_template(template_file)
 
+    all_vals=[]
+    all_vals.extend(bayes_analysis.l1_dist)
+    all_vals.extend(bayes_analysis.l1_pos_dist)
+    all_vals.extend(bayes_analysis.l1_neg_dist)
+
     fig=plt.figure()
     ax=plt.subplot(311)
-    print(bayes_analysis.l1_dist)
-    plt.hist(bayes_analysis.l1_dist, normed=True)
+    bins=min(all_vals)+np.array(range(int((max(all_vals)-min(all_vals))/.005)+1))*.005
+    hist=plt.hist(bayes_analysis.l1_dist, bins=bins, normed=True)
+    plt.ylim([0,max(hist[0])])
     plt.ylabel('L1 Probability')
     ax=plt.subplot(312)
-    plt.hist(bayes_analysis.l1_pos_dist, normed=True)
+    plt.hist(bayes_analysis.l1_pos_dist, bins=hist[1], normed=True)
+    plt.ylim([0,max(hist[0])])
     plt.ylabel('L1 Positive - Probability')
     ax=plt.subplot(313)
-    plt.hist(bayes_analysis.l1_neg_dist, normed=True)
+    plt.hist(bayes_analysis.l1_neg_dist, bins=hist[1], normed=True)
+    plt.ylim([0,max(hist[0])])
     plt.ylabel('L1 Negative - Probability')
     plt.xlabel('BOLD - Contrast Slope')
     fname=os.path.join('img','l1_dist.png')
