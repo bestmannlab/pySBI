@@ -143,7 +143,7 @@ def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_
         furl = 'img/bayes_%s_joint_marginal_%s_%s.png' % (file_prefix, param1_name, param2_name)
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
-        save_to_eps('img/bayes_%s_joint_marginal_%s_%s.eps' % (file_prefix, param1_name, param2_name))
+        save_to_eps(os.path.join(reports_dir, 'img/bayes_%s_joint_marginal_%s_%s.eps' % (file_prefix, param1_name, param2_name)))
         plt.close()
         return furl
     return None
