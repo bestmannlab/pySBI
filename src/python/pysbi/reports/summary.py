@@ -6,7 +6,7 @@ from pysbi.analysis import run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.bayesian import create_bayesian_report, render_joint_marginal_report
 from pysbi.reports.utils import get_local_average, make_report_dirs
-from pysbi.util.utils import Struct, save_to_png
+from pysbi.util.utils import Struct, save_to_png, save_to_eps
 import matplotlib.pylab as plt
 
 class SummaryData:
@@ -289,6 +289,7 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     plt.xlabel('BOLD - Contrast Slope')
     fname=os.path.join('img','l1_dist.png')
     save_to_png(fig, os.path.join(base_report_dir, fname))
+    save_to_eps(fig, os.path.join(base_report_dir, 'img','l1_dist.eps'))
     report_info.l1_dist_url=fname
 
 

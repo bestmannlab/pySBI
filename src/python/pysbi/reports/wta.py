@@ -9,7 +9,7 @@ from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_sin
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.summary import render_summary_report, SummaryData
 from pysbi.reports.utils import all_trials_exist, get_tested_param_combos, make_report_dirs
-from pysbi.util.utils import save_to_png, Struct, plot_raster
+from pysbi.util.utils import save_to_png, Struct, plot_raster, save_to_eps
 
 
 def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range,
@@ -165,6 +165,7 @@ def create_wta_network_report(file_prefix, contrast_range, num_trials, reports_d
         plt.xlabel('Max Input Rate')
         plt.ylabel('Max Population Rate')
         save_to_png(fig, fname)
+        save_to_eps(fig, os.path.join(reports_dir, 'img/input_output_rate.eps'))
         plt.close()
 
     report_info.bold=create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_rate, trial_rt,
@@ -210,6 +211,7 @@ def create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_ra
         plt.xlabel('Input Contrast')
         plt.ylabel('Max BOLD')
         save_to_png(fig, fname)
+        save_to_eps(fig, os.path.join(reports_dir, 'img/contrast_bold.eps'))
         plt.close()
 
     clf=LinearRegression()
@@ -232,6 +234,7 @@ def create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_ra
         plt.xlabel('Max Firing Rate')
         plt.ylabel('Max BOLD')
         save_to_png(fig, fname)
+        save_to_eps(fig, os.path.join(reports_dir, 'img/firing_rate_bold.eps'))
         plt.close()
 
     clf=LinearRegression()
@@ -254,6 +257,7 @@ def create_bold_report(reports_dir, trial_contrast, trial_max_bold, trial_max_ra
         plt.xlabel('Response Time')
         plt.ylabel('Max BOLD')
         save_to_png(fig, fname)
+        save_to_eps(fig, os.path.join(reports_dir, 'img/response_time_bold.eps'))
         plt.close()
 
     return report_info
@@ -278,6 +282,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
             e_group_sizes=[int(4*data.network_group_size/5) for i in range(data.num_groups)]
             fig=plot_raster(data.e_spike_neurons, data.e_spike_times, e_group_sizes)
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/e_raster.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
 
         furl='img/i_raster.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
@@ -287,6 +292,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
             i_group_sizes=[int(data.network_group_size/5) for i in range(data.num_groups)]
             fig=plot_raster(data.i_spike_neurons, data.i_spike_times, i_group_sizes)
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/i_raster.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
 
     trial.firing_rate_url = None
@@ -307,6 +313,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
             plt.xlabel('Time (ms)')
             plt.ylabel('Firing Rate (Hz)')
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/firing_rate.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
 
     trial.neural_state_url=None
@@ -335,6 +342,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
                 plt.xlabel('Time (ms)')
                 plt.ylabel('Conductance (nA)')
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/neural_state.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
 
     trial.lfp_url = None
@@ -350,6 +358,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
             plt.xlabel('Time (ms)')
             plt.ylabel('LFP (mA)')
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/lfp.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
 
     trial.voxel_url = None
@@ -371,6 +380,7 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
             plt.xlabel('Time (s)')
             plt.ylabel('BOLD')
             save_to_png(fig, fname)
+            save_to_eps(fig, os.path.join(reports_dir, 'img/voxel.contrast.%0.4f.trial.%d.eps' % (contrast, trial_idx)))
             plt.close()
     return trial
 
@@ -393,6 +403,7 @@ def create_roc_report(file_prefix, num_groups, contrast_range, num_trials, repor
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         save_to_png(fig, fname)
+        save_to_eps(fig, os.path.join(reports_dir, 'img/roc.eps'))
         plt.close()
     return roc_report
 

@@ -1,7 +1,7 @@
 import os
 import matplotlib.pylab as plt
 import numpy as np
-from pysbi.util.utils import Struct, save_to_png
+from pysbi.util.utils import Struct, save_to_png, save_to_eps
 
 def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope, bc_intercept, bc_r_sqr, evidence,
                            posterior, marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
@@ -100,6 +100,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         prior_furl = 'img/bayes_%s_marginal_prior_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, prior_furl)
         save_to_png(fig, fname)
+        save_to_eps('img/bayes_%s_marginal_prior_%s.eps' % (file_prefix,param_name))
         plt.close()
 
         fig = plt.figure()
@@ -111,6 +112,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         likelihood_furl = 'img/bayes_%s_marginal_likelihood_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, likelihood_furl)
         save_to_png(fig, fname)
+        save_to_eps(fig, 'img/bayes_%s_marginal_likelihood_%s.eps' % (file_prefix,param_name))
         plt.close()
 
         fig = plt.figure()
@@ -122,6 +124,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         posterior_furl = 'img/bayes_%s_marginal_posterior_%s.png' % (file_prefix, param_name)
         fname = os.path.join(reports_dir, posterior_furl)
         save_to_png(fig, fname)
+        save_to_eps(fig, 'img/bayes_%s_marginal_posterior_%s.eps' % (file_prefix, param_name))
         plt.close()
 
         return prior_furl, likelihood_furl, posterior_furl
@@ -140,6 +143,7 @@ def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_
         furl = 'img/bayes_%s_joint_marginal_%s_%s.png' % (file_prefix, param1_name, param2_name)
         fname = os.path.join(reports_dir, furl)
         save_to_png(fig, fname)
+        save_to_eps('img/bayes_%s_joint_marginal_%s_%s.eps' % (file_prefix, param1_name, param2_name))
         plt.close()
         return furl
     return None
