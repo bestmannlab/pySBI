@@ -124,7 +124,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         posterior_furl = os.path.join(reports_dir, 'img/bayes_%s_marginal_posterior_%s.png' % (file_prefix, param_name))
         fname = os.path.join(reports_dir, posterior_furl)
         save_to_png(fig, fname)
-        save_to_eps(fig, 'img/bayes_%s_marginal_posterior_%s.eps' % (file_prefix, param_name))
+        save_to_eps(fig, os.path.join(reports_dir, 'img/bayes_%s_marginal_posterior_%s.eps' % (file_prefix, param_name)))
         plt.close()
 
         return prior_furl, likelihood_furl, posterior_furl
