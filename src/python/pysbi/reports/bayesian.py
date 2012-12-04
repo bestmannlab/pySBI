@@ -5,7 +5,7 @@ from pysbi.util.utils import Struct, save_to_png, save_to_eps
 
 def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope, bc_intercept, bc_r_sqr, evidence,
                            posterior, marginals, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range,
-                           p_i_e_range, file_prefix, reports_dir, edesc, marginal_ylim, joint_marginal_clim):
+                           p_i_e_range, file_prefix, reports_dir, edesc, marginal_ylim):
     report_info=Struct()
     report_info.title=title
     report_info.edesc=edesc
@@ -64,25 +64,25 @@ def create_bayesian_report(title, num_groups, trial_duration, roc_auc, bc_slope,
 
 
     report_info.joint_marginal_p_b_e_p_x_e_url = render_joint_marginal_report('p_b_e', 'p_x_e', p_b_e_range, p_x_e_range,
-        marginals.posterior_p_b_e_p_x_e, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_b_e_p_x_e, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_e_e_p_e_i_url = render_joint_marginal_report('p_e_e', 'p_e_i', p_e_e_range, p_e_i_range,
-        marginals.posterior_p_e_e_p_e_i, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_e_e_p_e_i, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_e_e_p_i_i_url = render_joint_marginal_report('p_e_e', 'p_i_i', p_e_e_range, p_i_i_range,
-        marginals.posterior_p_e_e_p_i_i, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_e_e_p_i_i, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_e_e_p_i_e_url = render_joint_marginal_report('p_e_e', 'p_i_e', p_e_e_range, p_i_e_range,
-        marginals.posterior_p_e_e_p_i_e, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_e_e_p_i_e, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_e_i_p_i_i_url = render_joint_marginal_report('p_e_i', 'p_i_i', p_e_i_range, p_i_i_range,
-        marginals.posterior_p_e_i_p_i_i, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_e_i_p_i_i, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_e_i_p_i_e_url = render_joint_marginal_report('p_e_i', 'p_i_e', p_e_i_range, p_i_e_range,
-        marginals.posterior_p_e_i_p_i_e, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_e_i_p_i_e, file_prefix, reports_dir)
 
     report_info.joint_marginal_p_i_i_p_i_e_url = render_joint_marginal_report('p_i_i', 'p_i_e', p_i_i_range, p_i_e_range,
-        marginals.posterior_p_i_i_p_i_e, file_prefix, reports_dir, joint_marginal_clim)
+        marginals.posterior_p_i_i_p_i_e, file_prefix, reports_dir)
 
     return report_info
 
@@ -132,12 +132,11 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
 
 
 def render_joint_marginal_report(param1_name, param2_name, param1_range, param2_range, joint_posterior, file_prefix,
-                                 reports_dir, clim):
+                                 reports_dir):
     if len(param1_range) > 1 < len(param2_range):
         fig = plt.figure()
         im = plt.imshow(joint_posterior, extent=[min(param2_range), max(param2_range), min(param1_range),
                                                  max(param1_range)], interpolation='nearest', origin='lower')
-        im.set_clim(0.0,clim)
         fig.colorbar(im)
         plt.xlabel(param2_name)
         plt.ylabel(param1_name)
