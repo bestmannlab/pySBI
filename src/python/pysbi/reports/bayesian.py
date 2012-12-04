@@ -100,7 +100,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         prior_furl = 'img/bayes_%s_marginal_prior_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, prior_furl)
         save_to_png(fig, fname)
-        save_to_eps(fig,'img/bayes_%s_marginal_prior_%s.eps' % (file_prefix,param_name))
+        save_to_eps(fig,os.path.join(reports_dir, 'img/bayes_%s_marginal_prior_%s.eps' % (file_prefix,param_name)))
         plt.close()
 
         fig = plt.figure()
@@ -112,7 +112,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         likelihood_furl = 'img/bayes_%s_marginal_likelihood_%s.png' % (file_prefix,param_name)
         fname = os.path.join(reports_dir, likelihood_furl)
         save_to_png(fig, fname)
-        save_to_eps(fig, 'img/bayes_%s_marginal_likelihood_%s.eps' % (file_prefix,param_name))
+        save_to_eps(fig, os.path.join(reports_dir, 'img/bayes_%s_marginal_likelihood_%s.eps' % (file_prefix,param_name)))
         plt.close()
 
         fig = plt.figure()
@@ -121,7 +121,7 @@ def render_marginal_report(param_name, param_range, param_prior, param_likelihoo
         plt.xlabel(param_name)
         plt.ylabel('p(%s|WTA,M)' % param_name)
         plt.ylim([0,.8])
-        posterior_furl = 'img/bayes_%s_marginal_posterior_%s.png' % (file_prefix, param_name)
+        posterior_furl = os.path.join(reports_dir, 'img/bayes_%s_marginal_posterior_%s.png' % (file_prefix, param_name))
         fname = os.path.join(reports_dir, posterior_furl)
         save_to_png(fig, fname)
         save_to_eps(fig, 'img/bayes_%s_marginal_posterior_%s.eps' % (file_prefix, param_name))
