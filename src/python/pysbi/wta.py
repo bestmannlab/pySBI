@@ -54,11 +54,7 @@ default_params=Parameters(
     # Connection probabilities
     p_b_e=0.1,
     p_x_e=0.05,
-    #p_b_e=0.075,
-    #p_x_e=0.075,
     p_e_e=0.0075,
-    #p_e_i=0.1,
-    #p_e_i=0.05,
     p_e_i=0.04,
     p_i_i=0.01,
     p_i_e=0.02)
@@ -256,7 +252,7 @@ class WTAMonitor():
     #       record_firing_rate = record firing rate if true
     #       record_inputs = record inputs if true
     def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
-                 record_spikes=True, record_firing_rate=True, record_inputs=False):
+                 record_spikes=True, record_firing_rate=True, record_inputs=False, single_inh_pop=False):
         self.num_groups=network.num_groups
         self.N=network.N
         self.monitors=[]
@@ -764,12 +760,12 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     start_time = time()
 
     # Init simulation parameters
-    background_rate=15*Hz
+    background_rate=20*Hz
     stim_start_time=.25*second
     stim_end_time=.75*second
-    network_group_size=2000
-    background_input_size=1000
-    task_input_size=1000
+    network_group_size=1000
+    background_input_size=500
+    task_input_size=500
 
     # Create network inputs
     background_input=PoissonGroup(background_input_size, rates=background_rate)
@@ -799,18 +795,23 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     def inject_muscimol():
         if muscimol_amount>0:
             wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
+        if not single_inh_pop:
             wta_network.groups_i[injection_site].g_muscimol=muscimol_amount
 
     # Create Brian network and reset clock
-    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-        wta_monitor.monitors, inject_muscimol)
+    if muscimol_amount>0:
+        net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
+            wta_monitor.monitors, inject_muscimol)
+    else:
+        net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
+            wta_monitor.monitors)
     reinit_default_clock()
-    print "Initialization time:", time() - start_time
+    print "Initialization time: %.2fs" % (time() - start_time)
 
     # Run simulation
     start_time = time()
     net.run(trial_duration, report='text')
-    print "Simulation time:", time() - start_time
+    print "Simulation time: %.2fs" % (time() - start_time)
 
     # Compute BOLD signal
     if record_voxel:
@@ -819,7 +820,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
             [500, 2500], trial_duration)
         wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
             [500, 2500], trial_duration)
-        print "BOLD generation time:", time() - start_time
+        print "BOLD generation time: %.2fs" % (time() - start_time)
 
     # Write output to file
     if output_file is not None:
@@ -829,7 +830,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
             stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params, muscimol_amount,
             injection_site)
         print 'Wrote output to %s' % output_file
-        print "Write output time:", time() - start_time
+        print "Write output time: %.2fs" % (time() - start_time)
 
     # Plot outputs
     if plot_output:
