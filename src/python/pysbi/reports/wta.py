@@ -6,7 +6,7 @@ from brian.stdunits import nA, mA, Hz, ms
 import matplotlib.pylab as plt
 import numpy as np
 from scikits.learn.linear_model.base import LinearRegression
-from pysbi.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_single_option, get_lfp_signal, run_bayesian_analysis
+from pysbi.wta.analysis import FileInfo, get_roc_single_option, get_auc, get_auc_single_option, get_lfp_signal, run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.summary import render_summary_report, SummaryData
 from pysbi.reports.utils import all_trials_exist, get_tested_param_combos, make_report_dirs
