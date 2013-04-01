@@ -30,8 +30,15 @@ class SummaryData:
                                 len(p_i_e_range)])
         self.auc=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
                            len(p_i_e_range)])
+        self.bfr_slope=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                                        len(p_i_e_range)])
+        self.bfr_intercept=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range),
+                                    len(p_i_i_range), len(p_i_e_range)])
+        self.bfr_r_sqr=np.zeros([len(p_b_e_range), len(p_x_e_range), len(p_e_e_range), len(p_e_i_range), len(p_i_i_range),
+                                len(p_i_e_range)])
 
-    def fill(self, auc_dict, bc_slope_dict, bc_intercept_dict, bc_r_sqr_dict, smooth_missing_params=False):
+    def fill(self, auc_dict, bc_slope_dict, bc_intercept_dict, bc_r_sqr_dict, bfr_slope_dict, bfr_intercept_dict,
+             bfr_r_sqr_dict, smooth_missing_params=False):
         for i,p_b_e in enumerate(self.p_b_e_range):
             for j,p_x_e in enumerate(self.p_x_e_range):
                 for k,p_e_e in enumerate(self.p_e_e_range):
@@ -43,11 +50,17 @@ class SummaryData:
                                     self.bc_slope[i,j,k,l,m,n]=np.mean(bc_slope_dict[(i,j,k,l,m,n)])
                                     self.bc_intercept[i,j,k,l,m,n]=np.mean(bc_intercept_dict[(i,j,k,l,m,n)])
                                     self.bc_r_sqr[i,j,k,l,m,n]=np.mean(bc_r_sqr_dict[(i,j,k,l,m,n)])
+                                    self.bfr_slope[i,j,k,l,m,n]=np.mean(bfr_slope_dict[(i,j,k,l,m,n)])
+                                    self.bfr_intercept[i,j,k,l,m,n]=np.mean(bfr_intercept_dict[(i,j,k,l,m,n)])
+                                    self.bfr_r_sqr[i,j,k,l,m,n]=np.mean(bfr_r_sqr_dict[(i,j,k,l,m,n)])
                                 elif smooth_missing_params:
                                     self.auc[i,j,k,l,m,n]=get_local_average(auc_dict,[i,j,k,l,m,n])
                                     self.bc_slope[i,j,k,l,m,n]=get_local_average(bc_slope_dict,[i,j,k,l,m,n])
                                     self.bc_intercept[i,j,k,l,m,n]=get_local_average(bc_intercept_dict,[i,j,k,l,m,n])
                                     self.bc_r_sqr[i,j,k,l,m,n]=get_local_average(bc_r_sqr_dict,[i,j,k,l,m,n])
+                                    self.bfr_slope[i,j,k,l,m,n]=get_local_average(bfr_slope_dict,[i,j,k,l,m,n])
+                                    self.bfr_intercept[i,j,k,l,m,n]=get_local_average(bfr_intercept_dict,[i,j,k,l,m,n])
+                                    self.bfr_r_sqr[i,j,k,l,m,n]=get_local_average(bfr_r_sqr_dict,[i,j,k,l,m,n])
 
     def read_from_file(self, filename):
         f=h5py.File(filename)
@@ -63,6 +76,9 @@ class SummaryData:
         self.bc_slope=np.array(f['bold_contrast_slope'])
         self.bc_intercept=np.array(f['bold_contrast_intercept'])
         self.bc_r_sqr=np.array(f['bold_contrast_r_sqr'])
+        self.bfr_slope=np.array(f['bold_firing_rate_slope'])
+        self.bfr_intercept=np.array(f['bold_firing_rate_intercept'])
+        self.bfr_r_sqr=np.array(f['bold_firing_rate_r_sqr'])
         self.auc=np.array(f['auc'])
         f.close()
 
@@ -80,6 +96,9 @@ class SummaryData:
         f['bold_contrast_slope']=self.bc_slope
         f['bold_contrast_intercept']=self.bc_intercept
         f['bold_contrast_r_sqr']=self.bc_r_sqr
+        f['bold_firing_rate_slope']=self.bfr_slope
+        f['bold_firing_rate_intercept']=self.bfr_intercept
+        f['bold_firing_rate_r_sqr']=self.bfr_r_sqr
         f['auc']=self.auc
         f.close()
 
@@ -99,6 +118,9 @@ def create_summary_report(summary_file_name, base_report_dir, e_desc):
     report_info.bc_slope={}
     report_info.bc_intercept={}
     report_info.bc_r_sqr={}
+    report_info.bfr_slope={}
+    report_info.bfr_intercept={}
+    report_info.bfr_r_sqr={}
     for i,p_b_e in enumerate(summary_data.p_b_e_range):
         for j,p_x_e in enumerate(summary_data.p_x_e_range):
             for k,p_e_e in enumerate(summary_data.p_e_e_range):
@@ -110,27 +132,45 @@ def create_summary_report(summary_file_name, base_report_dir, e_desc):
                                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bc_slope[i,j,k,l,m,n]
                                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bc_intercept[i,j,k,l,m,n]
                                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bc_r_sqr[i,j,k,l,m,n]
+                                report_info.bfr_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bfr_slope[i,j,k,l,m,n]
+                                report_info.bfr_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bfr_intercept[i,j,k,l,m,n]
+                                report_info.bfr_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=summary_data.bfr_r_sqr[i,j,k,l,m,n]
                             else:
                                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bfr_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bfr_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                                report_info.bfr_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
 
     report_info.num_groups=summary_data.num_groups
     report_info.trial_duration=summary_data.trial_duration
     report_info.num_trials=summary_data.num_trials
     report_info.p_b_e_range=summary_data.p_b_e_range
     report_info.p_x_e_range=summary_data.p_x_e_range
-    report_info.p_e_e_range=summary_data.p_e_e_range
+    report_info.p_e_e_range=summary_data.p_e_e_range[:-1]
     report_info.p_e_i_range=summary_data.p_e_i_range
     report_info.p_i_i_range=summary_data.p_i_i_range
     report_info.p_i_e_range=summary_data.p_i_e_range
 
-    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+    bc_bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
         summary_data.bc_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
         summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
 
-    render_summary_report(base_report_dir, bayes_analysis, summary_data.p_b_e_range, summary_data.p_e_e_range,
+    bfr_bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bfr_slope, summary_data.bfr_intercept,
+        summary_data.bfr_r_sqr, summary_data.num_trials, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range)
+
+    bc_base_dir=os.path.join(base_report_dir, 'bold-contrast')
+    make_report_dirs(bc_base_dir)
+    render_summary_report(bc_base_dir, bc_bayes_analysis, summary_data.p_b_e_range, summary_data.p_e_e_range,
+        summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range,
+        report_info)
+
+    bfr_base_dir=os.path.join(base_report_dir, 'bold-firing_rate')
+    make_report_dirs(bfr_base_dir)
+    render_summary_report(bfr_base_dir, bfr_bayes_analysis, summary_data.p_b_e_range, summary_data.p_e_e_range,
         summary_data.p_e_i_range, summary_data.p_i_e_range, summary_data.p_i_i_range, summary_data.p_x_e_range,
         report_info)
 
@@ -272,19 +312,54 @@ def render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_ra
     dpi = 80
     inch_width = 800 / dpi
     inch_height = 1800 / dpi
+    max_perc=0.0
+
+    #bins=min(all_vals)+np.array(range(int((max(all_vals)-min(all_vals))/.005)+1))*.005
+    #bins=-.2+np.array(range(int(.4/.0025)+1))*.0025
+    #hist=plt.hist(bayes_analysis.l1_dist, bins=bins, normed=True)
+    l1_val_hist, l1_val_bins = np.histogram(bayes_analysis.l1_dist, bins=100)
+    l1_val_hist = l1_val_hist.astype(float)
+    l1_bin_width=l1_val_bins[0]
+    if len(l1_val_bins)>1:
+        l1_bin_width = l1_val_bins[1] - l1_val_bins[0]
+    l1_val_perc=(l1_val_hist/len(all_vals))
+    if max(l1_val_perc)>max_perc:
+        max_perc=max(l1_val_perc)
+    l1_pos_val_hist, l1_pos_val_bins = np.histogram(bayes_analysis.l1_pos_dist, bins=l1_val_bins)
+    l1_pos_val_hist = l1_pos_val_hist.astype(float)
+    l1_pos_bin_width=l1_pos_val_bins[0]
+    if len(l1_pos_val_bins)>1:
+        l1_pos_bin_width = l1_pos_val_bins[1] - l1_pos_val_bins[0]
+    l1_pos_val_perc=(l1_pos_val_hist/len(bayes_analysis.l1_pos_dist))
+    if max(l1_pos_val_perc)>max_perc:
+        max_perc=max(l1_pos_val_perc)
+    l1_neg_val_hist, l1_neg_val_bins = np.histogram(bayes_analysis.l1_neg_dist, bins=l1_val_bins)
+    l1_neg_val_hist = l1_neg_val_hist.astype(float)
+    l1_neg_bin_width=l1_neg_val_bins[0]
+    if len(l1_neg_val_bins)>1:
+        l1_neg_bin_width = l1_neg_val_bins[1] - l1_neg_val_bins[0]
+    l1_neg_val_perc=(l1_neg_val_hist/len(bayes_analysis.l1_neg_dist))
+    if max(l1_neg_val_perc)>max_perc:
+        max_perc=max(l1_neg_val_perc)
+
+
     fig = plt.figure(figsize=(inch_width, inch_height), dpi=dpi)
     ax=plt.subplot(311)
-    bins=min(all_vals)+np.array(range(int((max(all_vals)-min(all_vals))/.005)+1))*.005
-    hist=plt.hist(bayes_analysis.l1_dist, bins=bins, normed=True)
-    plt.ylim([0,max(hist[0])])
+    plt.bar(l1_val_bins[:-1], l1_val_perc, width=l1_bin_width)
+    plt.xlim(l1_val_bins[0],l1_val_bins[-1])
+    plt.ylim([0,max_perc])
     plt.ylabel('L1 Probability')
     ax=plt.subplot(312)
-    plt.hist(bayes_analysis.l1_pos_dist, bins=hist[1], normed=True)
-    plt.ylim([0,max(hist[0])])
+    #plt.hist(bayes_analysis.l1_pos_dist, bins=hist[1], normed=True)
+    plt.bar(l1_pos_val_bins[:-1], l1_pos_val_perc, width=l1_pos_bin_width)
+    plt.xlim(l1_pos_val_bins[0],l1_pos_val_bins[-1])
+    plt.ylim([0,max_perc])
     plt.ylabel('L1 Positive - Probability')
     ax=plt.subplot(313)
-    plt.hist(bayes_analysis.l1_neg_dist, bins=hist[1], normed=True)
-    plt.ylim([0,max(hist[0])])
+    #plt.hist(bayes_analysis.l1_neg_dist, bins=hist[1], normed=True)
+    plt.bar(l1_neg_val_bins[:-1], l1_neg_val_perc, width=l1_neg_bin_width)
+    plt.xlim(l1_neg_val_bins[0],l1_neg_val_bins[-1])
+    plt.ylim([0,max_perc])
     plt.ylabel('L1 Negative - Probability')
     plt.xlabel('BOLD - Contrast Slope')
     fname=os.path.join('img','l1_dist.png')

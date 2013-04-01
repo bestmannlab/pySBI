@@ -1,6 +1,7 @@
 from jinja2.environment import Environment
 from jinja2.loaders import FileSystemLoader
 import os
+import math
 from brian.stdunits import nA, mA, Hz, ms
 import matplotlib.pylab as plt
 import numpy as np
@@ -27,6 +28,9 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     bc_intercept_dict={}
     bc_r_sqr_dict={}
     auc_dict={}
+    bfr_slope_dict={}
+    bfr_intercept_dict={}
+    bfr_r_sqr_dict={}
 
     param_combos=get_tested_param_combos(data_dir, num_groups, trial_duration, contrast_range, num_trials, e_desc)
 
@@ -36,6 +40,10 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     report_info.bc_slope={}
     report_info.bc_intercept={}
     report_info.bc_r_sqr={}
+    report_info.bfr_slope={}
+    report_info.bfr_intercept={}
+    report_info.bfr_r_sqr={}
+
 
     for (p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e) in param_combos:
         if p_b_e in p_b_e_range and p_x_e in p_x_e_range and p_e_e in p_e_e_range and p_e_i in p_e_i_range and p_i_i in p_i_i_range and p_i_e in p_i_e_range:
@@ -64,19 +72,36 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
                 if not (i,j,k,l,m,n) in bc_r_sqr_dict:
                     bc_r_sqr_dict[(i,j,k,l,m,n)]=[]
                 bc_r_sqr_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_contrast_r_sqr)
+
                 if not (i,j,k,l,m,n) in auc_dict:
                     auc_dict[(i,j,k,l,m,n)]=[]
                 auc_dict[(i,j,k,l,m,n)].append(wta_report.roc.auc)
+
+                if not (i,j,k,l,m,n) in bfr_slope_dict:
+                    bfr_slope_dict[(i,j,k,l,m,n)]=[]
+                bfr_slope_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_firing_rate_slope)
+                if not (i,j,k,l,m,n) in bfr_intercept_dict:
+                    bfr_intercept_dict[(i,j,k,l,m,n)]=[]
+                bfr_intercept_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_firing_rate_intercept)
+                if not (i,j,k,l,m,n) in bfr_r_sqr_dict:
+                    bfr_r_sqr_dict[(i,j,k,l,m,n)]=[]
+                bfr_r_sqr_dict[(i,j,k,l,m,n)].append(wta_report.bold.bold_firing_rate_r_sqr)
 
                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.roc.auc
                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_slope
                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_intercept
                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_contrast_r_sqr
+                report_info.bfr_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_firing_rate_slope
+                report_info.bfr_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_firing_rate_intercept
+                report_info.bfr_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=wta_report.bold.bold_firing_rate_r_sqr
             else:
                 report_info.roc_auc[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                 report_info.bc_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                 report_info.bc_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
                 report_info.bc_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.bfr_slope[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.bfr_intercept[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
+                report_info.brf_r_sqr[(p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e)]=0
 
     report_info.num_groups=num_groups
     report_info.trial_duration=trial_duration
@@ -88,15 +113,25 @@ def create_all_reports(data_dir, num_groups, trial_duration, p_b_e_range, p_x_e_
     report_info.p_i_i_range=p_i_i_range
     report_info.p_i_e_range=p_i_e_range
 
-    summary_data.fill(auc_dict, bc_slope_dict, bc_intercept_dict, bc_r_sqr_dict,
-        smooth_missing_params=smooth_missing_params)
+    summary_data.fill(auc_dict, bc_slope_dict, bc_intercept_dict, bc_r_sqr_dict, bfr_slope_dict, bfr_intercept_dict,
+        bfr_r_sqr_dict, smooth_missing_params=smooth_missing_params)
 
     summary_data.write_to_file(os.path.join(base_report_dir,summary_filename))
 
-    bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
+    bc_bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bc_slope, summary_data.bc_intercept,
         summary_data.bc_r_sqr, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
 
-    render_summary_report(base_report_dir, bayes_analysis, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
+    bfr_bayes_analysis=run_bayesian_analysis(summary_data.auc, summary_data.bfr_slope, summary_data.bfr_intercept,
+            summary_data.bfr_r_sqr, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range, p_i_i_range, p_x_e_range)
+
+    bc_base_dir=os.path.join(base_report_dir, 'bold-contrast')
+    make_report_dirs(bc_base_dir)
+    render_summary_report(bc_base_dir, bc_bayes_analysis, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
+        p_i_i_range, p_x_e_range, report_info)
+
+    bfr_base_dir=os.path.join(base_report_dir, 'bold-firing_rate')
+    make_report_dirs(bfr_base_dir)
+    render_summary_report(bfr_base_dir, bfr_bayes_analysis, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
         p_i_i_range, p_x_e_range, report_info)
 
 
@@ -117,7 +152,13 @@ def create_wta_network_report(file_prefix, contrast_range, num_trials, reports_d
     trial_max_input=np.zeros([total_trials,1])
     trial_max_rate=np.zeros([total_trials,1])
     trial_rt=np.zeros([total_trials,1])
+
+    report_info.contrast_accuracy=np.zeros([len(contrast_range),1])
+
+    max_bold=[]
     for j,contrast in enumerate(contrast_range):
+        contrast_max_bold=[]
+        report_info.contrast_accuracy[j]=0.0
         for i in range(num_trials):
             file_name='%s.contrast.%0.4f.trial.%d.h5' % (file_prefix, contrast, i)
             print('opening %s' % file_name)
@@ -138,11 +179,27 @@ def create_wta_network_report(file_prefix, contrast_range, num_trials, reports_d
             trial_idx=j*num_trials+i
             trial = create_trial_report(data, reports_dir, contrast, i, regenerate_plots=regenerate_trial_plots)
             trial_contrast[trial_idx]=trial.input_contrast
-            trial_max_bold[trial_idx]=trial.max_bold
+            if not math.isnan(trial.max_bold):
+                trial_max_bold[trial_idx]=trial.max_bold
+            else:
+                if j>1 and max_bold[j-1]<1.0 and max_bold[j-2]<1.0:
+                    trial_max_bold[trial_idx]=max_bold[j-1]+(max_bold[j-1]-max_bold[j-2])
+                elif j>0 and max_bold[j-1]<1.0:
+                    trial_max_bold[trial_idx]=max_bold[j-1]*2.0
+                else:
+                    trial_max_bold[trial_idx]=1.0
+
+            report_info.contrast_accuracy[j]+=trial.correct
+
             trial_max_input[trial_idx]=trial.max_input
             trial_max_rate[trial_idx]=trial.max_rate
             trial_rt[trial_idx]=trial.rt
             report_info.trials.append(trial)
+
+            contrast_max_bold.append(trial_max_bold[trial_idx])
+        report_info.contrast_accuracy[j]/=float(num_trials)
+        mean_contrast_bold=np.mean(np.array(contrast_max_bold))
+        max_bold.append(mean_contrast_bold)
 
     clf=LinearRegression()
     clf.fit(trial_max_input,trial_max_rate)
@@ -266,6 +323,15 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
     trial = Struct()
     trial.input_freq=data.input_freq
     trial.input_contrast=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
+    trial.correct=0.0
+    option_idx=-1
+    if data.input_freq[0]>data.input_freq[1]:
+        option_idx=0
+    elif data.input_freq[1]>data.input_freq[0]:
+        option_idx=1
+    if option_idx>-1:
+        if np.max(data.e_firing_rates[option_idx, 6500:7500])>np.max(data.e_firing_rates[1 - option_idx, 6500:7500]):
+            trial.correct=1.0
     trial.rt=data.rt
 
     max_input_idx=np.where(trial.input_freq==np.max(trial.input_freq))[0][0]
@@ -364,7 +430,10 @@ def create_trial_report(data, reports_dir, contrast, trial_idx, regenerate_plots
     trial.voxel_url = None
     trial.max_bold=0
     if data.voxel_rec is not None:
-        trial.max_bold=np.max(data.voxel_rec['y'][0])
+        trial.max_bold=-1000
+        for val in data.voxel_rec['y'][0]:
+            if not math.isnan(val) and val>trial.max_bold:
+                trial.max_bold=val
         furl = 'img/voxel.contrast.%0.4f.trial.%d.png' % (contrast, trial_idx)
         fname = os.path.join(reports_dir, furl)
         trial.voxel_url = furl
@@ -450,5 +519,6 @@ def plot_bold_contrast(data_dir, num_groups, trial_duration, num_trials, p_b_e,p
 
 if __name__=='__main__':
     param_range=[float(x)*.01 for x in range(0,11)]
-    create_all_reports('../../data/wta-output',2,1.0,[0.1],[0.03],param_range,param_range,param_range,param_range,20,
-        '../../data/reports',regenerate_network_plots=False,regenerate_trial_plots=False)
+    create_all_reports('../../data/wta-output/',2,1.0,[.1],[.05],[.002,.004,.006,.008,.01,.02],param_range,param_range,
+        param_range,[0.0,.0625,.125,.25,.5,1.0],3,'control','../../data/reports/new/multi_inh_pop',
+        regenerate_network_plots=False,regenerate_trial_plots=False,smooth_missing_params=False)

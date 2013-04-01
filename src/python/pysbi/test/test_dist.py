@@ -1,16 +1,18 @@
 import os
 from brian.units import second
 import numpy as np
-from pysbi.analysis import FileInfo, get_auc
+from pysbi.analysis import get_auc
 from pysbi.wta import default_params, run_wta
 
-def test_estimate_distribution(output_dir, random_seed=None):
+def test_estimate_distribution(output_dir):
     # number of parameters
     num_params=4
     # number of iterations
     num_iterations=1000
     # Q variance
-    covar=0.1*np.identity(num_params)
+    covar=0.05*np.identity(num_params)
+
+    all_param_prob={}
 
     markov_chain=np.zeros([num_iterations,num_params])
     markov_chain_prob=np.zeros(num_iterations)
@@ -23,7 +25,12 @@ def test_estimate_distribution(output_dir, random_seed=None):
     for i in range(1,num_iterations):
         innovation=0.1*np.random.multivariate_normal(x,covar)
         candidate=np.clip(x+innovation,0.0,0.1)
-        candidate_prob=get_prob(candidate, output_dir)
+        candidate_key='%0.3f:%0.3f:%0.3f:%0.3f' % (candidate[0],candidate[1],candidate[2],candidate[3])
+        if candidate_key in all_param_prob:
+            candidate_prob=all_param_prob[candidate_key]
+        else:
+            candidate_prob=get_prob(candidate, output_dir)
+            all_param_prob[candidate_key]=candidate_prob
 
         transition_prob=np.min([1,candidate_prob/x_prob])
         if np.random.random()<transition_prob:
@@ -54,10 +61,26 @@ def get_prob(x, output_dir):
                wta_params.p_i_i, wta_params.p_i_e)
     file_prefix=os.path.join(output_dir,file_desc)
 
+    num_example_trials=[0,0]
     for trial in range(num_trials):
         inputs=np.zeros(2)
-        inputs[0]=np.random.rand()*input_sum
+        inputs[0]=np.random.random()*input_sum
         inputs[1]=input_sum-inputs[0]
+
+        if inputs[0]>inputs[1]:
+            num_example_trials[0]+=1
+        else:
+            num_example_trials[1]+=1
+
+        if trial==num_trials-1:
+            if num_example_trials[0]==0:
+                inputs[0]=input_sum*0.5+np.random.random()*input_sum*0.5
+                inputs[1]=input_sum-inputs[0]
+                num_example_trials[0]+=1
+            elif num_example_trials[1]==0:
+                inputs[1]=input_sum*0.5+np.random.random()*input_sum*0.5
+                inputs[0]=input_sum-inputs[1]
+                num_example_trials[1]+=1
 
         output_file='%s.trial.%d.h5' % (file_prefix,trial)
 

@@ -189,8 +189,12 @@ def post_broken_wta_jobs(nodes, num_trials, data_path, e_desc, single_inh_pop=Fa
                         record_spikes=True)
                     launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-def post_missing_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_range, p_i_i_range, p_i_e_range,
-                          num_trials, data_path, single_inh_pop=False, start_nodes=True):
+def post_missing_wta_jobs(summary_file_name, nodes, num_trials, data_path, e_desc, single_inh_pop=False, muscimol_amount=0*nS,
+                          injection_site=0, start_nodes=True):
+
+    summary_data=SummaryData()
+    summary_data.read_from_file(summary_file_name)
+
     num_groups=2
     trial_duration=1*second
     input_sum=40.0
@@ -198,37 +202,41 @@ def post_missing_wta_jobs(nodes, p_b_e_range, p_x_e_range, p_e_e_range, p_e_i_ra
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
-    for p_b_e in p_b_e_range:
-        for p_x_e in p_x_e_range:
-            for p_e_e in p_e_e_range:
-                for p_e_i in p_e_i_range:
-                    for p_i_i in p_i_i_range:
-                        for p_i_e in p_i_e_range:
-                            for t in range(num_trials):
-                                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.trial.%d.h5' %\
-                                          (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t)
-                                recreate=False
-                                file_name=os.path.join(data_path,file_desc)
-                                print('Checking %s' % file_name)
-                                if not os.path.exists(file_name):
-                                    recreate=True
-                                else:
-                                    try:
-                                        data=FileInfo(file_name)
-                                    except Exception:
-                                        recreate=True
-                                        os.remove(file_name)
-                                if recreate:
-                                    print('*** Recreating %s ***' % file_desc)
-                                    inputs=np.zeros(2)
-                                    inputs[0]=np.random.rand()*input_sum
-                                    inputs[1]=input_sum-inputs[0]
-                                    np.random.shuffle(inputs)
-                                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
-                                        p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, t, single_inh_pop=single_inh_pop,
-                                        record_lfp=True, record_voxel=True, record_neuron_state=False,
-                                        record_firing_rate=True, record_spikes=True)
-                                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+    contrast_range=[0.0, 0.0625, 0.125, 0.25, 0.5, 1.0]
+    for i,p_b_e in enumerate(summary_data.p_b_e_range):
+        for j,p_x_e in enumerate(summary_data.p_x_e_range):
+            for k,p_e_e in enumerate(summary_data.p_e_e_range):
+                for l,p_e_i in enumerate(summary_data.p_e_i_range):
+                    for m,p_i_i in enumerate(summary_data.p_i_i_range):
+                        for n,p_i_e in enumerate(summary_data.p_i_e_range):
+                            if not summary_data.auc[i,j,k,l,m,n]:
+                                for contrast in contrast_range:
+                                    for t in range(num_trials):
+                                        file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d.h5' %\
+                                                  (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, e_desc, contrast, t)
+                                        recreate=False
+                                        file_name=os.path.join(data_path,file_desc)
+                                        print('Checking %s' % file_name)
+                                        if not os.path.exists(file_name):
+                                            recreate=True
+                                        else:
+                                            try:
+                                                data=FileInfo(file_name)
+                                            except Exception:
+                                                recreate=True
+                                                os.remove(file_name)
+                                        if recreate:
+                                            print('*** Recreating %s ***' % file_desc)
+                                            inputs=np.zeros(2)
+                                            inputs[0]=(input_sum*(contrast+1.0)/2.0)
+                                            inputs[1]=input_sum-inputs[0]
+                                            np.random.shuffle(inputs)
+                                            cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                                                p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop,
+                                                muscimol_amount=muscimol_amount, injection_site=injection_site, record_lfp=True,
+                                                record_voxel=True, record_neuron_state=False, record_firing_rate=True,
+                                                record_spikes=True)
+                                            launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 
 def sample(param_marginal_posterior, param_range, alpha=0.1, precision=3):

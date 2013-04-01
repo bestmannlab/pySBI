@@ -260,7 +260,7 @@ def run_posthoc_bayes_analysis(summary_file_name, perf_threshold, r_sqr_threshol
 
 
 def run_bayesian_analysis(auc, slope, intercept, r_sqr, num_trials, p_b_e_range, p_e_e_range, p_e_i_range, p_i_e_range,
-                          p_i_i_range, p_x_e_range, perf_threshold=0.9, r_sqr_threshold=0.2):
+                          p_i_i_range, p_x_e_range, perf_threshold=0.75, r_sqr_threshold=0.2):
     bayes_analysis = Struct()
     # p(AUC | p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, M)
     # p(AUC | theta, M)
@@ -548,15 +548,27 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
                 example = 1
                 for j in range(num_extra_trials):
                     p += 1
-            else:
+            elif data.input_freq[option_idx] < data.input_freq[1-option_idx]:
                 for j in range(num_extra_trials):
                     n += 1
+            else:
+                if np.max(data.e_firing_rates[option_idx, 6500:7500])>np.max(data.e_firing_rates[1 - option_idx, 6500:7500]):
+                    example=1
+                    for j in range(num_extra_trials):
+                        p += 1
+                else:
+                    for j in range(num_extra_trials):
+                        n += 1
 
             # Get mean rate of pop 1 for last 100ms
             pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
             other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
+            max_rate=max([np.max(data.e_firing_rates[option_idx, 6500:7500]),
+                          np.max(data.e_firing_rates[1 - option_idx, 6500:7500])])
+            pop_mean+=.25*max_rate*np.random.randn()
+            other_pop_mean+=.25*max_rate*np.random.randn()
             for j in range(num_extra_trials):
-                f_score=.25*np.random.randn()
+                f_score=0
                 if float(pop_mean+other_pop_mean):
                     f_score+=float(pop_mean)/float(pop_mean+other_pop_mean)
                 l.append((example, f_score))
