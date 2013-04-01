@@ -5,7 +5,7 @@ from brian.stdunits import Hz, nS
 from brian.units import second
 #from scikits.learn.linear_model.base import LinearRegression
 from scikits.learn.linear_model import LinearRegression
-from pysbi.wta import default_params, run_wta
+from pysbi.wta.network import run_wta,default_params
 import numpy as np
 import matplotlib.pylab as plt
 
@@ -106,6 +106,16 @@ def test_contrast_lesion_one_param(p_range, trial_numbers, data_path, muscimol_a
         test_contrast_lesion(p, p, trial_numbers, param_data_path,muscimol_amount=muscimol_amount,
             injection_site=injection_site,single_inh_pop=single_inh_pop, plot_summary=False)
 
+def test_contrast_lesion_two_param(p_range, trial_numbers, data_path, muscimol_amount=0*nS, injection_site=0,
+                                   single_inh_pop=False):
+    for p_intra in p_range:
+        for p_inter in p_range:
+            param_data_path=os.path.join(data_path,'p_intra.%0.3f.p_inter.%0.3f' % (p_intra,p_inter))
+            if not os.path.exists(param_data_path):
+                os.mkdir(param_data_path)
+            test_contrast_lesion(p_intra, p_inter, trial_numbers, param_data_path,muscimol_amount=muscimol_amount,
+                injection_site=injection_site,single_inh_pop=single_inh_pop, plot_summary=False)
+
 def test_contrast_lesion(p_intra, p_inter, trial_numbers, data_path, muscimol_amount=0*nS, injection_site=0,
                          single_inh_pop=False, plot_summary=True):
     num_groups=2
@@ -132,7 +142,7 @@ def test_contrast_lesion(p_intra, p_inter, trial_numbers, data_path, muscimol_am
         inputs[1]=input_sum-inputs[0]
 
         for j,trial_idx in enumerate(trial_numbers):
-            print('Trial %d' % j)
+            print('Trial %d' % trial_idx)
             trial_contrast[i*num_trials+j]=contrast
             np.random.shuffle(inputs)
 
@@ -147,8 +157,8 @@ def test_contrast_lesion(p_intra, p_inter, trial_numbers, data_path, muscimol_am
             out_file=None
             if not data_path is None:
                 out_file=os.path.join(data_path,file)
-            wta_monitor=run_wta(wta_params, num_groups, input_freq, trial_duration, record_neuron_state=True,
-                output_file=out_file, single_inh_pop=single_inh_pop)
+            wta_monitor=run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=out_file,
+                single_inh_pop=single_inh_pop, record_spikes=False, record_lfp=False, save_summary_only=True)
 
             trial_max_bold[i*num_trials+j]=np.max(wta_monitor.voxel_monitor['y'].values)
             trial_max_exc_bold[i*num_trials+j]=np.max(wta_monitor.voxel_exc_monitor['y'].values)
@@ -177,9 +187,9 @@ def test_contrast_lesion(p_intra, p_inter, trial_numbers, data_path, muscimol_am
             out_file=None
             if not data_path is None:
                 out_file=os.path.join(data_path,file)
-            wta_monitor=run_wta(wta_params, num_groups, input_freq, trial_duration, record_neuron_state=True,
-                output_file=out_file, muscimol_amount=muscimol_amount, injection_site=injection_site,
-                single_inh_pop=single_inh_pop)
+            wta_monitor=run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=out_file,
+                muscimol_amount=muscimol_amount, injection_site=injection_site, single_inh_pop=single_inh_pop,
+                record_spikes=False, record_lfp=False, save_summary_only=True)
 
             lesioned_trial_max_bold[i*num_trials+j]=np.max(wta_monitor.voxel_monitor['y'].values)
             lesioned_trial_max_exc_bold[i*num_trials+j]=np.max(wta_monitor.voxel_exc_monitor['y'].values)
