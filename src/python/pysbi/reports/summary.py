@@ -2,7 +2,7 @@ from jinja2 import Environment, FileSystemLoader
 import os
 import h5py
 import numpy as np
-from pysbi.analysis import run_bayesian_analysis
+from pysbi.wta.analysis import run_bayesian_analysis
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.bayesian import create_bayesian_report, render_joint_marginal_report
 from pysbi.reports.utils import get_local_average, make_report_dirs
