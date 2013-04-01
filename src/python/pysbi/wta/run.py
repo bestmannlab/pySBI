@@ -13,7 +13,7 @@ from pysbi.reports.utils import get_tested_param_combos
 def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast,trial, single_inh_pop=False,
                  muscimol_amount=0*nS, injection_site=0, record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
                  record_firing_rate=True, save_summary_only=True):
-    cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta.py']
+    cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta/network.py']
     if muscimol_amount>0:
         e_desc='lesioned'
     else:
