@@ -1,10 +1,10 @@
 import os
 from brian.units import second
 import numpy as np
-from pysbi.analysis import get_auc
-from pysbi.wta import default_params, run_wta
+from pysbi.wta.analysis import  get_auc
+from pysbi.wta.network import default_params, run_wta
 
-def test_estimate_distribution(output_dir):
+def test_estimate_distribution(output_dir, random_seed=None):
     # number of parameters
     num_params=4
     # number of iterations
