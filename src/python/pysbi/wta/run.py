@@ -99,7 +99,7 @@ def post_missing_one_param_wta_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, da
     for p in p_range:
         for i,contrast in enumerate(contrast_range):
             for t in range(num_trials):
-                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d' %\
+                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d.h5' %\
                           (num_groups, trial_duration, p_b_e, p_x_e, p, p, p, p, 'control', contrast, t)
                 file_name=os.path.join(data_dir, file_desc)
                 if not os.path.exists(file_name):
