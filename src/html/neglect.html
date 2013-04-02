@@ -1,0 +1,259 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+    <title>Neglect</title>
+</head>
+
+<body>
+
+<script type="text/javascript">
+    $(document).ready(function()
+            {
+                $("#plot_table").tablesorter();
+                $("#summary_table").tablesorter();
+            }
+    );
+</script>
+
+<h4>Network Free Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>p_b_e</td>
+        <td>{{ rinfo.wta_params.p_b_e }}</td>
+    </tr>
+    <tr>
+        <td>p_x_e</td>
+        <td>{{ rinfo.wta_params.p_x_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td>{{ rinfo.wta_params.p_e_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td>{{ rinfo.wta_params.p_e_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td>{{ rinfo.wta_params.p_i_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td>{{ rinfo.wta_params.p_i_e }}</td>
+    </tr>
+</table>
+
+<table border=0 class="tablesorter" id="plot_table">
+    <thead>
+        <tr class="col_header">
+            <th>&nbsp;</th>
+            <th>Control</th>
+            <th>Lesioned</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>&nbsp;</td>
+            <td><img src="{{ rinfo.control_roc_url }}"/></td>
+            <td><img src="{{ rinfo.lesion_roc_url }}"/></td>
+        </tr>
+        <tr>
+            <td><strong>All synaptic activity</strong></td>
+            <td><img src="{{ rinfo.control_contrast_bold_url }}"/></td>
+            <td><img src="{{ rinfo.lesion_contrast_bold_url }}"/></td>
+        </tr>
+        <tr>
+            <td><strong>Only excitatory synaptic activity</strong></td>
+            <td><img src="{{ rinfo.control_contrast_exc_bold_url }}"/></td>
+            <td><img src="{{ rinfo.lesion_contrast_exc_bold_url }}"/></td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td><img src="{{ rinfo.control_rt_bold_url }}"/></td>
+            <td><img src="{{ rinfo.lesion_rt_bold_url }}"/></td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td><img src="{{ rinfo.control_rt_exc_bold_url }}"/></td>
+            <td><img src="{{ rinfo.lesion_rt_exc_bold_url }}"/></td>
+        </tr>
+    </tbody>
+</table>
+
+<img src="{{ rinfo.contrast_rt_url }}"/>
+
+<table class="tablesorter" id="summary_table">
+    <thead>
+        <th>Condition</th>
+        <th>Contrast</th>
+        <th>Trial</th>
+        <th>RT</th>
+        <th>Max BOLD</th>
+        <th>&nbsp;</th>
+    </thead>
+    <tbody>
+        {% for contrast in rinfo.contrast_range %}
+            {% for trial in rinfo.trials %}
+                <tr>
+                    <td>Control</td>
+                    <td>{{ contrast }}</td>
+                    <td>{{ trial }}</td>
+                    <td>{{ rinfo.control_trials[contrast][trial].rt }}</td>
+                    <td>{{ rinfo.control_trials[contrast][trial].max_bold|round(4) }}</td>
+                    <td><a href="#control.contrast.{{ contrast }}.trial.{{ trial }}">trial data</a></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+        {% for contrast in rinfo.contrast_range %}
+            {% for trial in rinfo.trials %}
+                <tr>
+                    <td>Lesioned</td>
+                    <td>{{ contrast }}</td>
+                    <td>{{ trial }}</td>
+                    <td>{{ rinfo.lesion_trials[contrast][trial].rt }}</td>
+                    <td>{{ rinfo.lesion_trials[contrast][trial].max_bold|round(4) }}</td>
+                    <td><a href="#lesion.contrast.{{ contrast }}.trial.{{ trial }}">trial data</a></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Control Trials</h3>
+<table>
+    {% for contrast in rinfo.contrast_range %}
+        {% for trial in rinfo.trials %}
+            <tr>
+                <td colspan="2">
+                    <strong><a name="control.contrast.{{ contrast }}.trial.{{ trial }}">Contrast={{ contrast }}</a></strong><br>
+                    <strong>Trial {{ trial }}</strong>
+                    <br>
+                    Inputs=[{% for input in rinfo.control_trials[contrast][trial].input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+                    <br>
+                    Response Time={{ rinfo.control_trials[contrast][trial].rt }}
+                    <br>
+                    Input Contrast={{ rinfo.control_trials[contrast][trial].input_contrast|round(3) }}
+                    <br>
+                    Max Input Rate={{ rinfo.control_trials[contrast][trial].max_input|round(2) }}Hz
+                    <br>
+                    Max Output Rate={{ rinfo.control_trials[contrast][trial].max_rate|round(2) }}Hz
+                    <br>
+                    Max BOLD signal={{ rinfo.control_trials[contrast][trial].max_bold|round(4) }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].e_raster_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].e_raster_url }}"/>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].i_raster_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].i_raster_url }}"/>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].firing_rate_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].firing_rate_url }}"/>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].neural_state_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].neural_state_url }}"/>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].lfp_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].lfp_url }}"/>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rinfo.control_trials[contrast][trial].voxel_url %}
+                    <img src="{{ rinfo.control_trials[contrast][trial].voxel_url }}"/>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"><hr/></td>
+            </tr>
+        {% endfor %}
+    {% endfor %}
+</table>
+
+<h3>Lesion Trials</h3>
+<table>
+    {% for contrast in rinfo.contrast_range %}
+        {% for trial in rinfo.trials %}
+        <tr>
+            <td colspan="2">
+                <strong><a name="lesion.contrast.{{ contrast }}.trial.{{ trial }}">Contrast={{ contrast }}</a></strong><br>
+                <strong>Trial {{ trial }}</strong>
+                <br>
+                Inputs=[{% for input in rinfo.lesion_trials[contrast][trial].input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+                <br>
+                Response Time={{ rinfo.lesion_trials[contrast][trial].rt }}
+                <br>
+                Input Contrast={{ rinfo.lesion_trials[contrast][trial].input_contrast|round(3) }}
+                <br>
+                Max Input Rate={{ rinfo.lesion_trials[contrast][trial].max_input|round(2) }}Hz
+                <br>
+                Max Output Rate={{ rinfo.lesion_trials[contrast][trial].max_rate|round(2) }}Hz
+                <br>
+                Max BOLD signal={{ rinfo.lesion_trials[contrast][trial].max_bold|round(4) }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].e_raster_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].e_raster_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].i_raster_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].i_raster_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].firing_rate_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].firing_rate_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].neural_state_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].neural_state_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].lfp_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].lfp_url }}"/>
+                {% endif %}
+            </td>
+            <td>
+                {% if rinfo.lesion_trials[contrast][trial].voxel_url %}
+                <img src="{{ rinfo.lesion_trials[contrast][trial].voxel_url }}"/>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2"><hr/></td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+</table>
+</body>
+</html>
