@@ -85,6 +85,48 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
 
     return cmds, log_file_template, output_file
 
+def post_missing_one_param_wta_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, data_dir, single_inh_pop=True, start_nodes=True,
+                                    muscimol_amount=0*nS, injection_site=0):
+    num_groups=2
+    trial_duration=1*second
+    input_sum=40.0
+    launcher=Launcher(nodes)
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
+
+    contrast_range=[0.0, 0.0625, 0.125, 0.25, 0.5, 1.0]
+    for p in p_range:
+        for i,contrast in enumerate(contrast_range):
+            for t in range(num_trials):
+                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d' %\
+                          (num_groups, trial_duration, p_b_e, p_x_e, p, p, p, p, 'control', contrast, t)
+                file_name=os.path.join(data_dir, file_desc)
+                if not os.path.exists(file_name):
+                    inputs=np.zeros(2)
+                    inputs[0]=(input_sum*(contrast+1.0)/2.0)
+                    inputs[1]=input_sum-inputs[0]
+                    np.random.shuffle(inputs)
+                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                        p_x_e, p, p, p, p, contrast, t, single_inh_pop=single_inh_pop, record_lfp=True,
+                        record_voxel=True, record_neuron_state=False, record_firing_rate=True,
+                        record_spikes=True, save_summary_only=True)
+                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+                file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.%s.contrast.%0.4f.trial.%d' %\
+                          (num_groups, trial_duration, p_b_e, p_x_e, p, p, p, p, 'control', contrast, t)
+                file_name=os.path.join(data_dir, file_desc)
+                if not os.path.exists(file_name):
+                    inputs=np.zeros(2)
+                    inputs[0]=(input_sum*(contrast+1.0)/2.0)
+                    inputs[1]=input_sum-inputs[0]
+                    np.random.shuffle(inputs)
+                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e,
+                        p_x_e, p, p, p, p, contrast, t, single_inh_pop=single_inh_pop, muscimol_amount=muscimol_amount,
+                        injection_site=injection_site, record_lfp=True, record_voxel=True, record_neuron_state=False,
+                        record_firing_rate=True, record_spikes=True, save_summary_only=True)
+                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
 def post_one_param_wta_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, single_inh_pop=True, start_nodes=True,
                             muscimol_amount=0*nS, injection_site=0):
     num_groups=2
