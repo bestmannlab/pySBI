@@ -2,7 +2,7 @@ import os
 import random
 from brian.stdunits import nS
 import numpy as np
-from brian.units import second
+from brian.units import second, siemens
 from ezrcluster.launcher import Launcher
 from pysbi.wta.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
@@ -49,7 +49,7 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('0')
     if muscimol_amount>0:
         cmds.append('--muscimol_amount')
-        cmds.append(str(muscimol_amount))
+        cmds.append(str(muscimol_amount/siemens))
         cmds.append('--injection_site')
         cmds.append('%d' % injection_site)
     cmds.append('--record_lfp')
