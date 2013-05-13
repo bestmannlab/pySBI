@@ -639,9 +639,9 @@ def trapezoid_area(x1,x2,y1,y2):
     height_avg=float(y1+y2)/2.0
     return base*height_avg
 
-def get_roc(prefix, num_trials, num_extra_trials):
-    roc1=get_roc_single_option(prefix, num_trials, num_extra_trials, 0)
-    roc2=get_roc_single_option(prefix, num_trials, num_extra_trials, 1)
+def get_roc(prefix, contrast_range, num_trials, num_extra_trials):
+    roc1=get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, 0)
+    roc2=get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, 1)
 
     plt.figure()
     plt.plot(roc1[:,0],roc1[:,1],'x-',label='option 1')
@@ -694,17 +694,30 @@ def compute_auc(l_sorted, n, p):
     return a
 
 class TrialSummary:
+    """
+    Represents summary of data from a single trial
+    """
+
     def __init__(self, contrast, trial_idx, data):
+        """
+        Initialize summary data from full data object
+        contrast = input contrast
+        trial_idx = trial index
+        data = full data obejct
+        """
         self.contrast=contrast
         self.trial_idx=trial_idx
         self.injection_site=data.injection_site
         self.muscimol_amount=data.muscimol_amount
+        # Index of max responding population
         self.decision_idx=0
         if data.summary_data.e_mean[1]>data.summary_data.e_mean[0]:
             self.decision_idx=1
+        # Index of maximum input
         self.max_in_idx=0
         if data.input_freq[1] > data.input_freq[0]:
             self.max_in_idx=1
+        # Whether or not selection is correct
         self.correct=False
         if data.input_freq[1]==data.input_freq[0] or self.decision_idx==self.max_in_idx:
             self.correct=True
@@ -713,18 +726,49 @@ class TrialSummary:
         self.e_mean=data.summary_data.e_mean
 
     def get_f_score(self, idx, alpha=1.0):
+        """
+        Get F-score for this trial
+        """
         if np.sum(self.e_mean):
             e_mean_rand=self.e_mean+alpha*np.random.randn(len(self.e_mean))*self.e_mean
             return float(e_mean_rand[idx])/float(np.sum(e_mean_rand))
         return 0.0
 
+
+class MaxBOLDContrastRegression:
+    def __init__(self, trials_max_bold, trials_contrast):
+        self.trials_max_bold=np.array(trials_max_bold)
+        self.trials_max_bold_contrast=np.array(trials_contrast)
+        self.trials_max_bold_contrast=np.reshape(self.trials_max_bold_contrast,(-1,1))
+
+        self.bold_contrast_a=nan
+        self.bold_contrast_b=0
+        if len(self.trials_max_bold_contrast):
+            clf = LinearRegression()
+            clf.fit(self.trials_max_bold_contrast, self.trials_max_bold)
+            self.bold_contrast_a = clf.coef_[0]
+            self.bold_contrast_b = clf.intercept_
+
+
 class TrialSeries:
-    def __init__(self, dir, prefix, num_trials):
-        self.contrast_range=[0.0, 0.0625, 0.125, 0.25, 0.5, 1.0]
+    """
+    Represents a series of trials with varying input contrast levels
+    """
+
+    def __init__(self, dir, prefix, num_trials, contrast_range=(0.0, 0.0625, 0.125, 0.25, 0.5, 1.0)):
+        """
+        Load trial data files
+        dir = directory to load files from
+        prefix = file prefix
+        num_trials = number of trials per contrast level
+        contrast_range = range of contrast values tested
+        """
+        self.contrast_range=contrast_range
         self.num_trials=num_trials
 
         self.trial_summaries=[]
 
+        # Load each trial data file and store TrialSummary object
         for i,contrast in enumerate(self.contrast_range):
             for trial_idx in range(num_trials):
 
@@ -735,301 +779,174 @@ class TrialSeries:
 
                 self.trial_summaries.append(trial_summary)
 
-        self.compute_auc()
+        self.compute_muticlass_auc()
         self.compute_bold_contrast_regression()
 
-    def compute_auc(self):
-        auc_one=Struct()
-        auc_one.option_idx=0
-        auc_one.l = []
-        auc_one.p = 0
-        auc_one.n = 0
 
-        auc_two=Struct()
-        auc_two.option_idx=0
-        auc_two.l = []
-        auc_two.p = 0
-        auc_two.n = 0
+    def compute_muticlass_auc(self, n_options=2):
+        """
+        Compute the multi-option AUC for this series
+        """
+        response_option_aucs=[]
+        for i in range(n_options):
+            auc=Struct()
+            auc.option_idx=i
+            auc.l = []
+            auc.p = 0
+            auc.n = 0
+            response_option_aucs.append(auc)
 
+        # Get F-scores for each class for each trial
         for trial_summary in self.trial_summaries:
             if trial_summary.contrast>0.0:
                 for i in range(20):
-                    correct=0
-                    if trial_summary.max_in_idx==1:
-                        correct=1
-                        auc_one.n+=1.0
-                        auc_two.p+=1.0
-                    else:
-                        auc_one.p+=1.0
-                        auc_two.n+=1.0
+                    response_option_aucs[trial_summary.max_in_idx].p+=1.0
+                    response_option_aucs[1-trial_summary.max_in_idx].n+=1.0
 
-                    auc_one.l.append((1-correct, trial_summary.get_f_score(0)))
-                    auc_two.l.append((correct, trial_summary.get_f_score(1)))
+                    response_option_aucs[0].l.append((1-trial_summary.max_in_idx, trial_summary.get_f_score(0)))
+                    response_option_aucs[1].l.append((trial_summary.max_in_idx, trial_summary.get_f_score(1)))
 
-        auc_one.l_sorted = sorted(auc_one.l, key=lambda example: example[1], reverse=True)
-        auc_two.l_sorted = sorted(auc_two.l, key=lambda example: example[1], reverse=True)
-        auc_one.auc=compute_auc(auc_one.l_sorted,auc_one.n,auc_one.p)
-        auc_two.auc=compute_auc(auc_two.l_sorted,auc_two.n,auc_two.p)
-        self.total_auc=auc_one.auc*(auc_one.p/(auc_one.p+auc_two.p))+auc_two.auc*(auc_two.p/(auc_one.p+auc_two.p))
+        # Compute AUC of each response option
+        for auc in response_option_aucs:
+            auc.l_sorted = sorted(auc.l, key=lambda example: example[1], reverse=True)
+            auc.auc=compute_auc(auc.l_sorted,auc.n,auc.p)
+
+        # Compute weighted total AUC
+        self.total_auc=0.0
+        sub_total_auc=0
+        for auc in response_option_aucs:
+            sub_total_auc+=auc.p
+        for auc in response_option_aucs:
+            self.total_auc+=auc.auc*(auc.p/sub_total_auc)
 
     def compute_bold_contrast_regression(self):
-        self.trials_max_bold=[]
-        self.trials_max_bold_contrast=[]
-        self.trials_max_exc_bold=[]
-        self.trials_max_exc_bold_contrast=[]
+        """
+        Perform regression - max bold by input contrast
+        """
+        trials_max_bold=[]
+        trials_max_bold_contrast=[]
+        trials_max_exc_bold=[]
+        trials_max_exc_bold_contrast=[]
         for trial_summary in self.trial_summaries:
             if not math.isnan(trial_summary.bold_max):
-                self.trials_max_bold.append(trial_summary.bold_max)
-                self.trials_max_bold_contrast.append(trial_summary.contrast)
+                trials_max_bold.append(trial_summary.bold_max)
+                trials_max_bold_contrast.append(trial_summary.contrast)
             if not math.isnan(trial_summary.bold_exc_max):
-                self.trials_max_exc_bold.append(trial_summary.bold_exc_max)
-                self.trials_max_exc_bold_contrast.append(trial_summary.contrast)
+                trials_max_exc_bold.append(trial_summary.bold_exc_max)
+                trials_max_exc_bold_contrast.append(trial_summary.contrast)
 
-        self.trials_max_bold=np.array(self.trials_max_bold)
-        self.trials_max_exc_bold=np.array(self.trials_max_exc_bold)
-        self.trials_max_bold_contrast=np.array(self.trials_max_bold_contrast)
-        self.trials_max_bold_contrast=np.reshape(self.trials_max_bold_contrast,(-1,1))
-        self.trials_max_exc_bold_contrast=np.array(self.trials_max_exc_bold_contrast)
-        self.trials_max_exc_bold_contrast=np.reshape(self.trials_max_exc_bold_contrast,(-1,1))
-
-        self.bold_contrast_a=nan
-        self.bold_contrast_b=0
-        if len(self.trials_max_bold_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_contrast, self.trials_max_bold)
-            self.bold_contrast_a = clf.coef_[0]
-            self.bold_contrast_b = clf.intercept_
-            if math.isnan(self.bold_contrast_a):
-                print(self.trials_max_bold_contrast)
-                print(self.trials_max_bold)
-
-        self.bold_exc_contrast_a=nan
-        self.bold_exc_contrast_b=0
-        if len(self.trials_max_exc_bold_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_contrast, self.trials_max_exc_bold)
-            self.bold_exc_contrast_a = clf.coef_[0]
-            self.bold_exc_contrast_b = clf.intercept_
-            if math.isnan(self.bold_exc_contrast_a):
-                print(self.trials_max_exc_bold_contrast)
-                print(self.trials_max_exc_bold)
+        self.max_bold_regression=MaxBOLDContrastRegression(trials_max_bold, trials_max_bold_contrast)
+        self.max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold, trials_max_exc_bold_contrast)
 
     def sort_by_correct(self):
-        self.trials_max_bold_correct=[]
-        self.trials_max_bold_correct_contrast=[]
-        self.trials_max_bold_incorrect=[]
-        self.trials_max_bold_incorrect_contrast=[]
-        self.trials_max_exc_bold_correct=[]
-        self.trials_max_exc_bold_correct_contrast=[]
-        self.trials_max_exc_bold_incorrect=[]
-        self.trials_max_exc_bold_incorrect_contrast=[]
+        """
+        Sorts correct/incorrect trials and separately performs regression - max bold by input contrast
+        """
+        trials_max_bold_correct=[]
+        trials_max_bold_correct_contrast=[]
+        trials_max_bold_incorrect=[]
+        trials_max_bold_incorrect_contrast=[]
+        trials_max_exc_bold_correct=[]
+        trials_max_exc_bold_correct_contrast=[]
+        trials_max_exc_bold_incorrect=[]
+        trials_max_exc_bold_incorrect_contrast=[]
 
         for trial_summary in self.trial_summaries:
             if trial_summary.correct:
                 if not math.isnan(trial_summary.bold_max):
-                    self.trials_max_bold_correct.append(trial_summary.bold_max)
-                    self.trials_max_bold_correct_contrast.append(trial_summary.contrast)
+                    trials_max_bold_correct.append(trial_summary.bold_max)
+                    trials_max_bold_correct_contrast.append(trial_summary.contrast)
                 if not math.isnan(trial_summary.bold_exc_max):
-                    self.trials_max_exc_bold_correct.append(trial_summary.bold_exc_max)
-                    self.trials_max_exc_bold_correct_contrast.append(trial_summary.contrast)
+                    trials_max_exc_bold_correct.append(trial_summary.bold_exc_max)
+                    trials_max_exc_bold_correct_contrast.append(trial_summary.contrast)
             else:
                 if not math.isnan(trial_summary.bold_max):
-                    self.trials_max_bold_incorrect.append(trial_summary.bold_max)
-                    self.trials_max_bold_incorrect_contrast.append(trial_summary.contrast)
+                    trials_max_bold_incorrect.append(trial_summary.bold_max)
+                    trials_max_bold_incorrect_contrast.append(trial_summary.contrast)
                 if not math.isnan(trial_summary.bold_exc_max):
-                    self.trials_max_exc_bold_incorrect.append(trial_summary.bold_exc_max)
-                    self.trials_max_exc_bold_incorrect_contrast.append(trial_summary.contrast)
+                    trials_max_exc_bold_incorrect.append(trial_summary.bold_exc_max)
+                    trials_max_exc_bold_incorrect_contrast.append(trial_summary.contrast)
 
-        self.trials_max_bold_correct=np.array(self.trials_max_bold_correct)
-        self.trials_max_exc_bold_correct=np.array(self.trials_max_exc_bold_correct)
-        self.trials_max_bold_correct_contrast=np.array(self.trials_max_bold_correct_contrast)
-        self.trials_max_bold_correct_contrast=np.reshape(self.trials_max_bold_correct_contrast,(-1,1))
-        self.trials_max_exc_bold_correct_contrast=np.array(self.trials_max_exc_bold_correct_contrast)
-        self.trials_max_exc_bold_correct_contrast=np.reshape(self.trials_max_exc_bold_correct_contrast,(-1,1))
+        self.correct_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_correct, trials_max_bold_correct_contrast)
+        self.incorrect_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_incorrect, trials_max_bold_incorrect_contrast)
+        self.correct_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_correct, trials_max_exc_bold_correct_contrast)
+        self.incorrect_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_incorrect, trials_max_exc_bold_incorrect_contrast)
 
-        self.trials_max_bold_incorrect=np.array(self.trials_max_bold_incorrect)
-        self.trials_max_exc_bold_incorrect=np.array(self.trials_max_exc_bold_incorrect)
-        self.trials_max_bold_incorrect_contrast=np.array(self.trials_max_bold_incorrect_contrast)
-        self.trials_max_bold_incorrect_contrast=np.reshape(self.trials_max_bold_incorrect_contrast,(-1,1))
-        self.trials_max_exc_bold_incorrect_contrast=np.array(self.trials_max_exc_bold_incorrect_contrast)
-        self.trials_max_exc_bold_incorrect_contrast=np.reshape(self.trials_max_exc_bold_incorrect_contrast,(-1,1))
-
-        self.bold_contrast_correct_a=nan
-        self.bold_contrast_correct_b=0
-        if len(self.trials_max_bold_correct_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_correct_contrast, self.trials_max_bold_correct)
-            self.bold_contrast_correct_a = clf.coef_[0]
-            self.bold_contrast_correct_b = clf.intercept_
-
-        self.bold_exc_contrast_correct_a=nan
-        self.bold_exc_contrast_correct_b=0
-        if len(self.trials_max_exc_bold_correct_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_correct_contrast, self.trials_max_exc_bold_correct)
-            self.bold_exc_contrast_correct_a = clf.coef_[0]
-            self.bold_exc_contrast_correct_b = clf.intercept_
-
-        self.bold_contrast_incorrect_a=nan
-        self.bold_contrast_incorrect_b=0
-        if len(self.trials_max_bold_incorrect_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_incorrect_contrast, self.trials_max_bold_incorrect)
-            self.bold_contrast_incorrect_a = clf.coef_[0]
-            self.bold_contrast_incorrect_b = clf.intercept_
-
-        self.bold_exc_contrast_incorrect_a=nan
-        self.bold_exc_contrast_incorrect_b=0
-        if len(self.trials_max_exc_bold_incorrect_contrast):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_incorrect_contrast, self.trials_max_exc_bold_incorrect)
-            self.bold_exc_contrast_incorrect_a = clf.coef_[0]
-            self.bold_exc_contrast_incorrect_b = clf.intercept_
 
     def sort_by_correct_lesioned(self):
-        self.trials_max_bold_affected_correct=[]
-        self.trials_max_bold_affected_incorrect=[]
-        self.trials_max_bold_intact_correct=[]
-        self.trials_max_bold_intact_incorrect=[]
-        self.trials_max_exc_bold_affected_correct=[]
-        self.trials_max_exc_bold_affected_incorrect=[]
-        self.trials_max_exc_bold_intact_correct=[]
-        self.trials_max_exc_bold_intact_incorrect=[]
+        """
+        Sorts affect/intact correct/incorrect trials and separately performs regression - max bold by input contrast
+        """
+        trials_max_bold_affected_correct=[]
+        trials_max_bold_affected_incorrect=[]
+        trials_max_bold_intact_correct=[]
+        trials_max_bold_intact_incorrect=[]
+        trials_max_exc_bold_affected_correct=[]
+        trials_max_exc_bold_affected_incorrect=[]
+        trials_max_exc_bold_intact_correct=[]
+        trials_max_exc_bold_intact_incorrect=[]
 
-        self.trials_max_bold_affected_correct_contrast=[]
-        self.trials_max_bold_affected_incorrect_contrast=[]
-        self.trials_max_bold_intact_correct_contrast=[]
-        self.trials_max_bold_intact_incorrect_contrast=[]
-        self.trials_max_exc_bold_affected_correct_contrast=[]
-        self.trials_max_exc_bold_affected_incorrect_contrast=[]
-        self.trials_max_exc_bold_intact_correct_contrast=[]
-        self.trials_max_exc_bold_intact_incorrect_contrast=[]
+        trials_max_bold_affected_correct_contrast=[]
+        trials_max_bold_affected_incorrect_contrast=[]
+        trials_max_bold_intact_correct_contrast=[]
+        trials_max_bold_intact_incorrect_contrast=[]
+        trials_max_exc_bold_affected_correct_contrast=[]
+        trials_max_exc_bold_affected_incorrect_contrast=[]
+        trials_max_exc_bold_intact_correct_contrast=[]
+        trials_max_exc_bold_intact_incorrect_contrast=[]
 
         for trial_summary in self.trial_summaries:
             if trial_summary.decision_idx==trial_summary.injection_site and trial_summary.muscimol_amount>0:
                 if trial_summary.correct:
                     if not math.isnan(trial_summary.bold_max):
-                        self.trials_max_bold_affected_correct.append(trial_summary.bold_max)
-                        self.trials_max_bold_affected_correct_contrast.append(trial_summary.contrast)
+                        trials_max_bold_affected_correct.append(trial_summary.bold_max)
+                        trials_max_bold_affected_correct_contrast.append(trial_summary.contrast)
                     if not math.isnan(trial_summary.bold_exc_max):
-                        self.trials_max_exc_bold_affected_correct.append(trial_summary.bold_exc_max)
-                        self.trials_max_exc_bold_affected_correct_contrast.append(trial_summary.contrast)
+                        trials_max_exc_bold_affected_correct.append(trial_summary.bold_exc_max)
+                        trials_max_exc_bold_affected_correct_contrast.append(trial_summary.contrast)
 
                 else:
                     if not math.isnan(trial_summary.bold_max):
-                        self.trials_max_bold_affected_incorrect.append(trial_summary.bold_max)
-                        self.trials_max_bold_affected_incorrect_contrast.append(trial_summary.contrast)
+                        trials_max_bold_affected_incorrect.append(trial_summary.bold_max)
+                        trials_max_bold_affected_incorrect_contrast.append(trial_summary.contrast)
                     if not math.isnan(trial_summary.bold_exc_max):
-                        self.trials_max_exc_bold_affected_incorrect.append(trial_summary.bold_exc_max)
-                        self.trials_max_exc_bold_affected_incorrect_contrast.append(trial_summary.contrast)
+                        trials_max_exc_bold_affected_incorrect.append(trial_summary.bold_exc_max)
+                        trials_max_exc_bold_affected_incorrect_contrast.append(trial_summary.contrast)
 
             else:
                 if trial_summary.correct:
                     if not math.isnan(trial_summary.bold_max):
-                        self.trials_max_bold_intact_correct.append(trial_summary.bold_max)
-                        self.trials_max_bold_intact_correct_contrast.append(trial_summary.contrast)
+                        trials_max_bold_intact_correct.append(trial_summary.bold_max)
+                        trials_max_bold_intact_correct_contrast.append(trial_summary.contrast)
                     if not math.isnan(trial_summary.bold_exc_max):
-                        self.trials_max_exc_bold_intact_correct.append(trial_summary.bold_exc_max)
-                        self.trials_max_exc_bold_intact_correct_contrast.append(trial_summary.contrast)
+                        trials_max_exc_bold_intact_correct.append(trial_summary.bold_exc_max)
+                        trials_max_exc_bold_intact_correct_contrast.append(trial_summary.contrast)
                 else:
                     if not math.isnan(trial_summary.bold_max):
-                        self.trials_max_bold_intact_incorrect.append(trial_summary.bold_max)
-                        self.trials_max_bold_intact_incorrect_contrast.append(trial_summary.contrast)
+                        trials_max_bold_intact_incorrect.append(trial_summary.bold_max)
+                        trials_max_bold_intact_incorrect_contrast.append(trial_summary.contrast)
                     if not math.isnan(trial_summary.bold_exc_max):
-                        self.trials_max_exc_bold_intact_incorrect.append(trial_summary.bold_exc_max)
-                        self.trials_max_exc_bold_intact_incorrect_contrast.append(trial_summary.contrast)
+                        trials_max_exc_bold_intact_incorrect.append(trial_summary.bold_exc_max)
+                        trials_max_exc_bold_intact_incorrect_contrast.append(trial_summary.contrast)
 
-        self.trials_max_bold_affected_correct=np.array(self.trials_max_bold_affected_correct)
-        self.trials_max_exc_bold_affected_correct=np.array(self.trials_max_exc_bold_affected_correct)
-        self.trials_max_bold_affected_correct_contrast=np.array(self.trials_max_bold_affected_correct_contrast)
-        self.trials_max_bold_affected_correct_contrast=np.reshape(self.trials_max_bold_affected_correct_contrast,(-1,1))
-        self.trials_max_exc_bold_affected_correct_contrast=np.array(self.trials_max_exc_bold_affected_correct_contrast)
-        self.trials_max_exc_bold_affected_correct_contrast=np.reshape(self.trials_max_exc_bold_affected_correct_contrast,(-1,1))
+        self.affected_correct_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_affected_correct,
+            trials_max_bold_affected_correct_contrast)
+        self.affected_incorrect_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_affected_incorrect,
+            trials_max_bold_affected_incorrect_contrast)
+        self.intact_correct_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_intact_correct,
+            trials_max_bold_intact_correct_contrast)
+        self.intact_incorrect_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_intact_incorrect,
+            trials_max_bold_intact_incorrect_contrast)
 
-        self.trials_max_bold_affected_incorrect=np.array(self.trials_max_bold_affected_incorrect)
-        self.trials_max_exc_bold_affected_incorrect=np.array(self.trials_max_exc_bold_affected_incorrect)
-        self.trials_max_bold_affected_incorrect_contrast=np.array(self.trials_max_bold_affected_incorrect_contrast)
-        self.trials_max_bold_affected_incorrect_contrast=np.reshape(self.trials_max_bold_affected_incorrect_contrast,(-1,1))
-        self.trials_max_exc_bold_affected_incorrect_contrast=np.array(self.trials_max_exc_bold_affected_incorrect_contrast)
-        self.trials_max_exc_bold_affected_incorrect_contrast=np.reshape(self.trials_max_exc_bold_affected_incorrect_contrast,(-1,1))
+        self.affected_correct_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_affected_correct,
+            trials_max_exc_bold_affected_correct_contrast)
+        self.affected_incorrect_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_affected_incorrect,
+            trials_max_exc_bold_affected_incorrect_contrast)
+        self.intact_correct_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_intact_correct,
+            trials_max_exc_bold_intact_correct_contrast)
+        self.intact_incorrect_max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold_intact_incorrect,
+            trials_max_exc_bold_intact_incorrect_contrast)
 
-        self.trials_max_bold_intact_correct=np.array(self.trials_max_bold_intact_correct)
-        self.trials_max_exc_bold_intact_correct=np.array(self.trials_max_exc_bold_intact_correct)
-        self.trials_max_bold_intact_correct_contrast=np.array(self.trials_max_bold_intact_correct_contrast)
-        self.trials_max_bold_intact_correct_contrast=np.reshape(self.trials_max_bold_intact_correct_contrast,(-1,1))
-        self.trials_max_exc_bold_intact_correct_contrast=np.array(self.trials_max_exc_bold_intact_correct_contrast)
-        self.trials_max_exc_bold_intact_correct_contrast=np.reshape(self.trials_max_exc_bold_intact_correct_contrast,(-1,1))
-
-        self.trials_max_bold_intact_incorrect=np.array(self.trials_max_bold_intact_incorrect)
-        self.trials_max_exc_bold_intact_incorrect=np.array(self.trials_max_exc_bold_intact_incorrect)
-        self.trials_max_bold_intact_incorrect_contrast=np.array(self.trials_max_bold_intact_incorrect_contrast)
-        self.trials_max_bold_intact_incorrect_contrast=np.reshape(self.trials_max_bold_intact_incorrect_contrast,(-1,1))
-        self.trials_max_exc_bold_intact_incorrect_contrast=np.array(self.trials_max_exc_bold_intact_incorrect_contrast)
-        self.trials_max_exc_bold_intact_incorrect_contrast=np.reshape(self.trials_max_exc_bold_intact_incorrect_contrast,(-1,1))
-
-        self.bold_contrast_affected_correct_a=0
-        self.bold_contrast_affected_correct_b=0
-        if len(self.trials_max_bold_affected_correct):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_affected_correct_contrast, self.trials_max_bold_affected_correct)
-            self.bold_contrast_affected_correct_a = clf.coef_[0]
-            self.bold_contrast_affected_correct_b = clf.intercept_
-
-        self.bold_exc_contrast_affected_correct_a=0
-        self.bold_exc_contrast_affected_correct_b=0
-        if len(self.trials_max_exc_bold_affected_correct):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_affected_correct_contrast, self.trials_max_exc_bold_affected_correct)
-            self.bold_exc_contrast_affected_correct_a = clf.coef_[0]
-            self.bold_exc_contrast_affected_correct_b = clf.intercept_
-
-        self.bold_contrast_affected_incorrect_a=0
-        self.bold_contrast_affected_incorrect_b=0
-        if len(self.trials_max_bold_affected_incorrect):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_affected_incorrect_contrast, self.trials_max_bold_affected_incorrect)
-            self.bold_contrast_affected_incorrect_a = clf.coef_[0]
-            self.bold_contrast_affected_incorrect_b = clf.intercept_
-
-        self.bold_exc_contrast_affected_incorrect_a=0
-        self.bold_exc_contrast_affected_incorrect_b=0
-        if len(self.trials_max_exc_bold_affected_incorrect):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_affected_incorrect_contrast, self.trials_max_exc_bold_affected_incorrect)
-            self.bold_exc_contrast_affected_incorrect_a = clf.coef_[0]
-            self.bold_exc_contrast_affected_incorrect_b = clf.intercept_
-
-        self.bold_contrast_intact_correct_a=0
-        self.bold_contrast_intact_correct_b=0
-        if len(self.trials_max_bold_intact_correct):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_intact_correct_contrast, self.trials_max_bold_intact_correct)
-            self.bold_contrast_intact_correct_a = clf.coef_[0]
-            self.bold_contrast_intact_correct_b = clf.intercept_
-
-        self.bold_exc_contrast_intact_correct_a=0
-        self.bold_exc_contrast_intact_correct_b=0
-        if len(self.trials_max_exc_bold_intact_correct):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_intact_correct_contrast, self.trials_max_exc_bold_intact_correct)
-            self.bold_exc_contrast_intact_correct_a = clf.coef_[0]
-            self.bold_exc_contrast_intact_correct_b = clf.intercept_
-
-        self.bold_contrast_intact_incorrect_a=0
-        self.bold_contrast_intact_incorrect_b=0
-        if len(self.trials_max_bold_intact_incorrect):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_bold_intact_incorrect_contrast, self.trials_max_bold_intact_incorrect)
-            self.bold_contrast_intact_incorrect_a = clf.coef_[0]
-            self.bold_contrast_intact_incorrect_b = clf.intercept_
-
-        self.bold_exc_contrast_intact_incorrect_a=0
-        self.bold_exc_contrast_intact_incorrect_b=0
-        if len(self.trials_max_exc_bold_intact_incorrect):
-            clf = LinearRegression()
-            clf.fit(self.trials_max_exc_bold_intact_incorrect_contrast, self.trials_max_exc_bold_intact_incorrect)
-            self.bold_exc_contrast_intact_incorrect_a = clf.coef_[0]
-            self.bold_exc_contrast_intact_incorrect_b = clf.intercept_
 
 def plot_auc_one_param(base_dir, param_range, file_prefix, num_trials):
     p_auc=[]
@@ -1043,8 +960,8 @@ def plot_auc_one_param(base_dir, param_range, file_prefix, num_trials):
         lesioned_p_series=TrialSeries(base_dir,prefix, num_trials)
         p_auc.append(p_series.total_auc)
         lesioned_p_auc.append(lesioned_p_series.total_auc)
-        p_bc.append(p_series.bold_contrast_a)
-        p_exc_bc.append(p_series.bold_exc_contrast_a)
+        p_bc.append(p_series.max_bold_regression.bold_contrast_a)
+        p_exc_bc.append(p_series.max_exc_bold_regression.bold_contrast_a)
 
     fig=plt.figure()
     plt.plot(param_range,p_auc,'b')
@@ -1063,7 +980,7 @@ def plot_auc_one_param(base_dir, param_range, file_prefix, num_trials):
     plt.xlabel('Exc BOLD - Contrast slope')
     plt.show()
 
-def open_param_range_files(base_dir, param_range, file_prefix, num_trials):
+def open_two_param_range_files(base_dir, param_range, file_prefix, num_trials):
     param_files=[]
     for i,p_intra in enumerate(param_range):
         for j,p_inter in enumerate(param_range):
@@ -1084,7 +1001,7 @@ def open_lesioned_param_range_files(base_dir, param_range, file_prefix, num_tria
     return param_files
 
 def plot_bc_slope(base_dir, param_range, file_prefix, num_trials, perf_thresh=.90):
-    param_files=open_param_range_files(base_dir, param_range, file_prefix, num_trials)
+    param_files=open_two_param_range_files(base_dir, param_range, file_prefix, num_trials)
     bc_slope_data=compute_bc_slope(param_files, perf_thresh=perf_thresh)
     fig=plt.figure()
     ax=plt.subplot(211)
@@ -1161,8 +1078,8 @@ def plot_bc_slope(base_dir, param_range, file_prefix, num_trials, perf_thresh=.9
 def plot_perf_slope_analysis(base_dir, param_range, file_prefix, num_trials):
     num_bins=20
     min_perf=.5
-    perf_range=min_perf+np.array(range(40))*(1.0-min_perf)/40
-    param_files=open_param_range_files(base_dir, param_range, file_prefix, num_trials)
+    perf_range=min_perf+np.array(range(40))*(1.0-min_perf)/40.0
+    param_files=open_two_param_range_files(base_dir, param_range, file_prefix, num_trials)
 
     bc_data=[]
     for perf_thresh in perf_range:
@@ -1305,8 +1222,8 @@ def plot_bold_contrast_lesion_two_param(base_dir, param_range, file_prefix, num_
             prefix='%s.p_e_e.%.3f.p_e_i.%.3f.p_i_i.%.3f.p_i_e.%.3f.%s' % (file_prefix,p_intra,p_inter,p_intra,p_inter,'lesioned')
             lesioned_data=TrialSeries(base_dir,prefix, num_trials)
             lesioned_data.sort_by_correct_lesioned()
-            bc_slope[i,j]=control_data.bold_contrast_a
-            lesioned_bc_slope[i,j]=lesioned_data.bold_contrast_a
+            bc_slope[i,j]=control_data.max_bold_regression.bold_contrast_a
+            lesioned_bc_slope[i,j]=lesioned_data.max_bold_regression.bold_contrast_a
 
     fig=plt.figure()
     im = plt.imshow(bc_slope, extent=[min(param_range), max(param_range), min(param_range),
