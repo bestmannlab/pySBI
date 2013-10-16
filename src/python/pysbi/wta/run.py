@@ -58,8 +58,8 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('--p_dcs')
         cmds.append(str(p_dcs/volt))
     if i_dcs>0 or i_dcs<0:
-        cmds.append('--p_dcs')
-        cmds.append(str(p_dcs/volt))
+        cmds.append('--i_dcs')
+        cmds.append(str(i_dcs/volt))
     cmds.append('--record_lfp')
     if record_lfp:
         cmds.append('1')

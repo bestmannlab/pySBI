@@ -359,8 +359,8 @@ if __name__=='__main__':
     ap.add_argument('--single_inh_pop', type=int, default=0, help='Single inhibitory population')
     ap.add_argument('--muscimol_amount', type=float, default=0.0, help='Amount of muscimol to inject')
     ap.add_argument('--injection_site', type=int, default=0, help='Site of muscimol injection (group index)')
-    ap.add_argument('--p_dcs', type=float, default=0, help='Pyramidal cell DCS')
-    ap.add_argument('--i_dcs', type=float, default=0, help='Interneuron cell DCS')
+    ap.add_argument('--p_dcs', type=float, default=0.0, help='Pyramidal cell DCS')
+    ap.add_argument('--i_dcs', type=float, default=0.0, help='Interneuron cell DCS')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \
