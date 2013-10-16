@@ -330,7 +330,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
         write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
             output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
             stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params, muscimol_amount,
-            injection_site)
+            injection_site, p_dcs, i_dcs)
         print 'Wrote output to %s' % output_file
         print "Write output time: %.2fs" % (time() - start_time)
 

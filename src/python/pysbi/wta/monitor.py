@@ -359,7 +359,7 @@ class WTAMonitor():
 def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
                  output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp,
                  record_inputs, stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor,
-                 wta_params, muscimol_amount, injection_site):
+                 wta_params, muscimol_amount, injection_site, p_dcs, i_dcs):
 
     f = h5py.File(output_file, 'w')
 
@@ -406,6 +406,8 @@ def write_output(background_input_size, background_rate, input_freq, network_gro
     f.attrs['p_i_e'] = wta_params.p_i_e
     f.attrs['muscimol_amount'] = muscimol_amount
     f.attrs['injection_site'] = injection_site
+    f.attrs['p_dcs']=p_dcs
+    f.attrs['i_dcs']=i_dcs
 
     if not wta_monitor.save_summary_only:
         # Write LFP data

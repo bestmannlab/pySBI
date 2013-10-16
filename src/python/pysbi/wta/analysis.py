@@ -14,6 +14,7 @@ from pysbi.util.utils import Struct
 from pysbi.wta import network
 from pysbi.wta.network import run_wta
 
+
 def parse_output_file_name(output_file):
     strs=output_file.split('.')
     num_groups=int(strs[2])
@@ -25,7 +26,9 @@ def parse_output_file_name(output_file):
     p_e_i=float(strs[18]+'.'+strs[19])
     p_i_i=float(strs[21]+'.'+strs[22])
     p_i_e=float(strs[24]+'.'+strs[25])
-    return num_groups,input_pattern,duration,p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e
+    p_dcs=float(strs[26]+'.'+strs[27])
+    i_dcs=float(strs[28]+'.'+strs[29])
+    return num_groups,input_pattern,duration,p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e,p_dcs,i_dcs
 
 class FileInfo():
     def __init__(self, file_name):
@@ -46,6 +49,10 @@ class FileInfo():
         self.task_input_size=int(f.attrs['task_input_size'])
         self.muscimol_amount=float(f.attrs['muscimol_amount'])*siemens
         self.injection_site=int(f.attrs['injection_site'])
+        if 'p_dcs' in f.attrs:
+            self.p_dcs=float(f.attrs['p_dcs'])*volt
+        if 'i_dcs' in f.attrs:
+            self.i_dcs=float(f.attrs['i_dcs'])*volt
 
         self.wta_params=network.default_params()
         self.wta_params.C=float(f.attrs['C'])*farad

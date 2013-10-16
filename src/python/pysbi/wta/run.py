@@ -229,14 +229,14 @@ def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, num_trial
             np.random.shuffle(inputs)
             cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
                 p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop, record_lfp=True, record_voxel=True,
-                record_neuron_state=False, record_firing_rate=True, record_spikes=True, save_summary_only=True)
+                record_neuron_state=False, record_firing_rate=True, record_spikes=True, save_summary_only=False)
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
         for t in range(num_trials):
             np.random.shuffle(inputs)
             cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
                 p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop, p_dcs=p_dcs, i_dcs=i_dcs, record_lfp=True,
                 record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True,
-                save_summary_only=True)
+                save_summary_only=False)
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 def post_two_param_wta_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, single_inh_pop=True, start_nodes=True,
