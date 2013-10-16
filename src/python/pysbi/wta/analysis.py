@@ -749,6 +749,11 @@ class MaxBOLDContrastRegression:
             self.bold_contrast_a = clf.coef_[0]
             self.bold_contrast_b = clf.intercept_
 
+    def plot(self, x_max, x_min, dot_style, line_style, label_str):
+        plt.plot(self.trials_max_bold_contrast, self.trials_max_bold, dot_style)
+        plt.plot([x_min, x_max], [self.bold_contrast_a * x_min + self.bold_contrast_b,
+                                  self.bold_contrast_a * x_max + self.bold_contrast_b], line_style, label=label_str)
+
 
 class TrialSeries:
     """
@@ -1150,31 +1155,35 @@ def compute_bc_slope(param_files, perf_thresh=.90):
 
     for p_series in param_files:
         if p_series.total_auc>=perf_thresh:
-            if not math.isnan(p_series.bold_contrast_a):
-                bc_slope_data.p_pos_bc.append(p_series.bold_contrast_a)
-            if not math.isnan(p_series.bold_exc_contrast_a):
-                bc_slope_data.p_pos_exc_bc.append(p_series.bold_exc_contrast_a)
-            if not math.isnan(p_series.bold_contrast_correct_a):
-                bc_slope_data.p_pos_bc_correct.append(p_series.bold_contrast_correct_a)
-            if not math.isnan(p_series.bold_exc_contrast_correct_a):
-                bc_slope_data.p_pos_exc_bc_correct.append(p_series.bold_exc_contrast_correct_a)
-            if not math.isnan(p_series.bold_contrast_incorrect_a):
-                bc_slope_data.p_pos_bc_incorrect.append(p_series.bold_contrast_incorrect_a)
-            if not math.isnan(p_series.bold_exc_contrast_incorrect_a):
-                bc_slope_data.p_pos_exc_bc_incorrect.append(p_series.bold_exc_contrast_incorrect_a)
+            if not math.isnan(p_series.max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_bc.append(p_series.max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_exc_bc.append(p_series.max_exc_bold_regression.bold_contrast_a)
+
+            if not math.isnan(p_series.correct_max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_bc_correct.append(p_series.correct_max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.correct_max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_exc_bc_correct.append(p_series.correct_max_exc_bold_regression.bold_contrast_a)
+
+            if not math.isnan(p_series.incorrect_max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_bc_incorrect.append(p_series.incorrect_max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.incorrect_max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_pos_exc_bc_incorrect.append(p_series.incorrect_max_exc_bold_regression.bold_contrast_a)
         else:
-            if not math.isnan(p_series.bold_contrast_a):
-                bc_slope_data.p_neg_bc.append(p_series.bold_contrast_a)
-            if not math.isnan(p_series.bold_exc_contrast_a):
-                bc_slope_data.p_neg_exc_bc.append(p_series.bold_exc_contrast_a)
-            if not math.isnan(p_series.bold_contrast_correct_a):
-                bc_slope_data.p_neg_bc_correct.append(p_series.bold_contrast_correct_a)
-            if not math.isnan(p_series.bold_exc_contrast_correct_a):
-                bc_slope_data.p_neg_exc_bc_correct.append(p_series.bold_exc_contrast_correct_a)
-            if not math.isnan(p_series.bold_contrast_incorrect_a):
-                bc_slope_data.p_neg_bc_incorrect.append(p_series.bold_contrast_incorrect_a)
-            if not math.isnan(p_series.bold_exc_contrast_incorrect_a):
-                bc_slope_data.p_neg_exc_bc_incorrect.append(p_series.bold_exc_contrast_incorrect_a)
+            if not math.isnan(p_series.max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_bc.append(p_series.max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_exc_bc.append(p_series.max_exc_bold_regression.bold_contrast_a)
+
+            if not math.isnan(p_series.correct_max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_bc_correct.append(p_series.correct_max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.correct_max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_exc_bc_correct.append(p_series.correct_max_exc_bold_regression.bold_contrast_a)
+
+            if not math.isnan(p_series.incorrect_max_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_bc_incorrect.append(p_series.incorrect_max_bold_regression.bold_contrast_a)
+            if not math.isnan(p_series.incorrect_max_exc_bold_regression.bold_contrast_a):
+                bc_slope_data.p_neg_exc_bc_incorrect.append(p_series.incorrect_max_exc_bold_regression.bold_contrast_a)
 
     return bc_slope_data
 
@@ -1214,6 +1223,8 @@ def plot_auc_two_param(base_dir, param_range, file_prefix, num_trials):
 def plot_bold_contrast_lesion_two_param(base_dir, param_range, file_prefix, num_trials):
     bc_slope=np.zeros([len(param_range), len(param_range)])
     lesioned_bc_slope=np.zeros([len(param_range), len(param_range)])
+    bc_exc_slope=np.zeros([len(param_range), len(param_range)])
+    lesioned_bc_exc_slope=np.zeros([len(param_range), len(param_range)])
     for i,p_intra in enumerate(param_range):
         for j,p_inter in enumerate(param_range):
             prefix='%s.p_e_e.%.3f.p_e_i.%.3f.p_i_i.%.3f.p_i_e.%.3f.%s' % (file_prefix,p_intra,p_inter,p_intra,p_inter,'control')
@@ -1224,6 +1235,8 @@ def plot_bold_contrast_lesion_two_param(base_dir, param_range, file_prefix, num_
             lesioned_data.sort_by_correct_lesioned()
             bc_slope[i,j]=control_data.max_bold_regression.bold_contrast_a
             lesioned_bc_slope[i,j]=lesioned_data.max_bold_regression.bold_contrast_a
+            bc_exc_slope[i,j]=control_data.max_exc_bold_regression.bold_contrast_a
+            lesioned_bc_exc_slope[i,j]=lesioned_data.max_exc_bold_regression.bold_contrast_a
 
     fig=plt.figure()
     im = plt.imshow(bc_slope, extent=[min(param_range), max(param_range), min(param_range),
@@ -1243,6 +1256,24 @@ def plot_bold_contrast_lesion_two_param(base_dir, param_range, file_prefix, num_
     plt.title('Lesioned')
     plt.show()
 
+    fig=plt.figure()
+    im = plt.imshow(bc_exc_slope, extent=[min(param_range), max(param_range), min(param_range),
+                                      max(param_range)], interpolation='nearest', origin='lower')
+    fig.colorbar(im)
+    plt.xlabel('p_intra')
+    plt.ylabel('p_inter')
+    plt.title('Control - Exc only')
+    plt.show()
+
+    fig=plt.figure()
+    im = plt.imshow(lesioned_bc_exc_slope, extent=[min(param_range), max(param_range), min(param_range),
+                                               max(param_range)], interpolation='nearest', origin='lower')
+    fig.colorbar(im)
+    plt.xlabel('p_intra')
+    plt.ylabel('p_inter')
+    plt.title('Lesioned - Exc only')
+    plt.show()
+
 
 def plot_bold_contrast_lesion_one_param(output_dir, file_prefix, num_trials):
     
@@ -1257,35 +1288,23 @@ def plot_bold_contrast_lesion_one_param(output_dir, file_prefix, num_trials):
     x_max=np.max(control_data.contrast_range)
 
     fig=plt.figure()
-    if len(control_data.trials_max_bold_correct):
-        plot_regression(control_data.trials_contrast_correct, control_data.trials_max_bold_correct, 
-            control_data.bold_contrast_correct_a, control_data.bold_contrast_correct_b, x_max, x_min,'ok','k',
-            'Control Correct')
+    if len(control_data.correct_max_bold_regression.trials_max_bold):
+        control_data.max_bold_regression.plot(x_max, x_min,'ok','k','Control Correct')
         
-    if len(control_data.trials_max_bold_incorrect):
-        plot_regression(control_data.trials_contrast_incorrect, control_data.trials_max_bold_incorrect, 
-            control_data.bold_contrast_incorrect_a, control_data.bold_contrast_incorrect_b, x_max, x_min, 'xk', '--k',
-            'Control Incorrect')
+    if len(control_data.incorrect_max_bold_regression.trials_max_bold):
+        control_data.incorrect_max_bold_regression.plot(x_max, x_min, 'xk', '--k', 'Control Incorrect')
 
-    if len(lesioned_data.trials_max_bold_affected_correct):
-        plot_regression(lesioned_data.trials_max_bold_affected_correct_contrast,
-            lesioned_data.trials_max_bold_affected_correct, lesioned_data.bold_contrast_affected_correct_a,
-            lesioned_data.bold_contrast_affected_correct_b, x_max,x_min,'xb','--b','Lesioned Affected Correct')
+    if len(lesioned_data.affected_correct_max_bold_regression.trials_max_bold):
+        lesioned_data.affected_correct_max_bold_regression.plot(x_max,x_min,'xb','--b','Lesioned Affected Correct')
 
-    if len(lesioned_data.trials_max_bold_affected_incorrect):
-        plot_regression(lesioned_data.trials_max_bold_affected_incorrect_contrast,
-            lesioned_data.trials_max_bold_affected_incorrect, lesioned_data.bold_contrast_affected_incorrect_a,
-            lesioned_data.bold_contrast_affected_incorrect_b, x_max,x_min,'xr','--r','Lesioned Affected Incorrect')
+    if len(lesioned_data.affected_incorrect_max_bold_regression.trials_max_bold):
+        lesioned_data.affected_incorrect_max_bold_regression.plot(x_max,x_min,'xr','--r','Lesioned Affected Incorrect')
 
-    if len(lesioned_data.trials_max_bold_intact_correct):
-        plot_regression(lesioned_data.trials_max_bold_intact_correct_contrast,
-            lesioned_data.trials_max_bold_intact_correct, lesioned_data.bold_contrast_intact_correct_a,
-            lesioned_data.bold_contrast_intact_correct_b, x_max, x_min, 'ob','b','Lesioned Intact Correct')
+    if len(lesioned_data.intact_correct_max_bold_regression.trials_max_bold):
+        lesioned_data.intact_correct_max_bold_regression.plot(x_max, x_min, 'ob','b','Lesioned Intact Correct')
 
-    if len(lesioned_data.trials_max_bold_intact_incorrect):
-        plot_regression(lesioned_data.trials_max_bold_intact_incorrect_contrast,
-            lesioned_data.trials_max_bold_intact_incorrect, lesioned_data.bold_contrast_intact_incorrect_a,
-            lesioned_data.bold_contrast_intact_incorrect_b, x_max, x_min, 'or', 'r','Lesioned Intact Incorrect')
+    if len(lesioned_data.intact_incorrect_max_bold_regression.trials_max_bold):
+        lesioned_data.intact_incorrect_max_bold_regression.plot(x_max, x_min, 'or', 'r','Lesioned Intact Incorrect')
 
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
@@ -1293,35 +1312,23 @@ def plot_bold_contrast_lesion_one_param(output_dir, file_prefix, num_trials):
     plt.show()
 
     fig=plt.figure()
-    if len(control_data.trials_max_exc_bold_correct):
-        plot_regression(control_data.trials_contrast_correct, control_data.trials_max_exc_bold_correct,
-            control_data.bold_exc_contrast_correct_a, control_data.bold_exc_contrast_correct_b, x_max, x_min,'ok','k',
-            'Control Correct')
+    if len(control_data.correct_max_exc_bold_regression.trials_max_bold):
+        control_data.correct_max_exc_bold_regression.plot(x_max, x_min,'ok','k','Control Correct')
 
-    if len(control_data.trials_max_exc_bold_incorrect):
-        plot_regression(control_data.trials_contrast_incorrect, control_data.trials_max_exc_bold_incorrect,
-            control_data.bold_exc_contrast_incorrect_a, control_data.bold_exc_contrast_incorrect_b, x_max, x_min, 'xk', '--k',
-            'Control Incorrect')
+    if len(control_data.incorrect_max_exc_bold_regression.trials_max_bold):
+        control_data.incorrect_max_exc_bold_regression.plot(x_max, x_min, 'xk', '--k','Control Incorrect')
 
-    if len(lesioned_data.trials_max_exc_bold_affected_correct):
-        plot_regression(lesioned_data.trials_max_bold_affected_correct_contrast,
-            lesioned_data.trials_max_exc_bold_affected_correct, lesioned_data.bold_exc_contrast_affected_correct_a,
-            lesioned_data.bold_exc_contrast_affected_correct_b, x_max,x_min,'xb','--b','Lesioned Affected Correct')
+    if len(lesioned_data.affected_correct_max_exc_bold_regression.trials_max_bold):
+        lesioned_data.affected_correct_max_exc_bold_regression.plot(x_max,x_min,'xb','--b','Lesioned Affected Correct')
 
-    if len(lesioned_data.trials_max_exc_bold_affected_incorrect):
-        plot_regression(lesioned_data.trials_max_bold_affected_incorrect_contrast,
-            lesioned_data.trials_max_exc_bold_affected_incorrect, lesioned_data.bold_exc_contrast_affected_incorrect_a,
-            lesioned_data.bold_exc_contrast_affected_incorrect_b, x_max,x_min,'xr','--r','Lesioned Affected Incorrect')
+    if len(lesioned_data.affected_incorrect_max_exc_bold_regression.trials_max_bold):
+        lesioned_data.affected_incorrect_max_exc_bold_regression.plot(x_max,x_min,'xr','--r','Lesioned Affected Incorrect')
 
-    if len(lesioned_data.trials_max_exc_bold_intact_correct):
-        plot_regression(lesioned_data.trials_max_bold_intact_correct_contrast,
-            lesioned_data.trials_max_exc_bold_intact_correct, lesioned_data.bold_exc_contrast_intact_correct_a,
-            lesioned_data.bold_exc_contrast_intact_correct_b, x_max, x_min, 'ob','b','Lesioned Intact Correct')
+    if len(lesioned_data.intact_correct_max_exc_bold_regression.trials_max_bold):
+        lesioned_data.intact_correct_max_exc_bold_regression.plot(x_max, x_min, 'ob','b','Lesioned Intact Correct')
 
-    if len(lesioned_data.trials_max_exc_bold_intact_incorrect):
-        plot_regression(lesioned_data.trials_max_bold_intact_incorrect_contrast,
-            lesioned_data.trials_max_exc_bold_intact_incorrect, lesioned_data.bold_exc_contrast_intact_incorrect_a,
-            lesioned_data.bold_exc_contrast_intact_incorrect_b, x_max, x_min, 'or', 'r','Lesioned Intact Incorrect')
+    if len(lesioned_data.intact_incorrect_max_exc_bold_regression.trials_max_bold):
+        lesioned_data.intact_incorrect_max_exc_bold_regression.plot(x_max, x_min, 'or', 'r','Lesioned Intact Incorrect')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD (exc only)')
     plt.legend(loc='best')
