@@ -9,7 +9,7 @@ from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
 from brian.stdunits import pF, nS, mV, ms, Hz
 from brian.tools.parameters import Parameters
-from brian.units import siemens, second
+from brian.units import siemens, second, volt
 import argparse
 import numpy as np
 from numpy.matlib import randn
@@ -119,12 +119,6 @@ class WTANetworkGroup(NeuronGroup):
         self.init_subpopulations()
 
         self.init_connectivity()
-
-#    def inject_muscimol(self, group_idx, amount):
-#        self.groups_e[group_idx].gL+=amount
-#        print('e %d muscimol=%.4f nS' % (group_idx,self.groups_e[group_idx].gL/nS))
-#        self.groups_i[group_idx].gL+=amount
-#        print('i %d muscimol=%.4f nS' % (group_idx,self.groups_i[group_idx].gL/nS))
 
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
@@ -236,23 +230,31 @@ class WTANetworkGroup(NeuronGroup):
                     self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_x_e, (0*ms, 5*ms)))
 
 
-## Run WTA network
-#       wta_params = network parameters
-#       num_groups = number of input groups
-#       input_freq = mean firing rate of each input group
-#       trial_duration = how long to simulate
-#       ouput_file = ouput file to write to
-#       record_lfp = record LFP data if true
-#       record_voxel = record voxel data if true
-#       record_neuron_state = record neuron state data if true
-#       record_spikes = record spike data if true
-#       record_firing_rate = record network firing rates if true
-#       record_inputs = record input firing rates if true
-#       plot_output = plot outputs if true
-#       single_inh_pop = single inhibitory population if true
+
 def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, save_summary_only=False,
             record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
-            record_inputs=False, plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0):
+            record_inputs=False, plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0,
+            p_dcs=0*mV, i_dcs=0*mV):
+    """
+    Run WTA network
+       wta_params = network parameters
+       num_groups = number of input groups
+       input_freq = mean firing rate of each input group
+       trial_duration = how long to simulate
+       ouput_file = ouput file to write to
+       record_lfp = record LFP data if true
+       record_voxel = record voxel data if true
+       record_neuron_state = record neuron state data if true
+       record_spikes = record spike data if true
+       record_firing_rate = record network firing rates if true
+       record_inputs = record input firing rates if true
+       plot_output = plot outputs if true
+       single_inh_pop = single inhibitory population if true
+       muscimol_amount = amount of muscimol to inject
+       injection_site = where to inject muscimol
+       p_dcs = DCS to pyramidal cells
+       i_dcs = DCS to interneurons
+    """
 
     start_time = time()
 
@@ -261,7 +263,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     stim_start_time=.25*second
     stim_end_time=.75*second
     network_group_size=1000
-    background_input_size=500
+    background_input_size=1000
     task_input_size=500
 
     # Create network inputs
@@ -276,6 +278,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     # Create WTA network
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
         task_inputs=task_inputs, single_inh_pop=single_inh_pop)
+
+    wta_network.group_e.EL+=p_dcs
+    wta_network.group_i.EL+=i_dcs
 
     # LFP source
     lfp_source=LFPSource(wta_network.group_e)
@@ -354,6 +359,8 @@ if __name__=='__main__':
     ap.add_argument('--single_inh_pop', type=int, default=0, help='Single inhibitory population')
     ap.add_argument('--muscimol_amount', type=float, default=0.0, help='Amount of muscimol to inject')
     ap.add_argument('--injection_site', type=int, default=0, help='Site of muscimol injection (group index)')
+    ap.add_argument('--p_dcs', type=float, default=0, help='Pyramidal cell DCS')
+    ap.add_argument('--i_dcs', type=float, default=0, help='Interneuron cell DCS')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \
@@ -383,4 +390,5 @@ if __name__=='__main__':
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
         single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount*siemens,
-        injection_site=argvals.injection_site, save_summary_only=argvals.save_summary_only)
+        injection_site=argvals.injection_site, p_dcs=argvals.p_dcs*volt, i_dcs=argvals.i_dcs*volt,
+        save_summary_only=argvals.save_summary_only)
