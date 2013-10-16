@@ -496,12 +496,14 @@ def plot_bold_contrast(data_dir, num_groups, trial_duration, num_trials, p_b_e,p
     file_prefix=os.path.join(data_dir,file_desc)
     trial_contrast=np.zeros([num_trials,1])
     trial_max_bold=np.zeros(num_trials)
+    trial_max_bold_exc=np.zeros(num_trials)
     for i in range(num_trials):
         file_name='%s.trial.%d.h5' % (file_prefix, i)
         print('opening %s' % file_name)
         data=FileInfo(file_name)
         trial_contrast[i]=abs(data.input_freq[0]-data.input_freq[1])/sum(data.input_freq)
         trial_max_bold[i]=np.max(data.voxel_rec['y'][0])
+        trial_max_bold_exc[i]=np.max(data.voxel_exc_rec['y'][0])
 
     clf=LinearRegression()
     clf.fit(trial_contrast,trial_max_bold)
@@ -515,6 +517,21 @@ def plot_bold_contrast(data_dir, num_groups, trial_duration, num_trials, p_b_e,p
     plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
+    plt.show()
+
+    clf=LinearRegression()
+    clf.fit(trial_contrast,trial_max_bold_exc)
+    a=clf.coef_[0]
+    b=clf.intercept_
+
+    fig=plt.figure()
+    plt.plot(trial_contrast, trial_max_bold_exc, 'x')
+    x_min=np.min(trial_contrast)
+    x_max=np.max(trial_contrast)
+    plt.plot([x_min,x_max],[a*x_min+b,a*x_max+b],'--')
+    plt.xlabel('Input Contrast')
+    plt.ylabel('Max BOLD')
+    plt.title('Exc only')
     plt.show()
 
 if __name__=='__main__':
