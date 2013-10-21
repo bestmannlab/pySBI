@@ -4,10 +4,10 @@ from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
-from brian.membrane_equations import Current
+from brian.membrane_equations import Current, InjectedCurrent
 from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
-from brian.stdunits import pF, nS, mV, ms, Hz
+from brian.stdunits import pF, nS, mV, ms, Hz, nA
 from brian.tools.parameters import Parameters
 from brian.units import siemens, second, volt
 import argparse
@@ -52,10 +52,10 @@ default_params=Parameters(
     # Connection probabilities
     p_b_e=0.1,
     p_x_e=0.05,
-    p_e_e=0.0075,
-    p_e_i=0.04,
-    p_i_i=0.01,
-    p_i_e=0.02)
+    p_e_e=0.05,
+    p_e_i=0.05,
+    p_i_i=0.05,
+    p_i_e=0.03)
 
 # WTA network class - extends Brian's NeuronGroup
 class WTANetworkGroup(NeuronGroup):
@@ -106,6 +106,8 @@ class WTANetworkGroup(NeuronGroup):
         # GABA-B conductance
         eqs += biexp_synapse('g_gaba_b', params.tau1_gaba_b, params.tau2_gaba_b, siemens)
         eqs += Current('I_gaba_b=g_gaba_b*(E-vm): amp', E=params.E_gaba_b)
+
+        eqs +=InjectedCurrent('I_dcs: amp')
 
         # Total synaptic conductance
         eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a+g_gaba_b : siemens')
@@ -234,7 +236,7 @@ class WTANetworkGroup(NeuronGroup):
 def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, save_summary_only=False,
             record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
             record_inputs=False, plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0,
-            p_dcs=0*mV, i_dcs=0*mV):
+            p_dcs=0*nA, i_dcs=0*nA):
     """
     Run WTA network
        wta_params = network parameters
@@ -260,9 +262,11 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
 
     # Init simulation parameters
     background_rate=20*Hz
-    stim_start_time=.25*second
-    stim_end_time=.75*second
-    network_group_size=1000
+    stim_start_time=1*second
+    stim_end_time=trial_duration-1*second
+
+    # Total size of the network (excitatory and inhibitory cells)
+    network_group_size=2000
     background_input_size=1000
     task_input_size=500
 
@@ -279,8 +283,12 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
         task_inputs=task_inputs, single_inh_pop=single_inh_pop)
 
-    wta_network.group_e.EL+=p_dcs
-    wta_network.group_i.EL+=i_dcs
+    #wta_network.group_e.EL+=p_dcs
+    #wta_network.group_i.EL+=i_dcs
+    @network_operation
+    def inject_current(c):
+        wta_network.group_e.I_dcs=p_dcs
+        wta_network.group_i.I_dcs=i_dcs
 
     # LFP source
     lfp_source=LFPSource(wta_network.group_e)
@@ -301,12 +309,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
             wta_network.groups_i[injection_site].g_muscimol=muscimol_amount
 
     # Create Brian network and reset clock
-    if muscimol_amount>0:
-        net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-            wta_monitor.monitors, inject_muscimol)
-    else:
-        net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-            wta_monitor.monitors)
+    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
+        wta_monitor.monitors, inject_muscimol, inject_current)
     reinit_default_clock()
     print "Initialization time: %.2fs" % (time() - start_time)
 
