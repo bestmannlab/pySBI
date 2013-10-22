@@ -42,10 +42,22 @@ def plot_raster(group_spike_neurons, group_spike_times, group_sizes):
         plt.xlabel('Time (ms)')
         return fig
 
-def init_connection(pop1, pop2, target_name, min_weight, max_weight, p, delay, allow_self_conn=True):
-    conn=DelayConnection(pop1, pop2, target_name, sparseness=p,
-        weight=lambda:min_weight+np.random.rand()*(max_weight-min_weight),
-        delay=delay)
+def init_rand_weight_connection(pop1, pop2, target_name, min_weight, max_weight, p, delay, allow_self_conn=True):
+    """
+    Initialize a connection between two populations
+    pop1 = population sending projections
+    pop2 = populations receiving projections
+    target_name = name of synapse type to project to
+    min_weight = min weight of connection
+    max_weight = max weight of connection
+    p = probability of connection between any two neurons
+    delay = delay
+    allow_self_conn = allow neuron to project to itself
+    """
+    W=min_weight+np.random.rand(len(pop1),len(pop2))*(max_weight-min_weight)
+    conn=DelayConnection(pop1, pop2, target_name, sparseness=p, W=W, delay=delay)
+
+    # Remove self-connections
     if not allow_self_conn and len(pop1)==len(pop2):
         for j in xrange(len(pop1)):
             conn[j,j]=0.0
@@ -53,6 +65,30 @@ def init_connection(pop1, pop2, target_name, min_weight, max_weight, p, delay, a
             conn[j,j]=0.0
             conn.delay[j,j]=0.0
     return conn
+
+def init_connection(pop1, pop2, target_name, weight, p, delay, allow_self_conn=True):
+    """
+    Initialize a connection between two populations
+    pop1 = population sending projections
+    pop2 = populations receiving projections
+    target_name = name of synapse type to project to
+    weight = weight of connection
+    p = probability of connection between any two neurons
+    delay = delay
+    allow_self_conn = allow neuron to project to itself
+    """
+    conn=DelayConnection(pop1, pop2, target_name, sparseness=p, weight=weight, delay=delay)
+
+    # Remove self-connections
+    if not allow_self_conn and len(pop1)==len(pop2):
+        for j in xrange(len(pop1)):
+            conn[j,j]=0.0
+            conn.delay[j,j]=0.0
+            conn[j,j]=0.0
+            conn.delay[j,j]=0.0
+    return conn
+
+
 
 
 
