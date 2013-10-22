@@ -17,8 +17,7 @@ class WTAMonitor():
     #       record_firing_rate = record firing rate if true
     #       record_inputs = record inputs if true
     def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
-                 record_spikes=True, record_firing_rate=True, record_inputs=False, single_inh_pop=False,
-                 save_summary_only=False):
+                 record_spikes=True, record_firing_rate=True, record_inputs=False, save_summary_only=False):
         self.num_groups=network.num_groups
         self.N=network.N
         self.monitors=[]
@@ -63,15 +62,9 @@ class WTAMonitor():
                 self.population_rate_monitors['excitatory'].append(e_rate_monitor)
                 self.monitors.append(e_rate_monitor)
 
-            if len(network.groups_i):
-                for group_i in network.groups_i:
-                    i_rate_monitor=PopulationRateMonitor(group_i)
-                    self.population_rate_monitors['inhibitory'].append(i_rate_monitor)
-                    self.monitors.append(i_rate_monitor)
-            else:
-                i_rate_monitor=PopulationRateMonitor(network.group_i)
-                self.population_rate_monitors['inhibitory'].append(i_rate_monitor)
-                self.monitors.append(i_rate_monitor)
+            i_rate_monitor=PopulationRateMonitor(network.group_i)
+            self.population_rate_monitors['inhibitory'].append(i_rate_monitor)
+            self.monitors.append(i_rate_monitor)
         else:
             self.population_rate_monitors=None
 
@@ -96,15 +89,9 @@ class WTAMonitor():
                 self.spike_monitors['excitatory'].append(e_spike_monitor)
                 self.monitors.append(e_spike_monitor)
 
-            if len(network.groups_i):
-                for group_i in network.groups_i:
-                    i_spike_monitor=SpikeMonitor(group_i)
-                    self.spike_monitors['inhibitory'].append(i_spike_monitor)
-                    self.monitors.append(i_spike_monitor)
-            else:
-                i_spike_monitor=SpikeMonitor(network.group_i)
-                self.spike_monitors['inhibitory'].append(i_spike_monitor)
-                self.monitors.append(i_spike_monitor)
+            i_spike_monitor=SpikeMonitor(network.group_i)
+            self.spike_monitors['inhibitory'].append(i_spike_monitor)
+            self.monitors.append(i_spike_monitor)
         else:
             self.spike_monitors=None
 
@@ -337,11 +324,10 @@ class WTAMonitor():
 
 ## Write monitor data to HDF5 file
 #       background_input_size = number of background inputs
-#       bacground rate = background firing rate
+#       background_freq rate = background firing rate
 #       input_freq = input firing rates
 #       network_group_size = number of neurons per input group
 #       num_groups = number of input groups
-#       single_inh_pop = single inhibitory population
 #       output_file = filename to write to
 #       record_firing_rate = write network firing rate data when true
 #       record_neuron_stae = write neuron state data when true
@@ -356,19 +342,18 @@ class WTAMonitor():
 #       voxel = voxel for network
 #       wta_monitor = network monitor
 #       wta_params = network parameters
-def write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
-                 output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp,
-                 record_inputs, stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor,
-                 wta_params, muscimol_amount, injection_site, p_dcs, i_dcs):
+def write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
+                 record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
+                 stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params,
+                 muscimol_amount, injection_site, p_dcs, i_dcs):
 
     f = h5py.File(output_file, 'w')
 
     # Write basic parameters
-    f.attrs['single_inh_pop']=single_inh_pop
     f.attrs['num_groups'] = num_groups
     f.attrs['input_freq'] = input_freq
     f.attrs['trial_duration'] = trial_duration
-    f.attrs['background_rate'] = background_rate
+    f.attrs['background_freq'] = background_freq
     f.attrs['stim_start_time'] = stim_start_time
     f.attrs['stim_end_time'] = stim_end_time
     f.attrs['network_group_size'] = network_group_size
