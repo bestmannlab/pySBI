@@ -1,3 +1,4 @@
+from numpy.matlib import randn, rand
 from time import time
 from brian.clock import reinit_default_clock
 from brian.directcontrol import PoissonGroup
@@ -12,7 +13,6 @@ from brian.tools.parameters import Parameters
 from brian.units import siemens, second, volt
 import argparse
 import numpy as np
-from numpy.matlib import randn
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 
@@ -26,36 +26,37 @@ default_params=Parameters(
     EL = -70 * mV,
     VT = -55 * mV,
     DeltaT = 3 * mV,
+    Vr = -53 * mV,
     # Magnesium concentration
     Mg = 1,
     # Synapse parameters
     E_ampa = 0 * mV,
     E_nmda = 0 * mV,
     E_gaba_a = -70 * mV,
-    E_gaba_b = -95 * mV,
-    tau_ampa = 2.5*ms,
-    tau1_nmda = 10*ms,
+    tau_ampa = 2*ms,
+    tau1_nmda = 2*ms,
     tau2_nmda = 100*ms,
-    tau_gaba_a = 2.5*ms,
-    tau1_gaba_b = 10*ms,
-    tau2_gaba_b =100*ms,
-    w_ampa_min=0.35*nS,
-    w_ampa_max=1.0*nS,
-    w_nmda_min=0.01*nS,
-    #w_nmda_max=0.6*nS,
-    w_nmda_max=0.1*nS,
-    w_gaba_a_min=0.25*nS,
-    w_gaba_a_max=1.2*nS,
-    w_gaba_b_min=0.1*nS,
-    #w_gaba_b_max=1.0*nS,
-    w_gaba_b_max=0.6*nS,
+    tau_gaba_a = 5*ms,
+    #tau1_gaba_b = 10*ms,
+    #tau2_gaba_b =100*ms,
+    pyr_w_ampa_ext=2.1*nS,
+    pyr_w_ampa_rec=0.05*nS,
+    int_w_ampa_ext=1.62*nS,
+    int_w_ampa_rec=0.04*nS,
+    pyr_w_nmda=0.165*nS,
+    int_w_nmda=0.13*nS,
+    pyr_w_gaba_a=1.3*nS,
+    int_w_gaba_a=1.0*nS,
+    #w_gaba_b_min=0.1*nS,
+    #w_gaba_b_max=0.6*nS,
     # Connection probabilities
     p_b_e=0.1,
     p_x_e=0.05,
-    p_e_e=0.05,
-    p_e_i=0.05,
-    p_i_i=0.05,
-    p_i_e=0.03)
+    p_e_e=0.02,
+    p_e_i=0.02,
+    p_i_i=0.02,
+    p_i_e=0.05,
+)
 
 # WTA network class - extends Brian's NeuronGroup
 class WTANetworkGroup(NeuronGroup):
@@ -66,15 +67,12 @@ class WTANetworkGroup(NeuronGroup):
     #       params = network parameters
     #       background_input = background input source
     #       task_inputs = task input sources
-    #       single_inh_pop = single inhibitory population if true
-    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None,
-                 single_inh_pop=False):
+    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None):
         self.N=N
         self.num_groups=num_groups
         self.params=params
         self.background_input=background_input
         self.task_inputs=task_inputs
-        self.single_inh_pop=single_inh_pop
 
         ## Set up equations
 
@@ -104,19 +102,21 @@ class WTANetworkGroup(NeuronGroup):
         eqs += Current('I_gaba_a=(g_gaba_a+g_muscimol)*(E-vm): amp', E=params.E_gaba_a)
 
         # GABA-B conductance
-        eqs += biexp_synapse('g_gaba_b', params.tau1_gaba_b, params.tau2_gaba_b, siemens)
-        eqs += Current('I_gaba_b=g_gaba_b*(E-vm): amp', E=params.E_gaba_b)
+        #eqs += biexp_synapse('g_gaba_b', params.tau1_gaba_b, params.tau2_gaba_b, siemens)
+        #eqs += Current('I_gaba_b=g_gaba_b*(E-vm): amp', E=params.E_gaba_b)
 
         eqs +=InjectedCurrent('I_dcs: amp')
 
         # Total synaptic conductance
-        eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a+g_gaba_b : siemens')
+        #eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a+g_gaba_b : siemens')
+        eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a : siemens')
         eqs += Equations('g_syn_exc=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda : siemens')
         # Total synaptic current
-        eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5+(I_gaba_b**2)**.5 : amp')
+        #eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5+(I_gaba_b**2)**.5 : amp')
+        eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5 : amp')
 
-        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, reset=params.EL, compile=True,
-            freeze=True)
+        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, refractory=1*ms, reset=params.Vr,
+            compile=True, freeze=True)
 
         self.init_subpopulations()
 
@@ -124,44 +124,49 @@ class WTANetworkGroup(NeuronGroup):
 
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
-        self.groups_e=[]
-        self.groups_i=[]
-
         # Main excitatory subpopulation
-        self.group_e=self.subgroup(int(4*self.N*self.num_groups/5))
+        e_size=int(self.N*.8)
+        self.group_e=self.subgroup(e_size)
         # regular spiking params (from Naud et al., 2008)
         self.group_e.C=104*pF
         self.group_e.gL=4.3*nS
         self.group_e.EL=-65*mV
         self.group_e.VT=-52*mV
         self.group_e.DeltaT=0.8*mV
+        #self.group_e.reset=-53*mV
+        #self.group_e._refractory_time=2*ms
 
         # Main inhibitory subpopulation
-        self.group_i=self.subgroup(int(self.N*self.num_groups/5))
-        # fast-spiking interneuron params (from Naud et al., 2008)
+        i_size=int(self.N*.2)
+        self.group_i=self.subgroup(i_size)
+        # continuous non-adapting interneuron params (from Naud et al., 2008)
         self.group_i.C=59*pF
         self.group_i.gL=2.9*nS
         self.group_i.EL=-62*mV
         self.group_i.VT=-42*mV
         self.group_i.DeltaT=3.0*mV
+        #self.group_i.reset=-54*mV
+        #self.group_i._refractory_time=1*ms
 
         # Input-specific sub-subpopulations
+        self.groups_e=[]
         for i in range(self.num_groups):
-            subgroup_e=self.group_e.subgroup(int(4*self.N/5))
+            subgroup_e=self.group_e.subgroup(int(e_size/self.num_groups))
             self.groups_e.append(subgroup_e)
-
-            if not self.single_inh_pop:
-                subgroup_i=self.group_i.subgroup(int(self.N/5))
-                self.groups_i.append(subgroup_i)
 
         # Initialize state variables
         self.vm = self.params.EL+randn(self.N*self.num_groups)*10*mV
-        self.g_ampa_r = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
-        self.g_ampa_b = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
-        self.g_ampa_x = self.params.w_ampa_min+randn(self.N*self.num_groups)*(self.params.w_ampa_max-self.params.w_ampa_min)*.1
-        self.g_nmda = self.params.w_nmda_min+randn(self.N*self.num_groups)*(self.params.w_nmda_max-self.params.w_nmda_min)*.1
-        self.g_gaba_a = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
-        self.g_gaba_b = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
+        self.group_e.g_ampa_r = rand(e_size)*self.params.pyr_w_ampa_rec*.01
+        self.group_e.g_ampa_b = rand(e_size)*self.params.pyr_w_ampa_ext*.01
+        self.group_e.g_ampa_x = rand(e_size)*self.params.pyr_w_ampa_ext*.01
+        self.group_e.g_nmda = rand(e_size)*self.params.pyr_w_nmda*.01
+        self.group_e.g_gaba_a = rand(e_size)*self.params.pyr_w_gaba_a*.01
+        self.group_i.g_ampa_r = rand(i_size)*self.params.int_w_ampa_rec*.01
+        self.group_i.g_ampa_b = rand(i_size)*self.params.int_w_ampa_ext*.01
+        self.group_i.g_ampa_x = rand(i_size)*self.params.int_w_ampa_ext*.01
+        self.group_i.g_nmda = rand(i_size)*self.params.int_w_nmda*.01
+        self.group_i.g_gaba_a = rand(i_size)*self.params.int_w_gaba_a*.01
+#        self.g_gaba_b = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
 
 
     ## Initialize network connectivity
@@ -173,69 +178,46 @@ class WTANetworkGroup(NeuronGroup):
 
             # E population - recurrent connections
             self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_ampa_r',
-                self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_e, (0*ms, 5*ms), allow_self_conn=False))
+                self.params.pyr_w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False))
             self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_nmda',
-                self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_e, (0*ms, 5*ms), allow_self_conn=False))
+                self.params.pyr_w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False))
 
-            if not self.single_inh_pop:
-                # I -> I population - recurrent connections
-                self.connections.append(init_connection(self.groups_i[i], self.groups_i[i], 'g_gaba_a',
-                    self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_i, (0*ms, 5*ms),
-                    allow_self_conn=False))
-                self.connections.append(init_connection(self.groups_i[i], self.groups_i[i], 'g_gaba_b',
-                    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms),
-                    allow_self_conn=False))
+            # E -> I excitatory connections
+            self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
+                self.params.int_w_ampa_rec, self.params.p_e_i, .5*ms))
+            self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_nmda', self.params.int_w_nmda,
+                self.params.p_e_i, .5*ms))
 
-                # E -> I excitatory connections
-                self.connections.append(init_connection(self.groups_e[i], self.groups_i[i], 'g_ampa_r',
-                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_i, (0*ms, 5*ms)))
-                self.connections.append(init_connection(self.groups_e[i], self.groups_i[i], 'g_nmda',
-                    self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_i, (0*ms, 5*ms)))
+            # I -> E - inhibitory connections
+            self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
+                self.params.pyr_w_gaba_a, self.params.p_i_e, .5*ms))
+            #self.connections.append(init_rand_weight_connection(self.group_i, self.groups_e[i], 'g_gaba_b',
+            #    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
 
-                # I -> E - inhibitory connections
-                for j in range(self.num_groups):
-                    if not i==j:
-                        self.connections.append(init_connection(self.groups_i[i], self.groups_e[j], 'g_gaba_a',
-                            self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_e, (0*ms, 5*ms)))
-                        self.connections.append(init_connection(self.groups_i[i], self.groups_e[j], 'g_gaba_b',
-                            self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
-
-            else:
-                # E -> I excitatory connections
-                self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
-                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_e_i, (0*ms, 5*ms)))
-                self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_nmda',
-                    self.params.w_nmda_min, self.params.w_nmda_max, self.params.p_e_i, (0*ms, 5*ms)))
-
-                # I -> E - inhibitory connections
-                self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
-                    self.params.w_gaba_a_min, self.params.w_gaba_a_max, self.params.p_i_e, (0*ms, 5*ms)))
-                self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_b',
-                    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
-
-        if self.single_inh_pop:
-            # I population - recurrent connections
-            self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.w_gaba_a_min,
-                self.params.w_gaba_a_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
-            self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_b', self.params.w_gaba_b_min,
-                self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
+        # I population - recurrent connections
+        self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.int_w_gaba_a,
+            self.params.p_i_i, .5*ms, allow_self_conn=False))
+        #self.connections.append(init_rand_weight_connection(self.group_i, self.group_i, 'g_gaba_b', self.params.w_gaba_b_min,
+        #    self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
 
         if self.background_input is not None:
-            # Background -> E+I population connectinos
-            self.connections.append(init_connection(self.background_input, self, 'g_ampa_b', self.params.w_ampa_min,
-                self.params.w_ampa_max, self.params.p_b_e, (0*ms, 5*ms)))
+            # Background -> E+I population connections
+            self.connections.append(init_connection(self.background_input, self.group_e, 'g_ampa_b',
+                self.params.pyr_w_ampa_ext, self.params.p_b_e, .5*ms))
+            self.connections.append(init_connection(self.background_input, self.group_i, 'g_ampa_b',
+                self.params.int_w_ampa_ext, self.params.p_b_e, .5*ms))
 
         if self.task_inputs is not None:
             # Task input -> E population connections
             for i in range(self.num_groups):
                 self.connections.append(init_connection(self.task_inputs[i], self.groups_e[i], 'g_ampa_x',
-                    self.params.w_ampa_min, self.params.w_ampa_max, self.params.p_x_e, (0*ms, 5*ms)))
+                    self.params.pyr_w_ampa_ext, self.params.p_x_e, .5*ms))
 
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None, save_summary_only=False,
-            record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
-            record_inputs=False, plot_output=False, single_inh_pop=False, muscimol_amount=0*nS, injection_site=0,
+def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=3, output_file=None,
+            save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
+            record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
             p_dcs=0*nA, i_dcs=0*nA):
     """
     Run WTA network
@@ -243,7 +225,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
        num_groups = number of input groups
        input_freq = mean firing rate of each input group
        trial_duration = how long to simulate
-       ouput_file = ouput file to write to
+       output_file = output file to write to
+       save_summary_only = whether or not to save all data or just summary data to file
        record_lfp = record LFP data if true
        record_voxel = record voxel data if true
        record_neuron_state = record neuron state data if true
@@ -251,7 +234,6 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
        record_firing_rate = record network firing rates if true
        record_inputs = record input firing rates if true
        plot_output = plot outputs if true
-       single_inh_pop = single inhibitory population if true
        muscimol_amount = amount of muscimol to inject
        injection_site = where to inject muscimol
        p_dcs = DCS to pyramidal cells
@@ -261,27 +243,26 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     start_time = time()
 
     # Init simulation parameters
-    background_rate=20*Hz
     stim_start_time=1*second
     stim_end_time=trial_duration-1*second
 
     # Total size of the network (excitatory and inhibitory cells)
     network_group_size=2000
-    background_input_size=1000
+    background_input_size=2000
     task_input_size=500
 
     # Create network inputs
-    background_input=PoissonGroup(background_input_size, rates=background_rate)
+    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz)
     task_inputs=[]
     def make_rate_function(rate):
-        return lambda t: ((stim_start_time<t<stim_end_time and (background_rate+rate)) or background_rate)
+        return lambda t: ((stim_start_time<t<stim_end_time and (1*Hz+rate)) or 1*Hz)
     for i in range(num_groups):
         rate=input_freq[i]*Hz
         task_inputs.append(PoissonGroup(task_input_size, rates=make_rate_function(rate)))
 
     # Create WTA network
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
-        task_inputs=task_inputs, single_inh_pop=single_inh_pop)
+        task_inputs=task_inputs)
 
     #wta_network.group_e.EL+=p_dcs
     #wta_network.group_i.EL+=i_dcs
@@ -305,8 +286,6 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     def inject_muscimol():
         if muscimol_amount>0:
             wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
-        if not single_inh_pop:
-            wta_network.groups_i[injection_site].g_muscimol=muscimol_amount
 
     # Create Brian network and reset clock
     net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
@@ -331,10 +310,10 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, output_file=None
     # Write output to file
     if output_file is not None:
         start_time = time()
-        write_output(background_input_size, background_rate, input_freq, network_group_size, num_groups, single_inh_pop,
-            output_file, record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
-            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params, muscimol_amount,
-            injection_site, p_dcs, i_dcs)
+        write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
+            record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
+            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params,
+            muscimol_amount, injection_site, p_dcs, i_dcs)
         print 'Wrote output to %s' % output_file
         print "Write output time: %.2fs" % (time() - start_time)
 
@@ -360,7 +339,6 @@ if __name__=='__main__':
     ap.add_argument('--p_i_e', type=float, default=0.01, help='Connection prob from inhibitory neurons to excitatory ' \
                                                               'neurons in other groups')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
-    ap.add_argument('--single_inh_pop', type=int, default=0, help='Single inhibitory population')
     ap.add_argument('--muscimol_amount', type=float, default=0.0, help='Amount of muscimol to inject')
     ap.add_argument('--injection_site', type=int, default=0, help='Site of muscimol injection (group index)')
     ap.add_argument('--p_dcs', type=float, default=0.0, help='Pyramidal cell DCS')
@@ -393,6 +371,5 @@ if __name__=='__main__':
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
-        single_inh_pop=argvals.single_inh_pop, muscimol_amount=argvals.muscimol_amount*siemens,
-        injection_site=argvals.injection_site, p_dcs=argvals.p_dcs*volt, i_dcs=argvals.i_dcs*volt,
-        save_summary_only=argvals.save_summary_only)
+        muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
+        p_dcs=argvals.p_dcs*volt, i_dcs=argvals.i_dcs*volt, save_summary_only=argvals.save_summary_only)
