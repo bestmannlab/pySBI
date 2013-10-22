@@ -35,13 +35,10 @@ class FileInfo():
         self.file_name=file_name
         f = h5py.File(file_name)
 
-        self.single_inh_pop=0
-        if 'single_inh_pop' in f.attrs:
-            self.single_inh_pop=int(f.attrs['single_inh_pop'])
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
-        self.background_rate=float(f.attrs['background_rate'])*second
+        self.background_freq=float(f.attrs['background_freq'])*second
         self.stim_start_time=float(f.attrs['stim_start_time'])*second
         self.stim_end_time=float(f.attrs['stim_end_time'])*second
         self.network_group_size=int(f.attrs['network_group_size'])
@@ -167,7 +164,7 @@ class FileInfo():
                                    'g_ampa_b': np.array(f_state['g_ampa_b']),
                                    'g_nmda':   np.array(f_state['g_nmda']),
                                    'g_gaba_a': np.array(f_state['g_gaba_a']),
-                                   #'g_gaba_b': np.array(f_state['g_gaba_b']),
+                                   'g_gaba_b': np.array(f_state['g_gaba_b']),
                                    'vm':       np.array(f_state['vm']),
                                    'record_idx': np.array(f_state['record_idx'])}
 
@@ -208,16 +205,34 @@ class FileInfo():
                     self.i_spike_neurons.append(np.array(f_spikes['i.%d.spike_neurons' % idx]))
                     self.i_spike_times.append(np.array(f_spikes['i.%d.spike_times' % idx]))
 
-        self.summary_data=None
+        self.summary_data=Struct()
         if 'summary' in f:
             f_summary=f['summary']
-            self.summary_data=Struct()
             self.summary_data.e_mean=np.array(f_summary['e_mean'])
             self.summary_data.e_max=np.array(f_summary['e_max'])
             self.summary_data.i_mean=np.array(f_summary['i_mean'])
             self.summary_data.i_max=np.array(f_summary['i_max'])
             self.summary_data.bold_max=np.array(f_summary['bold_max'])
             self.summary_data.bold_exc_max=np.array(f_summary['bold_exc_max'])
+        else:
+            e_mean_final=[]
+            e_max=[]
+            for i in range(self.e_firing_rates.shape[0]):
+                e_rate=self.e_firing_rates[i,:]
+                e_mean_final.append(np.mean(e_rate[6500:7500]))
+                e_max.append(np.max(e_rate))
+            i_mean_final=[]
+            i_max=[]
+            for i in range(self.i_firing_rates.shape[0]):
+                i_rate=self.i_firing_rates[i,:]
+                i_mean_final.append(np.mean(i_rate[6500:7500]))
+                i_max.append(np.max(i_rate))
+            self.summary_data.e_mean=np.array(e_mean_final)
+            self.summary_data.e_max=np.array(e_max)
+            self.summary_data.i_mean=np.array(i_mean_final)
+            self.summary_data.i_max=np.array(i_max)
+            self.summary_data.bold_max=np.max(self.voxel_rec['y'])
+            self.summary_data.bold_exc_max=np.max(self.voxel_exc_rec['y'])
 
         f.close()
 
@@ -731,6 +746,7 @@ class TrialSummary:
         self.bold_max=data.summary_data.bold_max
         self.bold_exc_max=data.summary_data.bold_exc_max
         self.e_mean=data.summary_data.e_mean
+        self.rt=data.rt
 
     def get_f_score(self, idx, alpha=1.0):
         """
@@ -799,37 +815,64 @@ class TrialSeries:
         """
         Compute the multi-option AUC for this series
         """
-        response_option_aucs=[]
+        self.response_option_aucs=[]
         for i in range(n_options):
             auc=Struct()
             auc.option_idx=i
             auc.l = []
             auc.p = 0
             auc.n = 0
-            response_option_aucs.append(auc)
+            self.response_option_aucs.append(auc)
 
         # Get F-scores for each class for each trial
         for trial_summary in self.trial_summaries:
             if trial_summary.contrast>0.0:
                 for i in range(20):
-                    response_option_aucs[trial_summary.max_in_idx].p+=1.0
-                    response_option_aucs[1-trial_summary.max_in_idx].n+=1.0
+                    self.response_option_aucs[trial_summary.max_in_idx].p+=1.0
+                    self.response_option_aucs[1-trial_summary.max_in_idx].n+=1.0
 
-                    response_option_aucs[0].l.append((1-trial_summary.max_in_idx, trial_summary.get_f_score(0)))
-                    response_option_aucs[1].l.append((trial_summary.max_in_idx, trial_summary.get_f_score(1)))
+                    self.response_option_aucs[0].l.append((1-trial_summary.max_in_idx, trial_summary.get_f_score(0)))
+                    self.response_option_aucs[1].l.append((trial_summary.max_in_idx, trial_summary.get_f_score(1)))
 
         # Compute AUC of each response option
-        for auc in response_option_aucs:
+        for auc in self.response_option_aucs:
             auc.l_sorted = sorted(auc.l, key=lambda example: example[1], reverse=True)
             auc.auc=compute_auc(auc.l_sorted,auc.n,auc.p)
 
         # Compute weighted total AUC
         self.total_auc=0.0
         sub_total_auc=0
-        for auc in response_option_aucs:
+        for auc in self.response_option_aucs:
             sub_total_auc+=auc.p
-        for auc in response_option_aucs:
+        for auc in self.response_option_aucs:
             self.total_auc+=auc.auc*(auc.p/sub_total_auc)
+
+    def plot_multiclass_roc(self):
+        plt.figure()
+
+        plt.plot([0,1],[0,1],'--')
+        for idx,auc in enumerate(self.response_option_aucs):
+            fp=0
+            tp=0
+            auc.roc=[]
+            f_prev=float('-inf')
+            for (example_i,f_i) in auc.l_sorted:
+                if not f_i==f_prev:
+                    auc.roc.append([float(fp)/float(auc.n),float(tp)/float(auc.p)])
+                    f_prev=f_i
+                if example_i>0:
+                    tp+=1
+                else:
+                    fp+=1
+            auc.roc.append([float(fp)/float(auc.n),float(tp)/float(auc.p)])
+            auc.roc=np.array(auc.roc)
+
+            plt.plot(auc.roc[:,0],auc.roc[:,1],'x-',label='option %d' % idx)
+
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.legend()
+        plt.show()
 
     def compute_bold_contrast_regression(self):
         """
@@ -849,6 +892,26 @@ class TrialSeries:
 
         self.max_bold_regression=MaxBOLDContrastRegression(trials_max_bold, trials_max_bold_contrast)
         self.max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold, trials_max_exc_bold_contrast)
+
+    def plot_rt(self):
+        contrast_rt={}
+        for trial_summary in self.trial_summaries:
+            if not trial_summary.rt is None:
+                if not trial_summary.contrast in contrast_rt:
+                    contrast_rt[trial_summary.contrast]=[]
+                contrast_rt[trial_summary.contrast].append(trial_summary.rt)
+
+        contrast=[]
+        rt=[]
+        for c,rts in contrast_rt.iteritems():
+            contrast.append(c)
+            rt.append(np.mean(np.array(rts)))
+
+        plt.figure()
+        plt.plot(contrast,rt,'x')
+        plt.xlabel('Contrast')
+        plt.ylabel('RT')
+        plt.show()
 
     def sort_by_correct(self):
         """
@@ -960,7 +1023,7 @@ class TrialSeries:
             trials_max_exc_bold_intact_incorrect_contrast)
 
 
-def plot_auc_one_param(base_dir, param_range, file_prefix, num_trials):
+def plot_auc_one_param_lesioned(base_dir, param_range, file_prefix, num_trials):
     p_auc=[]
     lesioned_p_auc=[]
     p_bc=[]
