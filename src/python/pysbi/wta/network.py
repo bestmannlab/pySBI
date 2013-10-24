@@ -10,7 +10,7 @@ from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
 from brian.stdunits import pF, nS, mV, ms, Hz, nA
 from brian.tools.parameters import Parameters
-from brian.units import siemens, second, volt
+from brian.units import siemens, second, volt, amp
 import argparse
 import numpy as np
 from pysbi.util.utils import init_connection
@@ -374,4 +374,4 @@ if __name__=='__main__':
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
         muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
-        p_dcs=argvals.p_dcs*volt, i_dcs=argvals.i_dcs*volt, save_summary_only=argvals.save_summary_only)
+        p_dcs=argvals.p_dcs*amp, i_dcs=argvals.i_dcs*amp, save_summary_only=argvals.save_summary_only)

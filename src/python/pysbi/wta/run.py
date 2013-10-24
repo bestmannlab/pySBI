@@ -1,8 +1,8 @@
 import os
 import random
-from brian.stdunits import nS
+from brian.stdunits import nS, pA
 import numpy as np
-from brian.units import second, siemens, volt
+from brian.units import second, siemens, volt, amp
 from ezrcluster.launcher import Launcher
 from pysbi.wta.analysis import FileInfo, run_bayesian_analysis
 from pysbi.config import SRC_DIR
@@ -10,10 +10,10 @@ from pysbi.util.random_distributions import make_distribution_curve
 from pysbi.reports.summary import SummaryData
 from pysbi.reports.utils import get_tested_param_combos
 
-def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast,trial,
-                 single_inh_pop=False, muscimol_amount=0*nS, injection_site=0, p_dcs=0*volt, i_dcs=0*volt,
-                 record_lfp=True, record_voxel=False, record_neuron_state=False, record_spikes=True,
-                 record_firing_rate=True, save_summary_only=True):
+def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e,
+                 contrast,trial, muscimol_amount=0*nS, injection_site=0, p_dcs=0*amp, i_dcs=0*amp, record_lfp=True,
+                 record_voxel=False, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
+                 save_summary_only=True):
     cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta/network.py']
     e_desc=''
     if muscimol_amount>0:
@@ -28,6 +28,8 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
     cmds.append('%d' % num_groups)
     cmds.append('--inputs')
     cmds.append(','.join([str(input) for input in inputs]))
+    cmds.append('--background')
+    cmds.append('%0.3f' % background_freq)
     cmds.append('--trial_duration')
     cmds.append('%0.3f' % trial_duration)
     cmds.append('--p_b_e')
@@ -44,11 +46,6 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
     cmds.append('%0.3f' % p_i_e)
     cmds.append('--output_file')
     cmds.append(output_file)
-    cmds.append('--single_inh_pop')
-    if single_inh_pop:
-        cmds.append('1')
-    else:
-        cmds.append('0')
     if muscimol_amount>0:
         cmds.append('--muscimol_amount')
         cmds.append(str(muscimol_amount/siemens))
@@ -56,10 +53,10 @@ def get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
         cmds.append('%d' % injection_site)
     if p_dcs>0 or p_dcs<0:
         cmds.append('--p_dcs')
-        cmds.append(str(p_dcs/volt))
+        cmds.append(str(p_dcs/amp))
     if i_dcs>0 or i_dcs<0:
         cmds.append('--i_dcs')
-        cmds.append(str(i_dcs/volt))
+        cmds.append(str(i_dcs/amp))
     cmds.append('--record_lfp')
     if record_lfp:
         cmds.append('1')
@@ -210,8 +207,8 @@ def post_one_param_wta_lesion_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, sin
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 
-def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, num_trials, single_inh_pop=True,
-                      start_nodes=True, p_dcs=0*volt, i_dcs=0*volt):
+def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, num_trials, start_nodes=True,
+                      p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=1*second
     input_sum=40.0
@@ -227,14 +224,14 @@ def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, num_trial
         inputs[1]=input_sum-inputs[0]
         for t in range(num_trials):
             np.random.shuffle(inputs)
-            cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
-                p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop, record_lfp=True, record_voxel=True,
+            cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e,
+                p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast, t, record_lfp=True, record_voxel=True,
                 record_neuron_state=False, record_firing_rate=True, record_spikes=True, save_summary_only=False)
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
         for t in range(num_trials):
             np.random.shuffle(inputs)
-            cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i,
-                p_i_i, p_i_e, contrast, t, single_inh_pop=single_inh_pop, p_dcs=p_dcs, i_dcs=i_dcs, record_lfp=True,
+            cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e,
+                p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, contrast, t, p_dcs=p_dcs, i_dcs=i_dcs, record_lfp=True,
                 record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True,
                 save_summary_only=False)
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
