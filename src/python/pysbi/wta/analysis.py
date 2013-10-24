@@ -47,9 +47,9 @@ class FileInfo():
         self.muscimol_amount=float(f.attrs['muscimol_amount'])*siemens
         self.injection_site=int(f.attrs['injection_site'])
         if 'p_dcs' in f.attrs:
-            self.p_dcs=float(f.attrs['p_dcs'])*volt
+            self.p_dcs=float(f.attrs['p_dcs'])*amp
         if 'i_dcs' in f.attrs:
-            self.i_dcs=float(f.attrs['i_dcs'])*volt
+            self.i_dcs=float(f.attrs['i_dcs'])*amp
 
         self.wta_params=network.default_params()
         self.wta_params.C=float(f.attrs['C'])*farad
