@@ -21,7 +21,7 @@ def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x
     else:
         e_desc+='control'
     file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.p_dcs.%0.4f.i_dcs.%0.4f.%s.contrast.%0.4f.trial.%d' %\
-              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, p_dcs, i_dcs, e_desc, contrast, trial)
+              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, p_dcs/pA, i_dcs/pA, e_desc, contrast, trial)
     log_file_template='%s.log' % file_desc
     output_file='/tmp/wta-output/%s.h5' % file_desc
     cmds.append('--num_groups')
@@ -211,7 +211,7 @@ def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, backgroun
                       p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=1*second
-    input_sum=40.0
+    input_sum=20.0
     launcher=Launcher(nodes)
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
