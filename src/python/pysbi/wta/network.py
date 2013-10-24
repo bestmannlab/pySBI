@@ -50,12 +50,12 @@ default_params=Parameters(
     #w_gaba_b_min=0.1*nS,
     #w_gaba_b_max=0.6*nS,
     # Connection probabilities
-    p_b_e=0.1,
+    p_b_e=0.05,
     p_x_e=0.05,
-    p_e_e=0.02,
-    p_e_i=0.02,
-    p_i_i=0.02,
-    p_i_e=0.05,
+    p_e_e=0.025,
+    p_e_i=0.03,
+    p_i_i=0.01,
+    p_i_e=0.06,
 )
 
 # WTA network class - extends Brian's NeuronGroup
@@ -215,7 +215,7 @@ class WTANetworkGroup(NeuronGroup):
 
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=3, output_file=None,
+def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=10, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
             record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
             p_dcs=0*nA, i_dcs=0*nA):
@@ -326,7 +326,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 if __name__=='__main__':
     ap = argparse.ArgumentParser(description='Run the WTA model')
     ap.add_argument('--num_groups', type=int, default=3, help='Number of input groups')
-    ap.add_argument('--inputs', type=str, default='0', help='Input pattern (Hz) - comma-delimited list')
+    ap.add_argument('--inputs', type=str, default='10,10', help='Input pattern (Hz) - comma-delimited list')
+    ap.add_argument('--background', type=float, default=4.0, help='Background firing rate (Hz)')
     ap.add_argument('--trial_duration', type=float, default=2.0, help='Trial duration (seconds)')
     ap.add_argument('--p_b_e', type=float, default=0.01, help='Connection prob from background to excitatory neurons')
     ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
@@ -357,7 +358,7 @@ if __name__=='__main__':
     input_freq=np.zeros(argvals.num_groups)
     inputs=argvals.inputs.split(',')
     for i in range(argvals.num_groups):
-        input_freq[i]=float(inputs[i])*Hz
+        input_freq[i]=float(inputs[i])
 
     wta_params=default_params()
     wta_params.p_b_e=argvals.p_b_e
@@ -367,7 +368,8 @@ if __name__=='__main__':
     wta_params.p_i_i=argvals.p_i_i
     wta_params.p_i_e=argvals.p_i_e
 
-    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second, output_file=argvals.output_file,
+    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second,
+        background_freq=argvals.background, output_file=argvals.output_file,
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
