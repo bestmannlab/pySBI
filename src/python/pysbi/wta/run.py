@@ -53,10 +53,10 @@ def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x
         cmds.append('%d' % injection_site)
     if p_dcs>0 or p_dcs<0:
         cmds.append('--p_dcs')
-        cmds.append(str(p_dcs/amp))
+        cmds.append(str(p_dcs/pA))
     if i_dcs>0 or i_dcs<0:
         cmds.append('--i_dcs')
-        cmds.append(str(i_dcs/amp))
+        cmds.append(str(i_dcs/pA))
     cmds.append('--record_lfp')
     if record_lfp:
         cmds.append('1')

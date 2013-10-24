@@ -8,7 +8,7 @@ from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current, InjectedCurrent
 from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
-from brian.stdunits import pF, nS, mV, ms, Hz, nA
+from brian.stdunits import pF, nS, mV, ms, Hz, nA, pA
 from brian.tools.parameters import Parameters
 from brian.units import siemens, second, volt, amp
 import argparse
@@ -218,7 +218,7 @@ class WTANetworkGroup(NeuronGroup):
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=10, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
             record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
-            p_dcs=0*nA, i_dcs=0*nA):
+            p_dcs=0*pA, i_dcs=0*pA):
     """
     Run WTA network
        wta_params = network parameters
@@ -374,4 +374,4 @@ if __name__=='__main__':
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
         muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
-        p_dcs=argvals.p_dcs*amp, i_dcs=argvals.i_dcs*amp, save_summary_only=argvals.save_summary_only)
+        p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA, save_summary_only=argvals.save_summary_only)
