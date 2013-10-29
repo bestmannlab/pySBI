@@ -1,16 +1,20 @@
 import os
-from brian.stdunits import Hz, ms
+from scipy.optimize import curve_fit
+import subprocess
+from brian.stdunits import Hz, ms, nA, mA
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
 import h5py
 import math
+from jinja2 import Environment, FileSystemLoader
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
 from scikits.learn.linear_model import LinearRegression
 from pysbi import wta, voxel
-from pysbi.config import DATA_DIR
-from pysbi.util.utils import Struct
+from pysbi.config import DATA_DIR, TEMPLATE_DIR
+from pysbi.reports.utils import make_report_dirs
+from pysbi.util.utils import Struct, save_to_png, plot_raster
 from pysbi.wta import network
 from pysbi.wta.network import run_wta
 
@@ -38,7 +42,7 @@ class FileInfo():
         self.num_groups=int(f.attrs['num_groups'])
         self.input_freq=np.array(f.attrs['input_freq'])
         self.trial_duration=float(f.attrs['trial_duration'])*second
-        self.background_freq=float(f.attrs['background_freq'])*second
+        self.background_freq=float(f.attrs['background_freq'])
         self.stim_start_time=float(f.attrs['stim_start_time'])*second
         self.stim_end_time=float(f.attrs['stim_end_time'])*second
         self.network_group_size=int(f.attrs['network_group_size'])
@@ -68,16 +72,24 @@ class FileInfo():
         self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
         self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
         self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
-        self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
-        self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
-        self.wta_params.w_ampa_min=float(f.attrs['w_ampa_min'])*siemens
-        self.wta_params.w_ampa_max=float(f.attrs['w_ampa_max'])*siemens
-        self.wta_params.w_nmda_min=float(f.attrs['w_nmda_min'])*siemens
-        self.wta_params.w_nmda_max=float(f.attrs['w_nmda_max'])*siemens
-        self.wta_params.w_gaba_a_min=float(f.attrs['w_gaba_a_min'])*siemens
-        self.wta_params.w_gaba_a_max=float(f.attrs['w_gaba_a_max'])*siemens
-        self.wta_params.w_gaba_b_min=float(f.attrs['w_gaba_b_min'])*siemens
-        self.wta_params.w_gaba_b_max=float(f.attrs['w_gaba_b_max'])*siemens
+        #self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
+        #self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
+        #self.wta_params.w_ampa_min=float(f.attrs['w_ampa_min'])*siemens
+        #self.wta_params.w_ampa_max=float(f.attrs['w_ampa_max'])*siemens
+        #self.wta_params.w_nmda_min=float(f.attrs['w_nmda_min'])*siemens
+        #self.wta_params.w_nmda_max=float(f.attrs['w_nmda_max'])*siemens
+        #self.wta_params.w_gaba_a_min=float(f.attrs['w_gaba_a_min'])*siemens
+        #self.wta_params.w_gaba_a_max=float(f.attrs['w_gaba_a_max'])*siemens
+        #self.wta_params.w_gaba_b_min=float(f.attrs['w_gaba_b_min'])*siemens
+        #self.wta_params.w_gaba_b_max=float(f.attrs['w_gaba_b_max'])*siemens
+        self.wta_params.pyr_w_ampa_ext=float(f.attrs['pyr_w_ampa_ext'])*siemens
+        self.wta_params.pyr_w_ampa_rec=float(f.attrs['pyr_w_ampa_rec'])*siemens
+        self.wta_params.int_w_ampa_ext=float(f.attrs['int_w_ampa_ext'])*siemens
+        self.wta_params.int_w_ampa_rec=float(f.attrs['int_w_ampa_rec'])*siemens
+        self.wta_params.pyr_w_nmda=float(f.attrs['pyr_w_nmda'])*siemens
+        self.wta_params.int_w_nmda=float(f.attrs['int_w_nmda'])*siemens
+        self.wta_params.pyr_w_gaba_a=float(f.attrs['pyr_w_gaba_a'])*siemens
+        self.wta_params.int_w_gaba_a=float(f.attrs['int_w_gaba_a'])*siemens
         self.wta_params.p_b_e=float(f.attrs['p_b_e'])
         self.wta_params.p_x_e=float(f.attrs['p_x_e'])
         self.wta_params.p_e_e=float(f.attrs['p_e_e'])
@@ -164,7 +176,7 @@ class FileInfo():
                                    'g_ampa_b': np.array(f_state['g_ampa_b']),
                                    'g_nmda':   np.array(f_state['g_nmda']),
                                    'g_gaba_a': np.array(f_state['g_gaba_a']),
-                                   'g_gaba_b': np.array(f_state['g_gaba_b']),
+                                   #'g_gaba_b': np.array(f_state['g_gaba_b']),
                                    'vm':       np.array(f_state['vm']),
                                    'record_idx': np.array(f_state['record_idx'])}
 
@@ -175,7 +187,7 @@ class FileInfo():
             f_rates=f['firing_rates']
             self.e_firing_rates=np.array(f_rates['e_rates'])
             self.i_firing_rates=np.array(f_rates['i_rates'])
-            self.rt=get_response_time(self.e_firing_rates, self.stim_start_time)
+            self.rt=get_response_time(self.e_firing_rates, self.stim_start_time, self.stim_end_time)
 
         self.background_rate=None
         if 'background_rate' in f:
@@ -215,17 +227,19 @@ class FileInfo():
             self.summary_data.bold_max=np.array(f_summary['bold_max'])
             self.summary_data.bold_exc_max=np.array(f_summary['bold_exc_max'])
         else:
+            end_idx=self.stim_end_time/ms*10
+            start_idx=end_idx-1000
             e_mean_final=[]
             e_max=[]
             for i in range(self.e_firing_rates.shape[0]):
                 e_rate=self.e_firing_rates[i,:]
-                e_mean_final.append(np.mean(e_rate[6500:7500]))
+                e_mean_final.append(np.mean(e_rate[start_idx:end_idx]))
                 e_max.append(np.max(e_rate))
             i_mean_final=[]
             i_max=[]
             for i in range(self.i_firing_rates.shape[0]):
                 i_rate=self.i_firing_rates[i,:]
-                i_mean_final.append(np.mean(i_rate[6500:7500]))
+                i_mean_final.append(np.mean(i_rate[start_idx:end_idx]))
                 i_max.append(np.max(i_rate))
             self.summary_data.e_mean=np.array(e_mean_final)
             self.summary_data.e_max=np.array(e_max)
@@ -536,24 +550,24 @@ def get_lfp_signal(wta_data, plot=False):
         plt.show()
     return lfp
 
-def get_response_time(e_firing_rates, stim_start_time):
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=40):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]
-    times=np.array(range(len(rate_1)))*.1
+    times=np.array(range(len(rate_1)))*.0001
     rt=None
     winner=None
     for idx,time in enumerate(times):
         time=time*second
-        if time>stim_start_time:
+        if stim_start_time < time < stim_end_time:
             if rt is None:
-                if rate_1[idx]>=2*rate_2[idx]:
+                if rate_1[idx]>=threshold and rate_1[idx]>=2*rate_2[idx]:
                     winner=1
                     rt=time-stim_start_time
-                if rate_2[idx]>=2*rate_1[idx]:
+                if rate_2[idx]>=threshold and rate_2[idx]>=2*rate_1[idx]:
                     winner=2
                     rt=time-stim_start_time
             else:
-                if (winner==1 and rate_1[idx]<2*rate_2[idx]) or (winner==2 and rate_2[idx]<2*rate_1[idx]):
+                if (winner==1 and rate_1[idx]<=1.5*rate_2[idx]) or (winner==2 and rate_2[idx]<=1.5*rate_1[idx]):
                     winner=None
                     rt=None
     return rt
@@ -566,7 +580,9 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
     for contrast in contrast_range:
         for trial in range(num_trials):
             data_path = '%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial)
+            print(data_path)
             data = FileInfo(data_path)
+            stim_end_idx=data.stim_end_time/ms*10
             example = 0
             if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
                 example = 1
@@ -576,7 +592,8 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
                 for j in range(num_extra_trials):
                     n += 1
             else:
-                if np.max(data.e_firing_rates[option_idx, 6500:7500])>np.max(data.e_firing_rates[1 - option_idx, 6500:7500]):
+                if np.max(data.e_firing_rates[option_idx, stim_end_idx-1000:stim_end_idx])>\
+                   np.max(data.e_firing_rates[1 - option_idx, stim_end_idx-1000:stim_end_idx]):
                     example=1
                     for j in range(num_extra_trials):
                         p += 1
@@ -585,10 +602,10 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
                         n += 1
 
             # Get mean rate of pop 1 for last 100ms
-            pop_mean = np.mean(data.e_firing_rates[option_idx, 6500:7500])
-            other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, 6500:7500])
-            max_rate=max([np.max(data.e_firing_rates[option_idx, 6500:7500]),
-                          np.max(data.e_firing_rates[1 - option_idx, 6500:7500])])
+            pop_mean = np.mean(data.e_firing_rates[option_idx, stim_end_idx-1000:stim_end_idx])
+            other_pop_mean = np.mean(data.e_firing_rates[1 - option_idx, stim_end_idx-1000:stim_end_idx])
+            max_rate=max([np.max(data.e_firing_rates[option_idx, stim_end_idx-1000:stim_end_idx]),
+                          np.max(data.e_firing_rates[1 - option_idx, stim_end_idx-1000:stim_end_idx])])
             pop_mean+=.25*max_rate*np.random.randn()
             other_pop_mean+=.25*max_rate*np.random.randn()
             for j in range(num_extra_trials):
@@ -727,10 +744,9 @@ class TrialSummary:
         trial_idx = trial index
         data = full data obejct
         """
+        self.data=data
         self.contrast=contrast
         self.trial_idx=trial_idx
-        self.injection_site=data.injection_site
-        self.muscimol_amount=data.muscimol_amount
         # Index of max responding population
         self.decision_idx=0
         if data.summary_data.e_mean[1]>data.summary_data.e_mean[0]:
@@ -741,20 +757,18 @@ class TrialSummary:
             self.max_in_idx=1
         # Whether or not selection is correct
         self.correct=False
-        if data.input_freq[1]==data.input_freq[0] or self.decision_idx==self.max_in_idx:
+        if data.rt is not None and (data.input_freq[1]==data.input_freq[0] or self.decision_idx==self.max_in_idx):
             self.correct=True
-        self.bold_max=data.summary_data.bold_max
-        self.bold_exc_max=data.summary_data.bold_exc_max
-        self.e_mean=data.summary_data.e_mean
-        self.rt=data.rt
+        self.max_rate=np.max(data.summary_data.e_max)
 
-    def get_f_score(self, idx, alpha=1.0):
+    def get_f_score(self, idx, alpha=2.0):
         """
         Get F-score for this trial
         """
-        if np.sum(self.e_mean):
-            e_mean_rand=self.e_mean+alpha*np.random.randn(len(self.e_mean))*self.e_mean
+        if np.sum(self.data.summary_data.e_mean):
+            e_mean_rand=self.data.summary_data.e_mean+alpha*np.random.randn(len(self.data.summary_data.e_mean))*self.data.summary_data.e_mean
             return float(e_mean_rand[idx])/float(np.sum(e_mean_rand))
+            #return float(self.data.summary_data.e_mean[idx])/float(np.sum(self.data.summary_data.e_mean))
         return 0.0
 
 
@@ -771,12 +785,16 @@ class MaxBOLDContrastRegression:
             clf.fit(self.trials_max_bold_contrast, self.trials_max_bold)
             self.bold_contrast_a = clf.coef_[0]
             self.bold_contrast_b = clf.intercept_
+            self.bold_contrast_r_sqr=clf.score(self.trials_max_bold_contrast, self.trials_max_bold)
 
     def plot(self, x_max, x_min, dot_style, line_style, label_str):
         plt.plot(self.trials_max_bold_contrast, self.trials_max_bold, dot_style)
         plt.plot([x_min, x_max], [self.bold_contrast_a * x_min + self.bold_contrast_b,
                                   self.bold_contrast_a * x_max + self.bold_contrast_b], line_style, label=label_str)
 
+
+def weibull(x, alpha, beta):
+    return 1.0-0.5*np.exp(-(x/alpha)**beta)
 
 class TrialSeries:
     """
@@ -801,9 +819,7 @@ class TrialSeries:
             for trial_idx in range(num_trials):
 
                 file_name=os.path.join(dir,'%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial_idx))
-                data=FileInfo(file_name)
-
-                trial_summary=TrialSummary(contrast, trial_idx, data)
+                trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name))
 
                 self.trial_summaries.append(trial_summary)
 
@@ -847,10 +863,9 @@ class TrialSeries:
         for auc in self.response_option_aucs:
             self.total_auc+=auc.auc*(auc.p/sub_total_auc)
 
-    def plot_multiclass_roc(self):
-        plt.figure()
+    def plot_multiclass_roc(self, filename=None):
+        fig=plt.figure()
 
-        plt.plot([0,1],[0,1],'--')
         for idx,auc in enumerate(self.response_option_aucs):
             fp=0
             tp=0
@@ -869,10 +884,16 @@ class TrialSeries:
 
             plt.plot(auc.roc[:,0],auc.roc[:,1],'x-',label='option %d' % idx)
 
+        plt.plot([0,1],[0,1],'--')
+
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         plt.legend()
-        plt.show()
+        if filename is None:
+            plt.show()
+        else:
+            save_to_png(fig, filename)
+            plt.close()
 
     def compute_bold_contrast_regression(self):
         """
@@ -883,35 +904,76 @@ class TrialSeries:
         trials_max_exc_bold=[]
         trials_max_exc_bold_contrast=[]
         for trial_summary in self.trial_summaries:
-            if not math.isnan(trial_summary.bold_max):
-                trials_max_bold.append(trial_summary.bold_max)
+            if not math.isnan(trial_summary.data.summary_data.bold_max):
+                trials_max_bold.append(trial_summary.data.summary_data.bold_max)
                 trials_max_bold_contrast.append(trial_summary.contrast)
-            if not math.isnan(trial_summary.bold_exc_max):
-                trials_max_exc_bold.append(trial_summary.bold_exc_max)
+            if not math.isnan(trial_summary.data.summary_data.bold_exc_max):
+                trials_max_exc_bold.append(trial_summary.data.summary_data.bold_exc_max)
                 trials_max_exc_bold_contrast.append(trial_summary.contrast)
 
         self.max_bold_regression=MaxBOLDContrastRegression(trials_max_bold, trials_max_bold_contrast)
         self.max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold, trials_max_exc_bold_contrast)
 
-    def plot_rt(self):
-        contrast_rt={}
+    def plot_perc_correct(self, filename=None):
+        contrast_correct={}
         for trial_summary in self.trial_summaries:
-            if not trial_summary.rt is None:
-                if not trial_summary.contrast in contrast_rt:
-                    contrast_rt[trial_summary.contrast]=[]
-                contrast_rt[trial_summary.contrast].append(trial_summary.rt)
+            if trial_summary.contrast>0:
+                if not trial_summary.contrast in contrast_correct:
+                    contrast_correct[trial_summary.contrast]=[]
+                if trial_summary.correct:
+                    contrast_correct[trial_summary.contrast].append(1.0)
+                else:
+                    contrast_correct[trial_summary.contrast].append(0.0)
 
         contrast=[]
-        rt=[]
-        for c,rts in contrast_rt.iteritems():
+        perc_correct=[]
+        for c in sorted(contrast_correct.keys()):
+            correct=contrast_correct[c]
             contrast.append(c)
-            rt.append(np.mean(np.array(rts)))
+            perc_correct.append(np.sum(correct)/len(correct))
 
-        plt.figure()
-        plt.plot(contrast,rt,'x')
+        contrast=np.array(contrast)
+        perc_correct=np.array(perc_correct)
+
+        popt, pcov = curve_fit(weibull, contrast, perc_correct)
+
+        fig=plt.figure()
+        plt.plot(contrast,perc_correct,'o')
+        plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt))
         plt.xlabel('Contrast')
-        plt.ylabel('RT')
-        plt.show()
+        plt.ylabel('% correct')
+        if filename is None:
+            plt.show()
+        else:
+            save_to_png(fig, filename)
+            plt.close()
+
+    def plot_rt(self, filename=None):
+        contrast_rt={}
+        for trial_summary in self.trial_summaries:
+            if not trial_summary.data.rt is None:
+                if not trial_summary.contrast in contrast_rt:
+                    contrast_rt[trial_summary.contrast]=[]
+                contrast_rt[trial_summary.contrast].append(trial_summary.data.rt)
+
+        contrast=[]
+        mean_rt=[]
+        std_rt=[]
+        for c in sorted(contrast_rt.keys()):
+            rts=contrast_rt[c]
+            contrast.append(c)
+            mean_rt.append(np.mean(rts))
+            std_rt.append(np.std(rts))
+
+        fig=plt.figure()
+        plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-')
+        plt.xlabel('Contrast')
+        plt.ylabel('Decision time (s)')
+        if filename is None:
+            plt.show()
+        else:
+            save_to_png(fig, filename)
+            plt.close()
 
     def sort_by_correct(self):
         """
@@ -928,18 +990,18 @@ class TrialSeries:
 
         for trial_summary in self.trial_summaries:
             if trial_summary.correct:
-                if not math.isnan(trial_summary.bold_max):
-                    trials_max_bold_correct.append(trial_summary.bold_max)
+                if not math.isnan(trial_summary.data.summary_data.bold_max):
+                    trials_max_bold_correct.append(trial_summary.data.summary_data.bold_max)
                     trials_max_bold_correct_contrast.append(trial_summary.contrast)
-                if not math.isnan(trial_summary.bold_exc_max):
-                    trials_max_exc_bold_correct.append(trial_summary.bold_exc_max)
+                if not math.isnan(trial_summary.data.summary_data.bold_exc_max):
+                    trials_max_exc_bold_correct.append(trial_summary.data.summary_data.bold_exc_max)
                     trials_max_exc_bold_correct_contrast.append(trial_summary.contrast)
             else:
-                if not math.isnan(trial_summary.bold_max):
-                    trials_max_bold_incorrect.append(trial_summary.bold_max)
+                if not math.isnan(trial_summary.data.summary_data.bold_max):
+                    trials_max_bold_incorrect.append(trial_summary.data.summary_data.bold_max)
                     trials_max_bold_incorrect_contrast.append(trial_summary.contrast)
-                if not math.isnan(trial_summary.bold_exc_max):
-                    trials_max_exc_bold_incorrect.append(trial_summary.bold_exc_max)
+                if not math.isnan(trial_summary.data.summary_data.bold_exc_max):
+                    trials_max_exc_bold_incorrect.append(trial_summary.data.summary_data.bold_exc_max)
                     trials_max_exc_bold_incorrect_contrast.append(trial_summary.contrast)
 
         self.correct_max_bold_regression=MaxBOLDContrastRegression(trials_max_bold_correct, trials_max_bold_correct_contrast)
@@ -1404,6 +1466,178 @@ def plot_bold_contrast_lesion_one_param(output_dir, file_prefix, num_trials):
     plt.legend(loc='best')
     plt.show()
 
+
+def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc):
+    make_report_dirs(reports_dir)
+
+    report_info=Struct()
+    report_info.version = subprocess.check_output(["git", "describe"])
+    report_info.edesc=edesc
+
+    report_info.series=TrialSeries(data_dir, file_prefix, num_trials)
+    report_info.series.sort_by_correct()
+
+    report_info.wta_params=report_info.series.trial_summaries[0].data.wta_params
+    report_info.voxel_params=report_info.series.trial_summaries[0].data.voxel_params
+    report_info.num_groups=report_info.series.trial_summaries[0].data.num_groups
+    report_info.trial_duration=report_info.series.trial_summaries[0].data.trial_duration
+    report_info.background_freq=report_info.series.trial_summaries[0].data.background_freq
+    report_info.stim_start_time=report_info.series.trial_summaries[0].data.stim_start_time
+    report_info.stim_end_time=report_info.series.trial_summaries[0].data.stim_end_time
+    report_info.network_group_size=report_info.series.trial_summaries[0].data.network_group_size
+    report_info.background_input_size=report_info.series.trial_summaries[0].data.background_input_size
+    report_info.task_input_size=report_info.series.trial_summaries[0].data.task_input_size
+    report_info.muscimol_amount=report_info.series.trial_summaries[0].data.muscimol_amount
+    report_info.injection_site=report_info.series.trial_summaries[0].data.injection_site
+    report_info.p_dcs=report_info.series.trial_summaries[0].data.p_dcs
+    report_info.i_dcs=report_info.series.trial_summaries[0].data.i_dcs
+
+    furl='img/roc.png'
+    fname=os.path.join(reports_dir, furl)
+    report_info.roc_url=furl
+    report_info.series.plot_multiclass_roc(filename=fname)
+
+    furl='img/rt.png'
+    fname=os.path.join(reports_dir, furl)
+    report_info.rt_url=furl
+    report_info.series.plot_rt(filename=fname)
+
+    furl='img/perc_correct.png'
+    fname=os.path.join(reports_dir, furl)
+    report_info.perc_correct_url=furl
+    report_info.series.plot_perc_correct(filename=fname)
+
+    furl='img/bold_contrast_regression.png'
+    fname=os.path.join(reports_dir,furl)
+    report_info.bold_contrast_regression_url=furl
+    x_min=np.min(report_info.series.contrast_range)
+    x_max=np.max(report_info.series.contrast_range)
+    fig=plt.figure()
+    report_info.series.max_bold_regression.plot(x_max, x_min,'ok','k','Fit')
+    plt.xlabel('Input Contrast')
+    plt.ylabel('Max BOLD')
+    plt.legend(loc='best')
+    save_to_png(fig, fname)
+    plt.close()
+
+    report_info.trial_reports=[]
+    for trial_summary in report_info.series.trial_summaries:
+        report_info.trial_reports.append(create_trial_report(trial_summary, reports_dir))
+
+    #create report
+    template_file='wta_network_instance_new.html'
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    template=env.get_template(template_file)
+
+    output_file='wta_network.%s.html' % file_prefix
+    fname=os.path.join(reports_dir,output_file)
+    stream=template.stream(rinfo=report_info)
+    stream.dump(fname)
+
+def create_trial_report(trial_summary, reports_dir):
+    trial_report=Struct()
+    trial_report.trial_idx=trial_summary.trial_idx
+    trial_report.contrast=trial_summary.contrast
+    trial_report.input_freq=trial_summary.data.input_freq
+    trial_report.correct=trial_summary.correct
+    trial_report.rt=trial_summary.data.rt
+    trial_report.max_rate=trial_summary.max_rate
+    trial_report.max_bold=trial_summary.data.summary_data.bold_max
+
+    trial_report.firing_rate_url = None
+    if trial_summary.data.e_firing_rates is not None and trial_summary.data.i_firing_rates is not None:
+        furl = 'img/firing_rate.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        fname = os.path.join(reports_dir, furl)
+        trial_report.firing_rate_url = furl
+        fig = plt.figure()
+        ax = plt.subplot(211)
+        max_pop_rate=0
+        for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
+            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+        if trial_report.rt:
+            rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
+            ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Firing Rate (Hz)')
+        ax = plt.subplot(212)
+        max_pop_rate=0
+        for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
+            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+        if trial_report.rt:
+            rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
+            ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Firing Rate (Hz)')
+        save_to_png(fig, fname)
+        plt.close()
+
+    trial_report.neural_state_url=None
+    if trial_summary.data.neural_state_rec is not None:
+        furl = 'img/neural_state.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        fname = os.path.join(reports_dir, furl)
+        trial_report.neural_state_url = furl
+        fig = plt.figure()
+        for i in range(trial_summary.data.num_groups):
+            times=np.array(range(len(trial_summary.data.neural_state_rec['g_ampa_r'][i*2])))*.1
+            ax = plt.subplot(trial_summary.data.num_groups * 100 + 20 + (i * 2 + 1))
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_r'][i * 2] / nA, label='AMPA-recurrent')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_x'][i * 2] / nA, label='AMPA-task')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_b'][i * 2] / nA, label='AMPA-backgrnd')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_nmda'][i * 2] / nA, label='NMDA')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_gaba_a'][i * 2] / nA, label='GABA_A')
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Conductance (nA)')
+            ax = plt.subplot(trial_summary.data.num_groups * 100 + 20 + (i * 2 + 2))
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_r'][i * 2 + 1] / nA, label='AMPA-recurrent')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_x'][i * 2 + 1] / nA, label='AMPA-task')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_b'][i * 2 + 1] / nA, label='AMPA-backgrnd')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_nmda'][i * 2 + 1] / nA, label='NMDA')
+            ax.plot(times, trial_summary.data.neural_state_rec['g_gaba_a'][i * 2 + 1] / nA, label='GABA_A')
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Conductance (nA)')
+        save_to_png(fig, fname)
+        plt.close()
+
+    trial_report.lfp_url = None
+    if trial_summary.data.lfp_rec is not None:
+        furl = 'img/lfp.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        fname = os.path.join(reports_dir, furl)
+        trial_report.lfp_url = furl
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        lfp=get_lfp_signal(trial_summary.data)
+        ax.plot(np.array(range(len(lfp))), lfp / mA)
+        plt.xlabel('Time (ms)')
+        plt.ylabel('LFP (mA)')
+        save_to_png(fig, fname)
+        plt.close()
+
+    trial_report.voxel_url = None
+    if trial_summary.data.voxel_rec is not None:
+        furl = 'img/voxel.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        fname = os.path.join(reports_dir, furl)
+        trial_report.voxel_url = furl
+        end_idx=int(trial_summary.data.trial_duration/ms/.1)
+        fig = plt.figure()
+        ax = plt.subplot(211)
+        ax.plot(np.array(range(end_idx))*.1, trial_summary.data.voxel_rec['G_total'][0][:end_idx] / nA)
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Total Synaptic Activity (nA)')
+        ax = plt.subplot(212)
+        ax.plot(np.array(range(len(trial_summary.data.voxel_rec['y'][0])))*.1*ms, trial_summary.data.voxel_rec['y'][0])
+        plt.xlabel('Time (s)')
+        plt.ylabel('BOLD')
+        save_to_png(fig, fname)
+        plt.close()
+
+    return trial_report
+
 if __name__=='__main__':
-    p_range=np.array(range(1,11))*.01
-    plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
+    #p_range=np.array(range(1,11))*.01
+    #plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
+    prefix='wta.groups.2.duration.3.000.p_b_e.0.050.p_x_e.0.050.p_e_e.0.025.p_e_i.0.030.p_i_i.0.010.p_i_e.0.060.p_dcs.0.0000.i_dcs.0.0000.control'
+    dir='../../data/dcs'
+    t=TrialSeries(dir,prefix,10)
+    t.plot_rt()
