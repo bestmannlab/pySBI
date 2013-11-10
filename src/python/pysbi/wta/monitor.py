@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA
-from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show
+from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 
 # Collection of monitors for WTA network
 class WTAMonitor():
@@ -43,12 +43,15 @@ class WTAMonitor():
         if record_neuron_state:
             self.record_idx=[]
             for i in range(self.num_groups):
-                e_idx=i*int(4*self.N/5)
-                i_idx=int(4*self.N*self.num_groups/5)+i*int(self.N/5)
-                self.record_idx.extend([e_idx, i_idx])
+                e_idx=i*int(.8*self.N/self.num_groups)
+                self.record_idx.append(e_idx)
+            i_idx=int(.8*self.N)
+            self.record_idx.append(i_idx)
             self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a',
-                                                                    'g_gaba_b','g_nmda','I_ampa_r','I_ampa_x',
-                                                                    'I_ampa_b','I_gaba_a','I_gaba_b','I_nmda'],
+                                                                    #'g_gaba_b','g_nmda','I_ampa_r','I_ampa_x',
+                                                                    'g_nmda','I_ampa_r','I_ampa_x',
+                                                                    #'I_ampa_b','I_gaba_a','I_gaba_b','I_nmda'],
+                                                                    'I_ampa_b','I_gaba_a','I_nmda'],
                 record=self.record_idx)
             self.monitors.append(self.network_monitor)
         else:
@@ -145,28 +148,21 @@ class WTAMonitor():
 
         # Network state plots
         if self.network_monitor is not None:
-            figure()
             max_conductances=[]
-            for i in range(self.num_groups):
-                neuron_idx=self.record_idx[i*2]
+            for neuron_idx in self.record_idx:
                 max_conductances.append(np.max(self.network_monitor['g_ampa_r'][neuron_idx]/nS))
                 max_conductances.append(np.max(self.network_monitor['g_ampa_x'][neuron_idx]/nS))
                 max_conductances.append(np.max(self.network_monitor['g_ampa_b'][neuron_idx]/nS))
                 max_conductances.append(np.max(self.network_monitor['g_nmda'][neuron_idx]/nS))
                 max_conductances.append(np.max(self.network_monitor['g_gaba_a'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_gaba_b'][neuron_idx]/nS))
-                neuron_idx=self.record_idx[i*2+1]
-                max_conductances.append(np.max(self.network_monitor['g_ampa_r'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_ampa_x'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_ampa_b'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_nmda'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_gaba_a'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_gaba_b'][neuron_idx]/nS))
+                #max_conductances.append(np.max(self.network_monitor['g_gaba_b'][neuron_idx]/nS))
             max_conductance=np.max(max_conductances)
 
+            fig=figure()
             for i in range(self.num_groups):
-                ax=subplot(self.num_groups*100+20+(i*2+1))
-                neuron_idx=self.record_idx[i*2]
+                neuron_idx=self.record_idx[i]
+                ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
+                title('e%d' % i)
                 ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
                     label='AMPA-recurrent')
                 ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
@@ -177,68 +173,56 @@ class WTAMonitor():
                     label='NMDA')
                 ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
                     label='GABA_A')
-                ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
-                    label='GABA_B')
+                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
+                #    label='GABA_B')
                 ylim(0,max_conductance)
                 xlabel('Time (ms)')
                 ylabel('Conductance (nS)')
                 legend()
 
-                ax=subplot(self.num_groups*100+20+(i*2+2))
-                neuron_idx=self.record_idx[i*2+1]
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
-                    label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
-                    label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
-                    label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
-                    label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
-                    label='GABA_A')
-                ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
-                    label='GABA_B')
-                ylim(0,max_conductance)
-                xlabel('Time (ms)')
-                ylabel('Conductance (nS)')
-                legend()
+            neuron_idx=self.record_idx[self.num_groups]
+            ax=subplot('%d1%d' % (self.num_groups+1,self.num_groups+1))
+            title('i')
+            ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
+                label='AMPA-recurrent')
+            ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
+                label='AMPA-task')
+            ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
+                label='AMPA-backgrnd')
+            ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
+                label='NMDA')
+            ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
+                label='GABA_A')
+            #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
+            #    label='GABA_B')
+            ylim(0,max_conductance)
+            xlabel('Time (ms)')
+            ylabel('Conductance (nS)')
+            legend()
 
-            figure()
             min_currents=[]
             max_currents=[]
-            for i in range(self.num_groups):
-                neuron_idx=self.record_idx[i*2]
+            for neuron_idx in self.record_idx:
                 max_currents.append(np.max(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
                 max_currents.append(np.max(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
                 max_currents.append(np.max(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
                 max_currents.append(np.max(self.network_monitor['I_nmda'][neuron_idx]/nS))
                 max_currents.append(np.max(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
+                #max_currents.append(np.max(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
                 min_currents.append(np.min(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
                 min_currents.append(np.min(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
                 min_currents.append(np.min(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
                 min_currents.append(np.min(self.network_monitor['I_nmda'][neuron_idx]/nS))
                 min_currents.append(np.min(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
-                neuron_idx=self.record_idx[i*2+1]
-                max_currents.append(np.max(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_nmda'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_nmda'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
+                #min_currents.append(np.min(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
             max_current=np.max(max_currents)
             min_current=np.min(min_currents)
 
+            fig=figure()
             for i in range(self.num_groups):
-                ax=subplot(self.num_groups*100+20+(i*2+1))
-                neuron_idx=self.record_idx[i*2]
+                ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
+                neuron_idx=self.record_idx[i]
+                title('e%d' % i)
                 ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
                     label='AMPA-recurrent')
                 ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
@@ -249,31 +233,32 @@ class WTAMonitor():
                     label='NMDA')
                 ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
                     label='GABA_A')
-                ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
-                    label='GABA_B')
+                #ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
+                #    label='GABA_B')
                 ylim(min_current,max_current)
                 xlabel('Time (ms)')
                 ylabel('Current (nA)')
                 legend()
 
-                ax=subplot(self.num_groups*100+20+(i*2+2))
-                neuron_idx=self.record_idx[i*2+1]
-                ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
-                    label='AMPA-recurrent')
-                ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
-                    label='AMPA-task')
-                ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
-                    label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
-                    label='NMDA')
-                ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
-                    label='GABA_A')
-                ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
-                    label='GABA_B')
-                ylim(min_current,max_current)
-                xlabel('Time (ms)')
-                ylabel('Current (nA)')
-                legend()
+            ax=subplot(int('%d1%d' % (self.num_groups+1,self.num_groups+1)))
+            neuron_idx=self.record_idx[self.num_groups]
+            title('i')
+            ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
+                label='AMPA-recurrent')
+            ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
+                label='AMPA-task')
+            ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
+                label='AMPA-backgrnd')
+            ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
+                label='NMDA')
+            ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
+                label='GABA_A')
+            #ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
+            #    label='GABA_B')
+            ylim(min_current,max_current)
+            xlabel('Time (ms)')
+            ylabel('Current (nA)')
+            legend()
 
         # LFP plot
         if self.lfp_monitor is not None:
