@@ -215,7 +215,7 @@ class WTANetworkGroup(NeuronGroup):
 
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=10, output_file=None,
+def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
             record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
             p_dcs=0*pA, i_dcs=0*pA):
@@ -248,17 +248,19 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 
     # Total size of the network (excitatory and inhibitory cells)
     network_group_size=2000
-    background_input_size=2000
-    task_input_size=500
+    background_input_size=5000
+    task_input_size=1000
 
     # Create network inputs
-    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz)
+    def make_task_rate_function(rate):
+        return lambda t: ((stim_start_time<t<stim_end_time and background_freq*Hz+rate+20*np.random.randn()*Hz) or background_freq*Hz)
+    def make_background_rate_function(rate):
+        return lambda t: 5*np.random.randn(background_input_size)*Hz+rate
+    background_input=PoissonGroup(background_input_size, rates=make_background_rate_function(background_freq*Hz))
     task_inputs=[]
-    def make_rate_function(rate):
-        return lambda t: ((stim_start_time<t<stim_end_time and (1*Hz+rate)) or 1*Hz)
     for i in range(num_groups):
         rate=input_freq[i]*Hz
-        task_inputs.append(PoissonGroup(task_input_size, rates=make_rate_function(rate)))
+        task_inputs.append(PoissonGroup(task_input_size, rates=make_task_rate_function(rate)))
 
     # Create WTA network
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
