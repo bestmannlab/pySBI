@@ -295,7 +295,7 @@ Overall AUC={{ rinfo.series.total_auc|round(3) }}
         <th>Input Contrast</th>
         <th>Inputs</th>
         <th>Correct</th>
-        <th>Response Time</th>
+        <th>Decision Time</th>
         <th>Max Firing Rate</th>
         <th>Max Bold</th>
     </tr>
@@ -324,7 +324,7 @@ Overall AUC={{ rinfo.series.total_auc|round(3) }}
             <br>
             Inputs=[{% for input in trial_report.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
             <br>
-            Response Time={{ trial_report.rt }}
+            Decision Time={{ trial_report.rt }}
             <br>
             Max Firing Rate={{ trial_report.max_rate|round(2) }}Hz
             <br>

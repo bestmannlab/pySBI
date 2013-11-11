@@ -550,7 +550,7 @@ def get_lfp_signal(wta_data, plot=False):
         plt.show()
     return lfp
 
-def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=40):
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=30):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]
     times=np.array(range(len(rate_1)))*.0001
@@ -560,14 +560,14 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=
         time=time*second
         if stim_start_time < time < stim_end_time:
             if rt is None:
-                if rate_1[idx]>=threshold and rate_1[idx]>=2*rate_2[idx]:
+                if rate_1[idx]>=threshold:
                     winner=1
                     rt=time-stim_start_time
-                if rate_2[idx]>=threshold and rate_2[idx]>=2*rate_1[idx]:
+                elif rate_2[idx]>=threshold:
                     winner=2
                     rt=time-stim_start_time
             else:
-                if (winner==1 and rate_1[idx]<=1.5*rate_2[idx]) or (winner==2 and rate_2[idx]<=1.5*rate_1[idx]):
+                if (winner==1 and rate_1[idx]<threshold) or (winner==2 and rate_2[idx]<threshold):
                     winner=None
                     rt=None
     return rt
@@ -935,11 +935,13 @@ class TrialSeries:
         contrast=np.array(contrast)
         perc_correct=np.array(perc_correct)
 
-        popt, pcov = curve_fit(weibull, contrast, perc_correct)
-
         fig=plt.figure()
         plt.plot(contrast,perc_correct,'o')
-        plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt))
+        try:
+            popt, pcov = curve_fit(weibull, contrast, perc_correct)
+            plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt))
+        except:
+            print('error fitting performance data')
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         if filename is None:
@@ -1471,7 +1473,7 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc)
     make_report_dirs(reports_dir)
 
     report_info=Struct()
-    report_info.version = subprocess.check_output(["git", "describe"])
+    report_info.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
     report_info.edesc=edesc
 
     report_info.series=TrialSeries(data_dir, file_prefix, num_trials)
