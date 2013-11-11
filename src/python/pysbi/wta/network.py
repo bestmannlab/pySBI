@@ -50,12 +50,12 @@ default_params=Parameters(
     #w_gaba_b_min=0.1*nS,
     #w_gaba_b_max=0.6*nS,
     # Connection probabilities
-    p_b_e=0.05,
-    p_x_e=0.05,
-    p_e_e=0.025,
-    p_e_i=0.03,
-    p_i_i=0.01,
-    p_i_e=0.06,
+    p_b_e=0.03,
+    p_x_e=0.01,
+    p_e_e=0.03,
+    p_e_i=0.08,
+    p_i_i=0.2,
+    p_i_e=0.08,
 )
 
 # WTA network class - extends Brian's NeuronGroup
