@@ -210,7 +210,7 @@ def post_one_param_wta_lesion_jobs(nodes, p_b_e, p_x_e, p_range, num_trials, sin
 def post_wta_dcs_jobs(nodes, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, start_nodes=True,
                       p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
-    trial_duration=3*second
+    trial_duration=4*second
     input_sum=20.0
     launcher=Launcher(nodes)
     if start_nodes:
