@@ -8,9 +8,9 @@ from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current, InjectedCurrent
 from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
-from brian.stdunits import pF, nS, mV, ms, Hz, nA, pA
+from brian.stdunits import pF, nS, mV, ms, Hz, pA
 from brian.tools.parameters import Parameters
-from brian.units import siemens, second, volt, amp
+from brian.units import siemens, second
 import argparse
 import numpy as np
 from pysbi.util.utils import init_connection
