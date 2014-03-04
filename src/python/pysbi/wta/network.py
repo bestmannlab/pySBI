@@ -3,6 +3,7 @@ from time import time
 from brian.clock import reinit_default_clock
 from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
+from brian.experimental.model_documentation import document_network, labels_from_namespace, LaTeXDocumentWriter
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current, InjectedCurrent
@@ -171,54 +172,54 @@ class WTANetworkGroup(NeuronGroup):
 
     ## Initialize network connectivity
     def init_connectivity(self):
-        self.connections=[]
+        self.connections={}
 
         # Iterate over input groups
         for i in range(self.num_groups):
 
             # E population - recurrent connections
-            self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_ampa_r',
-                self.params.pyr_w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False))
-            self.connections.append(init_connection(self.groups_e[i], self.groups_e[i], 'g_nmda',
-                self.params.pyr_w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False))
+            self.connections['e%d->e%d_ampa' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
+                'g_ampa_r', self.params.pyr_w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False)
+            self.connections['e%d->e%d_nmda' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
+                'g_nmda', self.params.pyr_w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False)
 
             # E -> I excitatory connections
-            self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
-                self.params.int_w_ampa_rec, self.params.p_e_i, .5*ms))
-            self.connections.append(init_connection(self.groups_e[i], self.group_i, 'g_nmda', self.params.int_w_nmda,
-                self.params.p_e_i, .5*ms))
+            self.connections['e%d->i_ampa' % i]=init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
+                self.params.int_w_ampa_rec, self.params.p_e_i, .5*ms)
+            self.connections['e%d->i_nmda' % i]=init_connection(self.groups_e[i], self.group_i, 'g_nmda',
+                self.params.int_w_nmda, self.params.p_e_i, .5*ms)
 
             # I -> E - inhibitory connections
-            self.connections.append(init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
-                self.params.pyr_w_gaba_a, self.params.p_i_e, .5*ms))
+            self.connections['i->e%d_gabaa' % i]=init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
+                self.params.pyr_w_gaba_a, self.params.p_i_e, .5*ms)
             #self.connections.append(init_rand_weight_connection(self.group_i, self.groups_e[i], 'g_gaba_b',
             #    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
 
         # I population - recurrent connections
-        self.connections.append(init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.int_w_gaba_a,
-            self.params.p_i_i, .5*ms, allow_self_conn=False))
+        self.connections['i->i_gabaa']=init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.int_w_gaba_a,
+            self.params.p_i_i, .5*ms, allow_self_conn=False)
         #self.connections.append(init_rand_weight_connection(self.group_i, self.group_i, 'g_gaba_b', self.params.w_gaba_b_min,
         #    self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
 
         if self.background_input is not None:
             # Background -> E+I population connections
-            self.connections.append(init_connection(self.background_input, self.group_e, 'g_ampa_b',
-                self.params.pyr_w_ampa_ext, self.params.p_b_e, .5*ms))
-            self.connections.append(init_connection(self.background_input, self.group_i, 'g_ampa_b',
-                self.params.int_w_ampa_ext, self.params.p_b_e, .5*ms))
+            self.connections['b->e_ampa']=init_connection(self.background_input, self.group_e, 'g_ampa_b',
+                self.params.pyr_w_ampa_ext, self.params.p_b_e, .5*ms)
+            self.connections['b->i_ampa']=init_connection(self.background_input, self.group_i, 'g_ampa_b',
+                self.params.int_w_ampa_ext, self.params.p_b_e, .5*ms)
 
         if self.task_inputs is not None:
             # Task input -> E population connections
             for i in range(self.num_groups):
-                self.connections.append(init_connection(self.task_inputs[i], self.groups_e[i], 'g_ampa_x',
-                    self.params.pyr_w_ampa_ext, self.params.p_x_e, .5*ms))
+                self.connections['t%d->e%d_ampa' % (i,i)]=init_connection(self.task_inputs[i], self.groups_e[i],
+                    'g_ampa_x', self.params.pyr_w_ampa_ext, self.params.p_x_e, .5*ms)
 
 
 
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
             record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
-            p_dcs=0*pA, i_dcs=0*pA):
+            p_dcs=0*pA, i_dcs=0*pA, report='text'):
     """
     Run WTA network
        wta_params = network parameters
@@ -290,22 +291,40 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
             wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
 
     # Create Brian network and reset clock
-    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections,
-        wta_monitor.monitors, inject_muscimol, inject_current)
+    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections.values(),
+        wta_monitor.monitors.values(), inject_muscimol, inject_current)
     reinit_default_clock()
     print "Initialization time: %.2fs" % (time() - start_time)
 
+#    writer=LaTeXDocumentWriter()
+#    labels={}
+#    labels[voxel]=('v',str(voxel))
+#    labels[background_input]=('bi',str(background_input))
+#    labels[lfp_source]=('lfp',str(lfp_source))
+#    labels[wta_network]=('n',str(wta_network))
+#    labels[wta_network.group_e]=('e',str(wta_network.group_e))
+#    labels[wta_network.group_i]=('i',str(wta_network.group_i))
+#    for i,e_group in enumerate(wta_network.groups_e):
+#        labels[e_group]=('e%d' % i,'%s %d' % (str(e_group),i))
+#    for i,task_input in enumerate(task_inputs):
+#        labels[task_input]=('t%d' % i,'%s %d' % (str(task_input),i))
+#    for name,conn in wta_network.connections.iteritems():
+#        labels[conn]=(name,str(conn))
+#    for name,monitor in wta_monitor.monitors.iteritems():
+#        labels[monitor]=(name,str(monitor))
+#    writer.document_network(net=net, labels=labels)
+
     # Run simulation
     start_time = time()
-    net.run(trial_duration, report='text')
+    net.run(trial_duration, report=report)
     print "Simulation time: %.2fs" % (time() - start_time)
 
     # Compute BOLD signal
     if record_voxel:
         start_time = time()
-        wta_monitor.voxel_exc_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total_exc'].values[0], voxel.params,
-            [500, 2500], trial_duration)
-        wta_monitor.voxel_monitor=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
+        wta_monitor.monitors['voxel_exc']=get_bold_signal(wta_monitor.voxel_monitor['G_total_exc'].values[0],
+            voxel.params, [500, 2500], trial_duration)
+        wta_monitor.monitors['voxel']=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
             [500, 2500], trial_duration)
         print "BOLD generation time: %.2fs" % (time() - start_time)
 
@@ -327,7 +346,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 
 if __name__=='__main__':
     ap = argparse.ArgumentParser(description='Run the WTA model')
-    ap.add_argument('--num_groups', type=int, default=3, help='Number of input groups')
+    ap.add_argument('--num_groups', type=int, default=2, help='Number of input groups')
     ap.add_argument('--inputs', type=str, default='10,10', help='Input pattern (Hz) - comma-delimited list')
     ap.add_argument('--background', type=float, default=4.0, help='Background firing rate (Hz)')
     ap.add_argument('--trial_duration', type=float, default=2.0, help='Trial duration (seconds)')
