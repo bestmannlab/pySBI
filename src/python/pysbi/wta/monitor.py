@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA
+from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 
 # Collection of monitors for WTA network
@@ -20,24 +20,17 @@ class WTAMonitor():
                  record_spikes=True, record_firing_rate=True, record_inputs=False, save_summary_only=False):
         self.num_groups=network.num_groups
         self.N=network.N
-        self.monitors=[]
+        self.monitors={}
         self.save_summary_only=save_summary_only
 
         # LFP monitor
         if record_lfp:
-            self.lfp_monitor = StateMonitor(lfp_source, 'LFP', record=0)
-            self.monitors.append(self.lfp_monitor)
-        else:
-            self.lfp_monitor=None
+            self.monitors['lfp'] = StateMonitor(lfp_source, 'LFP', record=0)
 
         # Voxel monitor
         if record_voxel:
-            self.voxel_monitor = MultiStateMonitor(voxel, vars=['G_total','G_total_exc','y'],
+            self.monitors['voxel'] = MultiStateMonitor(voxel, vars=['G_total','G_total_exc','y'],
                 record=True)
-            self.monitors.append(self.voxel_monitor)
-        else:
-            self.voxel_monitor=None
-        self.voxel_exc_monitor=None
 
         # Network monitor
         if record_neuron_state:
@@ -47,114 +40,95 @@ class WTAMonitor():
                 self.record_idx.append(e_idx)
             i_idx=int(.8*self.N)
             self.record_idx.append(i_idx)
-            self.network_monitor = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b','g_gaba_a',
-                                                                    #'g_gaba_b','g_nmda','I_ampa_r','I_ampa_x',
-                                                                    'g_nmda','I_ampa_r','I_ampa_x',
-                                                                    #'I_ampa_b','I_gaba_a','I_gaba_b','I_nmda'],
-                                                                    'I_ampa_b','I_gaba_a','I_nmda'],
+            self.monitors['network'] = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b',
+                                                                        'g_gaba_a', 'g_nmda','I_ampa_r','I_ampa_x',
+                                                                        'I_ampa_b','I_gaba_a','I_nmda'], 
                 record=self.record_idx)
-            self.monitors.append(self.network_monitor)
-        else:
-            self.network_monitor=None
 
         # Population rate monitors
         if record_firing_rate:
-            self.population_rate_monitors={'excitatory':[], 'inhibitory':[]}
-            for group_e in network.groups_e:
-                e_rate_monitor=PopulationRateMonitor(group_e)
-                self.population_rate_monitors['excitatory'].append(e_rate_monitor)
-                self.monitors.append(e_rate_monitor)
+            for i,group_e in enumerate(network.groups_e):
+                self.monitors['excitatory_rate_%d' % i]=PopulationRateMonitor(group_e)
 
-            i_rate_monitor=PopulationRateMonitor(network.group_i)
-            self.population_rate_monitors['inhibitory'].append(i_rate_monitor)
-            self.monitors.append(i_rate_monitor)
-        else:
-            self.population_rate_monitors=None
+            self.monitors['inhibitory_rate']=PopulationRateMonitor(network.group_i)
 
         # Input rate monitors
         if record_inputs:
-            self.background_rate_monitor=PopulationRateMonitor(network.background_input)
-            self.monitors.append(self.background_rate_monitor)
-            self.task_rate_monitors=[]
-            for task_input in network.task_inputs:
-                task_monitor=PopulationRateMonitor(task_input)
-                self.task_rate_monitors.append(task_monitor)
-                self.monitors.append(task_monitor)
-        else:
-            self.background_rate_monitor=None
-            self.task_rate_monitors=None
+            self.monitors['background_rate']=PopulationRateMonitor(network.background_input)
+            for i,task_input in enumerate(network.task_inputs):
+                self.monitors['task_rate_%d' % i]=PopulationRateMonitor(task_input)
 
         # Spike monitors
         if record_spikes:
-            self.spike_monitors={'excitatory':[], 'inhibitory':[]}
-            for group_e in network.groups_e:
-                e_spike_monitor=SpikeMonitor(group_e)
-                self.spike_monitors['excitatory'].append(e_spike_monitor)
-                self.monitors.append(e_spike_monitor)
+            for i,group_e in enumerate(network.groups_e):
+                self.monitors['excitatory_spike_%d' % i]=SpikeMonitor(group_e)
 
-            i_spike_monitor=SpikeMonitor(network.group_i)
-            self.spike_monitors['inhibitory'].append(i_spike_monitor)
-            self.monitors.append(i_spike_monitor)
-        else:
-            self.spike_monitors=None
+            self.monitors['inhibitory_spike']=SpikeMonitor(network.group_i)
 
     # Plot monitor data
     def plot(self):
 
         # Spike raster plots
-        if self.spike_monitors is not None:
+        if 'inhibitory_spike' in self.monitors:
+            num_plots=self.num_groups+1
             figure()
-            subplot(211)
-            raster_plot(*self.spike_monitors['excitatory'],newfigure=False)
-            subplot(212)
-            raster_plot(*self.spike_monitors['inhibitory'],newfigure=False)
+            for i in range(self.num_groups):
+                subplot(num_plots,1,i+1)
+                raster_plot(*self.monitors['excitatory_spike_%d' % i],newfigure=False)
+            subplot(num_plots,1,num_plots)
+            raster_plot(*self.monitors['inhibitory_spike'],newfigure=False)
 
         # Network firing rate plots
-        if self.population_rate_monitors is not None:
+        if 'inhibitory_rate' in self.monitors:
             figure()
             ax=subplot(211)
-            max_rates=[np.max(pop_rate_monitor.smooth_rate(width=5*ms)/hertz) for pop_rate_monitor in
-                       self.population_rate_monitors['excitatory']]
-            max_rates.extend([np.max(pop_rate_monitor.smooth_rate(width=5*ms)/hertz) for pop_rate_monitor in
-                              self.population_rate_monitors['inhibitory']])
+            max_rates=[np.max(self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz)]
+            for i in range(self.num_groups):
+                max_rates.append(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz)
             max_rate=np.max(max_rates)
 
-            for idx,pop_rate_monitor in enumerate(self.population_rate_monitors['excitatory']):
+            for idx in range(self.num_groups):
+                pop_rate_monitor=self.monitors['excitatory_rate_%d' % idx]
                 ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
                 ylim(0,max_rate)
             legend()
             ylabel('Firing rate (Hz)')
 
             ax=subplot(212)
-            for idx,pop_rate_monitor in enumerate(self.population_rate_monitors['inhibitory']):
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i %d' % idx)
-                ylim(0,max_rate)
+            pop_rate_monitor=self.monitors['inhibitory_rate']
+            ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i')
+            ylim(0,max_rate)
             legend()
             ylabel('Firing rate (Hz)')
             xlabel('Time (ms)')
 
         # Input firing rate plots
-        if self.background_rate_monitor is not None and self.task_rate_monitors is not None:
+        if 'background_rate' in self.monitors:
             figure()
-            max_rate=np.max(self.background_rate_monitor.smooth_rate(width=5*ms)/hertz)
-            for task_monitor in self.task_rate_monitors:
-                max_rate=np.max(max_rate, np.max(task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz))
+            max_rates=[np.max(self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)]
+            for i in range(self.num_groups):
+                max_rates.append(np.max(self.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,
+                    filter='gaussian')/hertz))
+            max_rate=np.max(max_rates)
             ax=subplot(111)
-            ax.plot(self.background_rate_monitor.times/ms, self.background_rate_monitor.smooth_rate(width=5*ms)/hertz)
+            ax.plot(self.monitors['background_rate'].times/ms, 
+                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             ylim(0,max_rate)
-            for task_monitor in self.task_rate_monitors:
+            for i in range(self.num_groups):
+                task_monitor=self.monitors['task_rate_%d' % i]
                 ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
                 ylim(0,max_rate)
 
         # Network state plots
-        if self.network_monitor is not None:
+        if 'network' in self.monitors is not None:
+            network_monitor=self.monitors['network']
             max_conductances=[]
             for neuron_idx in self.record_idx:
-                max_conductances.append(np.max(self.network_monitor['g_ampa_r'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_ampa_x'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_ampa_b'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_nmda'][neuron_idx]/nS))
-                max_conductances.append(np.max(self.network_monitor['g_gaba_a'][neuron_idx]/nS))
+                max_conductances.append(np.max(network_monitor['g_ampa_r'][neuron_idx]/nS))
+                max_conductances.append(np.max(network_monitor['g_ampa_x'][neuron_idx]/nS))
+                max_conductances.append(np.max(network_monitor['g_ampa_b'][neuron_idx]/nS))
+                max_conductances.append(np.max(network_monitor['g_nmda'][neuron_idx]/nS))
+                max_conductances.append(np.max(network_monitor['g_gaba_a'][neuron_idx]/nS))
                 #max_conductances.append(np.max(self.network_monitor['g_gaba_b'][neuron_idx]/nS))
             max_conductance=np.max(max_conductances)
 
@@ -163,17 +137,17 @@ class WTAMonitor():
                 neuron_idx=self.record_idx[i]
                 ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
                 title('e%d' % i)
-                ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
+                ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS, 
                     label='AMPA-recurrent')
-                ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
+                ax.plot(network_monitor['g_ampa_x'].times/ms, network_monitor['g_ampa_x'][neuron_idx]/nS,
                     label='AMPA-task')
-                ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
+                ax.plot(network_monitor['g_ampa_b'].times/ms, network_monitor['g_ampa_b'][neuron_idx]/nS,
                     label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
+                ax.plot(network_monitor['g_nmda'].times/ms, network_monitor['g_nmda'][neuron_idx]/nS,
                     label='NMDA')
-                ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
+                ax.plot(network_monitor['g_gaba_a'].times/ms, network_monitor['g_gaba_a'][neuron_idx]/nS,
                     label='GABA_A')
-                #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
+                #ax.plot(network_monitor['g_gaba_b'].times/ms, network_monitor['g_gaba_b'][neuron_idx]/nS,
                 #    label='GABA_B')
                 ylim(0,max_conductance)
                 xlabel('Time (ms)')
@@ -183,17 +157,17 @@ class WTAMonitor():
             neuron_idx=self.record_idx[self.num_groups]
             ax=subplot('%d1%d' % (self.num_groups+1,self.num_groups+1))
             title('i')
-            ax.plot(self.network_monitor['g_ampa_r'].times/ms, self.network_monitor['g_ampa_r'][neuron_idx]/nS,
+            ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS,
                 label='AMPA-recurrent')
-            ax.plot(self.network_monitor['g_ampa_x'].times/ms, self.network_monitor['g_ampa_x'][neuron_idx]/nS,
+            ax.plot(network_monitor['g_ampa_x'].times/ms, network_monitor['g_ampa_x'][neuron_idx]/nS,
                 label='AMPA-task')
-            ax.plot(self.network_monitor['g_ampa_b'].times/ms, self.network_monitor['g_ampa_b'][neuron_idx]/nS,
+            ax.plot(network_monitor['g_ampa_b'].times/ms, network_monitor['g_ampa_b'][neuron_idx]/nS,
                 label='AMPA-backgrnd')
-            ax.plot(self.network_monitor['g_nmda'].times/ms, self.network_monitor['g_nmda'][neuron_idx]/nS,
+            ax.plot(network_monitor['g_nmda'].times/ms, network_monitor['g_nmda'][neuron_idx]/nS,
                 label='NMDA')
-            ax.plot(self.network_monitor['g_gaba_a'].times/ms, self.network_monitor['g_gaba_a'][neuron_idx]/nS,
+            ax.plot(network_monitor['g_gaba_a'].times/ms, network_monitor['g_gaba_a'][neuron_idx]/nS,
                 label='GABA_A')
-            #ax.plot(self.network_monitor['g_gaba_b'].times/ms, self.network_monitor['g_gaba_b'][neuron_idx]/nS,
+            #ax.plot(network_monitor['g_gaba_b'].times/ms, network_monitor['g_gaba_b'][neuron_idx]/nS,
             #    label='GABA_B')
             ylim(0,max_conductance)
             xlabel('Time (ms)')
@@ -203,18 +177,18 @@ class WTAMonitor():
             min_currents=[]
             max_currents=[]
             for neuron_idx in self.record_idx:
-                max_currents.append(np.max(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_nmda'][neuron_idx]/nS))
-                max_currents.append(np.max(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                #max_currents.append(np.max(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_r'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_x'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_ampa_b'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_nmda'][neuron_idx]/nS))
-                min_currents.append(np.min(self.network_monitor['I_gaba_a'][neuron_idx]/nS))
-                #min_currents.append(np.min(self.network_monitor['I_gaba_b'][neuron_idx]/nS))
+                max_currents.append(np.max(network_monitor['I_ampa_r'][neuron_idx]/nS))
+                max_currents.append(np.max(network_monitor['I_ampa_x'][neuron_idx]/nS))
+                max_currents.append(np.max(network_monitor['I_ampa_b'][neuron_idx]/nS))
+                max_currents.append(np.max(network_monitor['I_nmda'][neuron_idx]/nS))
+                max_currents.append(np.max(network_monitor['I_gaba_a'][neuron_idx]/nS))
+                #max_currents.append(np.max(network_monitor['I_gaba_b'][neuron_idx]/nS))
+                min_currents.append(np.min(network_monitor['I_ampa_r'][neuron_idx]/nS))
+                min_currents.append(np.min(network_monitor['I_ampa_x'][neuron_idx]/nS))
+                min_currents.append(np.min(network_monitor['I_ampa_b'][neuron_idx]/nS))
+                min_currents.append(np.min(network_monitor['I_nmda'][neuron_idx]/nS))
+                min_currents.append(np.min(network_monitor['I_gaba_a'][neuron_idx]/nS))
+                #min_currents.append(np.min(network_monitor['I_gaba_b'][neuron_idx]/nS))
             max_current=np.max(max_currents)
             min_current=np.min(min_currents)
 
@@ -223,17 +197,17 @@ class WTAMonitor():
                 ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
                 neuron_idx=self.record_idx[i]
                 title('e%d' % i)
-                ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
+                ax.plot(network_monitor['I_ampa_r'].times/ms, network_monitor['I_ampa_r'][neuron_idx]/nA,
                     label='AMPA-recurrent')
-                ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
+                ax.plot(network_monitor['I_ampa_x'].times/ms, network_monitor['I_ampa_x'][neuron_idx]/nA,
                     label='AMPA-task')
-                ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
+                ax.plot(network_monitor['I_ampa_b'].times/ms, network_monitor['I_ampa_b'][neuron_idx]/nA,
                     label='AMPA-backgrnd')
-                ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
+                ax.plot(network_monitor['I_nmda'].times/ms, network_monitor['I_nmda'][neuron_idx]/nA,
                     label='NMDA')
-                ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
+                ax.plot(network_monitor['I_gaba_a'].times/ms, network_monitor['I_gaba_a'][neuron_idx]/nA,
                     label='GABA_A')
-                #ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
+                #ax.plot(network_monitor['I_gaba_b'].times/ms, network_monitor['I_gaba_b'][neuron_idx]/nA,
                 #    label='GABA_B')
                 ylim(min_current,max_current)
                 xlabel('Time (ms)')
@@ -243,17 +217,17 @@ class WTAMonitor():
             ax=subplot(int('%d1%d' % (self.num_groups+1,self.num_groups+1)))
             neuron_idx=self.record_idx[self.num_groups]
             title('i')
-            ax.plot(self.network_monitor['I_ampa_r'].times/ms, self.network_monitor['I_ampa_r'][neuron_idx]/nA,
+            ax.plot(network_monitor['I_ampa_r'].times/ms, network_monitor['I_ampa_r'][neuron_idx]/nA,
                 label='AMPA-recurrent')
-            ax.plot(self.network_monitor['I_ampa_x'].times/ms, self.network_monitor['I_ampa_x'][neuron_idx]/nA,
+            ax.plot(network_monitor['I_ampa_x'].times/ms, network_monitor['I_ampa_x'][neuron_idx]/nA,
                 label='AMPA-task')
-            ax.plot(self.network_monitor['I_ampa_b'].times/ms, self.network_monitor['I_ampa_b'][neuron_idx]/nA,
+            ax.plot(network_monitor['I_ampa_b'].times/ms, network_monitor['I_ampa_b'][neuron_idx]/nA,
                 label='AMPA-backgrnd')
-            ax.plot(self.network_monitor['I_nmda'].times/ms, self.network_monitor['I_nmda'][neuron_idx]/nA,
+            ax.plot(network_monitor['I_nmda'].times/ms, network_monitor['I_nmda'][neuron_idx]/nA,
                 label='NMDA')
-            ax.plot(self.network_monitor['I_gaba_a'].times/ms, self.network_monitor['I_gaba_a'][neuron_idx]/nA,
+            ax.plot(network_monitor['I_gaba_a'].times/ms, network_monitor['I_gaba_a'][neuron_idx]/nA,
                 label='GABA_A')
-            #ax.plot(self.network_monitor['I_gaba_b'].times/ms, self.network_monitor['I_gaba_b'][neuron_idx]/nA,
+            #ax.plot(network_monitor['I_gaba_b'].times/ms, network_monitor['I_gaba_b'][neuron_idx]/nA,
             #    label='GABA_B')
             ylim(min_current,max_current)
             xlabel('Time (ms)')
@@ -261,50 +235,54 @@ class WTAMonitor():
             legend()
 
         # LFP plot
-        if self.lfp_monitor is not None:
+        if 'lfp' in self.monitors:
             figure()
             ax=subplot(111)
-            ax.plot(self.lfp_monitor.times / ms, self.lfp_monitor[0] / mA)
+            ax.plot(self.monitors['lfp'].times / ms, self.monitors['lfp'] / mA)
             xlabel('Time (ms)')
             ylabel('LFP (mA)')
 
         # Voxel activity plots
-        if self.voxel_monitor is not None:
-            syn_max=np.max(self.voxel_monitor['G_total'][0] / nS)
-            y_max=np.max(self.voxel_monitor['y'][0])
-            y_min=np.min(self.voxel_monitor['y'][0])
+        if 'voxel' in self.monitors:
+            voxel_monitor=self.monitors['voxel']
+            voxel_exc_monitor=None
+            if 'voxel_exc' in self.monitors:
+                voxel_exc_monitor=self.monitors['voxel_exc']
+            syn_max=np.max(voxel_monitor['G_total'][0] / nS)
+            y_max=np.max(voxel_monitor['y'][0])
+            y_min=np.min(voxel_monitor['y'][0])
             figure()
-            if self.voxel_exc_monitor is None:
+            if voxel_exc_monitor is None:
                 ax=subplot(211)
             else:
                 ax=subplot(221)
-                syn_max=np.max([syn_max, np.max(self.voxel_exc_monitor['G_total'][0])])
-                y_max=np.max([y_max, np.max(self.voxel_exc_monitor['y'][0])])
-                y_min=np.min([y_min, np.min(self.voxel_exc_monitor['y'][0])])
-            ax.plot(self.voxel_monitor['G_total'].times / ms, self.voxel_monitor['G_total'][0] / nS)
+                syn_max=np.max([syn_max, np.max(voxel_exc_monitor['G_total'][0])])
+                y_max=np.max([y_max, np.max(voxel_exc_monitor['y'][0])])
+                y_min=np.min([y_min, np.min(voxel_exc_monitor['y'][0])])
+            ax.plot(voxel_monitor['G_total'].times / ms, voxel_monitor['G_total'][0] / nS)
             xlabel('Time (ms)')
             ylabel('Total Synaptic Activity (nS)')
             ylim(0, syn_max)
-            if self.voxel_exc_monitor is None:
+            if voxel_exc_monitor is None:
                 ax=subplot(212)
             else:
                 ax=subplot(222)
-            ax.plot(self.voxel_monitor['y'].times / ms, self.voxel_monitor['y'][0])
+            ax.plot(voxel_monitor['y'].times / ms, voxel_monitor['y'][0])
             xlabel('Time (ms)')
             ylabel('BOLD')
             ylim(y_min, y_max)
-            if self.voxel_exc_monitor is not None:
+            if voxel_exc_monitor is not None:
                 ax=subplot(223)
-                ax.plot(self.voxel_exc_monitor['G_total'].times / ms, self.voxel_exc_monitor['G_total'][0] / nS)
+                ax.plot(voxel_exc_monitor['G_total'].times / ms, voxel_exc_monitor['G_total'][0] / nS)
                 xlabel('Time (ms)')
                 ylabel('Total Synaptic Activity (nS)')
                 ylim(0, syn_max)
                 ax=subplot(224)
-                ax.plot(self.voxel_exc_monitor['y'].times / ms, self.voxel_exc_monitor['y'][0])
+                ax.plot(voxel_exc_monitor['y'].times / ms, voxel_exc_monitor['y'][0])
                 xlabel('Time (ms)')
                 ylabel('BOLD')
                 ylim(y_min, y_max)
-        show()
+        #show()
 
 
 ## Write monitor data to HDF5 file
@@ -391,7 +369,7 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
         # Write LFP data
         if record_lfp:
             f_lfp = f.create_group('lfp')
-            f_lfp['lfp']=wta_monitor.lfp_monitor.values
+            f_lfp['lfp']=wta_monitor.monitors['lfp'].values
 
         # Write voxel data
         if record_voxel:
@@ -417,89 +395,89 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
             f_vox.attrs['k3'] = voxel.k3
 
             f_vox_total=f_vox.create_group('total_syn')
-            f_vox_total['G_total'] = wta_monitor.voxel_monitor['G_total'].values
-            f_vox_total['s'] = wta_monitor.voxel_monitor['s'].values
-            f_vox_total['f_in'] = wta_monitor.voxel_monitor['f_in'].values
-            f_vox_total['v'] = wta_monitor.voxel_monitor['v'].values
-            f_vox_total['q'] = wta_monitor.voxel_monitor['q'].values
-            f_vox_total['y'] = wta_monitor.voxel_monitor['y'].values
+            f_vox_total['G_total'] = wta_monitor.monitors['voxel']['G_total'].values
+            f_vox_total['s'] = wta_monitor.monitors['voxel']['s'].values
+            f_vox_total['f_in'] = wta_monitor.monitors['voxel']['f_in'].values
+            f_vox_total['v'] = wta_monitor.monitors['voxel']['v'].values
+            f_vox_total['q'] = wta_monitor.monitors['voxel']['q'].values
+            f_vox_total['y'] = wta_monitor.monitors['voxel']['y'].values
 
             f_vox_exc=f_vox.create_group('exc_syn')
-            f_vox_exc['G_total'] = wta_monitor.voxel_exc_monitor['G_total'].values
-            f_vox_exc['s'] = wta_monitor.voxel_exc_monitor['s'].values
-            f_vox_exc['f_in'] = wta_monitor.voxel_exc_monitor['f_in'].values
-            f_vox_exc['v'] = wta_monitor.voxel_exc_monitor['v'].values
-            f_vox_exc['q'] = wta_monitor.voxel_exc_monitor['q'].values
-            f_vox_exc['y'] = wta_monitor.voxel_exc_monitor['y'].values
+            f_vox_exc['G_total'] = wta_monitor.monitors['voxel_exc']['G_total'].values
+            f_vox_exc['s'] = wta_monitor.monitors['voxel_exc']['s'].values
+            f_vox_exc['f_in'] = wta_monitor.monitors['voxel_exc']['f_in'].values
+            f_vox_exc['v'] = wta_monitor.monitors['voxel_exc']['v'].values
+            f_vox_exc['q'] = wta_monitor.monitors['voxel_exc']['q'].values
+            f_vox_exc['y'] = wta_monitor.monitors['voxel_exc']['y'].values
 
         # Write neuron state data
         if record_neuron_state:
             f_state = f.create_group('neuron_state')
-            f_state['g_ampa_r'] = wta_monitor.network_monitor['g_ampa_r'].values
-            f_state['g_ampa_x'] = wta_monitor.network_monitor['g_ampa_x'].values
-            f_state['g_ampa_b'] = wta_monitor.network_monitor['g_ampa_b'].values
-            f_state['g_nmda'] = wta_monitor.network_monitor['g_nmda'].values
-            f_state['g_gaba_a'] = wta_monitor.network_monitor['g_gaba_a'].values
-            #f_state['g_gaba_b'] = wta_monitor.network_monitor['g_gaba_b'].values
-            f_state['I_ampa_r'] = wta_monitor.network_monitor['I_ampa_r'].values
-            f_state['I_ampa_x'] = wta_monitor.network_monitor['I_ampa_x'].values
-            f_state['I_ampa_b'] = wta_monitor.network_monitor['I_ampa_b'].values
-            f_state['I_nmda'] = wta_monitor.network_monitor['I_nmda'].values
-            f_state['I_gaba_a'] = wta_monitor.network_monitor['I_gaba_a'].values
-            #f_state['I_gaba_b'] = wta_monitor.network_monitor['I_gaba_b'].values
-            f_state['vm'] = wta_monitor.network_monitor['vm'].values
+            f_state['g_ampa_r'] = wta_monitor.monitors['network']['g_ampa_r'].values
+            f_state['g_ampa_x'] = wta_monitor.monitors['network']['g_ampa_x'].values
+            f_state['g_ampa_b'] = wta_monitor.monitors['network']['g_ampa_b'].values
+            f_state['g_nmda'] = wta_monitor.monitors['network']['g_nmda'].values
+            f_state['g_gaba_a'] = wta_monitor.monitors['network']['g_gaba_a'].values
+            #f_state['g_gaba_b'] = wta_monitor.monitors['network']['g_gaba_b'].values
+            f_state['I_ampa_r'] = wta_monitor.monitors['network']['I_ampa_r'].values
+            f_state['I_ampa_x'] = wta_monitor.monitors['network']['I_ampa_x'].values
+            f_state['I_ampa_b'] = wta_monitor.monitors['network']['I_ampa_b'].values
+            f_state['I_nmda'] = wta_monitor.monitors['network']['I_nmda'].values
+            f_state['I_gaba_a'] = wta_monitor.monitors['network']['I_gaba_a'].values
+            #f_state['I_gaba_b'] = wta_monitor.monitors['network']['I_gaba_b'].values
+            f_state['vm'] = wta_monitor.monitors['network']['vm'].values
             f_state['record_idx'] = np.array(wta_monitor.record_idx)
 
         # Write network firing rate data
         if record_firing_rate:
             f_rates = f.create_group('firing_rates')
             e_rates = []
-            for rate_monitor in wta_monitor.population_rate_monitors['excitatory']:
-                e_rates.append(rate_monitor.smooth_rate(width=5 * ms, filter='gaussian'))
+            for i in range(num_groups):
+                e_rates.append(wta_monitor.monitors['excitatory_rate_%d' % i].smooth_rate(width=5 * ms, filter='gaussian'))
             f_rates['e_rates'] = np.array(e_rates)
 
-            i_rates = []
-            for rate_monitor in wta_monitor.population_rate_monitors['inhibitory']:
-                i_rates.append(rate_monitor.smooth_rate(width=5 * ms, filter='gaussian'))
+            i_rates = [wta_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
             f_rates['i_rates'] = np.array(i_rates)
 
         # Write input firing rate data
         if record_inputs:
             back_rate=f.create_group('background_rate')
-            back_rate['firing_rate']=wta_monitor.background_rate_monitor.smooth_rate(width=5*ms,filter='gaussian')
+            back_rate['firing_rate']=wta_monitor.monitors['background_rate'].smooth_rate(width=5*ms,filter='gaussian')
             task_rates=f.create_group('task_rates')
             t_rates=[]
-            for task_monitor in wta_monitor.task_rate_monitors:
-                t_rates.append(task_monitor.smooth_rate(width=5*ms,filter='gaussian'))
+            for i in range(num_groups):
+                t_rates.append(wta_monitor.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,filter='gaussian'))
             task_rates['firing_rates']=np.array(t_rates)
 
         # Write spike data
         if record_spikes:
             f_spikes = f.create_group('spikes')
-            for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['excitatory']):
+            for idx in num_groups:
+                spike_monitor=wta_monitor.monitors['excitatory_spike_%d' % idx]
                 if len(spike_monitor.spikes):
                     f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
                     f_spikes['e.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
 
-            for idx, spike_monitor in enumerate(wta_monitor.spike_monitors['inhibitory']):
-                if len(spike_monitor.spikes):
-                    f_spikes['i.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
-                    f_spikes['i.%d.spike_times' % idx] = np.array([s[1] for s in spike_monitor.spikes])
+            spike_monitor=wta_monitor.monitors['inhibitory_spike']
+            if len(spike_monitor.spikes):
+                f_spikes['i.spike_neurons'] = np.array([s[0] for s in spike_monitor.spikes])
+                f_spikes['i.spike_times'] = np.array([s[1] for s in spike_monitor.spikes])
 
     else:
         f_summary=f.create_group('summary')
+        endIdx=int(stim_end_time/defaultclock.dt)
+        startIdx=endIdx-500
         e_mean_final=[]
         e_max=[]
-        for rate_monitor in wta_monitor.population_rate_monitors['excitatory']:
+        for idx in num_groups:
+            rate_monitor=wta_monitor.monitors['excitatory_rate_%d' % idx]
             e_rate=rate_monitor.smooth_rate(width=5*ms, filter='gaussian')
-            e_mean_final.append(np.mean(e_rate[6500:7500]))
+            e_mean_final.append(np.mean(e_rate[startIdx:endIdx]))
             e_max.append(np.max(e_rate))
-        i_mean_final=[]
-        i_max=[]
-        for rate_monitor in wta_monitor.population_rate_monitors['inhibitory']:
-            i_rate=rate_monitor.smooth_rate(width=5*ms, filter='gaussian')
-            i_mean_final.append(np.mean(i_rate[6500:7500]))
-            i_max.append(np.max(i_rate))
+        rate_monitor=wta_monitor.monitors['inhibitory_rate']
+        i_rate=rate_monitor.smooth_rate(width=5*ms, filter='gaussian')
+        i_mean_final=[np.mean(i_rate[startIdx:endIdx])]
+        i_max=[np.max(i_rate)]
         f_summary['e_mean']=np.array(e_mean_final)
         f_summary['e_max']=np.array(e_max)
         f_summary['i_mean']=np.array(i_mean_final)

@@ -89,6 +89,9 @@ def init_connection(pop1, pop2, target_name, weight, p, delay, allow_self_conn=T
     return conn
 
 
+def weibull(x, alpha, beta):
+    return 1.0-0.5*np.exp(-(x/alpha)**beta)
 
 
-
+def rt_function(x, a, k, tr):
+    return a/(k*x)*np.tanh(a*k*x)+tr

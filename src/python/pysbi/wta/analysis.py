@@ -1,6 +1,7 @@
 import os
 from scipy.optimize import curve_fit
 import subprocess
+from brian.clock import defaultclock
 from brian.stdunits import Hz, ms, nA, mA
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
@@ -8,13 +9,14 @@ import h5py
 import math
 from jinja2 import Environment, FileSystemLoader
 from matplotlib import cm
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 from scikits.learn.linear_model import LinearRegression
-from pysbi import wta, voxel
+from pysbi import  voxel
 from pysbi.config import DATA_DIR, TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, plot_raster
+from pysbi.util.utils import Struct, save_to_png, save_to_eps, weibull, rt_function
 from pysbi.wta import network
 from pysbi.wta.network import run_wta
 
@@ -747,9 +749,14 @@ class TrialSummary:
         self.data=data
         self.contrast=contrast
         self.trial_idx=trial_idx
+
+        endIdx=int(data.stim_end_time/defaultclock.dt)
+        startIdx=endIdx-500
+        e_mean=np.mean(data.e_firing_rates[:,startIdx:endIdx],axis=1)
+
         # Index of max responding population
         self.decision_idx=0
-        if data.summary_data.e_mean[1]>data.summary_data.e_mean[0]:
+        if e_mean[1]>e_mean[0]:
             self.decision_idx=1
         # Index of maximum input
         self.max_in_idx=0
@@ -793,8 +800,9 @@ class MaxBOLDContrastRegression:
                                   self.bold_contrast_a * x_max + self.bold_contrast_b], line_style, label=label_str)
 
 
-def weibull(x, alpha, beta):
-    return 1.0-0.5*np.exp(-(x/alpha)**beta)
+
+
+
 
 class TrialSeries:
     """
@@ -816,6 +824,7 @@ class TrialSeries:
 
         # Load each trial data file and store TrialSummary object
         for i,contrast in enumerate(self.contrast_range):
+            print('loading contrast %.4f' % contrast)
             for trial_idx in range(num_trials):
 
                 file_name=os.path.join(dir,'%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial_idx))
@@ -888,12 +897,13 @@ class TrialSeries:
 
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.legend()
+        plt.legend(loc='best')
         if filename is None:
             plt.show()
         else:
-            save_to_png(fig, filename)
-            plt.close()
+            save_to_png(fig, '%s.png' % filename)
+            save_to_eps(fig, '%s.eps' % filename)
+            plt.close(fig)
 
     def compute_bold_contrast_regression(self):
         """
@@ -914,68 +924,88 @@ class TrialSeries:
         self.max_bold_regression=MaxBOLDContrastRegression(trials_max_bold, trials_max_bold_contrast)
         self.max_exc_bold_regression=MaxBOLDContrastRegression(trials_max_exc_bold, trials_max_exc_bold_contrast)
 
-    def plot_perc_correct(self, filename=None):
-        contrast_correct={}
+    def get_contrast_perc_correct_stats(self):
+        contrast_correct = {}
         for trial_summary in self.trial_summaries:
-            if trial_summary.contrast>0:
+            if trial_summary.contrast > 0:
                 if not trial_summary.contrast in contrast_correct:
-                    contrast_correct[trial_summary.contrast]=[]
+                    contrast_correct[trial_summary.contrast] = []
                 if trial_summary.correct:
                     contrast_correct[trial_summary.contrast].append(1.0)
                 else:
                     contrast_correct[trial_summary.contrast].append(0.0)
-
-        contrast=[]
-        perc_correct=[]
+        contrast = []
+        perc_correct = []
         for c in sorted(contrast_correct.keys()):
-            correct=contrast_correct[c]
+            correct = contrast_correct[c]
             contrast.append(c)
-            perc_correct.append(np.sum(correct)/len(correct))
+            perc_correct.append(np.sum(correct) / len(correct))
+        contrast = np.array(contrast)
+        #contrast.reshape([1,len(contrast)])
+        perc_correct = np.array(perc_correct)
+        #perc_correct.reshape([1,len(perc_correct)])
+        return contrast, perc_correct
 
-        contrast=np.array(contrast)
-        perc_correct=np.array(perc_correct)
+    def plot_perc_correct(self, filename=None):
+        contrast, perc_correct = self.get_contrast_perc_correct_stats()
 
         fig=plt.figure()
-        plt.plot(contrast,perc_correct,'o')
+        plt.plot(np.array(contrast)+.001,perc_correct,'o')
         try:
-            popt, pcov = curve_fit(weibull, contrast, perc_correct)
-            plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt))
+            popt, pcov = curve_fit(weibull, np.array(contrast)+.001, perc_correct)
+            plt.plot(np.array(range(1001))*.001,weibull(np.array(range(1001))*.001,*popt))
         except:
             print('error fitting performance data')
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
+        plt.xscale('log')
+        plt.xlim([.001,1])
         if filename is None:
             plt.show()
         else:
-            save_to_png(fig, filename)
-            plt.close()
+            save_to_png(fig, '%s.png' % filename)
+            save_to_eps(fig, '%s.eps' % filename)
+            plt.close(fig)
 
-    def plot_rt(self, filename=None):
-        contrast_rt={}
+    def get_contrast_rt_stats(self):
+        contrast_rt = {}
         for trial_summary in self.trial_summaries:
             if not trial_summary.data.rt is None:
                 if not trial_summary.contrast in contrast_rt:
-                    contrast_rt[trial_summary.contrast]=[]
+                    contrast_rt[trial_summary.contrast] = []
                 contrast_rt[trial_summary.contrast].append(trial_summary.data.rt)
-
-        contrast=[]
-        mean_rt=[]
-        std_rt=[]
+        contrast = []
+        mean_rt = []
+        std_rt = []
         for c in sorted(contrast_rt.keys()):
-            rts=contrast_rt[c]
+            rts = contrast_rt[c]
             contrast.append(c)
             mean_rt.append(np.mean(rts))
             std_rt.append(np.std(rts))
+        return contrast, mean_rt, std_rt
+
+    def plot_rt(self, filename=None):
+        contrast, mean_rt, std_rt = self.get_contrast_rt_stats()
 
         fig=plt.figure()
-        plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-')
+        #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-')
+        plt.plot(np.array(contrast)+.001,mean_rt,'o')
+        try:
+            popt,pcov=curve_fit(rt_function, np.array(contrast)+.001, mean_rt)
+            plt.plot(np.array(range(1001))*.001,rt_function(np.array(range(1001))*.001,*popt))
+        except Exception as e:
+            print(e.message)
+            print('error fitting RT data')
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
+        plt.xscale('log')
+        plt.xlim([.001,1])
         if filename is None:
             plt.show()
         else:
-            save_to_png(fig, filename)
-            plt.close()
+            save_to_png(fig, '%s.png' % filename)
+            save_to_eps(fig, '%s.eps' % filename)
+            plt.close(fig)
 
     def sort_by_correct(self):
         """
@@ -1469,11 +1499,141 @@ def plot_bold_contrast_lesion_one_param(output_dir, file_prefix, num_trials):
     plt.show()
 
 
-def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc):
+def create_dcs_comparison_report(data_dir, file_prefix, stim_levels, num_trials, reports_dir, edesc):
+    """
+    Create report for DCS simulations
+    data_dir=directory where datafiles are stored
+    file_prefix=prefix of data files (before p_dcs param)
+    stim_levels= dict of conditions - key is name, value is tuple of stimulation levels in pA of pyramidal and interneurons
+        i.e. {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)}
+    num_trials=number of trials in each condition
+    reports_dir=directory to put reports in
+    edesc=extra description
+    """
     make_report_dirs(reports_dir)
 
     report_info=Struct()
     report_info.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+    report_info.edesc=edesc
+
+    report_info.urls={}
+    series={}
+    for stim_level in stim_levels:
+        p_dcs=stim_levels[stim_level][0]
+        i_dcs=stim_levels[stim_level][1]
+        stim_report_dir=os.path.join(reports_dir,stim_level)
+        prefix='%s.p_dcs.%.4f.i_dcs.%.4f.control' % (file_prefix,p_dcs,i_dcs)
+        stim_report=create_network_report(data_dir,prefix,num_trials,stim_report_dir,'', version=report_info.version)
+        report_info.urls[stim_level]=os.path.join(stim_level,'wta_network.%s.html' % prefix)
+        series[stim_level]=stim_report.series
+        if stim_level=='control':
+            report_info.wta_params=stim_report.series.trial_summaries[0].data.wta_params
+            report_info.voxel_params=stim_report.series.trial_summaries[0].data.voxel_params
+            report_info.num_groups=stim_report.series.trial_summaries[0].data.num_groups
+            report_info.trial_duration=stim_report.series.trial_summaries[0].data.trial_duration
+            report_info.background_freq=stim_report.series.trial_summaries[0].data.background_freq
+            report_info.stim_start_time=stim_report.series.trial_summaries[0].data.stim_start_time
+            report_info.stim_end_time=stim_report.series.trial_summaries[0].data.stim_end_time
+            report_info.network_group_size=stim_report.series.trial_summaries[0].data.network_group_size
+            report_info.background_input_size=stim_report.series.trial_summaries[0].data.background_input_size
+            report_info.task_input_size=stim_report.series.trial_summaries[0].data.task_input_size
+            report_info.muscimol_amount=stim_report.series.trial_summaries[0].data.muscimol_amount
+            report_info.injection_site=stim_report.series.trial_summaries[0].data.injection_site
+        del stim_report
+    colors={'anode':'g','cathode':'b'}
+
+    furl='img/rt'
+    fname=os.path.join(reports_dir, furl)
+    report_info.rt_url='%s.png' % furl
+    fig=plt.figure()
+    contrast, mean_rt, std_rt = series['control'].get_contrast_rt_stats()
+    #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='ko-',label='control')
+    plt.plot(contrast,mean_rt,'ko',label='control')
+    try:
+        popt,pcov=curve_fit(rt_function, contrast, mean_rt)
+        plt.plot(np.array(range(101))*.01,rt_function(np.array(range(101))*.01,*popt),'k')
+    except:
+        print('error fitting RT data')
+    for stim_level in stim_levels:
+        if not stim_level=='control':
+            contrast, mean_rt, std_rt = series[stim_level].get_contrast_rt_stats()
+            #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-'+colors[color_idx],label=stim_level)
+            plt.plot(contrast,mean_rt,'o'+colors[stim_level])
+            try:
+                popt,pcov=curve_fit(rt_function, contrast, mean_rt)
+                plt.plot(np.array(range(101))*.01,rt_function(np.array(range(101))*.01,*popt),colors[stim_level])
+            except:
+                print('error fitting RT data')
+    plt.xlabel('Contrast')
+    plt.ylabel('Decision time (s)')
+    plt.xscale('log')
+    plt.legend()
+    save_to_png(fig, '%s.png' % fname)
+    save_to_eps(fig, '%s.eps' % fname)
+    plt.close(fig)
+
+    furl='img/perc_correct'
+    fname=os.path.join(reports_dir, furl)
+    report_info.perc_correct_url='%s.png' % furl
+    fig=plt.figure()
+    contrast, perc_correct = series['control'].get_contrast_perc_correct_stats()
+    plt.plot(contrast,perc_correct,'ok',label='control')
+    try:
+        popt, pcov = curve_fit(weibull, contrast, perc_correct)
+        plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt),'k')
+    except:
+        print('error fitting performance data')
+    for stim_level in stim_levels:
+        if not stim_level=='control':
+            contrast, perc_correct = series[stim_level].get_contrast_perc_correct_stats()
+            plt.plot(contrast,perc_correct,'o'+colors[stim_level],label=stim_level)
+            try:
+                popt, pcov = curve_fit(weibull, contrast, perc_correct, maxfev=3000)
+                plt.plot(np.array(range(101))*.01,weibull(np.array(range(101))*.01,*popt),colors[stim_level])
+            except:
+                print('error fitting performance data')
+    plt.xlabel('Contrast')
+    plt.ylabel('% correct')
+    plt.legend()
+    save_to_png(fig, '%s.png' % fname)
+    save_to_eps(fig, '%s.eps' % fname)
+    plt.close(fig)
+
+    furl='img/bold_contrast_regression'
+    fname=os.path.join(reports_dir,furl)
+    report_info.bold_contrast_regression_url='%s.png' % furl
+    x_min=np.min(series['control'].contrast_range)
+    x_max=np.max(series['control'].contrast_range)
+    fig=plt.figure()
+    series['control'].max_bold_regression.plot(x_max, x_min,'ok','k','control')
+    for stim_level in stim_levels:
+        if not stim_level=='control':
+            series[stim_level].max_bold_regression.plot(x_max, x_min,'o'+colors[stim_level],colors[stim_level],stim_level)
+    plt.xlabel('Input Contrast')
+    plt.ylabel('Max BOLD')
+    plt.legend(loc='best')
+    plt.xscale('log')
+    save_to_png(fig, '%s.png' % fname)
+    save_to_eps(fig, '%s.eps' % fname)
+    plt.close(fig)
+
+    #create report
+    template_file='wta_dcs_comparison.html'
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    template=env.get_template(template_file)
+
+    output_file='dcs_comparison.%s.html' % file_prefix
+    fname=os.path.join(reports_dir,output_file)
+    stream=template.stream(rinfo=report_info)
+    stream.dump(fname)
+
+def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc, version=None):
+    make_report_dirs(reports_dir)
+
+    report_info=Struct()
+    if version is None:
+        version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+    report_info.version = version
     report_info.edesc=edesc
 
     report_info.series=TrialSeries(data_dir, file_prefix, num_trials)
@@ -1494,24 +1654,24 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc)
     report_info.p_dcs=report_info.series.trial_summaries[0].data.p_dcs
     report_info.i_dcs=report_info.series.trial_summaries[0].data.i_dcs
 
-    furl='img/roc.png'
+    furl='img/roc'
     fname=os.path.join(reports_dir, furl)
-    report_info.roc_url=furl
+    report_info.roc_url='%s.png' % furl
     report_info.series.plot_multiclass_roc(filename=fname)
 
-    furl='img/rt.png'
+    furl='img/rt'
     fname=os.path.join(reports_dir, furl)
-    report_info.rt_url=furl
+    report_info.rt_url='%s.png' % furl
     report_info.series.plot_rt(filename=fname)
 
-    furl='img/perc_correct.png'
+    furl='img/perc_correct'
     fname=os.path.join(reports_dir, furl)
-    report_info.perc_correct_url=furl
+    report_info.perc_correct_url='%s.png' % furl
     report_info.series.plot_perc_correct(filename=fname)
 
-    furl='img/bold_contrast_regression.png'
+    furl='img/bold_contrast_regression'
     fname=os.path.join(reports_dir,furl)
-    report_info.bold_contrast_regression_url=furl
+    report_info.bold_contrast_regression_url='%s.png' % furl
     x_min=np.min(report_info.series.contrast_range)
     x_max=np.max(report_info.series.contrast_range)
     fig=plt.figure()
@@ -1519,8 +1679,10 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc)
     plt.xlabel('Input Contrast')
     plt.ylabel('Max BOLD')
     plt.legend(loc='best')
-    save_to_png(fig, fname)
-    plt.close()
+    plt.xscale('log')
+    save_to_png(fig, '%s.png' % fname)
+    save_to_eps(fig, '%s.eps' % fname)
+    plt.close(fig)
 
     report_info.trial_reports=[]
     for trial_summary in report_info.series.trial_summaries:
@@ -1536,6 +1698,8 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc)
     stream=template.stream(rinfo=report_info)
     stream.dump(fname)
 
+    return report_info
+
 def create_trial_report(trial_summary, reports_dir):
     trial_report=Struct()
     trial_report.trial_idx=trial_summary.trial_idx
@@ -1548,38 +1712,55 @@ def create_trial_report(trial_summary, reports_dir):
 
     trial_report.firing_rate_url = None
     if trial_summary.data.e_firing_rates is not None and trial_summary.data.i_firing_rates is not None:
-        furl = 'img/firing_rate.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        furl = 'img/firing_rate.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
         fname = os.path.join(reports_dir, furl)
-        trial_report.firing_rate_url = furl
-        fig = plt.figure()
-        ax = plt.subplot(211)
+        trial_report.firing_rate_url = '%s.png' % furl
+
+        # figure out max firing rate of all neurons (pyramidal and interneuron)
         max_pop_rate=0
         for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
-            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
             max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+        for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
+            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+
+        #fig = plt.figure()
+        fig=Figure()
+
+        # Plot pyramidal neuron firing rate
+        #ax = plt.subplot(211)
+        ax=fig.add_subplot(2,1,1)
+        for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
+            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+        # Plot line showing RT
         if trial_report.rt:
             rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
             ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+        plt.ylim([0,10+max_pop_rate])
+        plt.legend()
         plt.xlabel('Time (ms)')
         plt.ylabel('Firing Rate (Hz)')
-        ax = plt.subplot(212)
-        max_pop_rate=0
+
+        # Plot interneuron firing rate
+        #ax = plt.subplot(212)
+        ax = fig.add_subplot(2,1,2)
         for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
             ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
-            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+        # Plot line showing RT
         if trial_report.rt:
             rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
             ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+        plt.ylim([0,10+max_pop_rate])
         plt.xlabel('Time (ms)')
         plt.ylabel('Firing Rate (Hz)')
-        save_to_png(fig, fname)
-        plt.close()
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
     trial_report.neural_state_url=None
     if trial_summary.data.neural_state_rec is not None:
-        furl = 'img/neural_state.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        furl = 'img/neural_state.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
         fname = os.path.join(reports_dir, furl)
-        trial_report.neural_state_url = furl
+        trial_report.neural_state_url = '%s.png' % furl
         fig = plt.figure()
         for i in range(trial_summary.data.num_groups):
             times=np.array(range(len(trial_summary.data.neural_state_rec['g_ampa_r'][i*2])))*.1
@@ -1599,28 +1780,30 @@ def create_trial_report(trial_summary, reports_dir):
             ax.plot(times, trial_summary.data.neural_state_rec['g_gaba_a'][i * 2 + 1] / nA, label='GABA_A')
             plt.xlabel('Time (ms)')
             plt.ylabel('Conductance (nA)')
-        save_to_png(fig, fname)
-        plt.close()
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
     trial_report.lfp_url = None
     if trial_summary.data.lfp_rec is not None:
-        furl = 'img/lfp.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        furl = 'img/lfp.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
         fname = os.path.join(reports_dir, furl)
-        trial_report.lfp_url = furl
+        trial_report.lfp_url = '%s.png' % furl
         fig = plt.figure()
         ax = plt.subplot(111)
         lfp=get_lfp_signal(trial_summary.data)
         ax.plot(np.array(range(len(lfp))), lfp / mA)
         plt.xlabel('Time (ms)')
         plt.ylabel('LFP (mA)')
-        save_to_png(fig, fname)
-        plt.close()
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
     trial_report.voxel_url = None
     if trial_summary.data.voxel_rec is not None:
-        furl = 'img/voxel.contrast.%0.4f.trial.%d.png' % (trial_summary.contrast, trial_summary.trial_idx)
+        furl = 'img/voxel.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
         fname = os.path.join(reports_dir, furl)
-        trial_report.voxel_url = furl
+        trial_report.voxel_url = '%s.png' % furl
         end_idx=int(trial_summary.data.trial_duration/ms/.1)
         fig = plt.figure()
         ax = plt.subplot(211)
@@ -1631,15 +1814,20 @@ def create_trial_report(trial_summary, reports_dir):
         ax.plot(np.array(range(len(trial_summary.data.voxel_rec['y'][0])))*.1*ms, trial_summary.data.voxel_rec['y'][0])
         plt.xlabel('Time (s)')
         plt.ylabel('BOLD')
-        save_to_png(fig, fname)
-        plt.close()
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
     return trial_report
 
 if __name__=='__main__':
     #p_range=np.array(range(1,11))*.01
     #plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
-    prefix='wta.groups.2.duration.3.000.p_b_e.0.050.p_x_e.0.050.p_e_e.0.025.p_e_i.0.030.p_i_i.0.010.p_i_e.0.060.p_dcs.0.0000.i_dcs.0.0000.control'
-    dir='../../data/dcs'
-    t=TrialSeries(dir,prefix,10)
-    t.plot_rt()
+    #prefix='wta.groups.2.duration.3.000.p_b_e.0.050.p_x_e.0.050.p_e_e.0.025.p_e_i.0.030.p_i_i.0.010.p_i_e.0.060.p_dcs.0.0000.i_dcs.0.0000.control'
+    #dir='../../data/dcs'
+    #t=TrialSeries(dir,prefix,10)
+    #t.plot_rt()
+    create_dcs_comparison_report('/home/jbonaiuto/Projects/pySBI/data/dcs',
+        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
+        {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
+        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
