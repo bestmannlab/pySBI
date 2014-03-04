@@ -78,7 +78,8 @@ def run_rl_simulation():
             0.5900, 0.1400, 1.0800, 0.6300, 0.8500, 0.4000, 1.0400, 0.1600, 0.7900, 0.5300, 0.9200, 0.0800, 0.6800,
             0.4000, 0.3500, 0.8500, 0.7500, 1.1000]])
 
-               
+    choice=np.zeros(trials)
+    rew=np.zeros(trials)
     for trial in range(trials):
         input_freq=8+exp_rew*3.0
         reward_probs=prob_walk[:,trial]
@@ -104,6 +105,27 @@ def run_rl_simulation():
             reward=reward_mags[decision_idx]
         print('Reward=%.2f' % reward)
         exp_rew[decision_idx]=(1.0-alpha)*exp_rew[decision_idx]+alpha*reward
+        choice[trial]=decision_idx+1
+        rew[trial]=reward
+
+    probfile=open('prob.csv','w')
+    probfile.write(','.join([str(x) for x in prob_walk[0,0:trials]])+'\n')
+    probfile.write(','.join([str(x) for x in prob_walk[1,0:trials]]))
+    probfile.close()
+
+    magfile=open('mag.csv','w')
+    magfile.write(','.join([str(x) for x in mags[0,0:trials]])+'\n')
+    magfile.write(','.join([str(x) for x in mags[1,0:trials]]))
+    magfile.close()
+
+    outfile=open('choice.csv','w')
+    outfile.write(','.join([str(x) for x in choice]))
+    outfile.close()
+
+    rewfile=open('rew.csv','w')
+    rewfile.write(','.join([str(x) for x in rew]))
+    rewfile.close()
+
 
 if __name__=='__main__':
     run_rl_simulation()
