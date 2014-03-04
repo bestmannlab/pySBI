@@ -201,7 +201,6 @@ class ZhengVoxel(NeuronGroup):
         self.f_in=1.0
         self.s=0.0
         self.f_in=1.0
-        self.f_out=1.0
         self.v=1.0
         self.o_e=self.e_base
         self.cb=self.cb_0
@@ -209,7 +208,6 @@ class ZhengVoxel(NeuronGroup):
         self.oe_log=np.log(1.0-self.o_e/(1.0-self.g))
 
         self.q=1.0
-        self.y=0.0
 
         if network is not None:
             self.G_total = linked_var(network, 'g_syn', func=sum)
@@ -267,10 +265,8 @@ class Voxel(NeuronGroup):
         self.f_in=1
         self.s=0
         self.f_in=1
-        self.f_out=1
         self.v=1
         self.q=1
-        self.y=0
 
         if network is not None:
             self.G_total = linked_var(network, 'g_syn', func=sum)
