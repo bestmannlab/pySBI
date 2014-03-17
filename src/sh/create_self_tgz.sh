@@ -1,1 +1,1 @@
-tar cvzf pySBI.tgz -C /data/projects/ --exclude=.git --exclude=data pySBI
+tar cvzf pySBI.tgz -C /home/jbonaiuto/Projects/ --exclude=.git --exclude=data/dcs --exclude=data/multi_inh_pop --exclude=data/neglect --exclude=data/reports --exclude=data/wta-output --exclude=data/wta-two_param --exclude=pySBI.tgz pySBI
