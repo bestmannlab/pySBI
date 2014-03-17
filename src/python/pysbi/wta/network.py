@@ -1,5 +1,6 @@
 from numpy.matlib import randn, rand
 from time import time
+import brian
 from brian.clock import reinit_default_clock
 from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
@@ -20,6 +21,9 @@ from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 # Default parameters for a WTA network with multiple inhibitory populations
 from pysbi.wta.monitor import WTAMonitor, write_output
 
+brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
+                             gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
+                             usecodegenreset = True)
 default_params=Parameters(
     # Neuron parameters
     C = 200 * pF,
@@ -322,9 +326,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     # Compute BOLD signal
     if record_voxel:
         start_time = time()
-        wta_monitor.monitors['voxel_exc']=get_bold_signal(wta_monitor.voxel_monitor['G_total_exc'].values[0],
+        wta_monitor.monitors['voxel_exc']=get_bold_signal(wta_monitor.monitors['voxel']['G_total_exc'].values[0],
             voxel.params, [500, 2500], trial_duration)
-        wta_monitor.monitors['voxel']=get_bold_signal(wta_monitor.voxel_monitor['G_total'].values[0], voxel.params,
+        wta_monitor.monitors['voxel']=get_bold_signal(wta_monitor.monitors['voxel']['G_total'].values[0], voxel.params,
             [500, 2500], trial_duration)
         print "BOLD generation time: %.2fs" % (time() - start_time)
 
