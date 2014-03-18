@@ -49,10 +49,10 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
             reward=reward_mags[decision_idx]
         print('Reward=%.2f' % reward)
         exp_rew[decision_idx]=(1.0-alpha)*exp_rew[decision_idx]+alpha*reward
-        choice[trial]=decision_idx+1
+        choice[trial]=decision_idx
         rew[trial]=reward
 
-    param_ests,prop_correct=fit_behavior(reward_probs, mags, rew, choice)
+    param_ests,prop_correct=fit_behavior(prob_walk, mags, rew, choice)
     f = h5py.File(output_file, 'w')
     f.attrs['alpha']=param_ests[0]
     f.attrs['beta']=param_ests[1]
