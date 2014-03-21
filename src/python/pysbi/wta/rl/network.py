@@ -54,6 +54,8 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
 
     param_ests,prop_correct=fit_behavior(prob_walk, mags, rew, choice)
     f = h5py.File(output_file, 'w')
+    f.attrs['p_b_e']=wta_params.p_b_e
+    f.attrs['background_freq']=background_freq
     f.attrs['alpha']=param_ests[0]
     f.attrs['beta']=param_ests[1]
     f.attrs['prop_correct']=prop_correct
