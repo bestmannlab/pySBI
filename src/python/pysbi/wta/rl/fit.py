@@ -51,7 +51,7 @@ def fit_subject_behavior(mat_file):
     mags /= 100.0
     return fit_behavior(prob_walk, mags, rew, choice)
 
-def fit_behavior(prob_walk, mags, rew, choice):
+def fit_behavior(prob_walk, mags, rew, choice, plot=False):
     n_fits=100
     all_param_estimates=np.zeros((2,n_fits))
     all_energy=np.zeros(n_fits)
@@ -76,26 +76,27 @@ def fit_behavior(prob_walk, mags, rew, choice):
         prop_correct_vec[i]=float(len(np.where(fit_choices==choice)))/float(len(choice))
     prop_correct=np.mean(prop_correct_vec)
 
-    plt.figure()
-    ax=plt.subplot(3,1,1)
-    plt.title('Real probs')
-    plt.plot(np.transpose(prob_walk))
+    if plot:
+        plt.figure()
+        ax=plt.subplot(3,1,1)
+        plt.title('Real probs')
+        plt.plot(np.transpose(prob_walk))
 
-    ax=plt.subplot(3,1,2)
-    plt.title('Modelled probs + rewards')
-    plt.plot(np.transpose(fit_probs))
-    plt.plot(rew,'o')
+        ax=plt.subplot(3,1,2)
+        plt.title('Modelled probs + rewards')
+        plt.plot(np.transpose(fit_probs))
+        plt.plot(rew,'o')
 
-    ax=plt.subplot(3,1,3)
-    plt.title('Modelled vals - chosen vs unchosen')
-    ch_val=np.zeros(prob_walk.shape[1])
-    unch_val=np.zeros(prob_walk.shape[1])
-    for t in range(prob_walk.shape[1]):
-        ch_val[t] = fit_vals[choice[t],t]
-        unch_val[t] = fit_vals[1-choice[t],t];
-    plt.plot(ch_val)
-    plt.plot(unch_val,'r')
-    plt.show()
+        ax=plt.subplot(3,1,3)
+        plt.title('Modelled vals - chosen vs unchosen')
+        ch_val=np.zeros(prob_walk.shape[1])
+        unch_val=np.zeros(prob_walk.shape[1])
+        for t in range(prob_walk.shape[1]):
+            ch_val[t] = fit_vals[choice[t],t]
+            unch_val[t] = fit_vals[1-choice[t],t];
+        plt.plot(ch_val)
+        plt.plot(unch_val,'r')
+        plt.show()
 
     print('Learning rate: %.4f' % param_ests[0])
     print('Beta: %.4f' % param_ests[1])
