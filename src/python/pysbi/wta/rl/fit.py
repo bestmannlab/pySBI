@@ -51,6 +51,36 @@ def fit_subject_behavior(mat_file):
     mags /= 100.0
     return fit_behavior(prob_walk, mags, rew, choice)
 
+def test_fit_behavior(mat_file):
+    alpha=0.2
+    beta=10.0
+
+    mat = scipy.io.loadmat(mat_file)
+    prob_walk=mat['store']['dat'][0][0][0][0][13]
+    mags=mat['store']['dat'][0][0][0][0][15]
+
+    prob_walk=prob_walk.astype(np.float32, copy=False)
+    mags=mags.astype(np.float32, copy=False)
+    mags /= 100.0
+
+    model_choices=np.zeros(prob_walk.shape[1])
+    model_rew=np.zeros(prob_walk.shape[1])
+    model_vals=np.zeros(prob_walk.shape)
+    model_probs=np.zeros(prob_walk.shape)
+
+    exp_rew=np.array([0.5,0.5])
+    for i in range(prob_walk.shape[1]):
+        model_vals[:,i]=exp_rew
+        ev=model_vals[:,i]*mags[:,i]
+        model_probs[0,i]=1.0/(1.0+np.exp(-beta*(ev[0]-ev[1])))
+        model_probs[1,i]=1.0/(1.0+np.exp(-beta*(ev[1]-ev[0])))
+        model_choices[i]=np.random.choice([0,1],p=model_probs[:,i])
+        if np.random.rand()<=prob_walk[model_choices[i],i]:
+            model_rew[i]=1.0
+        exp_rew[model_choices[i]]=(1.0-alpha)*exp_rew[model_choices[i]]+alpha*model_rew[i]
+    return fit_behavior(prob_walk,mags,model_rew,model_choices)
+
+
 def fit_behavior(prob_walk, mags, rew, choice, plot=False):
     n_fits=100
     all_param_estimates=np.zeros((2,n_fits))
@@ -66,14 +96,14 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
     fit_vals=rescorla_td_prediction(rew, choice, param_ests[0])
     fit_probs=np.zeros(fit_vals.shape)
     ev=fit_vals*mags
-    fit_probs[0,:]=1/(1+np.exp(-param_ests[1]*(ev[0,:]-ev[1,:])))
-    fit_probs[1,:]=1/(1+np.exp(-param_ests[1]*(ev[1,:]-ev[0,:])))
+    fit_probs[0,:]=1.0/(1.0+np.exp(-param_ests[1]*(ev[0,:]-ev[1,:])))
+    fit_probs[1,:]=1.0/(1.0+np.exp(-param_ests[1]*(ev[1,:]-ev[0,:])))
     prop_correct_vec=np.zeros(100)
     for i in range(100):
         fit_choices=np.zeros(choice.shape)
         for t in range(len(choice)):
             fit_choices[t]=np.random.choice([0,1], p=fit_probs[:,t])
-        prop_correct_vec[i]=float(len(np.where(fit_choices==choice)))/float(len(choice))
+        prop_correct_vec[i]=float(len(np.where(fit_choices==choice)[0]))/float(len(choice))
     prop_correct=np.mean(prop_correct_vec)
 
     if plot:
@@ -105,4 +135,5 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
     return param_ests,prop_correct
 
 if __name__=='__main__':
-    fit_subject_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
+    #fit_subject_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
+    test_fit_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
