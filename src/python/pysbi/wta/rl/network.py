@@ -119,9 +119,11 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
 def launch_processes(background_freq_range, p_b_e_range,p_x_e):
     for background_freq in background_freq_range:
         for p_b_e in p_b_e_range:
-            out_file='../../data/rerw/noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f.h5' % (background_freq,p_b_e,p_x_e)
+            file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f' % (background_freq,p_b_e,p_x_e)
+            out_file='../../data/rerw/%s.h5' % file_base
+            log_file='%s.txt' % file_base
             args=['nohup','python','pysbi/wta/rl/network.py','--background',str(background_freq),'--p_b_e',str(p_b_e),
-                  '--p_x_e',str(p_x_e),'--output_file',out_file]
+                  '--p_x_e',str(p_x_e),'--output_file',out_file,'>',log_file]
             subprocess.Popen(args)
 
 if __name__=='__main__':
