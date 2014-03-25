@@ -121,10 +121,11 @@ def launch_processes(background_freq_range, p_b_e_range,p_x_e):
         for p_b_e in p_b_e_range:
             file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f' % (background_freq,p_b_e,p_x_e)
             out_file='../../data/rerw/%s.h5' % file_base
-            log_file='%s.txt' % file_base
+            log_filename='%s.txt' % file_base
+            log_file=open(log_filename,'wb')
             args=['nohup','python','pysbi/wta/rl/network.py','--background',str(background_freq),'--p_b_e',str(p_b_e),
-                  '--p_x_e',str(p_x_e),'--output_file',out_file,'>',log_file]
-            subprocess.Popen(args)
+                  '--p_x_e',str(p_x_e),'--output_file',out_file]
+            subprocess.Popen(args,stdout=log_file)
 
 if __name__=='__main__':
     ap = argparse.ArgumentParser(description='Run the WTA model')
