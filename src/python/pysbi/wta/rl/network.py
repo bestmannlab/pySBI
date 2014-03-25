@@ -92,7 +92,7 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         for idx,time in enumerate(times):
             if e_rates[0][idx]>=30 and e_rates[0][idx]>e_rates[1][idx]:
                 decision_idx=0
-            elif e_rates[1][idx]>=30 and e_rates[1][idx]>e_rates[2][idx]:
+            elif e_rates[1][idx]>=30 and e_rates[1][idx]>e_rates[0][idx]:
                 decision_idx=1
 
         reward=0.0
