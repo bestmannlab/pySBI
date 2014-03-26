@@ -84,7 +84,7 @@ class WTAMonitor():
             ax=subplot(211)
             max_rates=[np.max(self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz)]
             for i in range(self.num_groups):
-                max_rates.append(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz)
+                max_rates.append(np.max(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz))
             max_rate=np.max(max_rates)
 
             for idx in range(self.num_groups):
@@ -282,7 +282,7 @@ class WTAMonitor():
                 xlabel('Time (ms)')
                 ylabel('BOLD')
                 ylim(y_min, y_max)
-        #show()
+        show()
 
 
 ## Write monitor data to HDF5 file
