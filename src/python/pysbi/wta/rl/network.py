@@ -30,42 +30,43 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
     rew=np.zeros(trials)
     inputs=np.zeros(prob_walk.shape)
 
-    f = h5py.File(output_file, 'w')
-    f.attrs['trials']=trials
-    f.attrs['alpha']=alpha
+    if output_file is not None:
+        f = h5py.File(output_file, 'w')
+        f.attrs['trials']=trials
+        f.attrs['alpha']=alpha
 
-    f.attrs['num_groups'] = num_groups
-    f.attrs['trial_duration'] = trial_duration
-    f.attrs['background_freq'] = background_freq
-    f.attrs['C'] = wta_params.C
-    f.attrs['gL'] = wta_params.gL
-    f.attrs['EL'] = wta_params.EL
-    f.attrs['VT'] = wta_params.VT
-    f.attrs['Mg'] = wta_params.Mg
-    f.attrs['DeltaT'] = wta_params.DeltaT
-    f.attrs['E_ampa'] = wta_params.E_ampa
-    f.attrs['E_nmda'] = wta_params.E_nmda
-    f.attrs['E_gaba_a'] = wta_params.E_gaba_a
-    f.attrs['tau_ampa'] = wta_params.tau_ampa
-    f.attrs['tau1_nmda'] = wta_params.tau1_nmda
-    f.attrs['tau2_nmda'] = wta_params.tau2_nmda
-    f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
-    f.attrs['pyr_w_ampa_ext']=wta_params.pyr_w_ampa_ext
-    f.attrs['pyr_w_ampa_rec']=wta_params.pyr_w_ampa_rec
-    f.attrs['int_w_ampa_ext']=wta_params.int_w_ampa_ext
-    f.attrs['int_w_ampa_rec']=wta_params.int_w_ampa_rec
-    f.attrs['pyr_w_nmda']=wta_params.pyr_w_nmda
-    f.attrs['int_w_nmda']=wta_params.int_w_nmda
-    f.attrs['pyr_w_gaba_a']=wta_params.pyr_w_gaba_a
-    f.attrs['int_w_gaba_a']=wta_params.int_w_gaba_a
-    f.attrs['p_b_e'] = wta_params.p_b_e
-    f.attrs['p_x_e'] = wta_params.p_x_e
-    f.attrs['p_e_e'] = wta_params.p_e_e
-    f.attrs['p_e_i'] = wta_params.p_e_i
-    f.attrs['p_i_i'] = wta_params.p_i_i
-    f.attrs['p_i_e'] = wta_params.p_i_e
-    #f.attrs['p_dcs']=p_dcs
-    #f.attrs['i_dcs']=i_dcs
+        f.attrs['num_groups'] = num_groups
+        f.attrs['trial_duration'] = trial_duration
+        f.attrs['background_freq'] = background_freq
+        f.attrs['C'] = wta_params.C
+        f.attrs['gL'] = wta_params.gL
+        f.attrs['EL'] = wta_params.EL
+        f.attrs['VT'] = wta_params.VT
+        f.attrs['Mg'] = wta_params.Mg
+        f.attrs['DeltaT'] = wta_params.DeltaT
+        f.attrs['E_ampa'] = wta_params.E_ampa
+        f.attrs['E_nmda'] = wta_params.E_nmda
+        f.attrs['E_gaba_a'] = wta_params.E_gaba_a
+        f.attrs['tau_ampa'] = wta_params.tau_ampa
+        f.attrs['tau1_nmda'] = wta_params.tau1_nmda
+        f.attrs['tau2_nmda'] = wta_params.tau2_nmda
+        f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
+        f.attrs['pyr_w_ampa_ext']=wta_params.pyr_w_ampa_ext
+        f.attrs['pyr_w_ampa_rec']=wta_params.pyr_w_ampa_rec
+        f.attrs['int_w_ampa_ext']=wta_params.int_w_ampa_ext
+        f.attrs['int_w_ampa_rec']=wta_params.int_w_ampa_rec
+        f.attrs['pyr_w_nmda']=wta_params.pyr_w_nmda
+        f.attrs['int_w_nmda']=wta_params.int_w_nmda
+        f.attrs['pyr_w_gaba_a']=wta_params.pyr_w_gaba_a
+        f.attrs['int_w_gaba_a']=wta_params.int_w_gaba_a
+        f.attrs['p_b_e'] = wta_params.p_b_e
+        f.attrs['p_x_e'] = wta_params.p_x_e
+        f.attrs['p_e_e'] = wta_params.p_e_e
+        f.attrs['p_e_i'] = wta_params.p_e_i
+        f.attrs['p_i_i'] = wta_params.p_i_i
+        f.attrs['p_i_e'] = wta_params.p_i_e
+        #f.attrs['p_dcs']=p_dcs
+        #f.attrs['i_dcs']=i_dcs
 
     for trial in range(trials):
         vals[:,trial]=exp_rew
@@ -104,17 +105,19 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         rew[trial]=reward
 
     param_ests,prop_correct=fit_behavior(prob_walk, mags, rew, choice)
-    f.attrs['est_alpha']=param_ests[0]
-    f.attrs['est_beta']=param_ests[1]
-    f.attrs['prop_correct']=prop_correct
 
-    f['prob_walk']=prob_walk
-    f['mags']=mags
-    f['rew']=rew
-    f['choice']=choice
-    f['vals']=vals
-    f['inputs']=inputs
-    f.close()
+    if output_file is not None:
+        f.attrs['est_alpha']=param_ests[0]
+        f.attrs['est_beta']=param_ests[1]
+        f.attrs['prop_correct']=prop_correct
+
+        f['prob_walk']=prob_walk
+        f['mags']=mags
+        f['rew']=rew
+        f['choice']=choice
+        f['vals']=vals
+        f['inputs']=inputs
+        f.close()
 
 def launch_processes(background_freq_range, p_b_e_range,p_x_e):
     for background_freq in background_freq_range:
