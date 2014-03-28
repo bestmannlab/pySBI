@@ -347,8 +347,10 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
 #    f.attrs['w_gaba_b_min'] = wta_params.w_gaba_b_min
 #    f.attrs['w_gaba_b_max'] = wta_params.w_gaba_b_max
     f.attrs['pyr_w_ampa_ext']=wta_params.pyr_w_ampa_ext
+    f.attrs['pyr_w_ampa_bak']=wta_params.pyr_w_ampa_bak
     f.attrs['pyr_w_ampa_rec']=wta_params.pyr_w_ampa_rec
     f.attrs['int_w_ampa_ext']=wta_params.int_w_ampa_ext
+    f.attrs['int_w_ampa_bak']=wta_params.int_w_ampa_bak
     f.attrs['int_w_ampa_rec']=wta_params.int_w_ampa_rec
     f.attrs['pyr_w_nmda']=wta_params.pyr_w_nmda
     f.attrs['int_w_nmda']=wta_params.int_w_nmda

@@ -45,8 +45,10 @@ default_params=Parameters(
     #tau1_gaba_b = 10*ms,
     #tau2_gaba_b =100*ms,
     pyr_w_ampa_ext=2.1*nS,
+    pyr_w_ampa_bak=0.05*nS,
     pyr_w_ampa_rec=0.05*nS,
     int_w_ampa_ext=1.62*nS,
+    int_w_ampa_bak=0.04*nS,
     int_w_ampa_rec=0.04*nS,
     pyr_w_nmda=0.165*nS,
     int_w_nmda=0.13*nS,
@@ -208,9 +210,9 @@ class WTANetworkGroup(NeuronGroup):
         if self.background_input is not None:
             # Background -> E+I population connections
             self.connections['b->e_ampa']=init_connection(self.background_input, self.group_e, 'g_ampa_b',
-                self.params.pyr_w_ampa_ext, self.params.p_b_e, .5*ms)
+                self.params.pyr_w_ampa_bak, self.params.p_b_e, .5*ms)
             self.connections['b->i_ampa']=init_connection(self.background_input, self.group_i, 'g_ampa_b',
-                self.params.int_w_ampa_ext, self.params.p_b_e, .5*ms)
+                self.params.int_w_ampa_bak, self.params.p_b_e, .5*ms)
 
         if self.task_inputs is not None:
             # Task input -> E population connections
