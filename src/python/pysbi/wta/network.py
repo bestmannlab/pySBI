@@ -355,16 +355,16 @@ if __name__=='__main__':
     ap.add_argument('--num_groups', type=int, default=2, help='Number of input groups')
     ap.add_argument('--inputs', type=str, default='10,10', help='Input pattern (Hz) - comma-delimited list')
     ap.add_argument('--background', type=float, default=4.0, help='Background firing rate (Hz)')
-    ap.add_argument('--trial_duration', type=float, default=2.0, help='Trial duration (seconds)')
-    ap.add_argument('--p_b_e', type=float, default=0.01, help='Connection prob from background to excitatory neurons')
-    ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
-    ap.add_argument('--p_e_e', type=float, default=0.005, help='Connection prob from excitatory neurons to excitatory ' \
+    ap.add_argument('--trial_duration', type=float, default=4.0, help='Trial duration (seconds)')
+    ap.add_argument('--p_b_e', type=float, default=default_params.p_b_e, help='Connection prob from background to excitatory neurons')
+    ap.add_argument('--p_x_e', type=float, default=default_params.p_x_e, help='Connection prob from task inputs to excitatory neurons')
+    ap.add_argument('--p_e_e', type=float, default=default_params.p_e_e, help='Connection prob from excitatory neurons to excitatory ' \
                                                                'neurons in the same group')
-    ap.add_argument('--p_e_i', type=float, default=0.1, help='Connection prob from excitatory neurons to inhibitory ' \
+    ap.add_argument('--p_e_i', type=float, default=default_params.p_e_i, help='Connection prob from excitatory neurons to inhibitory ' \
                                                              'neurons in the same group')
-    ap.add_argument('--p_i_i', type=float, default=0.01, help='Connection prob from inhibitory neurons to inhibitory ' \
+    ap.add_argument('--p_i_i', type=float, default=default_params.p_i_i, help='Connection prob from inhibitory neurons to inhibitory ' \
                                                               'neurons in the same group')
-    ap.add_argument('--p_i_e', type=float, default=0.01, help='Connection prob from inhibitory neurons to excitatory ' \
+    ap.add_argument('--p_i_e', type=float, default=default_params.p_i_e, help='Connection prob from inhibitory neurons to excitatory ' \
                                                               'neurons in other groups')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
     ap.add_argument('--muscimol_amount', type=float, default=0.0, help='Amount of muscimol to inject')
@@ -379,6 +379,7 @@ if __name__=='__main__':
     ap.add_argument('--record_firing_rate', type=int, default=1, help='Record neuron firing rate')
     ap.add_argument('--record_inputs', type=int, default=0, help='Record network inputs')
     ap.add_argument('--save_summary_only', type=int, default=0, help='Save only summary data')
+    ap.add_argument('--plot_output', type=int, default=0, help='Plot data')
 
     argvals = ap.parse_args()
 
@@ -401,4 +402,5 @@ if __name__=='__main__':
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
         muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
-        p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA, save_summary_only=argvals.save_summary_only)
+        p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA, save_summary_only=argvals.save_summary_only,
+        plot_output=argvals.plot_output)
