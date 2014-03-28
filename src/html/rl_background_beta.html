@@ -1,0 +1,208 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+    <title>RL Session</title>
+</head>
+
+<body>
+
+<script type="text/javascript">
+    $(document).ready(function()
+            {
+                $("#session_table").tablesorter();
+            }
+    );
+</script>
+
+<h4>Simulation Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>Number of groups</td>
+        <td>{{ rinfo.num_groups }}</td>
+    </tr>
+    <tr>
+        <td>Trial_duration</td>
+        <td>{{ rinfo.trial_duration }}</td>
+    </tr>
+</table>
+
+<h4>Network Free Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>p_b_e</td>
+        <td>{{ rinfo.wta_params.p_b_e }}</td>
+    </tr>
+    <tr>
+        <td>p_x_e</td>
+        <td>{{ rinfo.wta_params.p_x_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td>{{ rinfo.wta_params.p_e_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td>{{ rinfo.wta_params.p_e_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td>{{ rinfo.wta_params.p_i_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td>{{ rinfo.wta_params.p_i_e }}</td>
+    </tr>
+</table>
+
+<h4>Network Fixed Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.wta_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.wta_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>EL</td>
+        <td>{{ rinfo.wta_params.EL }}</td>
+    </tr>
+    <tr>
+        <td>VT</td>
+        <td>{{ rinfo.wta_params.VT }}</td>
+    </tr>
+    <tr>
+        <td>DeltaT</td>
+        <td>{{ rinfo.wta_params.DeltaT }}</td>
+    </tr>
+    <tr>
+        <td>Mg</td>
+        <td>{{ rinfo.wta_params.Mg }}</td>
+    </tr>
+    <tr>
+        <td>E_ampa</td>
+        <td>{{ rinfo.wta_params.E_ampa }}</td>
+    </tr>
+    <tr>
+        <td>E_nmda</td>
+        <td>{{ rinfo.wta_params.E_nmda }}</td>
+    </tr>
+    <tr>
+        <td>E_gaba_a</td>
+        <td>{{ rinfo.wta_params.E_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>tau_ampa</td>
+        <td>{{ rinfo.wta_params.tau_ampa }}</td>
+    </tr>
+    <tr>
+        <td>tau1_nmda</td>
+        <td>{{ rinfo.wta_params.tau1_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau2_nmda</td>
+        <td>{{ rinfo.wta_params.tau2_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau_gaba_a</td>
+        <td>{{ rinfo.wta_params.tau_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>pyr_w_ampa_ext</td>
+        <td>{{ rinfo.wta_params.pyr_w_ampa_ext }}</td>
+    </tr>
+    <tr>
+        <td>pyr_w_ampa_bak</td>
+        <td>{{ rinfo.wta_params.pyr_w_ampa_bak }}</td>
+    </tr>
+    <tr>
+        <td>pyr_w_ampa_rec</td>
+        <td>{{ rinfo.wta_params.pyr_w_ampa_rec }}</td>
+    </tr>
+    <tr>
+        <td>int_w_ampa_ext</td>
+        <td>{{ rinfo.wta_params.int_w_ampa_ext }}</td>
+    </tr>
+    <tr>
+        <td>int_w_ampa_bak</td>
+        <td>{{ rinfo.wta_params.int_w_ampa_bak }}</td>
+    </tr>
+    <tr>
+        <td>int_w_ampa_rec</td>
+        <td>{{ rinfo.wta_params.int_w_ampa_rec }}</td>
+    </tr>
+    <tr>
+        <td>pyr_w_nmda</td>
+        <td>{{ rinfo.wta_params.pyr_w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>int_w_nmda</td>
+        <td>{{ rinfo.wta_params.int_w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>pyr_w_gaba_a</td>
+        <td>{{ rinfo.wta_params.pyr_w_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>int_w_gaba_a</td>
+        <td>{{ rinfo.wta_params.int_w_gaba_a }}</td>
+    </tr>
+</table>
+
+<h4>RL Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>alpha</td>
+        <td>{{ rinfo.alpha }}</td>
+    </tr>
+</table>
+
+<img width="50%" src="{{ rinfo.alpha_url }}"/>
+<br>
+<img width="50%" src="{{ rinfo.beta_url }}"/>
+
+<h4>Sessions</h4>
+<table border="1" class="tablesorter" id="session_table">
+    <thead>
+        <tr>
+            <th>Background rate</th>
+            <th>Estimated alpha</th>
+            <th>Estimated beta</th>
+            <th>Proportion correct</th>
+            <th>% no response</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for session_data in rinfo.sessions %}
+    <tr>
+        <td><a href="{{ session_data.fname }}">{{ session_data.background_freq }}</a></td>
+        <td>{{ session_data.est_alpha }}</td>
+        <td>{{ session_data.est_beta }}</td>
+        <td>{{ session_data.prop_correct }}</td>
+        <td>{{ session_data.perc_no_response }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
