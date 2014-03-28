@@ -1,6 +1,7 @@
 import os
 from scipy.optimize import curve_fit
 import subprocess
+from brian import Hz, ms, nA, mA
 from brian.clock import defaultclock
 from brian.stdunits import Hz, ms, nA, mA
 from brian.units import second, farad, siemens, volt, amp
@@ -8,7 +9,7 @@ from scipy.signal import *
 import h5py
 import math
 from jinja2 import Environment, FileSystemLoader
-from matplotlib import cm
+from matplotlib import cm, pyplot
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
@@ -185,11 +186,12 @@ class FileInfo():
         self.e_firing_rates=None
         self.i_firing_rates=None
         self.rt=None
+        self.choice=None
         if 'firing_rates' in f:
             f_rates=f['firing_rates']
             self.e_firing_rates=np.array(f_rates['e_rates'])
             self.i_firing_rates=np.array(f_rates['i_rates'])
-            self.rt=get_response_time(self.e_firing_rates, self.stim_start_time, self.stim_end_time)
+            self.rt,self.choice=get_response_time(self.e_firing_rates, self.stim_start_time, self.stim_end_time)
 
         self.background_rate=None
         if 'background_rate' in f:
@@ -557,7 +559,7 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=
     rate_2=e_firing_rates[1]
     times=np.array(range(len(rate_1)))*.0001
     rt=None
-    winner=None
+    winner=-1
     for idx,time in enumerate(times):
         time=time*second
         if stim_start_time < time < stim_end_time:
@@ -570,9 +572,9 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, threshold=
                     rt=time-stim_start_time
             else:
                 if (winner==1 and rate_1[idx]<threshold) or (winner==2 and rate_2[idx]<threshold):
-                    winner=None
+                    winner=-1
                     rt=None
-    return rt
+    return rt,winner
 
 
 def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix):
@@ -1831,3 +1833,123 @@ if __name__=='__main__':
         'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
         {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
         '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
+
+class TrialReport:
+    def __init__(self, data_dir, file_prefix, reports_dir, trial_idx):
+        self.data_dir=data_dir
+        self.reports_dir=reports_dir
+        self.file_prefix=file_prefix
+        self.trial_idx=trial_idx
+
+    def create_report(self):
+        data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix))
+        self.input_freq=data.input_freq
+        self.rt=data.rt
+
+        self.firing_rate_url = None
+        if data.e_firing_rates is not None and data.i_firing_rates is not None:
+            furl = 'img/firing_rate.%s' % self.file_prefix
+            fname = os.path.join(self.reports_dir, furl)
+            self.firing_rate_url = '%s.png' % furl
+
+            # figure out max firing rate of all neurons (pyramidal and interneuron)
+            max_pop_rate=0
+            for i, pop_rate in enumerate(data.e_firing_rates):
+                max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+            for i, pop_rate in enumerate(data.i_firing_rates):
+                max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+
+            #fig = plt.figure()
+            fig=Figure()
+
+            # Plot pyramidal neuron firing rate
+            #ax = plt.subplot(211)
+            ax=fig.add_subplot(2,1,1)
+            for i, pop_rate in enumerate(data.e_firing_rates):
+                ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+                # Plot line showing RT
+            if self.rt:
+                rt_idx=(data.stim_start_time+self.rt)/ms
+                ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+            plt.ylim([0,10+max_pop_rate])
+            plt.legend()
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Firing Rate (Hz)')
+
+            # Plot interneuron firing rate
+            #ax = plt.subplot(212)
+            ax = fig.add_subplot(2,1,2)
+            for i, pop_rate in enumerate(data.i_firing_rates):
+                ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+                # Plot line showing RT
+            if self.rt:
+                rt_idx=(data.stim_start_time+self.rt)/ms
+                ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
+            plt.ylim([0,10+max_pop_rate])
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Firing Rate (Hz)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        self.neural_state_url=None
+        if data.neural_state_rec is not None:
+            furl = 'img/neural_state.%s' % self.file_prefix
+            fname = os.path.join(self.reports_dir, furl)
+            self.neural_state_url = '%s.png' % furl
+            fig = plt.figure()
+            for i in range(data.num_groups):
+                times=np.array(range(len(data.neural_state_rec['g_ampa_r'][i*2])))*.1
+                ax = plt.subplot(data.num_groups * 100 + 20 + (i * 2 + 1))
+                ax.plot(times, data.neural_state_rec['g_ampa_r'][i * 2] / nA, label='AMPA-recurrent')
+                ax.plot(times, data.neural_state_rec['g_ampa_x'][i * 2] / nA, label='AMPA-task')
+                ax.plot(times, data.neural_state_rec['g_ampa_b'][i * 2] / nA, label='AMPA-backgrnd')
+                ax.plot(times, data.neural_state_rec['g_nmda'][i * 2] / nA, label='NMDA')
+                ax.plot(times, data.neural_state_rec['g_gaba_a'][i * 2] / nA, label='GABA_A')
+                plt.xlabel('Time (ms)')
+                plt.ylabel('Conductance (nA)')
+                ax = plt.subplot(data.num_groups * 100 + 20 + (i * 2 + 2))
+                ax.plot(times, data.neural_state_rec['g_ampa_r'][i * 2 + 1] / nA, label='AMPA-recurrent')
+                ax.plot(times, data.neural_state_rec['g_ampa_x'][i * 2 + 1] / nA, label='AMPA-task')
+                ax.plot(times, data.neural_state_rec['g_ampa_b'][i * 2 + 1] / nA, label='AMPA-backgrnd')
+                ax.plot(times, data.neural_state_rec['g_nmda'][i * 2 + 1] / nA, label='NMDA')
+                ax.plot(times, data.neural_state_rec['g_gaba_a'][i * 2 + 1] / nA, label='GABA_A')
+                plt.xlabel('Time (ms)')
+                plt.ylabel('Conductance (nA)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        self.lfp_url = None
+        if data.lfp_rec is not None:
+            furl = 'img/lfp.%s' % self.file_prefix
+            fname = os.path.join(self.reports_dir, furl)
+            self.lfp_url = '%s.png' % furl
+            fig = plt.figure()
+            ax = plt.subplot(111)
+            lfp=get_lfp_signal(data)
+            ax.plot(np.array(range(len(lfp))), lfp / mA)
+            plt.xlabel('Time (ms)')
+            plt.ylabel('LFP (mA)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        self.voxel_url = None
+        if data.voxel_rec is not None:
+            furl = 'img/voxel.%s' % self.file_prefix
+            fname = os.path.join(self.reports_dir, furl)
+            self.voxel_url = '%s.png' % furl
+            end_idx=int(data.trial_duration/ms/.1)
+            fig = plt.figure()
+            ax = plt.subplot(211)
+            ax.plot(np.array(range(end_idx))*.1, data.voxel_rec['G_total'][0][:end_idx] / nA)
+            plt.xlabel('Time (ms)')
+            plt.ylabel('Total Synaptic Activity (nA)')
+            ax = plt.subplot(212)
+            ax.plot(np.array(range(len(data.voxel_rec['y'][0])))*.1*ms, data.voxel_rec['y'][0])
+            plt.xlabel('Time (s)')
+            plt.ylabel('BOLD')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
