@@ -6,6 +6,7 @@ from brian.units import second
 import numpy as np
 import scipy.io
 import h5py
+from pysbi.wta.analysis import get_response_time
 from pysbi.wta.network import default_params, run_wta
 from pysbi.wta.rl.fit import fit_behavior
 
@@ -20,7 +21,7 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
 
     num_groups=2
     exp_rew=np.array([0.5, 0.5])
-    trial_duration=3*second
+    trial_duration=4*second
     alpha=0.4
 
     trials=prob_walk.shape[1]
@@ -28,6 +29,7 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
     vals=np.zeros(prob_walk.shape)
     choice=np.zeros(trials)
     rew=np.zeros(trials)
+    rts=np.zeros(trials)
     inputs=np.zeros(prob_walk.shape)
 
     if output_file is not None:
@@ -52,8 +54,10 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         f.attrs['tau2_nmda'] = wta_params.tau2_nmda
         f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
         f.attrs['pyr_w_ampa_ext']=wta_params.pyr_w_ampa_ext
+        f.attrs['pyr_w_ampa_bak']=wta_params.pyr_w_ampa_bak
         f.attrs['pyr_w_ampa_rec']=wta_params.pyr_w_ampa_rec
         f.attrs['int_w_ampa_ext']=wta_params.int_w_ampa_ext
+        f.attrs['int_w_ampa_bak']=wta_params.int_w_ampa_bak
         f.attrs['int_w_ampa_rec']=wta_params.int_w_ampa_rec
         f.attrs['pyr_w_nmda']=wta_params.pyr_w_nmda
         f.attrs['int_w_nmda']=wta_params.int_w_nmda
@@ -88,20 +92,15 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         i_rates = [trial_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
         trial_group['i_rates'] = np.array(i_rates)
 
-        times=np.array(range(len(e_rates[0])))*.0001
-        decision_idx=-1
-        for idx,time in enumerate(times):
-            if e_rates[0][idx]>=30 and e_rates[0][idx]>e_rates[1][idx]:
-                decision_idx=0
-            elif e_rates[1][idx]>=30 and e_rates[1][idx]>e_rates[0][idx]:
-                decision_idx=1
+        rt,decision_idx=get_response_time(e_rates, 1*second, 2*second)
 
         reward=0.0
-        if np.random.random()<=prob_walk[decision_idx,trial]:
+        if decision_idx>=0 and np.random.random()<=prob_walk[decision_idx,trial]:
             reward=1.0
 
         exp_rew[decision_idx]=(1.0-alpha)*exp_rew[decision_idx]+alpha*reward
         choice[trial]=decision_idx
+        rts[trial]=rt
         rew[trial]=reward
 
     param_ests,prop_correct=fit_behavior(prob_walk, mags, rew, choice)
@@ -117,6 +116,7 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         f['choice']=choice
         f['vals']=vals
         f['inputs']=inputs
+        f['rts']=rts
         f.close()
 
 def launch_processes(background_freq_range, p_b_e_range,p_x_e):
