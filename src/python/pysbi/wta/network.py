@@ -45,10 +45,10 @@ default_params=Parameters(
     #tau1_gaba_b = 10*ms,
     #tau2_gaba_b =100*ms,
     pyr_w_ampa_ext=2.1*nS,
-    pyr_w_ampa_bak=0.05*nS,
+    pyr_w_ampa_bak=2.1*nS,
     pyr_w_ampa_rec=0.05*nS,
     int_w_ampa_ext=1.62*nS,
-    int_w_ampa_bak=0.04*nS,
+    int_w_ampa_bak=1.62*nS,
     int_w_ampa_rec=0.04*nS,
     pyr_w_nmda=0.165*nS,
     int_w_nmda=0.13*nS,
@@ -260,10 +260,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 
     # Create network inputs
     def make_task_rate_function(rate):
-        return lambda t: ((stim_start_time<t<stim_end_time and background_freq*Hz+rate+20*np.random.randn()*Hz) or background_freq*Hz)
-    def make_background_rate_function(rate):
-        return lambda t: 5*np.random.randn(background_input_size)*Hz+rate
-    background_input=PoissonGroup(background_input_size, rates=make_background_rate_function(background_freq*Hz))
+        return lambda t: ((stim_start_time<t<stim_end_time and rate) or 1*Hz)
+    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz)
     task_inputs=[]
     for i in range(num_groups):
         rate=input_freq[i]*Hz
