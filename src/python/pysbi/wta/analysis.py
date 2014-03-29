@@ -559,23 +559,23 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
     rate_2=e_firing_rates[1]
     times=np.array(range(len(rate_1)))*.0001
     rt=None
-    winner=-1
+    decision_idx=-1
     for idx,time in enumerate(times):
         time=time*second
         if stim_start_time < time < stim_end_time:
             if rt is None:
                 if rate_1[idx]>=upper_threshold and rate_2[idx]<=lower_threshold:
-                    winner=1
+                    decision_idx=0
                     rt=time-stim_start_time
                 elif rate_2[idx]>=upper_threshold and rate_1[idx]<=lower_threshold:
-                    winner=2
+                    decision_idx=1
                     rt=time-stim_start_time
             else:
-                if (winner==1 and (rate_1[idx]<upper_threshold or rate_2[idx]>lower_threshold)) or \
-                   (winner==2 and (rate_2[idx]<upper_threshold or rate_1[idx]>lower_threshold)):
-                    winner=-1
+                if (decision_idx==0 and (rate_1[idx]<upper_threshold or rate_2[idx]>lower_threshold)) or \
+                   (decision_idx==1 and (rate_2[idx]<upper_threshold or rate_1[idx]>lower_threshold)):
+                    decision_idx=-1
                     rt=None
-    return rt,winner
+    return rt,decision_idx
 
 
 def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix):
