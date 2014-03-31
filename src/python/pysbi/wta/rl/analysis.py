@@ -74,7 +74,6 @@ class FileInfo:
 
         self.trial_e_rates=[]
         self.trial_i_rates=[]
-        self.trial_rts=[]
         for i in range(self.num_trials):
             f_trial=f['trial %d' % i]
             self.trial_e_rates.append(np.array(f_trial['e_rates']))
@@ -223,7 +222,7 @@ class SessionReport:
             trial_prefix='%s.trial.%d' % (self.file_prefix,trial)
             rt=None
             if data.rts is not None:
-                rt=data.rts[trial]
+                rt=data.rts[trial]*second
             trial_data=TrialData(trial+1, data.trial_duration, data.vals[:,trial], trial_ev, data.inputs[:,trial],
                 data.choice[trial], data.rew[trial], trial_prefix, self.reports_dir, data.trial_e_rates[trial],
                 data.trial_i_rates[trial], rt=rt)
@@ -285,15 +284,15 @@ class BackgroundBetaReport:
 
         clf = LinearRegression()
         clf.fit(background_vals, alpha_vals)
-        alpha_a = clf.coef_[0]
-        alpha_b = clf.intercept_
-        alpha_r_sqr=clf.score(background_vals, alpha_vals)
+        self.alpha_a = clf.coef_[0][0]
+        self.alpha_b = clf.intercept_[0]
+        self.alpha_r_sqr=clf.score(background_vals, alpha_vals)
 
         clf = LinearRegression()
         clf.fit(background_vals, beta_vals)
-        beta_a = clf.coef_[0]
-        beta_b = clf.intercept_
-        beta_r_sqr=clf.score(background_vals, beta_vals)
+        self.beta_a = clf.coef_[0][0]
+        self.beta_b = clf.intercept_[0]
+        self.beta_r_sqr=clf.score(background_vals, beta_vals)
 
         # Create alpha plot
         furl='img/alpha_fit'
@@ -303,11 +302,12 @@ class BackgroundBetaReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.background_range,alpha_vals,'o')
-        ax.plot([self.background_range[0], self.background_range[-1]], [alpha_a * self.background_range[0] + alpha_b,
-                                                                        alpha_a * self.background_range[-1] + alpha_b],
-            label='r^2=%.3f' % alpha_r_sqr)
+        ax.plot([self.background_range[0], self.background_range[-1]], [self.alpha_a * self.background_range[0] + self.alpha_b,
+                                                                        self.alpha_a * self.background_range[-1] + self.alpha_b],
+            label='r^2=%.3f' % self.alpha_r_sqr)
         ax.set_xlabel('background')
         ax.set_ylabel('alpha')
+        ax.set_ylim([0,1])
         ax.legend(loc='best')
 
         save_to_png(fig, '%s.png' % fname)
@@ -322,9 +322,9 @@ class BackgroundBetaReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.background_range,beta_vals,'o')
-        ax.plot([self.background_range[0], self.background_range[-1]], [beta_a * self.background_range[0] + beta_b,
-                                                                        beta_a * self.background_range[-1] + beta_b],
-            label='r^2=%.3f' % beta_r_sqr)
+        ax.plot([self.background_range[0], self.background_range[-1]], [self.beta_a * self.background_range[0] + self.beta_b,
+                                                                        self.beta_a * self.background_range[-1] + self.beta_b],
+            label='r^2=%.3f' % self.beta_r_sqr)
         ax.set_xlabel('background')
         ax.set_ylabel('beta')
         ax.legend(loc='best')

@@ -177,6 +177,27 @@
     </tr>
 </table>
 
+<h4>Fit</h4>
+<table border="1">
+    <tr>
+        <td>Parameter</td>
+        <td>a</td>
+        <td>b</td>
+        <td>r^2</td>
+    </tr>
+    <tr>
+        <td>alpha</td>
+        <td>{{ rinfo.alpha_a|round(2) }}</td>
+        <td>{{ rinfo.alpha_b|round(2) }}</td>
+        <td>{{ rinfo.alpha_r_sqr|round(2) }}</td>
+    </tr>
+    <tr>
+        <td>beta</td>
+        <td>{{ rinfo.beta_a|round(2) }}</td>
+        <td>{{ rinfo.beta_b|round(2) }}</td>
+        <td>{{ rinfo.beta_r_sqr|round(2) }}</td>
+    </tr>
+</table>
 <img width="50%" src="{{ rinfo.alpha_url }}"/>
 <br>
 <img width="50%" src="{{ rinfo.beta_url }}"/>
@@ -188,14 +209,14 @@
             <th>Background rate</th>
             <th>Estimated alpha</th>
             <th>Estimated beta</th>
-            <th>Proportion correct</th>
+            <th>% correct</th>
             <th>% no response</th>
         </tr>
     </thead>
     <tbody>
     {% for session_data in rinfo.sessions %}
     <tr>
-        <td><a href="{{ session_data.fname }}">{{ session_data.background_freq }}</a></td>
+        <td><a href="{{ session_data.furl }}">{{ session_data.background_freq }}</a></td>
         <td>{{ session_data.est_alpha }}</td>
         <td>{{ session_data.est_beta }}</td>
         <td>{{ session_data.prop_correct }}</td>
