@@ -305,7 +305,7 @@ class BackgroundBetaReport:
         ax.plot([self.background_range[0], self.background_range[-1]], [self.alpha_a * self.background_range[0] + self.alpha_b,
                                                                         self.alpha_a * self.background_range[-1] + self.alpha_b],
             label='r^2=%.3f' % self.alpha_r_sqr)
-        ax.set_xlabel('background')
+        ax.set_xlabel('background frequency')
         ax.set_ylabel('alpha')
         ax.set_ylim([0,1])
         ax.legend(loc='best')
@@ -325,7 +325,7 @@ class BackgroundBetaReport:
         ax.plot([self.background_range[0], self.background_range[-1]], [self.beta_a * self.background_range[0] + self.beta_b,
                                                                         self.beta_a * self.background_range[-1] + self.beta_b],
             label='r^2=%.3f' % self.beta_r_sqr)
-        ax.set_xlabel('background')
+        ax.set_xlabel('background frequency')
         ax.set_ylabel('beta')
         ax.legend(loc='best')
 
