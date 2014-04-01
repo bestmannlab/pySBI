@@ -245,12 +245,13 @@ class SessionReport:
 
 
 class BackgroundBetaReport:
-    def __init__(self, data_dir, file_prefix, background_range, reports_dir, edesc):
+    def __init__(self, data_dir, file_prefix, background_range, reports_dir, trials, edesc):
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.background_range=background_range
         self.reports_dir=reports_dir
         self.edesc=edesc
+        self.trials=trials
 
         self.sessions=[]
 
@@ -260,20 +261,21 @@ class BackgroundBetaReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
-        beta_vals=np.zeros((len(self.background_range),1))
-        alpha_vals=np.zeros((len(self.background_range),1))
-        background_vals=np.zeros((len(self.background_range),1))
+        beta_vals=np.zeros((len(self.background_range)*self.trials,1))
+        alpha_vals=np.zeros((len(self.background_range)*self.trials,1))
+        background_vals=np.zeros((len(self.background_range)*self.trials,1))
 
         for idx,background_freq in enumerate(self.background_range):
-            print('background=%0.2f Hz' % background_freq)
-            session_prefix=self.file_prefix % background_freq
-            session_report_dir=os.path.join(self.reports_dir,session_prefix)
-            session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
-            session_report.create_report()
-            self.sessions.append(session_report)
-            background_vals[idx]=background_freq
-            alpha_vals[idx]=session_report.est_alpha
-            beta_vals[idx]=session_report.est_beta
+            for trial in range(self.trials):
+                print('background=%0.2f Hz, trial %d' % (background_freq, trial))
+                session_prefix=self.file_prefix % (background_freq,trial)
+                session_report_dir=os.path.join(self.reports_dir,session_prefix)
+                session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
+                session_report.create_report()
+                self.sessions.append(session_report)
+                background_vals[idx*self.trials+trial]=background_freq
+                alpha_vals[idx*self.trials+trial]=session_report.est_alpha
+                beta_vals[idx*self.trials+trial]=session_report.est_beta
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
@@ -301,7 +303,7 @@ class BackgroundBetaReport:
 
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        ax.plot(self.background_range,alpha_vals,'o')
+        ax.plot(background_vals,alpha_vals,'o')
         ax.plot([self.background_range[0], self.background_range[-1]], [self.alpha_a * self.background_range[0] + self.alpha_b,
                                                                         self.alpha_a * self.background_range[-1] + self.alpha_b],
             label='r^2=%.3f' % self.alpha_r_sqr)
@@ -321,7 +323,7 @@ class BackgroundBetaReport:
 
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        ax.plot(self.background_range,beta_vals,'o')
+        ax.plot(background_vals,beta_vals,'o')
         ax.plot([self.background_range[0], self.background_range[-1]], [self.beta_a * self.background_range[0] + self.beta_b,
                                                                         self.beta_a * self.background_range[-1] + self.beta_b],
             label='r^2=%.3f' % self.beta_r_sqr)
@@ -342,91 +344,3 @@ class BackgroundBetaReport:
         fname=os.path.join(self.reports_dir,self.output_file)
         stream=template.stream(rinfo=self)
         stream.dump(fname)
-
-
-def analyze_background_beta(data_dir, file_prefix, background_range):
-    beta_vals=np.zeros((len(background_range),1))
-    alpha_vals=np.zeros((len(background_range),1))
-    background_vals=np.zeros((len(background_range),1))
-    for idx,background in enumerate(background_range):
-        file_name=os.path.join(data_dir,file_prefix % background)
-        f = h5py.File(file_name)
-        alpha=float(f.attrs['est_alpha'])
-        beta=float(f.attrs['est_beta'])
-        beta_vals[idx]=beta
-        alpha_vals[idx]=alpha
-        background_vals[idx]=background
-
-    clf = LinearRegression()
-    clf.fit(background_vals, alpha_vals)
-    alpha_a = clf.coef_[0]
-    alpha_b = clf.intercept_
-    alpha_r_sqr=clf.score(background_vals, alpha_vals)
-
-    clf = LinearRegression()
-    clf.fit(background_vals, beta_vals)
-    beta_a = clf.coef_[0]
-    beta_b = clf.intercept_
-    beta_r_sqr=clf.score(background_vals, beta_vals)
-
-    plt.figure()
-    plt.plot(background_range,alpha_vals,'o')
-    plt.plot([background_range[0], background_range[-1]], [alpha_a * background_range[0] + alpha_b, alpha_a * background_range[-1] + alpha_b], label='r^2=%.3f' % alpha_r_sqr)
-    plt.xlabel('background')
-    plt.ylabel('alpha')
-    plt.legend()
-
-    plt.figure()
-    plt.plot(background_range,beta_vals,'o')
-    plt.plot([background_range[0], background_range[-1]], [beta_a * background_range[0] + beta_b, beta_a * background_range[-1] + beta_b], label='r^2=%.3f' % beta_r_sqr)
-    plt.xlabel('background')
-    plt.ylabel('beta')
-    plt.legend()
-
-    plt.show()
-
-def analyze_p_b_e_beta(data_dir, file_prefix, p_b_e_range):
-    beta_vals=np.zeros((len(p_b_e_range),1))
-    alpha_vals=np.zeros((len(p_b_e_range),1))
-    p_b_e_vals=np.zeros((len(p_b_e_range),1))
-    for idx,p_b_e in enumerate(p_b_e_range):
-        file_name=os.path.join(data_dir,file_prefix % p_b_e)
-        f = h5py.File(file_name)
-        alpha=float(f.attrs['alpha'])
-        beta=float(f.attrs['beta'])
-        beta_vals[idx]=beta
-        alpha_vals[idx]=alpha
-        p_b_e_vals[idx]=p_b_e
-
-    clf = LinearRegression()
-    clf.fit(p_b_e_vals, alpha_vals)
-    alpha_a = clf.coef_[0]
-    alpha_b = clf.intercept_
-    alpha_r_sqr=clf.score(p_b_e_vals, alpha_vals)
-
-    clf = LinearRegression()
-    clf.fit(p_b_e_vals, beta_vals)
-    beta_a = clf.coef_[0]
-    beta_b = clf.intercept_
-    beta_r_sqr=clf.score(p_b_e_vals, beta_vals)
-
-    plt.figure()
-    plt.plot(p_b_e_range,alpha_vals,'o')
-    plt.plot([p_b_e_range[0], p_b_e_range[-1]], [alpha_a * p_b_e_range[0] + alpha_b, alpha_a * p_b_e_range[-1] + alpha_b], label='r^2=%.3f' % alpha_r_sqr)
-    plt.xlabel('p_b_e')
-    plt.ylabel('alpha')
-    plt.legend()
-
-    plt.figure()
-    plt.plot(p_b_e_range,beta_vals,'o')
-    plt.plot([p_b_e_range[0], p_b_e_range[-1]], [beta_a * p_b_e_range[0] + beta_b, beta_a * p_b_e_range[-1] + beta_b], label='r^2=%.3f' % beta_r_sqr)
-    plt.xlabel('p_b_e')
-    plt.ylabel('beta')
-    plt.legend()
-
-    plt.show()
-
-if __name__=='__main__':
-    beta_report=BackgroundBetaReport('../../data/rerw','noise.background_%0.2f.p_b_e_0.0600.p_x_e_0.0100',range(10),
-        '../../data/reports/rl/background_beta','')
-    beta_report.create_report()
