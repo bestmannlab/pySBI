@@ -119,10 +119,10 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         f['rts']=rts
         f.close()
 
-def launch_processes(background_freq_range, p_b_e_range,p_x_e):
+def launch_processes(background_freq_range, p_b_e, p_x_e, trials):
     for background_freq in background_freq_range:
-        for p_b_e in p_b_e_range:
-            file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f' % (background_freq,p_b_e,p_x_e)
+        for trial in range(trials):
+            file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f.trial_%d' % (background_freq,p_b_e,p_x_e,trial)
             out_file='../../data/rerw/%s.h5' % file_base
             log_filename='%s.txt' % file_base
             log_file=open(log_filename,'wb')
