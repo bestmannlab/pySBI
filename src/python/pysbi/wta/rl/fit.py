@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import scipy.io
 from scipy.optimize import leastsq, fmin_ncg, fmin
 import matplotlib.pyplot as plt
@@ -30,10 +31,23 @@ def energy_learn_rewards(x, mags, rewards, choice):
 
 def fit_subject_behavior(mat_file):
     mat = scipy.io.loadmat(mat_file)
-    prob_walk=mat['store']['dat'][0][0][0][0][13]
-    mags=mat['store']['dat'][0][0][0][0][15]
-    rew=np.squeeze(mat['store']['dat'][0][0][0][0][16])
-    resp=np.squeeze(mat['store']['dat'][0][0][0][0][10])
+    prob_idx=-1
+    mags_idx=-1
+    rew_idx=-1
+    resp_idx=-1
+    for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
+        if dtype=='RESP':
+            resp_idx=idx
+        elif dtype=='probswalk':
+            prob_idx=idx
+        elif dtype=='mags':
+            mags_idx=idx
+        elif dtype=='outcrec':
+            rew_idx=idx
+    prob_walk=mat['store']['dat'][0][0][0][0][prob_idx]
+    mags=mat['store']['dat'][0][0][0][0][mags_idx]
+    rew=np.squeeze(mat['store']['dat'][0][0][0][0][rew_idx])
+    resp=np.squeeze(mat['store']['dat'][0][0][0][0][resp_idx])
 
     prob_walk=prob_walk.astype(np.float32, copy=False)
     mags=mags.astype(np.float32, copy=False)
@@ -47,6 +61,10 @@ def fit_subject_behavior(mat_file):
     choice[np.where(resp==lh_button)]=1
 
     missed_idx=np.where(np.isnan(resp)==True)[0]
+    choice=np.delete(choice, missed_idx)
+    rew=np.delete(rew, missed_idx)
+    mags=np.delete(mags, missed_idx, axis=1)
+    prob_walk=np.delete(prob_walk, missed_idx, axis=1)
 
     mags /= 100.0
     return fit_behavior(prob_walk, mags, rew, choice)
@@ -87,7 +105,7 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
     all_energy=np.zeros(n_fits)
     for i in range(n_fits):
         params=np.random.rand(2)
-        all_param_estimates[:,i]=fmin(energy_learn_rewards, params, args=(mags, rew, choice))
+        all_param_estimates[:,i]=fmin(energy_learn_rewards, params, args=(mags, rew, choice), disp=False)
         all_energy[i]=energy_learn_rewards(all_param_estimates[:,i],mags,rew,choice)
 
     min_idx=np.where(all_energy==np.min(all_energy))[0][0]
@@ -134,6 +152,68 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
 
     return param_ests,prop_correct
 
+def fit_subjects(data_dir, num_subjects, stim_cond):
+    """
+    stim_cond: 1=lat, 2=med, 3=nostim1, 4=nostim2
+    """
+    stim_order=np.array([
+        [6,1,2,4],
+        [6,1,2,4],
+        [6,1,2,4],
+        [4,1,2,5],
+        [4,1,2,5],
+        [4,1,2,5],
+        [6,3,1,4],
+        [6,3,1,4],
+        [6,3,1,4],
+        [4,3,1,5],
+        [4,3,1,5],
+        [4,3,1,5],
+        [3,4,1,5],
+        [3,4,1,5],
+        [3,4,1,5],
+        [1,6,2,4],
+        [1,6,2,4],
+        [1,6,2,4],
+        [3,6,1,4],
+        [3,6,1,4],
+        [3,6,1,4],
+        [1,4,2,5],
+        [1,4,2,5],
+        [1,4,2,5]
+    ])
+
+    beta_vals=[]
+    alpha_vals=[]
+    for i in range(num_subjects):
+        subj_id=i+1
+        subj_session_number=stim_order[i,stim_cond-1]
+        file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_session_number))
+        if os.path.exists(file_name):
+            print(file_name)
+            param_ests,prop_correct=fit_subject_behavior(file_name)
+            alpha_vals.append(param_ests[0])
+            beta_vals.append(param_ests[1])
+
+    fig=plt.figure()
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_vals), bins=10, range=(0.0,1.0))
+    bin_width=alpha_bins[1]-alpha_bins[0]
+    plt.bar(alpha_bins[:-1], alpha_hist, width=bin_width)
+    plt.xlim(0,1.0)
+    plt.xlabel('Alpha')
+    plt.ylabel('Proportion of Subjects')
+
+    fig=plt.figure()
+    beta_hist,beta_bins=np.histogram(np.array(beta_vals), bins=10, range=(0.0,20.0))
+    bin_width=beta_bins[1]-beta_bins[0]
+    plt.bar(beta_bins[:-1], beta_hist, width=bin_width)
+    plt.xlim(0.0,20.0)
+    plt.xlabel('Beta')
+    plt.ylabel('Proportion of Subjects')
+
+    plt.show()
+
 if __name__=='__main__':
     #fit_subject_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
-    test_fit_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
+    #test_fit_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
+    fit_subjects('../../data/rerw/subjects/',24,4)
