@@ -1,7 +1,7 @@
-clear all;
+function fit_behavior(file_name)
 
 %load ../../../data/rerw/subjects/1_2.mat
-load ../../../data/rerw/subjects/value1_s3_t2.mat
+load(['../../../data/rerw/subjects/' file_name]);
 
 rh_button = 7;
 lh_button = 22;
