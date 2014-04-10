@@ -152,10 +152,15 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
 
     return param_ests,prop_correct
 
-def fit_subjects(data_dir, num_subjects, stim_cond):
+def fit_subjects(data_dir, num_subjects):
     """
     stim_cond: 1=lat, 2=med, 3=nostim1, 4=nostim2
     """
+    LAT=0
+    MED=1
+    NOSTIM1=2
+    NOSTIM2=3
+
     stim_order=np.array([
         [6,1,2,4],
         [6,1,2,4],
@@ -183,32 +188,35 @@ def fit_subjects(data_dir, num_subjects, stim_cond):
         [1,4,2,5]
     ])
 
-    beta_vals=[]
-    alpha_vals=[]
+    beta_diff_vals=[]
+    alpha_diff_vals=[]
     for i in range(num_subjects):
         subj_id=i+1
-        subj_session_number=stim_order[i,stim_cond-1]
-        file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_session_number))
-        if os.path.exists(file_name):
-            print(file_name)
-            param_ests,prop_correct=fit_subject_behavior(file_name)
-            alpha_vals.append(param_ests[0])
-            beta_vals.append(param_ests[1])
+        subj_stim_session_number=stim_order[i,LAT]
+        stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+        subj_control_session_number=stim_order[i,NOSTIM2]
+        control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
+        if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
+            print('processing subject %d' % subj_id)
+            control_param_ests,control_prop_correct=fit_subject_behavior(control_file_name)
+            stim_param_ests,stim_prop_correct=fit_subject_behavior(stim_file_name)
+            alpha_diff_vals.append(stim_param_ests[0]-control_param_ests[0])
+            beta_diff_vals.append(stim_param_ests[1]-control_param_ests[1])
 
     fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_vals), bins=10, range=(0.0,1.0))
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0))
     bin_width=alpha_bins[1]-alpha_bins[0]
     plt.bar(alpha_bins[:-1], alpha_hist, width=bin_width)
-    plt.xlim(0,1.0)
-    plt.xlabel('Alpha')
+    plt.xlim(-1.0,1.0)
+    plt.xlabel('Change in alpha')
     plt.ylabel('Proportion of Subjects')
 
     fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_vals), bins=10, range=(0.0,20.0))
+    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0))
     bin_width=beta_bins[1]-beta_bins[0]
     plt.bar(beta_bins[:-1], beta_hist, width=bin_width)
-    plt.xlim(0.0,20.0)
-    plt.xlabel('Beta')
+    plt.xlim(-10.0,10.0)
+    plt.xlabel('Change in beta')
     plt.ylabel('Proportion of Subjects')
 
     plt.show()
@@ -216,4 +224,4 @@ def fit_subjects(data_dir, num_subjects, stim_cond):
 if __name__=='__main__':
     #fit_subject_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
     #test_fit_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
-    fit_subjects('../../data/rerw/subjects/',24,4)
+    fit_subjects('../../data/rerw/subjects/',24)
