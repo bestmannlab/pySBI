@@ -1,17 +1,18 @@
 import argparse
+import os
 import subprocess
 from brian.clock import defaultclock
-from brian.stdunits import ms
+from brian.stdunits import ms, pA
 from brian.units import second
 import numpy as np
 import scipy.io
 import h5py
 from pysbi.wta.analysis import get_response_time
 from pysbi.wta.network import default_params, run_wta
-from pysbi.wta.rl.fit import fit_behavior
+from pysbi.wta.rl.fit import fit_behavior, stim_order, LAT, NOSTIM1
 
 
-def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None):
+def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5, p_dcs=0*pA, i_dcs=0*pA, output_file=None):
     mat = scipy.io.loadmat(mat_file)
     prob_walk=mat['store']['dat'][0][0][0][0][13]
     mags=mat['store']['dat'][0][0][0][0][15]
@@ -22,7 +23,6 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
     num_groups=2
     exp_rew=np.array([0.5, 0.5])
     trial_duration=4*second
-    alpha=0.4
 
     trials=prob_walk.shape[1]
 
@@ -80,8 +80,8 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         inputs[:,trial]=10.0+inputs[:,trial]*2.5
 
         trial_monitor=run_wta(wta_params, num_groups, inputs[:,trial], trial_duration, background_freq=background_freq,
-            record_lfp=False, record_voxel=False, record_neuron_state=False, record_spikes=False,
-            record_firing_rate=True, record_inputs=False, plot_output=False)
+            p_dcs=p_dcs, i_dcs=i_dcs, record_lfp=False, record_voxel=False, record_neuron_state=False,
+            record_spikes=False, record_firing_rate=True, record_inputs=False, plot_output=False)
 
         trial_group=f.create_group('trial %d' % trial)
         e_rates = []
@@ -119,7 +119,48 @@ def run_rl_simulation(mat_file, wta_params, background_freq=5, output_file=None)
         f['rts']=rts
         f.close()
 
-def launch_processes(background_freq_range, p_b_e, p_x_e, trials):
+
+def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
+    background_freq=(beta-87.46)/-12.5
+    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
+        output_file=output_file % 'control')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
+        output_file=output_file % 'anode')
+
+
+def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file, p_b_e, p_x_e):
+    f = h5py.File(behavioral_param_file)
+    control_group=f['control']
+    alpha_vals=np.array(control_group['alpha'])
+    beta_vals=np.array(control_group['beta'])
+    for j in range(num_virtual_subjects):
+        stim_file_name=None
+        control_file_name=None
+        while True:
+            i=np.random.choice(range(num_real_subjects))
+            subj_id=i+1
+            subj_stim_session_number=stim_order[i,LAT]
+            stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+            subj_control_session_number=stim_order[i,NOSTIM1]
+            control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
+            if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
+                break
+        alpha_hist,alpha_bins=np.histogram(alpha_vals, density=True)
+        bin_width=alpha_bins[1]-alpha_bins[0]
+        alpha=np.random.choice(alpha_bins[:-1]+bin_width*.5, p=alpha_hist)
+        beta_hist,beta_bins=np.histogram(beta_vals, density=True)
+        bin_width=beta_bins[1]-beta_bins[0]
+        beta=np.random.choice(beta_bins[:-1]+bin_width*.5, p=beta_hist)
+        file_base='virtual_subject_'+j+'.%s'
+        out_file='../../data/rerw/%s.h5' % file_base
+        log_filename='%s.txt' % file_base
+        log_file=open(log_filename,'wb')
+        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
+              stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
+              '--output_file',out_file]
+        subprocess.Popen(args,stdout=log_file)
+
+def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials):
     for background_freq in background_freq_range:
         for trial in range(trials):
             file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f.trial_%d' % (background_freq,p_b_e,p_x_e,trial)
@@ -131,11 +172,13 @@ def launch_processes(background_freq_range, p_b_e, p_x_e, trials):
             subprocess.Popen(args,stdout=log_file)
 
 if __name__=='__main__':
-    ap = argparse.ArgumentParser(description='Run the WTA model')
-    ap.add_argument('--mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject mat file')
-    ap.add_argument('--background', type=float, default=5.0, help='Background firing rate (Hz)')
+    ap = argparse.ArgumentParser(description='Simulate a subject')
+    ap.add_argument('--control_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject control mat file')
+    ap.add_argument('--stim_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject stim mat file')
     ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
     ap.add_argument('--p_b_e', type=float, default=0.03, help='Connection prob from background to excitatory neurons')
+    ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
+    ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
 
     argvals = ap.parse_args()
@@ -144,4 +187,4 @@ if __name__=='__main__':
     wta_params.p_b_e=argvals.p_b_e
     wta_params.p_x_e=argvals.p_x_e
 
-    run_rl_simulation(argvals.mat_file, wta_params, background_freq=argvals.background, output_file=argvals.output_file)
+    simulate_subject(argvals.control_mat_file, argvals.stim_mat_file, wta_params, argvals.alpha, argvals.beta, argvals.output_file)
