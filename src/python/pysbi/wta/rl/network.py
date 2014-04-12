@@ -181,20 +181,20 @@ def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials
             subprocess.Popen(args,stdout=log_file)
 
 if __name__=='__main__':
-    simulate_subjects('../../data/rerw/subjects/',24,50,'../../data/rerw/subjects/fitted_behavioral_params.h5',0.03,0.06)
-#    ap = argparse.ArgumentParser(description='Simulate a subject')
-#    ap.add_argument('--control_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject control mat file')
-#    ap.add_argument('--stim_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject stim mat file')
-#    ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
-#    ap.add_argument('--p_b_e', type=float, default=0.03, help='Connection prob from background to excitatory neurons')
-#    ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
-#    ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
-#    ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
-#
-#    argvals = ap.parse_args()
-#
-#    wta_params=default_params
-#    wta_params.p_b_e=argvals.p_b_e
-#    wta_params.p_x_e=argvals.p_x_e
-#
-#    simulate_subject(argvals.control_mat_file, argvals.stim_mat_file, wta_params, argvals.alpha, argvals.beta, argvals.output_file)
+    #simulate_subjects('../../data/rerw/subjects/',24,50,'../../data/rerw/subjects/fitted_behavioral_params.h5',0.03,0.06)
+    ap = argparse.ArgumentParser(description='Simulate a subject')
+    ap.add_argument('--control_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject control mat file')
+    ap.add_argument('--stim_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject stim mat file')
+    ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
+    ap.add_argument('--p_b_e', type=float, default=0.03, help='Connection prob from background to excitatory neurons')
+    ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
+    ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
+    ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
+
+    argvals = ap.parse_args()
+
+    wta_params=default_params
+    wta_params.p_b_e=argvals.p_b_e
+    wta_params.p_x_e=argvals.p_x_e
+
+    simulate_subject(argvals.control_mat_file, argvals.stim_mat_file, wta_params, argvals.alpha, argvals.beta, argvals.output_file)
