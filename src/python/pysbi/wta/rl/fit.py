@@ -2,7 +2,43 @@ import numpy as np
 import os
 import scipy.io
 from scipy.optimize import leastsq, fmin_ncg, fmin
+import h5py
 import matplotlib.pyplot as plt
+
+"""
+    stim_cond: 1=lat, 2=med, 3=nostim1, 4=nostim2
+    """
+LAT=0
+MED=1
+NOSTIM1=2
+NOSTIM2=3
+
+stim_order=np.array([
+    [6,1,2,4],
+    [6,1,2,4],
+    [6,1,2,4],
+    [4,1,2,5],
+    [4,1,2,5],
+    [4,1,2,5],
+    [6,3,1,4],
+    [6,3,1,4],
+    [6,3,1,4],
+    [4,3,1,5],
+    [4,3,1,5],
+    [4,3,1,5],
+    [3,4,1,5],
+    [3,4,1,5],
+    [3,4,1,5],
+    [1,6,2,4],
+    [1,6,2,4],
+    [1,6,2,4],
+    [3,6,1,4],
+    [3,6,1,4],
+    [3,6,1,4],
+    [1,4,2,5],
+    [1,4,2,5],
+    [1,4,2,5]
+])
 
 def rescorla_td_prediction(walkset, choices, learning_rate):
     x_pre=np.zeros((2,walkset.shape[0]))
@@ -152,59 +188,47 @@ def fit_behavior(prob_walk, mags, rew, choice, plot=False):
 
     return param_ests,prop_correct
 
-def fit_subjects(data_dir, num_subjects):
-    """
-    stim_cond: 1=lat, 2=med, 3=nostim1, 4=nostim2
-    """
-    LAT=0
-    MED=1
-    NOSTIM1=2
-    NOSTIM2=3
-
-    stim_order=np.array([
-        [6,1,2,4],
-        [6,1,2,4],
-        [6,1,2,4],
-        [4,1,2,5],
-        [4,1,2,5],
-        [4,1,2,5],
-        [6,3,1,4],
-        [6,3,1,4],
-        [6,3,1,4],
-        [4,3,1,5],
-        [4,3,1,5],
-        [4,3,1,5],
-        [3,4,1,5],
-        [3,4,1,5],
-        [3,4,1,5],
-        [1,6,2,4],
-        [1,6,2,4],
-        [1,6,2,4],
-        [3,6,1,4],
-        [3,6,1,4],
-        [3,6,1,4],
-        [1,4,2,5],
-        [1,4,2,5],
-        [1,4,2,5]
-    ])
-
-    beta_diff_vals=[]
-    alpha_diff_vals=[]
+def fit_subjects(data_dir, num_subjects, output_file):
+    beta_stim_vals=[]
+    alpha_stim_vals=[]
+    beta_control_vals=[]
+    alpha_control_vals=[]
     for i in range(num_subjects):
         subj_id=i+1
         subj_stim_session_number=stim_order[i,LAT]
         stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
-        subj_control_session_number=stim_order[i,NOSTIM2]
+        subj_control_session_number=stim_order[i,NOSTIM1]
         control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
         if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
             print('processing subject %d' % subj_id)
             control_param_ests,control_prop_correct=fit_subject_behavior(control_file_name)
+            alpha_control_vals.append(control_param_ests[0])
+            beta_control_vals.append(control_param_ests[1])
             stim_param_ests,stim_prop_correct=fit_subject_behavior(stim_file_name)
-            alpha_diff_vals.append(stim_param_ests[0]-control_param_ests[0])
-            beta_diff_vals.append(stim_param_ests[1]-control_param_ests[1])
+            alpha_stim_vals.append(stim_param_ests[0])
+            beta_stim_vals.append(stim_param_ests[1])
+            #alpha_diff_vals.append(stim_param_ests[0]-control_param_ests[0])
+            #beta_diff_vals.append(stim_param_ests[1]-control_param_ests[1])
+
+    alpha_control_vals=np.array(alpha_control_vals)
+    beta_control_vals=np.array(beta_control_vals)
+    alpha_stim_vals=np.array(alpha_stim_vals)
+    beta_stim_vals=np.array(beta_stim_vals)
+
+    alpha_diff_vals=alpha_stim_vals-alpha_control_vals
+    beta_diff_vals=beta_stim_vals-beta_control_vals
+
+    f = h5py.File(output_file, 'w')
+    control_group=f.create_group('control')
+    control_group['alpha']=alpha_control_vals
+    control_group['beta']=beta_control_vals
+    stim_group=f.create_group('stim')
+    stim_group['alpha']=alpha_stim_vals
+    stim_group['beta']=beta_stim_vals
+    f.close()
 
     fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0))
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0), density=True)
     bin_width=alpha_bins[1]-alpha_bins[0]
     plt.bar(alpha_bins[:-1], alpha_hist, width=bin_width)
     plt.xlim(-1.0,1.0)
@@ -212,7 +236,7 @@ def fit_subjects(data_dir, num_subjects):
     plt.ylabel('Proportion of Subjects')
 
     fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0))
+    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0), density=True)
     bin_width=beta_bins[1]-beta_bins[0]
     plt.bar(beta_bins[:-1], beta_hist, width=bin_width)
     plt.xlim(-10.0,10.0)
@@ -224,4 +248,4 @@ def fit_subjects(data_dir, num_subjects):
 if __name__=='__main__':
     #fit_subject_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
     #test_fit_behavior('../../data/rerw/subjects/value1_s1_t2.mat')
-    fit_subjects('../../data/rerw/subjects/',24)
+    fit_subjects('../../data/rerw/subjects/',24,'../../data/rerw/subjects/fitted_behavioral_params.h5')
