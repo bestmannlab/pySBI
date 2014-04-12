@@ -147,11 +147,13 @@ def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavio
                 break
         alpha_hist,alpha_bins=np.histogram(alpha_vals, density=True)
         bin_width=alpha_bins[1]-alpha_bins[0]
-        alpha=np.random.choice(alpha_bins[:-1]+bin_width*.5, p=alpha_hist)
+        alpha_bin=np.random.choice(alpha_bins[:-1], p=alpha_hist*bin_width)
+        alpha=alpha_bin+np.random.rand()*bin_width
         beta_hist,beta_bins=np.histogram(beta_vals, density=True)
         bin_width=beta_bins[1]-beta_bins[0]
-        beta=np.random.choice(beta_bins[:-1]+bin_width*.5, p=beta_hist)
-        file_base='virtual_subject_'+j+'.%s'
+        beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
+        beta=beta_bin+np.random.rand()*bin_width
+        file_base='virtual_subject_'+str(j)+'.%s'
         out_file='../../data/rerw/%s.h5' % file_base
         log_filename='%s.txt' % file_base
         log_file=open(log_filename,'wb')
