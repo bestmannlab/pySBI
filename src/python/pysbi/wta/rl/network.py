@@ -76,8 +76,8 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5, p_dcs=
         f.attrs['p_e_i'] = wta_params.p_e_i
         f.attrs['p_i_i'] = wta_params.p_i_i
         f.attrs['p_i_e'] = wta_params.p_i_e
-        #f.attrs['p_dcs']=p_dcs
-        #f.attrs['i_dcs']=i_dcs
+        f.attrs['p_dcs']=p_dcs
+        f.attrs['i_dcs']=i_dcs
 
     for trial in range(trials):
         vals[:,trial]=exp_rew
@@ -167,7 +167,8 @@ def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavio
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
               stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
               '--output_file',out_file]
-        subprocess.Popen(args,stdout=log_file)
+        #subprocess.Popen(args,stdout=log_file)
+        print(args)
 
 def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials):
     for background_freq in background_freq_range:
