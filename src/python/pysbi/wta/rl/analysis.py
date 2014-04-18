@@ -355,11 +355,15 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
         control_file_name=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
         stim_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
         if os.path.exists(control_file_name) and os.path.exists(stim_file_name):
-            control_data=FileInfo(control_file_name)
+            try:
+                control_data=FileInfo(control_file_name)
+                stim_data=FileInfo(stim_file_name)
+            except:
+                continue
+
             alpha_control_vals.append(control_data.est_alpha)
             beta_control_vals.append(control_data.est_beta)
 
-            stim_data=FileInfo(stim_file_name)
             alpha_stim_vals.append(stim_data.est_alpha)
             beta_stim_vals.append(stim_data.est_beta)
 
