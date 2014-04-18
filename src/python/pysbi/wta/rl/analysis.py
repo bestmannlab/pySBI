@@ -359,6 +359,7 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
                 control_data=FileInfo(control_file_name)
                 stim_data=FileInfo(stim_file_name)
             except:
+                print('cant open subject %d' % i)
                 continue
 
             alpha_control_vals.append(control_data.est_alpha)
