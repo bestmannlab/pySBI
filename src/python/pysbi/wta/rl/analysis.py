@@ -376,17 +376,17 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     beta_diff_vals=beta_stim_vals-beta_control_vals
 
     fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0), density=True)
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0))
     bin_width=alpha_bins[1]-alpha_bins[0]
-    plt.bar(alpha_bins[:-1], alpha_hist, width=bin_width)
+    plt.bar(alpha_bins[:-1], alpha_hist/len(alpha_diff_vals), width=bin_width)
     plt.xlim(-1.0,1.0)
     plt.xlabel('Change in alpha')
     plt.ylabel('Proportion of Subjects')
 
     fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0), density=True)
+    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0))
     bin_width=beta_bins[1]-beta_bins[0]
-    plt.bar(beta_bins[:-1], beta_hist, width=bin_width)
+    plt.bar(beta_bins[:-1], beta_hist/len(beta_diff_vals), width=bin_width)
     plt.xlim(-10.0,10.0)
     plt.xlabel('Change in beta')
     plt.ylabel('Proportion of Subjects')
