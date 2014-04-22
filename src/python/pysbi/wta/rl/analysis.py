@@ -344,3 +344,52 @@ class BackgroundBetaReport:
         fname=os.path.join(self.reports_dir,self.output_file)
         stream=template.stream(rinfo=self)
         stream.dump(fname)
+
+
+def analyze_virtual_subjects(data_dir, num_virtual_subjects):
+    beta_stim_vals=[]
+    alpha_stim_vals=[]
+    beta_control_vals=[]
+    alpha_control_vals=[]
+    for i in range(num_virtual_subjects):
+        control_file_name=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
+        stim_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
+        if os.path.exists(control_file_name) and os.path.exists(stim_file_name):
+            try:
+                control_data=FileInfo(control_file_name)
+                stim_data=FileInfo(stim_file_name)
+            except:
+                print('cant open subject %d' % i)
+                continue
+
+            alpha_control_vals.append(control_data.est_alpha)
+            beta_control_vals.append(control_data.est_beta)
+
+            alpha_stim_vals.append(stim_data.est_alpha)
+            beta_stim_vals.append(stim_data.est_beta)
+
+    alpha_control_vals=np.array(alpha_control_vals)
+    beta_control_vals=np.array(beta_control_vals)
+    alpha_stim_vals=np.array(alpha_stim_vals)
+    beta_stim_vals=np.array(beta_stim_vals)
+
+    alpha_diff_vals=alpha_stim_vals-alpha_control_vals
+    beta_diff_vals=beta_stim_vals-beta_control_vals
+
+    fig=plt.figure()
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0))
+    bin_width=alpha_bins[1]-alpha_bins[0]
+    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_diff_vals)), width=bin_width)
+    plt.xlim(-1.0,1.0)
+    plt.xlabel('Change in alpha')
+    plt.ylabel('Proportion of Subjects')
+
+    fig=plt.figure()
+    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0))
+    bin_width=beta_bins[1]-beta_bins[0]
+    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_diff_vals)), width=bin_width)
+    plt.xlim(-10.0,10.0)
+    plt.xlabel('Change in beta')
+    plt.ylabel('Proportion of Subjects')
+
+    plt.show()
