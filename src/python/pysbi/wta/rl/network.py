@@ -140,7 +140,8 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects):
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
               stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
               str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
-        subprocess.Popen(args,stdout=log_file)
+        #subprocess.Popen(args,stdout=log_file)
+        print(args)
 
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
     background_freq=(beta-87.46)/-12.5
