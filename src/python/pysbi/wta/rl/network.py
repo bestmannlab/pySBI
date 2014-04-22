@@ -129,7 +129,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
 
 def simulate_subjects_cathode(data_dir, num_virtual_subjects):
     for i in range(num_virtual_subjects):
-        virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i))
+        virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.control.h5' % i))
         alpha=virtual_subj_data.alpha
         beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
         stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
@@ -140,8 +140,7 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects):
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
               stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
               str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
-        #subprocess.Popen(args,stdout=log_file)
-        print(args)
+        subprocess.Popen(args,stdout=log_file)
 
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
     background_freq=(beta-87.46)/-12.5
