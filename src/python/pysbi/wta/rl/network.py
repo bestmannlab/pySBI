@@ -127,36 +127,14 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         f['rts']=rts
         f.close()
 
-def get_subject_stim_file(data_dir, virtual_subject_id, num_real_subjects):
-    virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % virtual_subject_id))
-    virtual_subj_prob_walk=virtual_subj_data.prob_walk
-    for i in range(num_real_subjects):
-        subj_id=i+1
-        subj_stim_session_number=stim_order[i,LAT]
-        stim_file_name=os.path.join(data_dir,'subjects','value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
-        mat = scipy.io.loadmat(stim_file_name)
-        prob_idx=-1
-        for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
-            if dtype=='probswalk':
-                prob_idx=idx
-        prob_walk=mat['store']['dat'][0][0][0][0][prob_idx]
-        match=True
-        for j in prob_walk.shape[0]:
-            for k in prob_walk.shape[1]:
-                if not prob_walk[j,k]==virtual_subj_prob_walk[j,k]:
-                    match=False
-        if match:
-            return stim_file_name
-
-
-def simulate_subjects_cathode(data_dir, num_real_subjects, num_virtual_subjects, p_b_e, p_x_e):
+def simulate_subjects_cathode(data_dir, num_virtual_subjects, p_b_e, p_x_e):
     for i in range(num_virtual_subjects):
         virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i))
         alpha=virtual_subj_data.alpha
-        beta=(virtual_subj_data.background_freq*-12.5)+87.46
-        stim_file_name=get_subject_stim_file(data_dir, i, num_real_subjects)
+        beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
+        stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
         file_base='virtual_subject_'+str(i)+'.%s'
-        out_file='../../data/rerw/%s.h5' % file_base
+        out_file=os.path.join(data_dir,'%s.h5' % file_base)
         log_filename='%s.txt' % file_base
         log_file=open(log_filename,'wb')
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
