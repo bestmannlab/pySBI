@@ -144,8 +144,8 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects):
 
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
     background_freq=(beta-87.46)/-12.5
-#    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
-#        output_file=output_file % 'control')
+    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
+        output_file=output_file % 'control')
     run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
         output_file=output_file % 'anode')
     run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=2*pA,
