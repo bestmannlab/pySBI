@@ -9,6 +9,7 @@ import scipy.io
 import h5py
 from pysbi.wta.analysis import get_response_time
 from pysbi.wta.network import default_params, run_wta
+from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import fit_behavior, stim_order, LAT, NOSTIM1
 
 
@@ -126,13 +127,51 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5, p_dcs=
         f['rts']=rts
         f.close()
 
+def get_subject_stim_file(data_dir, virtual_subject_id, num_real_subjects):
+    virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % virtual_subject_id))
+    virtual_subj_prob_walk=virtual_subj_data.prob_walk
+    for i in range(num_real_subjects):
+        subj_id=i+1
+        subj_stim_session_number=stim_order[i,LAT]
+        stim_file_name=os.path.join(data_dir,'subjects','value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+        mat = scipy.io.loadmat(stim_file_name)
+        prob_idx=-1
+        for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
+            if dtype=='probswalk':
+                prob_idx=idx
+        prob_walk=mat['store']['dat'][0][0][0][0][prob_idx]
+        match=True
+        for j in prob_walk.shape[0]:
+            for k in prob_walk.shape[1]:
+                if not prob_walk[j,k]==virtual_subj_prob_walk[j,k]:
+                    match=False
+        if match:
+            return stim_file_name
+
+
+def simulate_subjects_cathode(data_dir, num_real_subjects, num_virtual_subjects, p_b_e, p_x_e):
+    for i in range(num_virtual_subjects):
+        virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i))
+        alpha=virtual_subj_data.alpha
+        beta=(virtual_subj_data.background_freq*-12.5)+87.46
+        stim_file_name=get_subject_stim_file(data_dir, i, num_real_subjects)
+        file_base='virtual_subject_'+str(i)+'.%s'
+        out_file='../../data/rerw/%s.h5' % file_base
+        log_filename='%s.txt' % file_base
+        log_file=open(log_filename,'wb')
+        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
+              stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
+              '--output_file',out_file]
+        subprocess.Popen(args,stdout=log_file)
 
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
     background_freq=(beta-87.46)/-12.5
-    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
-        output_file=output_file % 'control')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
-        output_file=output_file % 'anode')
+#    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
+#        output_file=output_file % 'control')
+#    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
+#        output_file=output_file % 'anode')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=2*pA,
+        output_file=output_file % 'cathode')
 
 
 def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file, p_b_e, p_x_e):
@@ -167,8 +206,7 @@ def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavio
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
               stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
               '--output_file',out_file]
-        #subprocess.Popen(args,stdout=log_file)
-        print(args)
+        subprocess.Popen(args,stdout=log_file)
 
 def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials):
     for background_freq in background_freq_range:
