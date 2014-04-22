@@ -197,6 +197,39 @@ def find_matching_subject_stim_file(data_dir, control_prob_walk, num_real_subjec
                 return stim_file_name
     return None
 
+def simulate_single_subject(data_dir, num_real_subjects, subj_idx, behavioral_param_file, p_b_e, p_x_e):
+    f = h5py.File(behavioral_param_file)
+    control_group=f['control']
+    alpha_vals=np.array(control_group['alpha'])
+    beta_vals=np.array(control_group['beta'])
+    stim_file_name=None
+    control_file_name=None
+    while True:
+        i=np.random.choice(range(num_real_subjects))
+        subj_id=i+1
+        subj_stim_session_number=stim_order[i,LAT]
+        stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+        subj_control_session_number=stim_order[i,NOSTIM1]
+        control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
+        if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
+            break
+    alpha_hist,alpha_bins=np.histogram(alpha_vals, density=True)
+    bin_width=alpha_bins[1]-alpha_bins[0]
+    alpha_bin=np.random.choice(alpha_bins[:-1], p=alpha_hist*bin_width)
+    alpha=alpha_bin+np.random.rand()*bin_width
+    beta_hist,beta_bins=np.histogram(beta_vals, density=True)
+    bin_width=beta_bins[1]-beta_bins[0]
+    beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
+    beta=beta_bin+np.random.rand()*bin_width
+    file_base='virtual_subject_'+str(subj_idx)+'.%s'
+    out_file='../../data/rerw/%s.h5' % file_base
+    log_filename='%s.txt' % file_base
+    log_file=open(log_filename,'wb')
+    args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
+          stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
+          '--output_file',out_file]
+    subprocess.Popen(args,stdout=log_file)
+
 def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file, p_b_e, p_x_e):
     f = h5py.File(behavioral_param_file)
     control_group=f['control']
