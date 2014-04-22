@@ -127,7 +127,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         f['rts']=rts
         f.close()
 
-def simulate_subjects_cathode(data_dir, num_virtual_subjects, p_b_e, p_x_e):
+def simulate_subjects_cathode(data_dir, num_virtual_subjects):
     for i in range(num_virtual_subjects):
         virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i))
         alpha=virtual_subj_data.alpha
@@ -138,8 +138,8 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects, p_b_e, p_x_e):
         log_filename='%s.txt' % file_base
         log_file=open(log_filename,'wb')
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
-              stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
-              '--output_file',out_file]
+              stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
+              str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
         subprocess.Popen(args,stdout=log_file)
 
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
