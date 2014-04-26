@@ -347,17 +347,21 @@ class BackgroundBetaReport:
 
 
 def analyze_virtual_subjects(data_dir, num_virtual_subjects):
-    beta_stim_vals=[]
-    alpha_stim_vals=[]
+    beta_anode_vals=[]
+    alpha_anode_vals=[]
+    beta_cathode_vals=[]
+    alpha_cathode_vals=[]
     beta_control_vals=[]
     alpha_control_vals=[]
     for i in range(num_virtual_subjects):
         control_file_name=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
-        stim_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
-        if os.path.exists(control_file_name) and os.path.exists(stim_file_name):
+        anode_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
+        cathode_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
+        if os.path.exists(control_file_name) and os.path.exists(anode_file_name) and os.path.exists(cathode_file_name):
             try:
                 control_data=FileInfo(control_file_name)
-                stim_data=FileInfo(stim_file_name)
+                anode_data=FileInfo(anode_file_name)
+                cathode_data=FileInfo(cathode_file_name)
             except:
                 print('cant open subject %d' % i)
                 continue
@@ -365,31 +369,59 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
             alpha_control_vals.append(control_data.est_alpha)
             beta_control_vals.append(control_data.est_beta)
 
-            alpha_stim_vals.append(stim_data.est_alpha)
-            beta_stim_vals.append(stim_data.est_beta)
+            alpha_anode_vals.append(anode_data.est_alpha)
+            beta_anode_vals.append(anode_data.est_beta)
+
+            alpha_cathode_vals.append(cathode_data.est_alpha)
+            beta_cathode_vals.append(cathode_data.est_beta)
 
     alpha_control_vals=np.array(alpha_control_vals)
     beta_control_vals=np.array(beta_control_vals)
-    alpha_stim_vals=np.array(alpha_stim_vals)
-    beta_stim_vals=np.array(beta_stim_vals)
+    alpha_anode_vals=np.array(alpha_anode_vals)
+    beta_anode_vals=np.array(beta_anode_vals)
+    alpha_cathode_vals=np.array(alpha_cathode_vals)
+    beta_cathode_vals=np.array(beta_cathode_vals)
 
-    alpha_diff_vals=alpha_stim_vals-alpha_control_vals
-    beta_diff_vals=beta_stim_vals-beta_control_vals
+    alpha_anode_diff_vals=alpha_anode_vals-alpha_control_vals
+    beta_anode_diff_vals=beta_anode_vals-beta_control_vals
+
+    alpha_cathode_diff_vals=alpha_cathode_vals-alpha_control_vals
+    beta_cathode_diff_vals=beta_cathode_vals-beta_control_vals
 
     fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_diff_vals), bins=10, range=(-1.0,1.0))
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_anode_diff_vals), bins=10, range=(-1.0,1.0))
     bin_width=alpha_bins[1]-alpha_bins[0]
-    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_diff_vals)), width=bin_width)
+    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_anode_diff_vals)), width=bin_width)
     plt.xlim(-1.0,1.0)
     plt.xlabel('Change in alpha')
     plt.ylabel('Proportion of Subjects')
+    plt.title('Anode')
 
     fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_diff_vals), bins=10, range=(-10.0,10.0))
+    beta_hist,beta_bins=np.histogram(np.array(beta_anode_diff_vals), bins=10, range=(-10.0,10.0))
     bin_width=beta_bins[1]-beta_bins[0]
-    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_diff_vals)), width=bin_width)
+    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_anode_diff_vals)), width=bin_width)
     plt.xlim(-10.0,10.0)
     plt.xlabel('Change in beta')
     plt.ylabel('Proportion of Subjects')
+    plt.title('Anode')
+
+    fig=plt.figure()
+    alpha_hist,alpha_bins=np.histogram(np.array(alpha_cathode_diff_vals), bins=10, range=(-1.0,1.0))
+    bin_width=alpha_bins[1]-alpha_bins[0]
+    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_cathode_diff_vals)), width=bin_width)
+    plt.xlim(-1.0,1.0)
+    plt.xlabel('Change in alpha')
+    plt.ylabel('Proportion of Subjects')
+    plt.title('Cathode')
+
+    fig=plt.figure()
+    beta_hist,beta_bins=np.histogram(np.array(beta_cathode_diff_vals), bins=10, range=(-10.0,10.0))
+    bin_width=beta_bins[1]-beta_bins[0]
+    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_cathode_diff_vals)), width=bin_width)
+    plt.xlim(-10.0,10.0)
+    plt.xlabel('Change in beta')
+    plt.ylabel('Proportion of Subjects')
+    plt.title('Cathode')
 
     plt.show()
