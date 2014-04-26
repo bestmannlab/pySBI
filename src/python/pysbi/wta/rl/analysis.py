@@ -345,6 +345,16 @@ class BackgroundBetaReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
+def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range):
+    diff_vals=new_vals-orig_vals
+    fig=plt.figure()
+    hist,bins=np.histogram(np.array(diff_vals), bins=10, range=diff_range)
+    bin_width=bins[1]-bins[0]
+    plt.bar(bins[:-1], hist/float(len(diff_vals)), width=bin_width)
+    plt.xlim(diff_range)
+    plt.xlabel('Change in %s' % param_name)
+    plt.ylabel('Proportion of Subjects')
+    plt.title(cond_name)
 
 def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     beta_anode_vals=[]
@@ -356,7 +366,7 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     for i in range(num_virtual_subjects):
         control_file_name=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
         anode_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
-        cathode_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
+        cathode_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode.h5' % i)
         if os.path.exists(control_file_name) and os.path.exists(anode_file_name) and os.path.exists(cathode_file_name):
             try:
                 control_data=FileInfo(control_file_name)
@@ -382,46 +392,10 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     alpha_cathode_vals=np.array(alpha_cathode_vals)
     beta_cathode_vals=np.array(beta_cathode_vals)
 
-    alpha_anode_diff_vals=alpha_anode_vals-alpha_control_vals
-    beta_anode_diff_vals=beta_anode_vals-beta_control_vals
+    plot_param_diff('Anode','alpha',alpha_control_vals,alpha_anode_vals,(-1.0,1.0))
+    plot_param_diff('Anode','beta',beta_control_vals,beta_anode_vals,(-10.0,10.0))
 
-    alpha_cathode_diff_vals=alpha_cathode_vals-alpha_control_vals
-    beta_cathode_diff_vals=beta_cathode_vals-beta_control_vals
-
-    fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_anode_diff_vals), bins=10, range=(-1.0,1.0))
-    bin_width=alpha_bins[1]-alpha_bins[0]
-    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_anode_diff_vals)), width=bin_width)
-    plt.xlim(-1.0,1.0)
-    plt.xlabel('Change in alpha')
-    plt.ylabel('Proportion of Subjects')
-    plt.title('Anode')
-
-    fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_anode_diff_vals), bins=10, range=(-10.0,10.0))
-    bin_width=beta_bins[1]-beta_bins[0]
-    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_anode_diff_vals)), width=bin_width)
-    plt.xlim(-10.0,10.0)
-    plt.xlabel('Change in beta')
-    plt.ylabel('Proportion of Subjects')
-    plt.title('Anode')
-
-    fig=plt.figure()
-    alpha_hist,alpha_bins=np.histogram(np.array(alpha_cathode_diff_vals), bins=10, range=(-1.0,1.0))
-    bin_width=alpha_bins[1]-alpha_bins[0]
-    plt.bar(alpha_bins[:-1], alpha_hist/float(len(alpha_cathode_diff_vals)), width=bin_width)
-    plt.xlim(-1.0,1.0)
-    plt.xlabel('Change in alpha')
-    plt.ylabel('Proportion of Subjects')
-    plt.title('Cathode')
-
-    fig=plt.figure()
-    beta_hist,beta_bins=np.histogram(np.array(beta_cathode_diff_vals), bins=10, range=(-10.0,10.0))
-    bin_width=beta_bins[1]-beta_bins[0]
-    plt.bar(beta_bins[:-1], beta_hist/float(len(beta_cathode_diff_vals)), width=bin_width)
-    plt.xlim(-10.0,10.0)
-    plt.xlabel('Change in beta')
-    plt.ylabel('Proportion of Subjects')
-    plt.title('Cathode')
+    plot_param_diff('Cathode','alpha',alpha_control_vals,alpha_cathode_vals,(-1.0,1.0))
+    plot_param_diff('Cathode','beta',beta_control_vals,beta_cathode_vals,(-10.0,10.0))
 
     plt.show()
