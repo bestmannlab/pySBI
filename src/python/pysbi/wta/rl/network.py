@@ -147,7 +147,7 @@ def simulate_subjects_stim_control(final_data_dir, local_data_dir, num_virtual_s
         virtual_subj_data=FileInfo(os.path.join(final_data_dir,'virtual_subject_%d.control.h5' % i))
         alpha=virtual_subj_data.alpha
         beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
-        stim_file_name=find_matching_subject_stim_file(os.path.join(final_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
+        stim_file_name=find_matching_subject_stim_file(os.path.join(local_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
         file_base='virtual_subject_'+str(i)+'.%s'
         out_file=os.path.join(local_data_dir,'%s.h5' % file_base)
         log_filename='%s.txt' % file_base
