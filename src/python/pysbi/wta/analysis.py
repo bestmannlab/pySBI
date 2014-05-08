@@ -831,9 +831,16 @@ class TrialSeries:
             for trial_idx in range(num_trials):
 
                 file_name=os.path.join(dir,'%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial_idx))
-                trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name))
-
-                self.trial_summaries.append(trial_summary)
+                trial_summary=None
+                if not os.path.exists(file_name):
+                    print('file does not exist: %s' % file_name)
+                else:
+                    try:
+                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name))
+                    except:
+                        print('cannot load file %s' % file_name)
+                if not trial_summary is None:
+                    self.trial_summaries.append(trial_summary)
 
         self.compute_muticlass_auc()
         self.compute_bold_contrast_regression()
