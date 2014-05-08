@@ -142,14 +142,37 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects):
               str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
         subprocess.Popen(args,stdout=log_file)
 
+def simulate_subjects_stim_control(data_dir, num_virtual_subjects):
+    for i in range(num_virtual_subjects):
+        virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.control.h5' % i))
+        alpha=virtual_subj_data.alpha
+        beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
+        stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
+        file_base='virtual_subject_'+str(i)+'.%s'
+        out_file=os.path.join(data_dir,'%s.h5' % file_base)
+        log_filename='%s.txt' % file_base
+        log_file=open(log_filename,'wb')
+        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
+              stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
+              str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
+        subprocess.Popen(args,stdout=log_file)
+
 def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
     background_freq=(beta-87.46)/-12.5
-    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
-        output_file=output_file % 'control')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
-        output_file=output_file % 'anode')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=2*pA,
-        output_file=output_file % 'cathode')
+#    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
+#        output_file=output_file % 'control')
+#    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
+#        output_file=output_file % 'anode')
+#    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=2*pA,
+#        output_file=output_file % 'cathode')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=0*pA,
+        output_file=output_file % 'anode_control_1')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=2*pA,
+        output_file=output_file % 'anode_control_2')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=0*pA,
+        output_file=output_file % 'cathode_control_1')
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=-2*pA,
+        output_file=output_file % 'cathode_control_2')
 
 
 def resume_subject_simulation(data_dir, num_virtual_subjects):
