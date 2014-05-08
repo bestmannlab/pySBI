@@ -249,7 +249,12 @@ class DCSComparisonReport:
             prefix='%s.p_dcs.%.4f.i_dcs.%.4f.control' % (self.file_prefix,p_dcs,i_dcs)
             self.series[stim_level]=create_network_report(self.data_dir,prefix,self.num_trials,stim_report_dir,'', version=report_info.version)
             report_info.urls[stim_level]=os.path.join(stim_level,'wta_network.%s.html' % prefix)
-        colors={'anode':'g','cathode':'b'}
+        colors={'anode':'g',
+                'anode control 1':'r',
+                'anode control 2':'m',
+                'cathode':'b',
+                'cathode control 1':'c',
+                'cathode control 2':'y'}
         report_info.rt_url=self.plot_rt(colors)
         report_info.perc_correct_url=self.plot_perc_correct(colors)
         report_info.bold_contrast_regression_url=self.plot_bold_contrast_regression(colors)
@@ -359,5 +364,15 @@ class DCSComparisonReport:
         return '%s.png' % furl
 
 if __name__=='__main__':
-    dcs_report=DCSComparisonReport('/home/jbonaiuto/Projects/pySBI/data/dcs','wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',{'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,'/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
+    dcs_report=DCSComparisonReport('/data/projects/pySBI/rdmd/data',
+        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
+        {
+            'control':(0,0),
+            'anode':(4,-2),
+            'anode control 1':(4,0),
+            'anode control 2':(4,2),
+            'cathode':(-4,2),
+            'cathode control 1':(-4,0),
+            'cathode control 2':(-4,-2)
+        },50,'/data/projects/pySBI/rdmd/report','')
     dcs_report.create_report()
