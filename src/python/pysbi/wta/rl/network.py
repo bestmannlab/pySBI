@@ -142,14 +142,14 @@ def simulate_subjects_cathode(data_dir, num_virtual_subjects):
               str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
         subprocess.Popen(args,stdout=log_file)
 
-def simulate_subjects_stim_control(data_dir, num_virtual_subjects):
+def simulate_subjects_stim_control(final_data_dir, local_data_dir, num_virtual_subjects):
     for i in range(num_virtual_subjects):
-        virtual_subj_data=FileInfo(os.path.join(data_dir,'virtual_subject_%d.control.h5' % i))
+        virtual_subj_data=FileInfo(os.path.join(final_data_dir,'virtual_subject_%d.control.h5' % i))
         alpha=virtual_subj_data.alpha
         beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
-        stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
+        stim_file_name=find_matching_subject_stim_file(os.path.join(final_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
         file_base='virtual_subject_'+str(i)+'.%s'
-        out_file=os.path.join(data_dir,'%s.h5' % file_base)
+        out_file=os.path.join(local_data_dir,'%s.h5' % file_base)
         log_filename='%s.txt' % file_base
         log_file=open(log_filename,'wb')
         args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
