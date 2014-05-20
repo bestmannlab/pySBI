@@ -372,6 +372,9 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     beta_cathode_control_1_vals=[]
     alpha_cathode_control_1_vals=[]
 
+    beta_cathode_control_2_vals=[]
+    alpha_cathode_control_2_vals=[]
+
     beta_control_vals=[]
     alpha_control_vals=[]
     for i in range(num_virtual_subjects):
@@ -381,9 +384,11 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
         anode_control_2_file_name=os.path.join(data_dir,'virtual_subject_%d.anode_control_2.h5' % i)
         cathode_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode.h5' % i)
         cathode_control_1_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode_control_1.h5' % i)
+        cathode_control_2_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode_control_2.h5' % i)
         if os.path.exists(control_file_name) and os.path.exists(anode_file_name) and \
-           os.path.exists(cathode_file_name) and os.path.exists(anode_control_1_file_name) and \
-           os.path.exists(anode_control_2_file_name) and os.path.exists(cathode_control_1_file_name):
+            os.path.exists(cathode_file_name) and os.path.exists(anode_control_1_file_name) and \
+            os.path.exists(anode_control_2_file_name) and os.path.exists(cathode_control_1_file_name) and \
+            os.path.exists(cathode_control_2_file_name):
             try:
                 control_data=FileInfo(control_file_name)
                 anode_data=FileInfo(anode_file_name)
@@ -391,6 +396,7 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
                 anode_control_2_data=FileInfo(anode_control_2_file_name)
                 cathode_data=FileInfo(cathode_file_name)
                 cathode_control_1_data=FileInfo(cathode_control_1_file_name)
+                cathode_control_2_data=FileInfo(cathode_control_2_file_name)
             except:
                 print('cant open subject %d' % i)
                 continue
@@ -413,6 +419,9 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
             alpha_cathode_control_1_vals.append(cathode_control_1_data.est_alpha)
             beta_cathode_control_1_vals.append(cathode_control_1_data.est_beta)
 
+            alpha_cathode_control_2_vals.append(cathode_control_2_data.est_alpha)
+            beta_cathode_control_2_vals.append(cathode_control_2_data.est_beta)
+
     alpha_control_vals=np.array(alpha_control_vals)
     beta_control_vals=np.array(beta_control_vals)
 
@@ -431,6 +440,9 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
     alpha_cathode_control_1_vals=np.array(alpha_cathode_control_1_vals)
     beta_cathode_control_1_vals=np.array(beta_cathode_control_1_vals)
 
+    alpha_cathode_control_2_vals=np.array(alpha_cathode_control_2_vals)
+    beta_cathode_control_2_vals=np.array(beta_cathode_control_2_vals)
+
     plot_param_diff('Anode','alpha',alpha_control_vals,alpha_anode_vals,(-1.0,1.0))
     plot_param_diff('Anode','beta',beta_control_vals,beta_anode_vals,(-10.0,10.0))
 
@@ -445,5 +457,8 @@ def analyze_virtual_subjects(data_dir, num_virtual_subjects):
 
     plot_param_diff('Cathode - Control 1','alpha',alpha_control_vals,alpha_cathode_control_1_vals,(-1.0,1.0))
     plot_param_diff('Cathode - Control 1','beta',beta_control_vals,beta_cathode_control_1_vals,(-10.0,10.0))
+
+    plot_param_diff('Cathode - Control 2','alpha',alpha_control_vals,alpha_cathode_control_2_vals,(-1.0,1.0))
+    plot_param_diff('Cathode - Control 2','beta',beta_control_vals,beta_cathode_control_2_vals,(-10.0,10.0))
 
     plt.show()
