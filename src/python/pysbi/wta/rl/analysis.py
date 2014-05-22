@@ -1,3 +1,4 @@
+from scipy import stats
 import subprocess
 from brian import second, farad, siemens, volt, Hz, ms
 from jinja2 import Environment, FileSystemLoader
@@ -345,6 +346,138 @@ class BackgroundBetaReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
+class StimConditionReport:
+    def __init__(self, data_dir, file_prefix, stim_condition, reports_dir, num_subjects, edesc):
+        self.data_dir=data_dir
+        self.file_prefix=file_prefix
+        self.stim_condition=stim_condition
+        self.reports_dir=reports_dir
+        self.edesc=edesc
+        self.num_subjects=num_subjects
+
+        self.sessions=[]
+
+    def create_report(self):
+        make_report_dirs(self.reports_dir)
+
+        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.edesc=self.edesc
+
+        self.condition_alphas=np.zeros(self.num_subjects)
+        self.condition_betas=np.zeros(self.num_subjects)
+
+        for virtual_subj_id in range(self.num_subjects):
+            print('subject %d' % virtual_subj_id)
+            session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+            session_report_dir=os.path.join(self.reports_dir,session_prefix)
+            session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
+            session_report.create_report()
+            self.sessions.append(session_report)
+
+            self.condition_alphas[virtual_subj_id]=session_report.est_alpha
+            self.condition_betas[virtual_subj_id]=session_report.est_beta
+
+        self.num_trials=self.sessions[0].num_trials
+        self.alpha=self.sessions[0].alpha
+
+        self.num_groups=self.sessions[0].num_groups
+        self.trial_duration=self.sessions[0].trial_duration
+        self.wta_params=self.sessions[0].wta_params
+
+        #create report
+        template_file='rl_stim_condition.html'
+        env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+        template=env.get_template(template_file)
+
+        self.output_file='rl_%s.html' % self.stim_condition
+        fname=os.path.join(self.reports_dir,self.output_file)
+        stream=template.stream(rinfo=self)
+        stream.dump(fname)
+
+class RLReport:
+    def __init__(self, data_dir, file_prefix, stim_conditions, reports_dir, num_subjects, edesc):
+        self.data_dir=data_dir
+        self.file_prefix=file_prefix
+        self.stim_conditions=stim_conditions
+        self.reports_dir=reports_dir
+        self.edesc=edesc
+        self.num_subjects=num_subjects
+
+        self.stim_condition_reports={}
+
+    def create_report(self):
+        make_report_dirs(self.reports_dir)
+
+        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.edesc=self.edesc
+
+        for stim_condition in self.stim_conditions:
+            print(stim_condition)
+            stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
+            self.stim_condition_reports[stim_condition] = StimConditionReport(self.data_dir, self.file_prefix,
+                stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
+            self.stim_condition_reports[stim_condition].create_report()
+
+        self.num_trials=self.stim_condition_reports['control'].sessions[0].num_trials
+        self.alpha=self.stim_condition_reports['control'].sessions[0].alpha
+
+        self.num_groups=self.stim_condition_reports['control'].sessions[0].num_groups
+        self.trial_duration=self.stim_condition_reports['control'].sessions[0].trial_duration
+        self.wta_params=self.stim_condition_reports['control'].sessions[0].wta_params
+
+        self.stim_alpha_change_urls={}
+        self.stim_beta_change_urls={}
+        self.stim_alpha_mean_change={}
+        self.stim_alpha_std_change={}
+        self.stim_beta_mean_change={}
+        self.stim_beta_std_change={}
+        self.alpha_wilcoxon_test={}
+        self.beta_wilcoxon_test={}
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                # Create alpha plot
+                furl='img/%s_alpha' % stim_condition
+                fname = os.path.join(self.reports_dir, furl)
+                self.stim_alpha_change_urls[stim_condition] = '%s.png' % furl
+                fig=plot_param_diff(stim_condition,'alpha',
+                    self.stim_condition_reports['control'].condition_alphas,
+                    self.stim_condition_reports[stim_condition].condition_alphas,
+                    (-1.0,1.0))
+                save_to_png(fig, '%s.png' % fname)
+                plt.close(fig)
+                alpha_diff=self.stim_condition_reports[stim_condition].condition_alphas-\
+                           self.stim_condition_reports['control'].condition_alphas
+                self.stim_alpha_mean_change[stim_condition]=np.mean(alpha_diff)
+                self.stim_alpha_std_change[stim_condition]=np.std(alpha_diff)
+                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(self.stim_condition_reports['control'].condition_alphas,
+                    self.stim_condition_reports[stim_condition].condition_alphas)
+
+                # Create beta plot
+                furl='img/%s_beta' % stim_condition
+                fname = os.path.join(self.reports_dir, furl)
+                self.stim_beta_change_urls[stim_condition] = '%s.png' % furl
+                fig=plot_param_diff(stim_condition,'beta',self.stim_condition_reports['control'].condition_betas,
+                    self.stim_condition_reports[stim_condition].condition_betas,
+                    (-10.0,10.0))
+                save_to_png(fig, '%s.png' % fname)
+                plt.close(fig)
+                beta_diff=self.stim_condition_reports[stim_condition].condition_betas-\
+                           self.stim_condition_reports['control'].condition_betas
+                self.stim_beta_mean_change[stim_condition]=np.mean(beta_diff)
+                self.stim_beta_std_change[stim_condition]=np.std(beta_diff)
+                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(self.stim_condition_reports['control'].condition_betas,
+                    self.stim_condition_reports[stim_condition].condition_betas)
+
+        #create report
+        template_file='rl.html'
+        env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+        template=env.get_template(template_file)
+
+        self.output_file='rl.html'
+        fname=os.path.join(self.reports_dir,self.output_file)
+        stream=template.stream(rinfo=self)
+        stream.dump(fname)
+
 def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range):
     diff_vals=new_vals-orig_vals
     fig=plt.figure()
@@ -355,95 +488,12 @@ def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range):
     plt.xlabel('Change in %s' % param_name)
     plt.ylabel('Proportion of Subjects')
     plt.title(cond_name)
+    return fig
 
-def analyze_virtual_subjects(data_dir, num_virtual_subjects):
-    beta_anode_vals=[]
-    alpha_anode_vals=[]
 
-    beta_anode_control_1_vals=[]
-    alpha_anode_control_1_vals=[]
 
-    beta_anode_control_2_vals=[]
-    alpha_anode_control_2_vals=[]
-
-    beta_cathode_vals=[]
-    alpha_cathode_vals=[]
-
-    beta_cathode_control_1_vals=[]
-    alpha_cathode_control_1_vals=[]
-
-    beta_control_vals=[]
-    alpha_control_vals=[]
-    for i in range(num_virtual_subjects):
-        control_file_name=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
-        anode_file_name=os.path.join(data_dir,'virtual_subject_%d.anode.h5' % i)
-        anode_control_1_file_name=os.path.join(data_dir,'virtual_subject_%d.anode_control_1.h5' % i)
-        anode_control_2_file_name=os.path.join(data_dir,'virtual_subject_%d.anode_control_2.h5' % i)
-        cathode_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode.h5' % i)
-        cathode_control_1_file_name=os.path.join(data_dir,'virtual_subject_%d.cathode_control_1.h5' % i)
-        if os.path.exists(control_file_name) and os.path.exists(anode_file_name) and \
-           os.path.exists(cathode_file_name) and os.path.exists(anode_control_1_file_name) and \
-           os.path.exists(anode_control_2_file_name) and os.path.exists(cathode_control_1_file_name):
-            try:
-                control_data=FileInfo(control_file_name)
-                anode_data=FileInfo(anode_file_name)
-                anode_control_1_data=FileInfo(anode_control_1_file_name)
-                anode_control_2_data=FileInfo(anode_control_2_file_name)
-                cathode_data=FileInfo(cathode_file_name)
-                cathode_control_1_data=FileInfo(cathode_control_1_file_name)
-            except:
-                print('cant open subject %d' % i)
-                continue
-
-            alpha_control_vals.append(control_data.est_alpha)
-            beta_control_vals.append(control_data.est_beta)
-
-            alpha_anode_vals.append(anode_data.est_alpha)
-            beta_anode_vals.append(anode_data.est_beta)
-
-            alpha_anode_control_1_vals.append(anode_control_1_data.est_alpha)
-            beta_anode_control_1_vals.append(anode_control_1_data.est_beta)
-
-            alpha_anode_control_2_vals.append(anode_control_2_data.est_alpha)
-            beta_anode_control_2_vals.append(anode_control_2_data.est_beta)
-
-            alpha_cathode_vals.append(cathode_data.est_alpha)
-            beta_cathode_vals.append(cathode_data.est_beta)
-
-            alpha_cathode_control_1_vals.append(cathode_control_1_data.est_alpha)
-            beta_cathode_control_1_vals.append(cathode_control_1_data.est_beta)
-
-    alpha_control_vals=np.array(alpha_control_vals)
-    beta_control_vals=np.array(beta_control_vals)
-
-    alpha_anode_vals=np.array(alpha_anode_vals)
-    beta_anode_vals=np.array(beta_anode_vals)
-
-    alpha_anode_control_1_vals=np.array(alpha_anode_control_1_vals)
-    beta_anode_control_1_vals=np.array(beta_anode_control_1_vals)
-
-    alpha_anode_control_2_vals=np.array(alpha_anode_control_2_vals)
-    beta_anode_control_2_vals=np.array(beta_anode_control_2_vals)
-
-    alpha_cathode_vals=np.array(alpha_cathode_vals)
-    beta_cathode_vals=np.array(beta_cathode_vals)
-
-    alpha_cathode_control_1_vals=np.array(alpha_cathode_control_1_vals)
-    beta_cathode_control_1_vals=np.array(beta_cathode_control_1_vals)
-
-    plot_param_diff('Anode','alpha',alpha_control_vals,alpha_anode_vals,(-1.0,1.0))
-    plot_param_diff('Anode','beta',beta_control_vals,beta_anode_vals,(-10.0,10.0))
-
-    plot_param_diff('Anode - Control 1','alpha',alpha_control_vals,alpha_anode_control_1_vals,(-1.0,1.0))
-    plot_param_diff('Anode - Control 1','beta',beta_control_vals,beta_anode_control_1_vals,(-10.0,10.0))
-
-    plot_param_diff('Anode - Control 2','alpha',alpha_control_vals,alpha_anode_control_2_vals,(-1.0,1.0))
-    plot_param_diff('Anode - Control 2','beta',beta_control_vals,beta_anode_control_2_vals,(-10.0,10.0))
-
-    plot_param_diff('Cathode','alpha',alpha_control_vals,alpha_cathode_vals,(-1.0,1.0))
-    plot_param_diff('Cathode','beta',beta_control_vals,beta_cathode_vals,(-10.0,10.0))
-
-    plot_param_diff('Cathode - Control 1','alpha',alpha_control_vals,alpha_cathode_control_1_vals,(-1.0,1.0))
-    plot_param_diff('Cathode - Control 1','beta',beta_control_vals,beta_cathode_control_1_vals,(-10.0,10.0))
-
-    plt.show()
+if __name__=='__main__':
+    report=RLReport('/data/projects/pySBI/rl','virtual_subject_%d.%s',
+        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
+        '/data/projects/pySBI/rl/report',50,'')
+    report.create_report()
