@@ -454,7 +454,7 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
         # Write spike data
         if record_spikes:
             f_spikes = f.create_group('spikes')
-            for idx in num_groups:
+            for idx in range(num_groups):
                 spike_monitor=wta_monitor.monitors['excitatory_spike_%d' % idx]
                 if len(spike_monitor.spikes):
                     f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
@@ -471,7 +471,7 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
         startIdx=endIdx-500
         e_mean_final=[]
         e_max=[]
-        for idx in num_groups:
+        for idx in range(num_groups):
             rate_monitor=wta_monitor.monitors['excitatory_rate_%d' % idx]
             e_rate=rate_monitor.smooth_rate(width=5*ms, filter='gaussian')
             e_mean_final.append(np.mean(e_rate[startIdx:endIdx]))
