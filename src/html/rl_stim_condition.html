@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
     <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
-    <title>RL Session</title>
+    <title>RL: {{ rinfo.stim_condition }}</title>
 </head>
 
 <body>
@@ -12,10 +12,11 @@
 <script type="text/javascript">
     $(document).ready(function()
             {
-                $("#trial_table").tablesorter();
+                $("#session_table").tablesorter();
             }
     );
 </script>
+<h4>Condition: {{ rinfo.stim_condition }}</h4>
 
 <h4>Simulation Parameters</h4>
 <table border="1">
@@ -30,10 +31,6 @@
     <tr>
         <td>Trial_duration</td>
         <td>{{ rinfo.trial_duration }}</td>
-    </tr>
-    <tr>
-        <td>Background rate</td>
-        <td>{{ rinfo.background_freq|round(3) }}</td>
     </tr>
     <tr>
         <td>Pyramidal cell DCS</td>
@@ -177,69 +174,26 @@
     </tr>
 </table>
 
-<h4>RL Parameters</h4>
-<table border="1">
-    <tr>
-        <td width="200"><strong>Parameter</strong></td>
-        <td width="100"><strong>Value</strong></td>
-    </tr>
-    <tr>
-        <td>alpha</td>
-        <td>{{ rinfo.alpha|round(3) }}</td>
-    </tr>
-</table>
-
-<h4>Fit Results</h4>
-<table border="1">
-    <tr>
-        <td><strong>Estimated alpha</strong></td>
-        <td>{{ rinfo.est_alpha|round(3) }}</td>
-    </tr>
-    <tr>
-        <td><strong>Estimated beta</strong></td>
-        <td>{{ rinfo.est_beta|round(3) }}</td>
-    </tr>
-    <tr>
-        <td><strong>% correct</strong></td>
-        <td>{{ rinfo.prop_correct|round(3) }}%</td>
-    </tr>
-    <tr>
-        <td><strong>% no response</strong></td>
-        <td>{{ rinfo.perc_no_response|round(3) }}%</td>
-    </tr>
-</table>
-
-
-<img width="50%" src="{{ rinfo.vals_url }}"/>
-<br>
-<img width="50%" src="{{ rinfo.probs_url }}"/>
-
-<h4>Trials</h4>
-<table class="tablesorter" id="trial_table">
+<h4>Sessions</h4>
+<table border="1" class="tablesorter" id="session_table">
     <thead>
     <tr>
-        <th><strong>Trial</strong></th>
-        <th><strong>Reward prob</strong></th>
-        <th><strong>Expected reward</strong></th>
-        <th><strong>Inputs</strong></th>
-        <th><strong>Choice</strong></th>
-        <th><strong>Correct</strong></th>
-        <th><strong>Reward</strong></th>
-        <th><strong>Firing rates</strong></th>
+        <th>Background rate</th>
+        <th>Estimated alpha</th>
+        <th>Estimated beta</th>
+        <th>% correct</th>
+        <th>% no response</th>
     </tr>
     </thead>
     <tbody>
-    {% for trial_data in rinfo.trials %}
-        <tr>
-            <td>{{ trial_data.trial }}</td>
-            <td>{{ trial_data.val }}</td>
-            <td>{{ trial_data.ev }}</td>
-            <td>{{ trial_data.inputs }}</td>
-            <td>{{ trial_data.choice }}</td>
-            <td>{{ trial_data.correct }}</td>
-            <td>{{ trial_data.rew }}</td>
-            <td><img src="{{ trial_data.firing_rate_url }}"/></td>
-        </tr>
+    {% for session_data in rinfo.sessions %}
+    <tr>
+        <td><a href="{{ session_data.furl }}">{{ session_data.background_freq|round(2) }}</a></td>
+        <td>{{ session_data.est_alpha|round(3) }}</td>
+        <td>{{ session_data.est_beta|round(3) }}</td>
+        <td>{{ session_data.prop_correct|round(2) }}</td>
+        <td>{{ session_data.perc_no_response|round(2) }}</td>
+    </tr>
     {% endfor %}
     </tbody>
 </table>
