@@ -12,7 +12,7 @@
 <script type="text/javascript">
     $(document).ready(function()
             {
-                $("#session_table").tablesorter();
+                $("#subjects_table").tablesorter();
             }
     );
 </script>
@@ -174,10 +174,13 @@
     </tr>
 </table>
 
-<h4>Sessions</h4>
-<table border="1" class="tablesorter" id="session_table">
+<h4>Virtual Subjects</h4>
+<table border="1" class="tablesorter" id="subjects_table">
     <thead>
     <tr>
+        <th>Virtual Subject ID</th>
+        <th>Alpha</th>
+        <th>Beta</th>
         <th>Background rate</th>
         <th>Estimated alpha</th>
         <th>Estimated beta</th>
@@ -188,7 +191,10 @@
     <tbody>
     {% for session_data in rinfo.sessions %}
     <tr>
-        <td><a href="{{ session_data.furl }}">{{ session_data.background_freq|round(2) }}</a></td>
+        <td><a href="{{ session_data.furl }}">{{ loop.index }}</a></td>
+        <td>{{ session_data.alpha|round(2) }}</td>
+        <td>{{ session_data.beta|round(2) }}</td>
+        <td>{{ session_data.background_freq|round(2) }}</td>
         <td>{{ session_data.est_alpha|round(3) }}</td>
         <td>{{ session_data.est_beta|round(3) }}</td>
         <td>{{ session_data.prop_correct|round(2) }}</td>
