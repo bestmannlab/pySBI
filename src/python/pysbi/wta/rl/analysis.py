@@ -1,6 +1,6 @@
 from scipy import stats
 import subprocess
-from brian import second, farad, siemens, volt, Hz, ms
+from brian import second, farad, siemens, volt, Hz, ms, amp
 from jinja2 import Environment, FileSystemLoader
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -62,6 +62,10 @@ class FileInfo:
         self.wta_params.p_e_i=float(f.attrs['p_e_i'])
         self.wta_params.p_i_i=float(f.attrs['p_i_i'])
         self.wta_params.p_i_e=float(f.attrs['p_i_e'])
+        if 'p_dcs' in f.attrs:
+            self.wta_params.p_dcs=float(f.attrs['p_dcs'])*amp
+        if 'i_dcs' in f.attrs:
+            self.wta_params.i_dcs=float(f.attrs['i_dcs'])*amp
 
         self.choice=np.array(f['choice'])
         self.inputs=np.array(f['inputs'])
@@ -159,6 +163,7 @@ class SessionReport:
 
         self.num_trials=data.num_trials
         self.alpha=data.alpha
+        self.beta=(data.background_freq/Hz*-12.5)+87.46
         self.est_alpha=data.est_alpha
         self.est_beta=data.est_beta
         self.prop_correct=data.prop_correct*100.0
