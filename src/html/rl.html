@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
     <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
-    <title>RL Session</title>
+    <title>RL Experiment</title>
 </head>
 
 <body>
@@ -12,7 +12,7 @@
 <script type="text/javascript">
     $(document).ready(function()
             {
-                $("#trial_table").tablesorter();
+                $("#stim_condition_table").tablesorter();
             }
     );
 </script>
@@ -30,18 +30,6 @@
     <tr>
         <td>Trial_duration</td>
         <td>{{ rinfo.trial_duration }}</td>
-    </tr>
-    <tr>
-        <td>Background rate</td>
-        <td>{{ rinfo.background_freq|round(3) }}</td>
-    </tr>
-    <tr>
-        <td>Pyramidal cell DCS</td>
-        <td>{{ rinfo.wta_params.p_dcs }}</td>
-    </tr>
-    <tr>
-        <td>Interneuron DCS</td>
-        <td>{{ rinfo.wta_params.i_dcs }}</td>
     </tr>
 </table>
 
@@ -177,73 +165,70 @@
     </tr>
 </table>
 
-<h4>RL Parameters</h4>
-<table border="1">
-    <tr>
-        <td width="200"><strong>Parameter</strong></td>
-        <td width="100"><strong>Value</strong></td>
-    </tr>
-    <tr>
-        <td>alpha</td>
-        <td>{{ rinfo.alpha|round(3) }}</td>
-    </tr>
-    <tr>
-        <td>beta</td>
-        <td>{{ rinfo.beta|round(3) }}</td>
-    </tr>
-</table>
-
-<h4>Fit Results</h4>
-<table border="1">
-    <tr>
-        <td><strong>Estimated alpha</strong></td>
-        <td>{{ rinfo.est_alpha|round(3) }}</td>
-    </tr>
-    <tr>
-        <td><strong>Estimated beta</strong></td>
-        <td>{{ rinfo.est_beta|round(3) }}</td>
-    </tr>
-    <tr>
-        <td><strong>% correct</strong></td>
-        <td>{{ rinfo.prop_correct|round(3) }}%</td>
-    </tr>
-    <tr>
-        <td><strong>% no response</strong></td>
-        <td>{{ rinfo.perc_no_response|round(3) }}%</td>
-    </tr>
-</table>
-
-
-<img width="50%" src="{{ rinfo.vals_url }}"/>
-<br>
-<img width="50%" src="{{ rinfo.probs_url }}"/>
-
-<h4>Trials</h4>
-<table class="tablesorter" id="trial_table">
+<h4>Stimulation Conditions</h4>
+<table border="1" class="tablesorter" id="stim_condition_table">
     <thead>
     <tr>
-        <th><strong>Trial</strong></th>
-        <th><strong>Reward prob</strong></th>
-        <th><strong>Expected reward</strong></th>
-        <th><strong>Inputs</strong></th>
-        <th><strong>Choice</strong></th>
-        <th><strong>Correct</strong></th>
-        <th><strong>Reward</strong></th>
-        <th><strong>Firing rates</strong></th>
+        <th>Condition</th>
+        <th>Pyramidal DCS</th>
+        <th>Interneuron DCS</th>
+        <th>Alpha change</th>
+        <th>Mean alpha change</th>
+        <th>T</th>
+        <th>p</th>
+        <th>Beta change</th>
+        <th>Mean beta change</th>
+        <th>t</th>
+        <th>p</th>
     </tr>
     </thead>
     <tbody>
-    {% for trial_data in rinfo.trials %}
-        <tr>
-            <td>{{ trial_data.trial }}</td>
-            <td>{{ trial_data.val }}</td>
-            <td>{{ trial_data.ev }}</td>
-            <td>{{ trial_data.inputs }}</td>
-            <td>{{ trial_data.choice }}</td>
-            <td>{{ trial_data.correct }}</td>
-            <td>{{ trial_data.rew }}</td>
-            <td><img src="{{ trial_data.firing_rate_url }}"/></td>
-        </tr>
+    {% for stim_condition in rinfo.stim_condition_reports %}
+    <tr>
+        <td><a href="{{ stim_condition }}/{{ rinfo.stim_condition_reports[stim_condition].output_file }}">{{ stim_condition }}</a></td>
+        <td>{{ rinfo.stim_condition_reports[stim_condition].wta_params.p_dcs }}</td>
+        <td>{{ rinfo.stim_condition_reports[stim_condition].wta_params.i_dcs }}</td>
+        <td>
+            {% if not stim_condition=='control' %}
+                <img width=500px src="{{ rinfo.stim_alpha_change_urls[stim_condition] }}"/>
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+                {{ rinfo.stim_alpha_mean_change[stim_condition]|round(3) }} +/- {{ rinfo.stim_alpha_std_change[stim_condition]|round(3) }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+                {{ rinfo.alpha_wilcoxon_test[stim_condition][0]|round(2) }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+                {{ rinfo.alpha_wilcoxon_test[stim_condition][1]|round(4) }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+                <img width=500px src="{{ rinfo.stim_beta_change_urls[stim_condition] }}"/>
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+                {{ rinfo.stim_beta_mean_change[stim_condition]|round(3) }} +/- {{ rinfo.stim_beta_std_change[stim_condition]|round(3) }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+            {{ rinfo.beta_wilcoxon_test[stim_condition][0]|round(2) }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
+            {{ rinfo.beta_wilcoxon_test[stim_condition][1]|round(4) }}
+            {% endif %}
+        </td>
+    </tr>
     {% endfor %}
     </tbody>
 </table>
