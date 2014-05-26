@@ -74,9 +74,9 @@ class WTAMonitor():
             figure()
             for i in range(self.num_groups):
                 subplot(num_plots,1,i+1)
-                raster_plot(*self.monitors['excitatory_spike_%d' % i],newfigure=False)
+                raster_plot(self.monitors['excitatory_spike_%d' % i],newfigure=False)
             subplot(num_plots,1,num_plots)
-            raster_plot(*self.monitors['inhibitory_spike'],newfigure=False)
+            raster_plot(self.monitors['inhibitory_spike'],newfigure=False)
 
         # Network firing rate plots
         if 'inhibitory_rate' in self.monitors:
@@ -238,7 +238,7 @@ class WTAMonitor():
         if 'lfp' in self.monitors:
             figure()
             ax=subplot(111)
-            ax.plot(self.monitors['lfp'].times / ms, self.monitors['lfp'] / mA)
+            ax.plot(self.monitors['lfp'].times / ms, self.monitors['lfp'][0]/mA)
             xlabel('Time (ms)')
             ylabel('LFP (mA)')
 
