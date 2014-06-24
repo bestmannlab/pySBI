@@ -220,6 +220,9 @@ class FileInfo():
                 if ('i.%d.spike_neurons' % idx) in f_spikes:
                     self.i_spike_neurons.append(np.array(f_spikes['i.%d.spike_neurons' % idx]))
                     self.i_spike_times.append(np.array(f_spikes['i.%d.spike_times' % idx]))
+            if 'i.spike_neurons' in f_spikes:
+                self.i_spike_neurons.append(np.array(f_spikes['i.spike_neurons']))
+                self.i_spike_times.append(np.array(f_spikes['i.spike_times']))
 
         self.summary_data=Struct()
         if 'summary' in f:
@@ -249,8 +252,10 @@ class FileInfo():
             self.summary_data.e_max=np.array(e_max)
             self.summary_data.i_mean=np.array(i_mean_final)
             self.summary_data.i_max=np.array(i_max)
-            self.summary_data.bold_max=np.max(self.voxel_rec['y'])
-            self.summary_data.bold_exc_max=np.max(self.voxel_exc_rec['y'])
+            if hasattr(self,'voxel_rec'):
+                self.summary_data.bold_max=np.max(self.voxel_rec['y'])
+            if hasattr(self,'voxel_exc_rec'):
+                self.summary_data.bold_exc_max=np.max(self.voxel_exc_rec['y'])
 
         f.close()
 
@@ -1830,17 +1835,6 @@ def create_trial_report(trial_summary, reports_dir):
 
     return trial_report
 
-if __name__=='__main__':
-    #p_range=np.array(range(1,11))*.01
-    #plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
-    #prefix='wta.groups.2.duration.3.000.p_b_e.0.050.p_x_e.0.050.p_e_e.0.025.p_e_i.0.030.p_i_i.0.010.p_i_e.0.060.p_dcs.0.0000.i_dcs.0.0000.control'
-    #dir='../../data/dcs'
-    #t=TrialSeries(dir,prefix,10)
-    #t.plot_rt()
-    create_dcs_comparison_report('/home/jbonaiuto/Projects/pySBI/data/dcs',
-        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
-        {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
-        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
 
 class TrialReport:
     def __init__(self, data_dir, file_prefix, reports_dir, trial_idx):
@@ -1961,3 +1955,16 @@ class TrialReport:
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
+
+
+if __name__=='__main__':
+    #p_range=np.array(range(1,11))*.01
+    #plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
+    #prefix='wta.groups.2.duration.3.000.p_b_e.0.050.p_x_e.0.050.p_e_e.0.025.p_e_i.0.030.p_i_i.0.010.p_i_e.0.060.p_dcs.0.0000.i_dcs.0.0000.control'
+    #dir='../../data/dcs'
+    #t=TrialSeries(dir,prefix,10)
+    #t.plot_rt()
+    create_dcs_comparison_report('/home/jbonaiuto/Projects/pySBI/data/dcs',
+        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
+        {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
+        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
