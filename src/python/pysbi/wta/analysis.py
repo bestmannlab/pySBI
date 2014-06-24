@@ -559,7 +559,7 @@ def get_lfp_signal(wta_data, plot=False):
         plt.show()
     return lfp
 
-def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=20):
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]
     times=np.array(range(len(rate_1)))*.0001
@@ -569,17 +569,14 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
         time=time*second
         if stim_start_time < time < stim_end_time:
             if rt is None:
-                if rate_1[idx]>=upper_threshold and rate_2[idx]<=lower_threshold:
+                if rate_1[idx]>=upper_threshold and (lower_threshold is None or rate_2[idx]<=lower_threshold):
                     decision_idx=0
                     rt=time-stim_start_time
-                elif rate_2[idx]>=upper_threshold and rate_1[idx]<=lower_threshold:
+                    break
+                elif rate_2[idx]>=upper_threshold and (lower_threshold is None or rate_1[idx]<=lower_threshold):
                     decision_idx=1
                     rt=time-stim_start_time
-            else:
-                if (decision_idx==0 and (rate_1[idx]<upper_threshold or rate_2[idx]>lower_threshold)) or \
-                   (decision_idx==1 and (rate_2[idx]<upper_threshold or rate_1[idx]>lower_threshold)):
-                    decision_idx=-1
-                    rt=None
+                    break
     return rt,decision_idx
 
 
