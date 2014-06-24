@@ -13,7 +13,8 @@ from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import fit_behavior, stim_order, LAT, NOSTIM1
 
 
-def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dcs=0*pA, output_file=None):
+def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
+                      output_file=None):
     mat = scipy.io.loadmat(mat_file)
     prob_idx=-1
     mags_idx=-1
@@ -79,6 +80,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         f.attrs['p_i_e'] = wta_params.p_i_e
         f.attrs['p_dcs']=p_dcs
         f.attrs['i_dcs']=i_dcs
+        f.attrs['dcs_start_time']=dcs_start_time
 
     for trial in range(trials):
         vals[:,trial]=exp_rew
@@ -88,8 +90,9 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         inputs[:,trial]=10.0+inputs[:,trial]*2.5
 
         trial_monitor=run_wta(wta_params, num_groups, inputs[:,trial], trial_duration, background_freq=background_freq,
-            p_dcs=p_dcs, i_dcs=i_dcs, record_lfp=False, record_voxel=False, record_neuron_state=False,
-            record_spikes=False, record_firing_rate=True, record_inputs=False, plot_output=False)
+            p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=dcs_start_time, record_lfp=False, record_voxel=False,
+            record_neuron_state=False, record_spikes=False, record_firing_rate=True, record_inputs=False,
+            plot_output=False)
 
         trial_group=f.create_group('trial %d' % trial)
         e_rates = []
@@ -100,7 +103,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         i_rates = [trial_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
         trial_group['i_rates'] = np.array(i_rates)
 
-        rt,decision_idx=get_response_time(e_rates, 1*second, 2*second)
+        rt,decision_idx=get_response_time(e_rates, 1*second, trial_duration-1*second, upper_threshold=30)
 
         reward=0.0
         if decision_idx>=0 and np.random.random()<=prob_walk[decision_idx,trial]:
@@ -142,34 +145,14 @@ def simulate_existing_subjects(final_data_dir, local_data_dir, num_virtual_subje
               str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
         subprocess.Popen(args,stdout=log_file)
 
-def simulate_subject(control_mat_file, stim_mat_file, wta_params, alpha, beta, output_file):
-    background_freq=(beta-87.46)/-12.5
-    run_rl_simulation(control_mat_file, wta_params, alpha=alpha, background_freq=background_freq,
-        output_file=output_file % 'control')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=-2*pA,
-        output_file=output_file % 'anode')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=2*pA,
-        output_file=output_file % 'cathode')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=0*pA,
-        output_file=output_file % 'anode_control_1')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=4*pA, i_dcs=2*pA,
-        output_file=output_file % 'anode_control_2')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=0*pA,
-        output_file=output_file % 'cathode_control_1')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-4*pA, i_dcs=-2*pA,
-        output_file=output_file % 'cathode_control_2')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=2*pA, i_dcs=-4*pA,
-        output_file=output_file % 'anode_control_3')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=2*pA, i_dcs=0*pA,
-        output_file=output_file % 'anode_control_4')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=2*pA, i_dcs=4*pA,
-        output_file=output_file % 'anode_control_5')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-2*pA, i_dcs=-4*pA,
-        output_file=output_file % 'cathode_control_3')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-2*pA, i_dcs=0*pA,
-        output_file=output_file % 'cathode_control_4')
-    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=-2*pA, i_dcs=4*pA,
-        output_file=output_file % 'cathode_control_5')
+def simulate_subject(stim_mat_file, wta_params, alpha, beta, output_file, background=None, p_dcs=0*pA, i_dcs=0*pA,
+                     dcs_start_time=0*ms):
+    if background is None:
+        background_freq=(beta-87.46)/-12.5
+    else:
+        background_freq=background
+    run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=p_dcs, i_dcs=i_dcs,
+        dcs_start_time=dcs_start_time, output_file=output_file)
 
 
 def resume_subject_simulation(data_dir, num_virtual_subjects):
@@ -298,12 +281,15 @@ def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials
 if __name__=='__main__':
     #simulate_subjects('../../data/rerw/subjects/',24,50,'../../data/rerw/subjects/fitted_behavioral_params.h5',0.03,0.06)
     ap = argparse.ArgumentParser(description='Simulate a subject')
-    ap.add_argument('--control_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject control mat file')
     ap.add_argument('--stim_mat_file', type=str, default='../../data/rerw/subjects/value1_s1_t2.mat', help='Subject stim mat file')
     ap.add_argument('--p_x_e', type=float, default=0.01, help='Connection prob from task inputs to excitatory neurons')
     ap.add_argument('--p_b_e', type=float, default=0.03, help='Connection prob from background to excitatory neurons')
+    ap.add_argument('--p_dcs', type=float, default=0.0, help='Pyramidal cell DCS')
+    ap.add_argument('--i_dcs', type=float, default=0.0, help='Interneuron cell DCS')
+    ap.add_argument('--dcs_start_time', type=float, default=0.0, help='Time to start dcs')
     ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
     ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
+    ap.add_argument('--background', type=float, default=None, help='Background firing rate (Hz)')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
 
     argvals = ap.parse_args()
@@ -312,4 +298,6 @@ if __name__=='__main__':
     wta_params.p_b_e=argvals.p_b_e
     wta_params.p_x_e=argvals.p_x_e
 
-    simulate_subject(argvals.control_mat_file, argvals.stim_mat_file, wta_params, argvals.alpha, argvals.beta, argvals.output_file)
+    simulate_subject(argvals.stim_mat_file, wta_params, argvals.alpha, argvals.beta, argvals.output_file,
+        background=argvals.background, p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA,
+        dcs_start_time=argvals.dcs_start_time*second)
