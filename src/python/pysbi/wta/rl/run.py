@@ -41,7 +41,7 @@ def get_rerw_commands(mat_file, p_b_e, p_x_e, p_dcs, i_dcs, dcs_start_time, alph
     return cmds, log_file_template, output_file
 
 def launch_background_freq_processes(nodes, background_freq_range, p_b_e, p_x_e, trials, start_nodes=True):
-    mat_file='../../data/rerw/subjects/value1_s1_t2.mat'
+    mat_file='/tmp/pySBI/data/rerw/subjects/value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
     if start_nodes:
