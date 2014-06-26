@@ -1,5 +1,5 @@
 from time import time
-from brian import ms
+from brian import ms, second
 from brian.connections.delayconnection import DelayConnection
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pylab as plt
@@ -95,3 +95,24 @@ def weibull(x, alpha, beta):
 
 def rt_function(x, a, k, tr):
     return a/(k*x)*np.tanh(a*k*x)+tr
+
+
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None):
+    rate_1=e_firing_rates[0]
+    rate_2=e_firing_rates[1]
+    times=np.array(range(len(rate_1)))*.0001
+    rt=None
+    decision_idx=-1
+    for idx,time in enumerate(times):
+        time=time*second
+        if stim_start_time < time < stim_end_time:
+            if rt is None:
+                if rate_1[idx]>=upper_threshold and (lower_threshold is None or rate_2[idx]<=lower_threshold):
+                    decision_idx=0
+                    rt=time-stim_start_time
+                    break
+                elif rate_2[idx]>=upper_threshold and (lower_threshold is None or rate_1[idx]<=lower_threshold):
+                    decision_idx=1
+                    rt=time-stim_start_time
+                    break
+    return rt,decision_idx

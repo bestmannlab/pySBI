@@ -7,7 +7,7 @@ from brian.units import second
 import numpy as np
 import scipy.io
 import h5py
-from pysbi.wta.analysis import get_response_time
+from pysbi.util.utils import get_response_time
 from pysbi.wta.network import default_params, run_wta
 from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import fit_behavior, stim_order, LAT, NOSTIM1

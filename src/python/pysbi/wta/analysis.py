@@ -3,13 +3,12 @@ from scipy.optimize import curve_fit
 import subprocess
 from brian import Hz, ms, nA, mA
 from brian.clock import defaultclock
-from brian.stdunits import Hz, ms, nA, mA
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
 import h5py
 import math
 from jinja2 import Environment, FileSystemLoader
-from matplotlib import cm, pyplot
+from matplotlib import cm
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +16,7 @@ from scikits.learn.linear_model import LinearRegression
 from pysbi import  voxel
 from pysbi.config import DATA_DIR, TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps, weibull, rt_function
+from pysbi.util.utils import Struct, save_to_png, save_to_eps, weibull, rt_function, get_response_time
 from pysbi.wta import network
 from pysbi.wta.network import run_wta
 
@@ -558,27 +557,6 @@ def get_lfp_signal(wta_data, plot=False):
         plt.plot(lfp)
         plt.show()
     return lfp
-
-def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None):
-    rate_1=e_firing_rates[0]
-    rate_2=e_firing_rates[1]
-    times=np.array(range(len(rate_1)))*.0001
-    rt=None
-    decision_idx=-1
-    for idx,time in enumerate(times):
-        time=time*second
-        if stim_start_time < time < stim_end_time:
-            if rt is None:
-                if rate_1[idx]>=upper_threshold and (lower_threshold is None or rate_2[idx]<=lower_threshold):
-                    decision_idx=0
-                    rt=time-stim_start_time
-                    break
-                elif rate_2[idx]>=upper_threshold and (lower_threshold is None or rate_1[idx]<=lower_threshold):
-                    decision_idx=1
-                    rt=time-stim_start_time
-                    break
-    return rt,decision_idx
-
 
 def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix):
     l = []
