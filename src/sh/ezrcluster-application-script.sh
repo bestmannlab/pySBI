@@ -4,7 +4,7 @@ cd /tmp
 rm -Rf pySBI
 rm pySBI.tgz
 rm -R /tmp/wta-output
-scp -p #PORT# #USER#@#HOST#:/data/pySBI/pySBI.tgz pySBI.tgz
+scp -P #PORT# #USER#@#HOST#:/data/pySBI/pySBI.tgz pySBI.tgz
 tar xvzf pySBI.tgz
 
 mkdir /tmp/wta-output
