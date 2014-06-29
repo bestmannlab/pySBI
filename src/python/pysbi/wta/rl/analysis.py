@@ -275,12 +275,13 @@ class BackgroundBetaReport:
                 print('background=%0.2f Hz, trial %d' % (background_freq, trial))
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
-                session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
-                session_report.create_report()
-                self.sessions.append(session_report)
-                background_vals[idx*self.trials+trial]=background_freq
-                alpha_vals[idx*self.trials+trial]=session_report.est_alpha
-                beta_vals[idx*self.trials+trial]=session_report.est_beta
+                if os.path.exists(os.path.join(self.data_dir,'%s.h5' % session_prefix)):
+                    session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
+                    session_report.create_report()
+                    self.sessions.append(session_report)
+                    background_vals[idx*self.trials+trial]=background_freq
+                    alpha_vals[idx*self.trials+trial]=session_report.est_alpha
+                    beta_vals[idx*self.trials+trial]=session_report.est_beta
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
