@@ -11,14 +11,18 @@ def run_full_adaptation_simulation():
     N=150
     network_params=default_params
     network_params.tau_a=5*second
-    trial_duration=10*second
-    isi=6*second
+    #trial_duration=10*second
+    trial_duration=2*second
+    #isi=6*second
+    isi=100*ms
+    #stim_dur=100*ms
+    stim_dur=300*ms
 
     stim1_start_time=1*second
-    stim1_end_time=stim1_start_time+100*ms
+    stim1_end_time=stim1_start_time+stim_dur
 
     stim2_start_time=stim1_end_time+isi
-    stim2_end_time=stim2_start_time+100*ms
+    stim2_end_time=stim2_start_time+stim_dur
 
     low_var=5
     high_var=15
@@ -35,26 +39,26 @@ def run_full_adaptation_simulation():
             pop_monitor,voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [stim1_mean,stim2_mean],
                 [stim1_var,stim2_var], [stim1_start_time,stim2_start_time],[stim1_end_time,stim2_end_time],
                 trial_duration)
-            y_max=np.max(voxel_monitor['y'][0][60000:])
+            y_max=np.max(voxel_monitor['y'][0])
 
-            pop_monitor,voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [stim2_mean],
-                [stim2_var], [stim1_start_time],[stim1_end_time], trial_duration)
+            pop_monitor,voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [stim1_mean,stim1_mean],
+                [stim1_var,stim1_var], [stim1_start_time,stim2_start_time],[stim1_end_time,stim2_end_time], trial_duration)
             baseline_y_max=np.max(voxel_monitor['y'][0])
-            prob_adaptation[i,j]=(baseline_y_max-y_max)/baseline_y_max
+            prob_adaptation[i,j]=(y_max-baseline_y_max)/baseline_y_max
             print('prob_adaptation=%.4f' % prob_adaptation[i,j])
 
             pop_monitor,voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [stim1_mean,stim2_mean],
                 [stim1_var,stim2_var], [stim1_start_time,stim2_start_time],[stim1_end_time,stim2_end_time],
                 trial_duration)
-            y_max=np.max(voxel_monitor['y'][0][60000:])
+            y_max=np.max(voxel_monitor['y'][0])
 
-            pop_monitor,voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [stim2_mean],
-                [stim2_var], [stim1_start_time],[stim1_end_time], trial_duration)
+            pop_monitor,voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [stim1_mean,stim1_mean],
+                [stim1_var,stim1_var], [stim1_start_time,stim2_start_time],[stim1_end_time,stim2_end_time], trial_duration)
             baseline_y_max=np.max(voxel_monitor['y'][0])
-            samp_adaptation[i,j]=(baseline_y_max-y_max)/baseline_y_max
+            samp_adaptation[i,j]=(y_max-baseline_y_max)/baseline_y_max
             print('samp adaptation=%.4f' % samp_adaptation[i,j])
 
-    data_dir='../../data/full_adaptation'
+    data_dir='../../data/adaptation/full_adaptation/rapid'
 
     fig=plt.figure()
     plt.title('Probabilistic Population')
@@ -79,19 +83,44 @@ def run_mean_adaptation_simulation():
     N=150
     network_params=default_params
     network_params.tau_a=5*second
-    trial_duration=10*second
-    isi=6*second
+    #trial_duration=10*second
+    trial_duration=2*second
+    #isi=6*second
+    isi=100*ms
+    #stim_dur=100*ms
+    stim_dur=300*ms
 
     stim1_start_time=1*second
-    stim1_end_time=stim1_start_time+100*ms
+    stim1_end_time=stim1_start_time+stim_dur
 
     stim2_start_time=stim1_end_time+isi
-    stim2_end_time=stim2_start_time+100*ms
+    stim2_end_time=stim2_start_time+stim_dur
     
     low_var=5
     high_var=15
-    
-    x_delta_range=np.array(range(0,int(N/3),5))
+
+    print('x_delta=0')
+    prob_low_var_pop_monitor,prob_low_var_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [int(N/3), int(N/3)], [low_var,low_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],
+        trial_duration)
+    prob_low_var_baseline=np.max(prob_low_var_voxel_monitor['y'][0])
+
+    prob_high_var_pop_monitor,prob_high_var_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [int(N/3), int(N/3)], [high_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],
+        trial_duration)
+    prob_high_var_baseline=np.max(prob_high_var_voxel_monitor['y'][0])
+
+    samp_low_var_pop_monitor,samp_low_var_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
+        [int(N/3), int(N/3)], [low_var,low_var], [stim1_start_time,stim2_start_time],
+        [stim1_end_time,stim2_end_time], trial_duration)
+    samp_low_var_baseline=np.max(samp_low_var_voxel_monitor['y'][0])
+
+    samp_high_var_pop_monitor,samp_high_var_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
+        [int(N/3), int(N/3)], [high_var,high_var], [stim1_start_time,stim2_start_time],
+        [stim1_end_time,stim2_end_time], trial_duration)
+    samp_high_var_baseline=np.max(samp_high_var_voxel_monitor['y'][0])
+
+    x_delta_range=np.array(range(10,int(N/3),5))
     prob_low_var_adaptation=np.zeros(len(x_delta_range))
     prob_high_var_adaptation=np.zeros(len(x_delta_range))
     samp_low_var_adaptation=np.zeros(len(x_delta_range))
@@ -102,40 +131,28 @@ def run_mean_adaptation_simulation():
         prob_low_var_pop_monitor,prob_low_var_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
             [int(N/3), int(N/3)+x_delta], [low_var,low_var], [stim1_start_time,stim2_start_time],
             [stim1_end_time,stim2_end_time], trial_duration)
-        y_max=np.max(prob_low_var_voxel_monitor['y'][0][60000:])
-        prob_low_var_baseline_pop_monitor,prob_low_var_baseline_voxel_monitor=run_pop_code(ProbabilisticPopulationCode,
-            N, network_params, [int(N/3)+x_delta], [low_var], [stim1_start_time], [stim1_end_time], 2*second)
-        baseline=np.max(prob_low_var_baseline_voxel_monitor['y'][0])
-        prob_low_var_adaptation[i]=(baseline-y_max)/baseline
+        y_max=np.max(prob_low_var_voxel_monitor['y'][0])
+        prob_low_var_adaptation[i]=(y_max-prob_low_var_baseline)/prob_low_var_baseline
 
         prob_high_var_pop_monitor,prob_high_var_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
             [int(N/3), int(N/3)+x_delta], [high_var,high_var], [stim1_start_time,stim2_start_time],
             [stim1_end_time,stim2_end_time], trial_duration)
-        y_max=np.max(prob_high_var_voxel_monitor['y'][0][60000:])
-        prob_high_var_baseline_pop_monitor,prob_high_var_baseline_voxel_monitor=run_pop_code(ProbabilisticPopulationCode,
-            N, network_params, [int(N/3)+x_delta], [high_var], [stim1_start_time], [stim1_end_time], 2*second)
-        baseline=np.max(prob_high_var_baseline_voxel_monitor['y'][0])
-        prob_high_var_adaptation[i]=(baseline-y_max)/baseline
+        y_max=np.max(prob_high_var_voxel_monitor['y'][0])
+        prob_high_var_adaptation[i]=(y_max-prob_high_var_baseline)/prob_high_var_baseline
 
         samp_low_var_pop_monitor,samp_low_var_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
             [int(N/3), int(N/3)+x_delta], [low_var,low_var], [stim1_start_time,stim2_start_time],
             [stim1_end_time,stim2_end_time], trial_duration)
-        y_max=np.max(samp_low_var_voxel_monitor['y'][0][60000:])
-        samp_low_var_baseline_pop_monitor,samp_low_var_baseline_voxel_monitor=run_pop_code(SamplingPopulationCode,
-            N, network_params, [int(N/3)+x_delta], [low_var], [stim1_start_time], [stim1_end_time], 2*second)
-        baseline=np.max(samp_low_var_baseline_voxel_monitor['y'][0])
-        samp_low_var_adaptation[i]=(baseline-y_max)/baseline
+        y_max=np.max(samp_low_var_voxel_monitor['y'][0])
+        samp_low_var_adaptation[i]=(y_max-samp_low_var_baseline)/samp_low_var_baseline
 
         samp_high_var_pop_monitor,samp_high_var_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
             [int(N/3), int(N/3)+x_delta], [high_var,high_var], [stim1_start_time,stim2_start_time],
             [stim1_end_time,stim2_end_time], trial_duration)
-        y_max=np.max(samp_high_var_voxel_monitor['y'][0][60000:])
-        samp_high_var_baseline_pop_monitor,samp_high_var_baseline_voxel_monitor=run_pop_code(SamplingPopulationCode,
-            N, network_params, [int(N/3)+x_delta], [high_var], [stim1_start_time], [stim1_end_time], 2*second)
-        baseline=np.max(samp_high_var_baseline_voxel_monitor['y'][0])
-        samp_high_var_adaptation[i]=(baseline-y_max)/baseline
+        y_max=np.max(samp_high_var_voxel_monitor['y'][0])
+        samp_high_var_adaptation[i]=(y_max-samp_high_var_baseline)/samp_high_var_baseline
 
-    data_dir='../../data/mean_shift'
+    data_dir='../../data/adaptation/mean_shift/rapid'
 
     fig=plt.figure()
     plt.title('Probabilistic Population Code')
@@ -162,66 +179,91 @@ def run_uncertainty_adaptation_simulation():
     N=150
     network_params=default_params
     network_params.tau_a=5*second
-    trial_duration=10*second
-    isi=6*second
+    #trial_duration=10*second
+    trial_duration=2*second
+    #isi=6*second
+    isi=100*ms
+    #stim_dur=100*ms
+    stim_dur=300*ms
 
     low_var=5
     high_var=15
     x=50
 
     stim1_start_time=1*second
-    stim1_end_time=stim1_start_time+100*ms
+    stim1_end_time=stim1_start_time+stim_dur
 
     stim2_start_time=stim1_end_time+isi
-    stim2_end_time=stim2_start_time+100*ms
+    stim2_end_time=stim2_start_time+stim_dur
 
     print('Prob low->high')
     prob_low_high_pop_monitor,prob_low_high_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
         [x,x], [low_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
-    prob_low_high_y_max=np.max(prob_low_high_voxel_monitor['y'][0][60000:])
+    #prob_low_high_y_max=np.max(prob_low_high_voxel_monitor['y'][0][60000:])
+    prob_low_high_y_max=np.max(prob_low_high_voxel_monitor['y'][0])
     
-    print('Prob high')
-    prob_high_pop_monitor,prob_high_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x],
-        [high_var], [stim1_start_time],[stim1_end_time],trial_duration)
-    prob_high_y_max=np.max(prob_high_voxel_monitor['y'][0])
+#    print('Prob high')
+#    prob_high_pop_monitor,prob_high_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x],
+#        [high_var], [stim1_start_time],[stim1_end_time],trial_duration)
+#    prob_high_y_max=np.max(prob_high_voxel_monitor['y'][0])
+    print('Prob low->low')
+    prob_low_low_pop_monitor,prob_low_low_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [x,x], [low_var,low_var], [stim1_start_time,stim2_start_time],[stim1_end_time,stim2_end_time],trial_duration)
+    prob_low_low_y_max=np.max(prob_low_low_voxel_monitor['y'][0])
     
     print('Prob high->low')
     prob_high_low_pop_monitor,prob_high_low_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
         [x,x], [high_var,low_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
-    prob_high_low_y_max=np.max(prob_high_low_voxel_monitor['y'][0][60000:])
+    #prob_high_low_y_max=np.max(prob_high_low_voxel_monitor['y'][0][60000:])
+    prob_high_low_y_max=np.max(prob_high_low_voxel_monitor['y'][0])
     
-    print('Prob low')
-    prob_low_pop_monitor,prob_low_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x], [low_var],
-        [stim1_start_time],[stim1_end_time],trial_duration)
-    prob_low_y_max=np.max(prob_low_voxel_monitor['y'][0])
+#    print('Prob low')
+#    prob_low_pop_monitor,prob_low_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x], [low_var],
+#        [stim1_start_time],[stim1_end_time],trial_duration)
+#    prob_low_y_max=np.max(prob_low_voxel_monitor['y'][0])
+    print('Prob high->high')
+    prob_high_high_pop_monitor,prob_high_high_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [x,x], [high_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
+    prob_high_high_y_max=np.max(prob_high_high_voxel_monitor['y'][0])
     
     print('Samp low->high')
     samp_low_high_pop_monitor,samp_low_high_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
         [x,x], [low_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
-    samp_low_high_y_max=np.max(samp_low_high_voxel_monitor['y'][0][60000:])
+    #samp_low_high_y_max=np.max(samp_low_high_voxel_monitor['y'][0][60000:])
+    samp_low_high_y_max=np.max(samp_low_high_voxel_monitor['y'][0])
     
-    print('Samp high')
-    samp_high_pop_monitor,samp_high_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [x], [high_var],
-        [stim1_start_time],[stim1_end_time],trial_duration)
-    samp_high_y_max=np.max(samp_high_voxel_monitor['y'][0])
+#    print('Samp high')
+#    samp_high_pop_monitor,samp_high_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [x], [high_var],
+#        [stim1_start_time],[stim1_end_time],trial_duration)
+#    samp_high_y_max=np.max(samp_high_voxel_monitor['y'][0])
+
+    print('Samp low->low')
+    samp_low_low_pop_monitor,samp_low_low_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
+        [x,x], [low_var,low_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
+    samp_low_low_y_max=np.max(samp_low_low_voxel_monitor['y'][0])
     
     print('Samp high->low')
     samp_high_low_pop_monitor,samp_high_low_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
         [x,x], [high_var,low_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
-    samp_high_low_y_max=np.max(samp_high_low_voxel_monitor['y'][0][60000:])
+    #samp_high_low_y_max=np.max(samp_high_low_voxel_monitor['y'][0][60000:])
+    samp_high_low_y_max=np.max(samp_high_low_voxel_monitor['y'][0])
     
-    print('Samp low')
-    samp_low_pop_monitor,samp_low_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [x], [low_var],
-        [stim1_start_time],[stim1_end_time],trial_duration)
-    samp_low_y_max=np.max(samp_low_voxel_monitor['y'][0])
+#    print('Samp low')
+#    samp_low_pop_monitor,samp_low_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [x], [low_var],
+#        [stim1_start_time],[stim1_end_time],trial_duration)
+#    samp_low_y_max=np.max(samp_low_voxel_monitor['y'][0])
+    print('Samp high->high')
+    samp_high_high_pop_monitor,samp_high_high_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params,
+        [x,x], [high_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time], trial_duration)
+    samp_high_high_y_max=np.max(samp_high_high_voxel_monitor['y'][0])
     
-    data_dir='../../data/var_shift'
+    data_dir='../../data/adaptation/var_shift/rapid'
 
     fig=plt.figure()
-    plt.plot([0,1],[(prob_high_y_max-prob_low_high_y_max)/prob_high_y_max,
-                    (prob_low_y_max-prob_high_low_y_max)/prob_low_y_max],label='prob')
-    plt.plot([0,1],[(samp_high_y_max-samp_low_high_y_max)/samp_high_y_max,
-                    (samp_low_y_max-samp_high_low_y_max)/samp_low_y_max],label='samp')
+    plt.plot([0,1],[(prob_low_high_y_max-prob_low_low_y_max)/prob_low_low_y_max,
+                    (prob_high_low_y_max-prob_high_high_y_max)/prob_high_high_y_max],label='prob')
+    plt.plot([0,1],[(samp_low_high_y_max-samp_low_low_y_max)/samp_low_low_y_max,
+                    (samp_high_low_y_max-samp_high_high_y_max)/samp_high_high_y_max],label='samp')
     plt.legend(loc='best')
     fname='var.adaptation.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -231,9 +273,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Probabilistic Population')
     plt.plot(prob_low_high_voxel_monitor['y'][0], 'b', label='low->high')
-    plt.plot(prob_high_voxel_monitor['y'][0], 'b--', label='high only')
+    plt.plot(prob_low_low_voxel_monitor['y'][0], 'b--', label='low->low')
     plt.plot(prob_high_low_voxel_monitor['y'][0], 'r', label='high->low')
-    plt.plot(prob_low_voxel_monitor['y'][0], 'r--', label='low only')
+    plt.plot(prob_high_high_voxel_monitor['y'][0], 'r--', label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.prob.bold.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -247,8 +289,8 @@ def run_uncertainty_adaptation_simulation():
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(412)
-    plt.title('high')
-    plt.imshow(prob_high_pop_monitor['e'][:],aspect='auto')
+    plt.title('low->low')
+    plt.imshow(prob_low_low_pop_monitor['e'][:],aspect='auto')
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(413)
@@ -257,8 +299,8 @@ def run_uncertainty_adaptation_simulation():
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(414)
-    plt.title('low')
-    plt.imshow(prob_low_pop_monitor['e'][:],aspect='auto')
+    plt.title('high->high')
+    plt.imshow(prob_high_high_pop_monitor['e'][:],aspect='auto')
     plt.clim(0,1)
     plt.colorbar()
     fname='var.adaptation.prob.e.%s'
@@ -269,9 +311,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Probabilistic Population')
     plt.plot(prob_low_high_pop_monitor['total_e'][0],'b',label='low->high')
-    plt.plot(prob_high_pop_monitor['total_e'][0],'b-.',label='high')
+    plt.plot(prob_low_low_pop_monitor['total_e'][0],'b-.',label='low->low')
     plt.plot(prob_high_low_pop_monitor['total_e'][0],'r',label='high->low')
-    plt.plot(prob_low_pop_monitor['total_e'][0],'r-.',label='low')
+    plt.plot(prob_high_high_pop_monitor['total_e'][0],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.prob.total_e.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -281,9 +323,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Probabilistic Population')
     plt.plot(prob_low_high_pop_monitor['total_r'][0],'b',label='low->high')
-    plt.plot(prob_high_pop_monitor['total_r'][0],'b-.',label='high')
+    plt.plot(prob_low_low_pop_monitor['total_r'][0],'b-.',label='low->low')
     plt.plot(prob_high_low_pop_monitor['total_r'][0],'r',label='high->low')
-    plt.plot(prob_low_pop_monitor['total_r'][0],'r-.',label='low')
+    plt.plot(prob_high_high_pop_monitor['total_r'][0],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.prob.total_r.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -293,9 +335,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Probabilistic Population')
     plt.plot(prob_low_high_voxel_monitor['G_total'][0][0:100000],'b',label='low->high')
-    plt.plot(prob_high_voxel_monitor['G_total'][0][0:100000],'b-.',label='high')
+    plt.plot(prob_low_low_voxel_monitor['G_total'][0][0:100000],'b-.',label='low->low')
     plt.plot(prob_high_low_voxel_monitor['G_total'][0][0:100000],'r',label='high->low')
-    plt.plot(prob_low_voxel_monitor['G_total'][0][0:100000],'r-.',label='low')
+    plt.plot(prob_high_high_voxel_monitor['G_total'][0][0:100000],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.prob.g_total.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -305,9 +347,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Sampling Population')
     plt.plot(samp_low_high_voxel_monitor['y'][0], 'b', label='low->high')
-    plt.plot(samp_high_voxel_monitor['y'][0], 'b-.', label='high only')
+    plt.plot(samp_low_low_voxel_monitor['y'][0], 'b-.', label='low->low')
     plt.plot(samp_high_low_voxel_monitor['y'][0], 'r', label='high->low')
-    plt.plot(samp_low_voxel_monitor['y'][0], 'r-.', label='low only')
+    plt.plot(samp_high_high_voxel_monitor['y'][0], 'r-.', label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.samp.bold.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -321,8 +363,8 @@ def run_uncertainty_adaptation_simulation():
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(412)
-    plt.title('high')
-    plt.imshow(samp_high_pop_monitor['e'][:],aspect='auto')
+    plt.title('low->low')
+    plt.imshow(samp_low_low_pop_monitor['e'][:],aspect='auto')
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(413)
@@ -331,8 +373,8 @@ def run_uncertainty_adaptation_simulation():
     plt.clim(0,1)
     plt.colorbar()
     plt.subplot(414)
-    plt.title('low')
-    plt.imshow(samp_low_pop_monitor['e'][:],aspect='auto')
+    plt.title('high->high')
+    plt.imshow(samp_high_high_pop_monitor['e'][:],aspect='auto')
     plt.clim(0,1)
     plt.colorbar()
     fname='var.adaptation.samp.e.%s'
@@ -343,9 +385,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Sampling Population')
     plt.plot(samp_low_high_pop_monitor['total_e'][0],'b',label='low->high')
-    plt.plot(samp_high_pop_monitor['total_e'][0],'b-.',label='high')
+    plt.plot(samp_low_low_pop_monitor['total_e'][0],'b-.',label='low->low')
     plt.plot(samp_high_low_pop_monitor['total_e'][0],'r',label='high->low')
-    plt.plot(samp_low_pop_monitor['total_e'][0],'r-.',label='low')
+    plt.plot(samp_high_high_pop_monitor['total_e'][0],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.samp.total_e.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -355,9 +397,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Sampling Population')
     plt.plot(samp_low_high_pop_monitor['total_r'][0],'b',label='low->high')
-    plt.plot(samp_high_pop_monitor['total_r'][0],'b-.',label='high')
+    plt.plot(samp_low_low_pop_monitor['total_r'][0],'b-.',label='low->low')
     plt.plot(samp_high_low_pop_monitor['total_r'][0],'r',label='high->low')
-    plt.plot(samp_low_pop_monitor['total_r'][0],'r-.',label='low')
+    plt.plot(samp_high_high_pop_monitor['total_r'][0],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.samp.total_r.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -367,9 +409,9 @@ def run_uncertainty_adaptation_simulation():
     fig=plt.figure()
     plt.title('Sampling Population')
     plt.plot(samp_low_high_voxel_monitor['G_total'][0][0:100000],'b',label='low->high')
-    plt.plot(samp_high_voxel_monitor['G_total'][0][0:100000],'b-.',label='high')
+    plt.plot(samp_low_low_voxel_monitor['G_total'][0][0:100000],'b-.',label='low->low')
     plt.plot(samp_high_low_voxel_monitor['G_total'][0][0:100000],'r',label='high->low')
-    plt.plot(samp_low_voxel_monitor['G_total'][0][0:100000],'r-.',label='low')
+    plt.plot(samp_high_high_voxel_monitor['G_total'][0][0:100000],'r-.',label='high->high')
     plt.legend(loc='best')
     fname='var.adaptation.samp.g_total.%s'
     save_to_png(fig, os.path.join(data_dir,fname % 'png'))
@@ -385,14 +427,15 @@ def run_isi_simulation():
     x1=50
     x2=100
     isi_times=range(25,750,25)
+    stim_dur=100*ms
     adaptation=np.zeros(len(isi_times))
     for i,isi in enumerate(isi_times):
         print('Testing isi=%dms' % isi)
         stim1_start_time=1*second
-        stim1_end_time=stim1_start_time+100*ms
+        stim1_end_time=stim1_start_time+stim_dur
 
         stim2_start_time=stim1_end_time+isi*ms
-        stim2_end_time=stim2_start_time+100*ms
+        stim2_end_time=stim2_start_time+stim_dur
 
         same_pop_monitor,same_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x1,x1], [var,var],
             [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],trial_duration)
@@ -403,7 +446,7 @@ def run_isi_simulation():
         diff_y_max=np.max(diff_voxel_monitor['y'][0])
         adaptation[i]=(diff_y_max-same_y_max)/diff_y_max*100.0
 
-    data_dir='../../data/isi'
+    data_dir='../../data/adaptation/isi'
     fig=plt.figure()
     plt.plot(isi_times,adaptation)
     plt.xlabel('ISI (ms)')
@@ -419,8 +462,10 @@ def test_simulation():
     network_params=default_params
     network_params.tau_a=5*second
     trial_duration=10*second
-    isi=6*second
-    stim_duration=100*ms
+    #isi=6*second
+    isi=100*ms
+    #stim_duration=100*ms
+    stim_duration=300*ms
     var=10
     x1=50
     x2=100
@@ -436,7 +481,7 @@ def test_simulation():
     single_pop_monitor,single_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x1], [var],
         [stim1_start_time], [stim1_end_time], trial_duration)
 
-    data_dir='../../data/adaptation_test/'
+    data_dir='../../data/adaptation/adaptation_test/rapid'
     fig=plt.figure()
     plt.subplot(311)
     plt.title('Same')
@@ -530,12 +575,12 @@ def test_simulation():
     plt.close(fig)
 
 
-def demo(N, network_params, trial_duration, x1, x2, low_var, high_var, isi):
+def demo(N, network_params, trial_duration, x1, x2, low_var, high_var, isi, stim_dur):
     stim1_start_time=1*second
-    stim1_end_time=stim1_start_time+100*ms
+    stim1_end_time=stim1_start_time+stim_dur
 
     stim2_start_time=stim1_end_time+isi
-    stim2_end_time=stim2_start_time+100*ms
+    stim2_end_time=stim2_start_time+stim_dur
 
     low_var_prob_pop_monitor,low_var_prob_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params,
         [x1,x2],[low_var,low_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],trial_duration)
@@ -550,7 +595,7 @@ def demo(N, network_params, trial_duration, x1, x2, low_var, high_var, isi):
     high_var_samp_pop_monitor,high_var_samp_voxel_monitor=run_pop_code(SamplingPopulationCode, N, network_params, [x1,x2],
         [high_var,high_var], [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],trial_duration)
 
-    data_dir='../../data/demo'
+    data_dir='../../data/adaptation/demo'
 
     fig=plt.figure()
     plt.subplot(411)
@@ -663,7 +708,7 @@ def demo(N, network_params, trial_duration, x1, x2, low_var, high_var, isi):
 
 
 if __name__=='__main__':
-    #demo(150, default_params, 2.0*second, 50,75,5,15, 60*ms)
+    #demo(150, default_params, 2.0*second, 50,75,5,15, 100*ms, 300*ms)
     #test_simulation()
     run_mean_adaptation_simulation()
     #run_uncertainty_adaptation_simulation()
