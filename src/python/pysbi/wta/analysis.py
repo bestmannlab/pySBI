@@ -1932,6 +1932,227 @@ class TrialReport:
             plt.close(fig)
 
 
+def get_fanos(spike_times, spike_neurons, num_neurons, start_time, end_time):
+    fano_factors=np.zeros(num_neurons)
+    for i in range(num_neurons):
+        idx=np.where((spike_times>=start_time) & (spike_times<end_time) & (spike_neurons==i))[0]
+        isis=np.array(np.diff([spike_times[j] for j in idx]))
+        if len(isis)>1:
+            fano_factors[i]=float(isis.std())/abs(float(isis.mean()))
+    return fano_factors
+
+def test_fano3(file_name, time_window):
+    data=FileInfo(file_name)
+    e_size=int(data.network_group_size*.8/2)
+
+    idx=0
+    start_time=0*second
+    end_time=time_window
+    slide_width=time_window/10.0
+    e0_fanos=np.zeros((data.trial_duration/slide_width,e_size))
+    e1_fanos=np.zeros((data.trial_duration/slide_width,e_size))
+
+    while end_time<data.trial_duration:
+        print(end_time)
+        e0_fanos[idx,:]=get_fanos(data.e_spike_times[0],data.e_spike_neurons[0],e_size,start_time,end_time)
+
+        e1_fanos[idx,:]=get_fanos(data.e_spike_times[1],data.e_spike_neurons[1],e_size,start_time,end_time)
+
+        idx+=1
+        start_time+=slide_width
+        end_time+=slide_width
+
+    e0_mean_fano=np.mean(e0_fanos,axis=1)
+    e0_std_fano=np.std(e0_fanos,axis=1)
+    e1_mean_fano=np.mean(e1_fanos,axis=1)
+    e1_std_fano=np.std(e1_fanos,axis=1)
+
+    fig=plt.figure()
+    ax=plt.subplot(211)
+    plt.plot(data.e_firing_rates[0])
+    plt.plot(data.e_firing_rates[1])
+    #plt.plot(data.i_firing_rates[0])
+    ax=plt.subplot(212)
+    plt.plot(e0_mean_fano,'b')
+    plt.fill_between(range(len(e0_mean_fano)),e0_mean_fano-e0_std_fano,e0_mean_fano+e0_std_fano,alpha=0.5)
+    plt.plot(e1_mean_fano,'g')
+    plt.fill_between(range(len(e1_mean_fano)),e1_mean_fano-e1_std_fano,e1_mean_fano+e1_std_fano,alpha=0.5)
+    #plt.plot(i_fano)
+    plt.show()
+
+def test_fano2(file_name, time_window):
+    data=FileInfo(file_name)
+    e_size=int(data.network_group_size*.8/2)
+
+    idx=0
+    start_time=0*second
+    end_time=time_window
+    bins=10
+    #slide_width=time_window/bins
+    slide_width=10*ms
+    e_0_fano=np.zeros((data.trial_duration/slide_width))
+    e_1_fano=np.zeros((data.trial_duration/slide_width))
+    start_idx_1=0
+    start_idx_2=0
+
+    while end_time<data.trial_duration:
+        print(end_time)
+        # Analyze data for each specific neuron:
+        e0_timesDict = {}
+        e1_timesDict = {}
+        for neuron in range(e_size):
+            e0_timesDict[neuron] = []
+            e1_timesDict[neuron] = []
+        for bin in range(bins):
+            # We iterate over the bins to calculate the spike counts
+            lower_time = start_time+time_window/bins*bin
+            upper_time = start_time+time_window/bins*(bin+1)
+            for j in range(start_idx_1,len(data.e_spike_times[0])):
+                if lower_time > data.e_spike_times[0][j]*second:
+                    start_idx_1=j
+                if lower_time <= data.e_spike_times[0][j] * second < upper_time:
+                    e0_timesDict[data.e_spike_neurons[0][j]].append(data.e_spike_times[0][j])
+                elif data.e_spike_times[0][j]*second>upper_time:
+                    break
+
+            for j in range(start_idx_2,len(data.e_spike_times[1])):
+                if lower_time > data.e_spike_times[1][j]*second:
+                    start_idx_2=j
+                if lower_time <= data.e_spike_times[1][j] * second < upper_time:
+                    e1_timesDict[data.e_spike_neurons[1][j]].append(data.e_spike_times[1][j])
+                elif data.e_spike_times[1][j]*second>upper_time:
+                    break
+
+        e0_isis=[]
+        e1_isis=[]
+        for neuron in range(e_size):
+            e0_isis.extend(np.diff(e0_timesDict[neuron]))
+            e1_isis.extend(np.diff(e1_timesDict[neuron]))
+        e0_isis=np.array(e0_isis)
+        e1_isis=np.array(e1_isis)
+        if len(e0_isis)>1:
+            e_0_fano[idx]=float(e0_isis.var())/abs(float(e0_isis.mean()))
+        if len(e1_isis)>1:
+            e_1_fano[idx]=float(e1_isis.var())/abs(float(e1_isis.mean()))
+
+        idx+=1
+        start_time+=slide_width
+        end_time+=slide_width
+
+    #fig=plt.figure()
+    #ax=plt.subplot(211)
+    #plt.plot(data.e_firing_rates[0])
+    #plt.plot(data.e_firing_rates[1])
+    #plt.plot(data.i_firing_rates[0])
+    #ax=plt.subplot(212)
+    #plt.plot(np.mean(e_0_fano,axis=1))
+    #plt.plot(np.mean(e_1_fano,axis=1))
+    #plt.plot(np.mean(i_fano,axis=1))
+
+    fig=plt.figure()
+    ax=plt.subplot(211)
+    plt.plot(data.e_firing_rates[0])
+    plt.plot(data.e_firing_rates[1])
+    #plt.plot(data.i_firing_rates[0])
+    ax=plt.subplot(212)
+    plt.plot(e_0_fano)
+    plt.plot(e_1_fano)
+    #plt.plot(i_fano)
+    plt.show()
+
+def test_fano(file_name, time_window):
+    data=FileInfo(file_name)
+
+    idx=0
+    start_time=0*second
+    end_time=time_window
+    bins=5
+    slide_width=time_window/bins
+    e_0_fano=np.zeros((data.trial_duration/slide_width,int(data.network_group_size*.8/2)))
+    e_1_fano=np.zeros((data.trial_duration/slide_width,int(data.network_group_size*.8/2)))
+    i_fano=np.zeros((data.trial_duration/slide_width,int(data.network_group_size*.2)))
+
+    start_idx_1=0
+    start_idx_2=0
+    start_idx_3=0
+
+    while end_time<data.trial_duration:
+        print(end_time)
+        #for i in range(data.network_group_size):
+        # Arrays for binning of spike counts
+        e0_binned_spikes = np.zeros((int(data.network_group_size*.8/2),bins))
+        e1_binned_spikes = np.zeros((int(data.network_group_size*.8/2),bins))
+        i_binned_spikes = np.zeros((int(data.network_group_size*.2),bins))
+        for bin in range(bins):
+            # We iterate over the bins to calculate the spike counts
+            lower_time = start_time+time_window/bins*bin
+            upper_time = start_time+time_window/bins*(bin+1)
+            for j in range(start_idx_1,len(data.e_spike_times[0])):
+                if lower_time > data.e_spike_times[0][j]*second:
+                    start_idx_1=j
+                if lower_time <= data.e_spike_times[0][j] * second < upper_time:
+                    e0_binned_spikes[data.e_spike_neurons[0][j],bin]+=1.0
+                elif data.e_spike_times[0][j]*second>upper_time:
+                    break
+
+            for j in range(start_idx_2,len(data.e_spike_times[1])):
+                if lower_time > data.e_spike_times[1][j]*second:
+                    start_idx_2=j
+                if lower_time <= data.e_spike_times[1][j] * second < upper_time:
+                    e1_binned_spikes[data.e_spike_neurons[1][j],bin]+=1.0
+                elif data.e_spike_times[1][j]*second>upper_time:
+                    break
+
+            for j in range(start_idx_3,len(data.i_spike_times[0])):
+                if lower_time > data.i_spike_times[0][j]*second:
+                    start_idx_3=j
+                if lower_time <= data.i_spike_times[0][j] * second < upper_time:
+                    i_binned_spikes[data.i_spike_neurons[0][j],bin]+=1.0
+                elif data.i_spike_times[0][j]*second>upper_time:
+                    break
+
+        var = np.var(e0_binned_spikes,axis=1)
+        avg = np.mean(e0_binned_spikes,axis=1)
+        nz_idx=np.where(avg>0)
+        e_0_fano[idx,nz_idx[0]]=var[nz_idx[0]]/avg[nz_idx[0]]
+
+        var = np.var(e1_binned_spikes,axis=1)
+        avg = np.mean(e1_binned_spikes,axis=1)
+        nz_idx=np.where(avg>0)
+        e_1_fano[idx,nz_idx[0]]=var[nz_idx[0]]/avg[nz_idx[0]]
+
+        var = np.var(i_binned_spikes,axis=1)
+        avg = np.mean(i_binned_spikes,axis=1)
+        nz_idx=np.where(avg>0)
+        i_fano[idx,nz_idx[0]]=var[nz_idx[0]]/avg[nz_idx[0]]
+
+        #print(np.mean(e_0_fano,axis=1))
+        idx+=1
+        start_time+=slide_width
+        end_time+=slide_width
+
+    fig=plt.figure()
+    ax=plt.subplot(211)
+    plt.plot(data.e_firing_rates[0])
+    plt.plot(data.e_firing_rates[1])
+    plt.plot(data.i_firing_rates[0])
+    ax=plt.subplot(212)
+    plt.plot(np.mean(e_0_fano,axis=1))
+    plt.plot(np.mean(e_1_fano,axis=1))
+    plt.plot(np.mean(i_fano,axis=1))
+
+    fig=plt.figure()
+    ax=plt.subplot(211)
+    plt.plot(data.e_firing_rates[0])
+    plt.plot(data.e_firing_rates[1])
+    plt.plot(data.i_firing_rates[0])
+    ax=plt.subplot(212)
+    plt.plot(e_0_fano)
+    plt.plot(e_1_fano)
+    plt.plot(i_fano)
+    plt.show()
+
+
 if __name__=='__main__':
     #p_range=np.array(range(1,11))*.01
     #plot_perf_slope_analysis('/media/data/projects/ezrcluster/data/output',p_range,'wta.groups.2.duration.1.000.p_b_e.0.100.p_x_e.0.100',10)
@@ -1939,7 +2160,10 @@ if __name__=='__main__':
     #dir='../../data/dcs'
     #t=TrialSeries(dir,prefix,10)
     #t.plot_rt()
-    create_dcs_comparison_report('/home/jbonaiuto/Projects/pySBI/data/dcs',
-        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
-        {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
-        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
+#    create_dcs_comparison_report('/home/jbonaiuto/Projects/pySBI/data/dcs',
+#        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
+#        {'control':(0,0),'anode':(4,-2),'cathode':(-4,2)},50,
+#        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
+    #test_fano('../../data/dcs/wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080.p_dcs.0.0000.i_dcs.0.0000.control.contrast.0.0000.trial.0.h5', 50*ms)
+    #test_fano2('../../data/dcs/test_dcs_fano.h5', 200*ms)
+    test_fano3('../../data/dcs/test_dcs_fano.h5', 500*ms)
