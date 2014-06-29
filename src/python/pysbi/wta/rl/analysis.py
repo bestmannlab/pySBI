@@ -10,8 +10,7 @@ import numpy as np
 from scikits.learn.linear_model import LinearRegression
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps
-from pysbi.wta.analysis import get_response_time
+from pysbi.util.utils import Struct, save_to_png, save_to_eps, get_response_time
 from pysbi.wta.network import default_params
 from pysbi.wta.rl.fit import rescorla_td_prediction
 
@@ -495,10 +494,87 @@ def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range):
     plt.title(cond_name)
     return fig
 
+def plot_trials_ev_diff(data_dir,file_name):
+    data=FileInfo(os.path.join(data_dir,file_name))
+    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+    hist,bins=np.histogram(np.array(ev_diff), bins=10)
+    bin_width=bins[1]-bins[0]
+    plt.bar(bins[:-1], hist/float(len(ev_diff)), width=bin_width)
+    plt.show()
 
+def plot_mean_firing_rate(data_dir, file_name):
+    data=FileInfo(os.path.join(data_dir,file_name))
+    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+
+    min_ev_diff=0.5
+    max_ev_diff=0.6
+    trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+    chosen_firing_rates=[]
+    unchosen_firing_rates=[]
+    for trial in trials:
+        if data.choice[trial]>-1:
+            chosen_firing_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
+            unchosen_firing_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
+
+    chosen_firing_rates=np.array(chosen_firing_rates)
+    unchosen_firing_rates=np.array(unchosen_firing_rates)
+
+    fig=plt.figure()
+    plt.plot(np.mean(chosen_firing_rates,axis=0))
+    plt.plot(np.mean(unchosen_firing_rates,axis=0))
+    plt.show()
+
+def debug_trial_plot(file_name):
+    f = h5py.File(file_name)
+    num_trials=int(f.attrs['trials'])
+    trial_e_rates=[]
+    trial_i_rates=[]
+    for i in range(num_trials):
+        f_trial=f['trial %d' % i]
+        trial_e_rates.append(np.array(f_trial['e_rates']))
+        trial_i_rates.append(np.array(f_trial['i_rates']))
+    f.close()
+
+    for i in range(num_trials):
+        e_firing_rates=trial_e_rates[i]
+        i_firing_rates=trial_i_rates[i]
+
+        # figure out max firing rate of all neurons (pyramidal and interneuron)
+        max_pop_rate=0
+        for i, pop_rate in enumerate(e_firing_rates):
+            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+        for i, pop_rate in enumerate(i_firing_rates):
+            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+
+        fig=plt.figure()
+
+        # Plot pyramidal neuron firing rate
+        ax=plt.subplot(2,1,1)
+        for i, pop_rate in enumerate(e_firing_rates):
+            #ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            ax.plot(pop_rate / Hz, label='group %d' % i)
+            # Plot line showing RT
+        #plt.ylim([0,10+max_pop_rate])
+        ax.legend(loc='best')
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Firing Rate (Hz)')
+
+        # Plot interneuron firing rate
+        ax = fig.add_subplot(2,1,2)
+        for i, pop_rate in enumerate(i_firing_rates):
+            #ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            ax.plot(pop_rate / Hz, label='group %d' % i)
+            # Plot line showing RT
+        #plt.ylim([0,10+max_pop_rate])
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Firing Rate (Hz)')
+        plt.show()
 
 if __name__=='__main__':
-    report=RLReport('/data/projects/pySBI/rl','virtual_subject_%d.%s',
-        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
-        '/data/projects/pySBI/rl/report',50,'')
-    report.create_report()
+#    report=RLReport('/data/projects/pySBI/rl','virtual_subject_%d.%s',
+#        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
+#        '/data/projects/pySBI/rl/report',50,'')
+#    report.create_report()
+    #plot_trials_ev_diff('../../data/rerw','virtual_subject_0.control.h5')
+    #plot_mean_firing_rate('../../data/rerw','virtual_subject_0.control.h5')
+    debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
