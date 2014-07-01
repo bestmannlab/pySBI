@@ -58,36 +58,56 @@ def run_repeated_test():
     stim2_start_time=stim1_end_time+sim_params.isi
     stim2_end_time=stim2_start_time+sim_params.stim_dur
 
-    # High and low mean and variance examples
+    x_delta_iter=5
+    # If baseline is single stimulus - need to test x_delta=0
+    x_delta_range=np.array(range(0,int(N/3),x_delta_iter))
+
+    # High and low variance examples
     low_var=5
-    low_mean=50
-    high_mean=100
+    x=int(N/3)
 
-    pop_monitor,voxel_monitor,prob_repeated_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
-        [Stimulus(low_mean,low_var,stim1_start_time,stim1_end_time),
-         Stimulus(high_mean,low_var,stim2_start_time,stim2_end_time)],
-        sim_params.trial_duration)
-    pop_monitor,voxel_monitor,prob_first_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
-        [Stimulus(low_mean, low_var, stim1_start_time, stim1_end_time)],
-        sim_params.trial_duration)
-    pop_monitor,voxel_monitor,prob_second_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
-        [Stimulus(high_mean, low_var, stim1_start_time, stim1_end_time)],
-        sim_params.trial_duration)
-    prob_combined_y_max=prob_first_y_max+prob_second_y_max
-    print('Prob, repeated: %.4f, combined: %.4f' % (prob_repeated_y_max, prob_combined_y_max))
+    prob_combined_y_max=np.zeros(len(x_delta_range))
+    prob_repeated_y_max=np.zeros(len(x_delta_range))
+    samp_combined_y_max=np.zeros(len(x_delta_range))
+    samp_repeated_y_max=np.zeros(len(x_delta_range))
+    for i,x_delta in enumerate(x_delta_range):
+        print('x_delta=%d' % x_delta)
 
-    pop_monitor,voxel_monitor,samp_repeated_y_max=run_pop_code(SamplingPopulationCode, N, network_params,
-        [Stimulus(low_mean,low_var,stim1_start_time,stim1_end_time),
-         Stimulus(high_mean,low_var,stim2_start_time,stim2_end_time)],
-        sim_params.trial_duration)
-    pop_monitor,voxel_monitor,samp_first_y_max=run_pop_code(SamplingPopulationCode, N, network_params,
-        [Stimulus(low_mean, low_var, stim1_start_time, stim1_end_time)],
-        sim_params.trial_duration)
-    pop_monitor,voxel_monitor,samp_second_y_max=run_pop_code(SamplingPopulationCode, N, network_params,
-        [Stimulus(high_mean, low_var, stim1_start_time, stim1_end_time)],
-        sim_params.trial_duration)
-    samp_combined_y_max=samp_first_y_max+samp_second_y_max
-    print('Samp, repeated: %.4f, combined: %.4f' % (samp_repeated_y_max, samp_combined_y_max))
+        pop_monitor,voxel_monitor,prob_repeated_y_max[i]=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+            [Stimulus(x,low_var,stim1_start_time,stim1_end_time),
+             Stimulus(x+x_delta,low_var,stim2_start_time,stim2_end_time)],
+            sim_params.trial_duration)
+        pop_monitor,voxel_monitor,prob_first_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+            [Stimulus(x, low_var, stim1_start_time, stim1_end_time)],
+            sim_params.trial_duration)
+        pop_monitor,voxel_monitor,prob_second_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+            [Stimulus(x+x_delta, low_var, stim1_start_time, stim1_end_time)],
+            sim_params.trial_duration)
+        prob_combined_y_max[i]=prob_first_y_max+prob_second_y_max
+
+        pop_monitor,voxel_monitor,samp_repeated_y_max[i]=run_pop_code(SamplingPopulationCode, N, network_params,
+            [Stimulus(x,low_var,stim1_start_time,stim1_end_time),
+             Stimulus(x+x_delta,low_var,stim2_start_time,stim2_end_time)],
+            sim_params.trial_duration)
+        pop_monitor,voxel_monitor,samp_first_y_max=run_pop_code(SamplingPopulationCode, N, network_params,
+            [Stimulus(x, low_var, stim1_start_time, stim1_end_time)],
+            sim_params.trial_duration)
+        pop_monitor,voxel_monitor,samp_second_y_max=run_pop_code(SamplingPopulationCode, N, network_params,
+            [Stimulus(x+x_delta, low_var, stim1_start_time, stim1_end_time)],
+            sim_params.trial_duration)
+        samp_combined_y_max[i]=samp_first_y_max+samp_second_y_max
+
+    data_dir='../../data/adaptation/repeated_test/'
+
+    fig=plt.figure()
+    plt.title('Probabilistic Population Code')
+    plt.plot(x_delta_range,prob_combined_y_max-prob_repeated_y_max,'r',label='prob')
+    plt.plot(x_delta_range,samp_combined_y_max-samp_repeated_y_max,'b',label='samp')
+    plt.legend(loc='best')
+    fname='repeated_test'
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
 
 def run_full_adaptation_simulation(design, baseline):
     N=150
@@ -152,11 +172,6 @@ def run_mean_adaptation_simulation(design, baseline):
     x_delta_iter=5
     # If baseline is single stimulus - need to test x_delta=0
     x_delta_range=np.array(range(0,int(N/3),x_delta_iter))
-
-    # Repeated baseline - run  with repeated stimulus at x_delta==0
-    if baseline=='repeated':
-        # If baseline is repeated stimulus - already computed x_delta=0 as baseline
-        x_delta_range=np.array(range(x_delta_iter,int(N/3),x_delta_iter))
 
     # High and low variance examples
     low_var=5
