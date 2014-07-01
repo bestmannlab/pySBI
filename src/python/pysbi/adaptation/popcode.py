@@ -1,4 +1,4 @@
-from brian import network_operation, defaultclock, Network, reinit_default_clock
+from brian import network_operation, defaultclock, Network, reinit_default_clock, second
 from brian.equations import Equations
 from brian.monitor import MultiStateMonitor
 from brian.neurongroup import NeuronGroup, linked_var
@@ -66,8 +66,14 @@ class SamplingPopulationCode(PopulationCode):
     def get_population_function(self, x, var):
         return 1.0/ var * np.exp( -(np.array(range(self.N)) - x)**2.0 / (2.0 * var**2.0))
 
+class Stimulus:
+    def __init__(self, x, var, start_time, end_time):
+        self.x=x
+        self.var=var
+        self.start_time=start_time
+        self.end_time=end_time
 
-def run_pop_code(pop_class, N, network_params, x_vec, var_vec, start_times, end_times, trial_duration):
+def run_pop_code(pop_class, N, network_params, stimuli, trial_duration):
     pop=pop_class(N,network_params)
     pop_monitor=MultiStateMonitor(pop, vars=['x','r','e','total_e','total_r'], record=True)
     voxel=Voxel()
@@ -75,15 +81,22 @@ def run_pop_code(pop_class, N, network_params, x_vec, var_vec, start_times, end_
     @network_operation(when='start')
     def get_pop_input():
         pop.x=0.0
-        for i,(x,var) in enumerate(zip(x_vec,var_vec)):
-            if start_times[i]<defaultclock.t<end_times[i]:
-                pop.x=pop.get_population_function(x, var)
+        for stimulus in stimuli:
+            if stimulus.start_time<defaultclock.t<stimulus.end_time:
+                pop.x+=pop.get_population_function(stimulus.x,stimulus.var)
 
     net=Network(pop, pop_monitor, get_pop_input)
     reinit_default_clock()
     net.run(trial_duration)
 
     g_total=np.sum(np.clip(pop_monitor['e'].values,0,1) * pop_monitor['x'].values, axis=0)+0.1
-    voxel_monitor=get_bold_signal(g_total, voxel.params, range(int(start_times[0]/defaultclock.dt)), trial_duration)
+    voxel_monitor=get_bold_signal(g_total, voxel.params, range(int(stimuli[0].start_time/defaultclock.dt)), trial_duration)
 
-    return pop_monitor, voxel_monitor
+    # There is only one peak with rapid design
+    if trial_duration>6*second:
+        y_max=np.max(voxel_monitor['y'][0][60000:])
+    else:
+        y_max=np.max(voxel_monitor['y'][0])
+
+
+    return pop_monitor, voxel_monitor, y_max
