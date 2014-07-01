@@ -207,6 +207,7 @@
     <thead>
         <tr>
             <th>Background rate</th>
+            <th>Subject</th>
             <th>Estimated alpha</th>
             <th>Estimated beta</th>
             <th>% correct</th>
@@ -217,6 +218,7 @@
     {% for session_data in rinfo.sessions %}
     <tr>
         <td><a href="{{ session_data.furl }}">{{ session_data.background_freq }}</a></td>
+        <td>{{ session_data.trial }}</td>
         <td>{{ session_data.est_alpha }}</td>
         <td>{{ session_data.est_beta }}</td>
         <td>{{ session_data.prop_correct }}</td>
