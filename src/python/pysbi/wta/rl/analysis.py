@@ -266,9 +266,12 @@ class BackgroundBetaReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
-        beta_vals=np.zeros((len(self.background_range)*self.trials,1))
-        alpha_vals=np.zeros((len(self.background_range)*self.trials,1))
-        background_vals=np.zeros((len(self.background_range)*self.trials,1))
+#        beta_vals=np.zeros((len(self.background_range)*self.trials,1))
+#        alpha_vals=np.zeros((len(self.background_range)*self.trials,1))
+#        background_vals=np.zeros((len(self.background_range)*self.trials,1))
+        beta_vals=[]
+        alpha_vals=[]
+        background_vals=[]
 
         for idx,background_freq in enumerate(self.background_range):
             for trial in range(self.trials):
@@ -280,9 +283,16 @@ class BackgroundBetaReport:
                     session_report.subject=trial
                     session_report.create_report()
                     self.sessions.append(session_report)
-                    background_vals[idx*self.trials+trial]=background_freq
-                    alpha_vals[idx*self.trials+trial]=session_report.est_alpha
-                    beta_vals[idx*self.trials+trial]=session_report.est_beta
+                    #background_vals[idx*self.trials+trial]=background_freq
+                    background_vals.append([background_freq])
+                    #alpha_vals[idx*self.trials+trial]=session_report.est_alpha
+                    alpha_vals.append([session_report.est_alpha])
+                    #beta_vals[idx*self.trials+trial]=session_report.est_beta
+                    beta_vals.append([session_report.est_beta])
+
+        background_vals=np.array(background_vals)
+        alpha_vals=np.array(alpha_vals)
+        beta_vals=np.array(beta_vals)
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
