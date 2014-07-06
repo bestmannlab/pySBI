@@ -68,4 +68,4 @@ def launch_missing_background_freq_processes(nodes, background_freq_range, p_b_e
                 background_freq, e_desc='trial.%d' % trial)
             out_path,out_filename=os.path.split(out_file)
             if not os.path.exists(os.path.join('/data/ezrcluster/data/output',out_filename)):
-                print('%s not found' % out_filename)
+                launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
