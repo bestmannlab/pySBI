@@ -19,8 +19,8 @@ long_design_params=Parameters(
     stim_dur=100*ms
 )
 
-def adaptation_simulation(baseline, pop_class, N, network_params, sim_params, stim1_mean, stim2_mean, stim1_var,
-                          stim2_var):
+def adaptation_simulation(design, baseline, pop_class, N, network_params, sim_params, stim1_mean, stim2_mean, stim1_var,
+                          stim2_var, data_dir, edesc):
     # Compute stimulus start and end times
     stim1_start_time=1*second
     stim1_end_time=stim1_start_time+sim_params.stim_dur
@@ -34,15 +34,69 @@ def adaptation_simulation(baseline, pop_class, N, network_params, sim_params, st
         sim_params.trial_duration)
 
     if baseline=='repeated':
-        pop_monitor,voxel_monitor,baseline_y_max=run_pop_code(pop_class, N, network_params,
+        baseline_pop_monitor,baseline_voxel_monitor,baseline_y_max=run_pop_code(pop_class, N, network_params,
             [Stimulus(stim1_mean,stim1_var,stim1_start_time,stim1_end_time),
              Stimulus(stim1_mean,stim1_var,stim2_start_time,stim2_end_time)],
             sim_params.trial_duration)
+        adaptation=(y_max-baseline_y_max)/baseline_y_max
     elif baseline=='single':
-        pop_monitor,voxel_monitor,baseline_y_max=run_pop_code(pop_class, N, network_params,
+        baseline_pop_monitor,baseline_voxel_monitor,baseline_y_max=run_pop_code(pop_class, N, network_params,
             [Stimulus(stim2_mean, stim2_var, stim1_start_time, stim1_end_time)],
             rapid_design_params.trial_duration)
-    adaptation=np.abs(y_max-baseline_y_max)/baseline_y_max
+        adaptation=(y_max-baseline_y_max)/baseline_y_max
+
+    fig=plt.figure()
+    plt.plot(voxel_monitor['y'][0], 'b', label='test')
+    plt.plot(baseline_voxel_monitor['y'][0], 'r', label='baseline')
+    plt.legend(loc='best')
+    fname='%s.baseline-%s.%s.%s.bold' % (design,baseline,edesc,pop_class.__name__)
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
+
+    fig=plt.figure()
+    plt.subplot(211)
+    plt.title('test')
+    plt.imshow(pop_monitor['e'][:],aspect='auto')
+    plt.clim(0,1)
+    plt.colorbar()
+    plt.subplot(212)
+    plt.title('baseline')
+    plt.imshow(baseline_pop_monitor['e'][:],aspect='auto')
+    plt.clim(0,1)
+    plt.colorbar()
+    fname='%s.baseline-%s.%s.%s.e' % (design,baseline,edesc,pop_class.__name__)
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
+
+    fig=plt.figure()
+    plt.plot(pop_monitor['total_e'][0],'b',label='test')
+    plt.plot(baseline_pop_monitor['total_e'][0],'r',label='baseline')
+    plt.legend(loc='best')
+    fname='%s.baseline-%s.%s.%s.total_e' % (design,baseline,edesc,pop_class.__name__)
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
+
+    fig=plt.figure()
+    plt.plot(pop_monitor['total_r'][0],'b',label='test')
+    plt.plot(baseline_pop_monitor['total_r'][0],'r',label='baseline')
+    plt.legend(loc='best')
+    fname='%s.baseline-%s.%s.%s.total_r' % (design,baseline,edesc,pop_class.__name__)
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
+
+    fig=plt.figure()
+    plt.plot(voxel_monitor['G_total'][0][0:100000],'b',label='test')
+    plt.plot(baseline_voxel_monitor['G_total'][0][0:100000],'r',label='baseline')
+    plt.legend(loc='best')
+    fname='%s.baseline-%s.%s.%s.g_total' % (design,baseline,edesc,pop_class.__name__)
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    plt.close(fig)
+
     return adaptation
 
 def run_repeated_test():
@@ -100,7 +154,6 @@ def run_repeated_test():
     data_dir='../../data/adaptation/repeated_test/'
 
     fig=plt.figure()
-    plt.title('Probabilistic Population Code')
     plt.plot(x_delta_range,prob_combined_y_max-prob_repeated_y_max,'r',label='prob')
     plt.plot(x_delta_range,samp_combined_y_max-samp_repeated_y_max,'b',label='samp')
     plt.legend(loc='best')
@@ -108,6 +161,8 @@ def run_repeated_test():
     save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
     save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
+
+
 
 def run_full_adaptation_simulation(design, baseline):
     N=150
@@ -117,6 +172,8 @@ def run_full_adaptation_simulation(design, baseline):
     if design=='long':
         network_params.tau_a=5*second
         sim_params=long_design_params
+
+    data_dir='../../data/adaptation/full_adaptation/'
 
     # High and low mean and variance examples
     low_var=5
@@ -130,17 +187,33 @@ def run_full_adaptation_simulation(design, baseline):
 
     for i,(stim1_mean,stim1_var) in enumerate(stim):
         for j,(stim2_mean,stim2_var) in enumerate(stim):
+            edesc=''
+            if stim1_mean==low_mean:
+                edesc+='low_mean.'
+            else:
+                edesc+='high_mean.'
+            if stim1_var==low_var:
+                edesc+='low_var-'
+            else:
+                edesc+='high_var-'
+            if stim2_mean==low_mean:
+                edesc+='low_mean.'
+            else:
+                edesc+='high_mean.'
+            if stim2_var==low_var:
+                edesc+='low_var'
+            else:
+                edesc+='high_var'
             print('prob stim1: mean=%d, var=%d; stim2: mean=%d, var=%d' % (stim1_mean,stim1_var,stim2_mean,stim2_var))
-            prob_adaptation[i,j]=adaptation_simulation(baseline, ProbabilisticPopulationCode, N, network_params,
-                sim_params, stim1_mean, stim2_mean, stim1_var, stim2_var)
+            prob_adaptation[i,j]=adaptation_simulation(design, baseline, ProbabilisticPopulationCode, N, network_params,
+                sim_params, stim1_mean, stim2_mean, stim1_var, stim2_var, os.path.join(data_dir,'prob',edesc),edesc)
             print('prob adaptation=%.4f' % prob_adaptation[i,j])
 
             print('samp stim1: mean=%d, var=%d; stim2: mean=%d, var=%d' % (stim1_mean,stim1_var,stim2_mean,stim2_var))
-            samp_adaptation[i,j]=adaptation_simulation(baseline, SamplingPopulationCode, N, network_params,
-                sim_params, stim1_mean, stim2_mean, stim1_var, stim2_var)
+            samp_adaptation[i,j]=adaptation_simulation(design, baseline, SamplingPopulationCode, N, network_params,
+                sim_params, stim1_mean, stim2_mean, stim1_var, stim2_var, os.path.join(data_dir,'samp',edesc),edesc)
             print('samp adaptation=%.4f' % samp_adaptation[i,j])
 
-    data_dir='../../data/adaptation/full_adaptation/'
 
     fig=plt.figure()
     plt.title('Probabilistic Population')
@@ -169,7 +242,9 @@ def run_mean_adaptation_simulation(design, baseline):
         network_params.tau_a=5*second
         sim_params=long_design_params
 
-    x_delta_iter=5
+    data_dir='../../data/adaptation/mean_shift/'
+
+    x_delta_iter=10
     # If baseline is single stimulus - need to test x_delta=0
     x_delta_range=np.array(range(0,int(N/3),x_delta_iter))
 
@@ -185,17 +260,16 @@ def run_mean_adaptation_simulation(design, baseline):
     for i,x_delta in enumerate(x_delta_range):
         print('x_delta=%d' % x_delta)
 
-        prob_low_var_adaptation[i]=adaptation_simulation(baseline, ProbabilisticPopulationCode, N, network_params,
-            sim_params, x, x+x_delta, low_var, low_var)
-        prob_high_var_adaptation[i]=adaptation_simulation(baseline, ProbabilisticPopulationCode, N, network_params,
-            sim_params, x, x+x_delta, high_var, high_var)
+        prob_low_var_adaptation[i]=adaptation_simulation(design, baseline, ProbabilisticPopulationCode, N, network_params,
+            sim_params, x, x+x_delta, low_var, low_var, os.path.join(data_dir,'prob','low_var'),'low_var.xdelta-%d' % x_delta)
+        prob_high_var_adaptation[i]=adaptation_simulation(design, baseline, ProbabilisticPopulationCode, N, network_params,
+            sim_params, x, x+x_delta, high_var, high_var, os.path.join(data_dir,'prob','high_var'),'high_var.xdelta-%d' % x_delta)
 
-        samp_low_var_adaptation[i]=adaptation_simulation(baseline, SamplingPopulationCode, N, network_params,
-            sim_params, x, x+x_delta, low_var, low_var)
-        samp_high_var_adaptation[i]=adaptation_simulation(baseline, SamplingPopulationCode, N, network_params,
-            sim_params, x, x+x_delta, high_var, high_var)
+        samp_low_var_adaptation[i]=adaptation_simulation(design, baseline, SamplingPopulationCode, N, network_params,
+            sim_params, x, x+x_delta, low_var, low_var, os.path.join(data_dir,'samp','low_var'),'low_var.xdelta-%d' % x_delta)
+        samp_high_var_adaptation[i]=adaptation_simulation(design, baseline, SamplingPopulationCode, N, network_params,
+            sim_params, x, x+x_delta, high_var, high_var, os.path.join(data_dir,'samp','high_var'),'high_var.xdelta-%d' % x_delta)
 
-    data_dir='../../data/adaptation/mean_shift/'
 
     fig=plt.figure()
     plt.title('Probabilistic Population Code')
@@ -233,21 +307,22 @@ def run_uncertainty_adaptation_simulation(design, baseline):
     high_var=15
     x=int(N/3)
 
+    data_dir='../../data/adaptation/var_shift/'
+
     print('prob low->high')
-    prob_low_high_adaptation=adaptation_simulation(baseline, ProbabilisticPopulationCode, N, network_params, sim_params,
-        x, x, low_var, high_var)
+    prob_low_high_adaptation=adaptation_simulation(design, baseline, ProbabilisticPopulationCode, N, network_params, sim_params,
+        x, x, low_var, high_var, os.path.join(data_dir,'prob','low-high'), 'low_high')
     print('prob high->low')
-    prob_high_low_adaptation=adaptation_simulation(baseline, ProbabilisticPopulationCode, N, network_params, sim_params,
-        x, x, high_var, low_var)
+    prob_high_low_adaptation=adaptation_simulation(design, baseline, ProbabilisticPopulationCode, N, network_params, sim_params,
+        x, x, high_var, low_var, os.path.join(data_dir,'prob','high-low'), 'high_low')
 
     print('samp low->high')
-    samp_low_high_adaptation=adaptation_simulation(baseline, SamplingPopulationCode, N, network_params, sim_params,
-        x, x, low_var, high_var)
+    samp_low_high_adaptation=adaptation_simulation(design, baseline, SamplingPopulationCode, N, network_params, sim_params,
+        x, x, low_var, high_var, os.path.join(data_dir,'samp','low-high'), 'low_high')
     print('samp high->low')
-    samp_high_low_adaptation=adaptation_simulation(baseline, SamplingPopulationCode, N, network_params, sim_params,
-        x, x, high_var, low_var)
+    samp_high_low_adaptation=adaptation_simulation(design, baseline, SamplingPopulationCode, N, network_params, sim_params,
+        x, x, high_var, low_var, os.path.join(data_dir,'prob','high-low'), 'high_low')
 
-    data_dir='../../data/adaptation/var_shift/'
 
     fig=plt.figure()
     plt.plot([0,1],[prob_low_high_adaptation, prob_high_low_adaptation],label='prob')
@@ -257,154 +332,6 @@ def run_uncertainty_adaptation_simulation(design, baseline):
     save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
     save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
-
-#    fig=plt.figure()
-#    plt.title('Probabilistic Population')
-#    plt.plot(prob_low_high_voxel_monitor['y'][0], 'b', label='low->high')
-#    plt.plot(prob_low_high_baseline_voxel_monitor['y'][0], 'b--', label='low->high baseline')
-#    plt.plot(prob_high_low_voxel_monitor['y'][0], 'r', label='high->low')
-#    plt.plot(prob_high_low_baseline_voxel_monitor['y'][0], 'r--', label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.prob.bold' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.subplot(411)
-#    plt.title('Probabilistic Population - low->high')
-#    plt.imshow(prob_low_high_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(412)
-#    plt.title('low->high baseline')
-#    plt.imshow(prob_low_high_baseline_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(413)
-#    plt.title('high->low')
-#    plt.imshow(prob_high_low_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(414)
-#    plt.title('high->low baseline')
-#    plt.imshow(prob_high_low_baseline_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    fname='%s.baseline-%s.var.adaptation.prob.e' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Probabilistic Population')
-#    plt.plot(prob_low_high_pop_monitor['total_e'][0],'b',label='low->high')
-#    plt.plot(prob_low_high_baseline_pop_monitor['total_e'][0],'b-.',label='low->high baseline')
-#    plt.plot(prob_high_low_pop_monitor['total_e'][0],'r',label='high->low')
-#    plt.plot(prob_high_low_baseline_pop_monitor['total_e'][0],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.prob.total_e' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Probabilistic Population')
-#    plt.plot(prob_low_high_pop_monitor['total_r'][0],'b',label='low->high')
-#    plt.plot(prob_low_high_baseline_pop_monitor['total_r'][0],'b-.',label='low->high baseline')
-#    plt.plot(prob_high_low_pop_monitor['total_r'][0],'r',label='high->low')
-#    plt.plot(prob_high_low_baseline_pop_monitor['total_r'][0],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.prob.total_r' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Probabilistic Population')
-#    plt.plot(prob_low_high_voxel_monitor['G_total'][0][0:100000],'b',label='low->high')
-#    plt.plot(prob_low_high_baseline_voxel_monitor['G_total'][0][0:100000],'b-.',label='low->high baseline')
-#    plt.plot(prob_high_low_voxel_monitor['G_total'][0][0:100000],'r',label='high->low')
-#    plt.plot(prob_high_low_baseline_voxel_monitor['G_total'][0][0:100000],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.prob.g_total' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Sampling Population')
-#    plt.plot(samp_low_high_voxel_monitor['y'][0], 'b', label='low->high')
-#    plt.plot(samp_low_high_baseline_voxel_monitor['y'][0], 'b-.', label='low->high baseline')
-#    plt.plot(samp_high_low_voxel_monitor['y'][0], 'r', label='high->low')
-#    plt.plot(samp_high_low_baseline_voxel_monitor['y'][0], 'r-.', label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.samp.bold' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.subplot(411)
-#    plt.title('Sampling Population - low->high')
-#    plt.imshow(samp_low_high_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(412)
-#    plt.title('low->high baseline')
-#    plt.imshow(samp_low_high_baseline_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(413)
-#    plt.title('high->low')
-#    plt.imshow(samp_high_low_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    plt.subplot(414)
-#    plt.title('high->low baseline')
-#    plt.imshow(samp_high_low_baseline_pop_monitor['e'][:],aspect='auto')
-#    plt.clim(0,1)
-#    plt.colorbar()
-#    fname='%s.baseline-%s.var.adaptation.samp.e' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Sampling Population')
-#    plt.plot(samp_low_high_pop_monitor['total_e'][0],'b',label='low->high')
-#    plt.plot(samp_low_high_baseline_pop_monitor['total_e'][0],'b-.',label='low->high baseline')
-#    plt.plot(samp_high_low_pop_monitor['total_e'][0],'r',label='high->low')
-#    plt.plot(samp_high_low_baseline_pop_monitor['total_e'][0],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.samp.total_e' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Sampling Population')
-#    plt.plot(samp_low_high_pop_monitor['total_r'][0],'b',label='low->high')
-#    plt.plot(samp_low_high_baseline_pop_monitor['total_r'][0],'b-.',label='low->high baseline')
-#    plt.plot(samp_high_low_pop_monitor['total_r'][0],'r',label='high->low')
-#    plt.plot(samp_high_low_baseline_pop_monitor['total_r'][0],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.adaptation.samp.total_r' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
-#
-#    fig=plt.figure()
-#    plt.title('Sampling Population')
-#    plt.plot(samp_low_high_voxel_monitor['G_total'][0][0:100000],'b',label='low->high')
-#    plt.plot(samp_low_high_baseline_voxel_monitor['G_total'][0][0:100000],'b-.',label='low->high baseline')
-#    plt.plot(samp_high_low_voxel_monitor['G_total'][0][0:100000],'r',label='high->low')
-#    plt.plot(samp_high_low_baseline_voxel_monitor['G_total'][0][0:100000],'r-.',label='high->low baseline')
-#    plt.legend(loc='best')
-#    fname='%s.baseline-%s.var.var.adaptation.samp.g_total' % (design,baseline)
-#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-#    plt.close(fig)
 
 
 def run_isi_simulation():
