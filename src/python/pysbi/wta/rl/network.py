@@ -83,6 +83,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         f.attrs['dcs_start_time']=dcs_start_time
 
     for trial in range(trials):
+        print('Trial %d' % trial)
         vals[:,trial]=exp_rew
         ev=vals[:,trial]*mags[:,trial]
         inputs[0,trial]=ev[0]-ev[1]
