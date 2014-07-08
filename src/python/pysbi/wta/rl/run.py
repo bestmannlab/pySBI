@@ -1,7 +1,10 @@
+import h5py
+import numpy as np
 import os
 from brian import pA, second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
+from pysbi.wta.rl.fit import stim_order, LAT, NOSTIM1
 
 def get_rerw_commands(mat_file, p_b_e, p_x_e, p_dcs, i_dcs, dcs_start_time, alpha, beta, background_freq, e_desc=''):
     cmds = ['python', '/tmp/pySBI/src/python/pysbi/wta/rl/network.py']
@@ -69,3 +72,82 @@ def launch_missing_background_freq_processes(nodes, background_freq_range, p_b_e
             out_path,out_filename=os.path.split(out_file)
             if not os.path.exists(os.path.join('/data/ezrcluster/data/output',out_filename)):
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+
+def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file,
+                                     p_b_e, p_x_e, start_nodes=True):
+    """
+    nodes = nodes to run simulation on
+    data_dir = directory containing subject data
+    num_real_subjects = number of real subjects
+    num_virtual_subjects = number of virtual subjects to run
+    behavioral_param_file = file containing subject fitted behavioral parameters
+    p_b_e
+    p_x_e
+    start_nodes = whether or not to start nodes
+    """
+
+    # Setup launcher
+    launcher=Launcher(nodes)
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
+
+    # Get subject alpha and beta values
+    f = h5py.File(behavioral_param_file)
+    control_group=f['control']
+    alpha_vals=np.array(control_group['alpha'])
+    beta_vals=np.array(control_group['beta'])
+
+    # For each virtual subject
+    for j in range(num_virtual_subjects):
+
+        # Choose an actual subject
+        stim_file_name=None
+        control_file_name=None
+        while True:
+            i=np.random.choice(range(num_real_subjects))
+            subj_id=i+1
+            subj_stim_session_number=stim_order[i,LAT]
+            stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+            subj_control_session_number=stim_order[i,NOSTIM1]
+            control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
+            if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
+                break
+
+        # Sample alpha from subject distribution - don't use subjects with high alpha
+        alpha_hist,alpha_bins=np.histogram(alpha_vals[np.where(alpha_vals<.99)[0]], density=True)
+        bin_width=alpha_bins[1]-alpha_bins[0]
+        alpha_bin=np.random.choice(alpha_bins[:-1], p=alpha_hist*bin_width)
+        alpha=alpha_bin+np.random.rand()*bin_width
+
+        # Sample beta from subject distribution - don't use subjects with high alpha
+        beta_hist,beta_bins=np.histogram(beta_vals[np.where(alpha_vals<.99)[0]], density=True)
+        bin_width=beta_bins[1]-beta_bins[0]
+        beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
+        beta=beta_bin+np.random.rand()*bin_width
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 0*pA, 0*pA, 0*second,
+            alpha, beta, None, e_desc='virtual_subject.%d.control' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 4*pA, -2*pA, 0*second,
+            alpha, beta, None, e_desc='virtual_subject.%d.anode' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, -4*pA, 2*pA, 0*second,
+            alpha, beta, None, e_desc='virtual_subject.%d.cathode' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 2*pA, -4*pA, 0*second,
+            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_1' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, -2*pA, 4*pA, 0*second,
+            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_1' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+
+if __name__=='__main__':
+    launch_virtual_subject_processes({}, '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects', 24, 25,
+        '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5', 0.02, 0.02, start_nodes=False)
