@@ -1,3 +1,4 @@
+import argparse
 import h5py
 import os
 from brian import defaultclock, Parameters
@@ -683,5 +684,9 @@ if __name__=='__main__':
     #run_uncertainty_adaptation_simulation()
     #run_isi_simulation()
     #run_full_adaptation_simulation()
-    run_correlation_analysis('/home/jbonaiuto/Projects/fmri_adaptation/trials_for_simulation.mat')
+    ap = argparse.ArgumentParser(description='Run the fMRI adaptation correlation simulation')
+    ap.add_argument('--mat_file', type=str, default=None, help='Stimulation mat file')
+    ap.add_argument('--output_file', type=str, default=None, help='Simulation output file')
+    argvals = ap.parse_args()
+    run_correlation_analysis(argvals.mat_file, argvals.output_file)
 
