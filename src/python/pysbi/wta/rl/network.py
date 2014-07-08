@@ -29,6 +29,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
     mags=mags.astype(np.float32, copy=False)
     mags /= 100.0
 
+    resp_thresh=35
     num_groups=2
     exp_rew=np.array([0.5, 0.5])
     trial_duration=4*second
@@ -104,7 +105,7 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         i_rates = [trial_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
         trial_group['i_rates'] = np.array(i_rates)
 
-        rt,decision_idx=get_response_time(e_rates, 1*second, trial_duration-1*second, upper_threshold=30)
+        rt,decision_idx=get_response_time(e_rates, 1*second, trial_duration-1*second, upper_threshold=resp_thresh)
 
         reward=0.0
         if decision_idx>=0 and np.random.random()<=prob_walk[decision_idx,trial]:
