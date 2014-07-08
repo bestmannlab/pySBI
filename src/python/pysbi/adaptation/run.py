@@ -1,10 +1,12 @@
+import h5py
 import os
 from brian import defaultclock, Parameters
 from brian.stdunits import ms
 from brian.units import second
 import matplotlib.pyplot as plt
 import numpy as np
-from pysbi.adaptation.popcode import default_params, ProbabilisticPopulationCode, run_pop_code, SamplingPopulationCode, Stimulus
+import scipy.io
+from pysbi.adaptation.popcode import default_params, ProbabilisticPopulationCode, run_pop_code, SamplingPopulationCode, Stimulus, run_restricted_pop_code
 from pysbi.util.utils import save_to_png, save_to_eps
 
 rapid_design_params=Parameters(
@@ -622,11 +624,64 @@ def demo(N, network_params, trial_duration, x1, x2, low_var, high_var, isi, stim
     plt.close(fig)
 
 
+def run_correlation_analysis(stim_mat_file, pop_class, output_file):
+    mat=scipy.io.loadmat(stim_mat_file)
+    trial_info=mat['trials_for_simulation']
+    stim_duration=300*ms
+    isi=100*ms
+    iti=2.5*second
+
+    network_params=default_params
+
+    N=360
+    low_var=5
+    high_var=15
+
+    trial_duration=2*trial_info.shape[0]*stim_duration+trial_info.shape[0]*isi+(trial_info.shape[0]-1)*iti
+
+    stimuli=[]
+    trial_start_time=0*second
+
+    for i in range(trial_info.shape[0]):
+        diff=trial_info[i,2]
+        stim1_mean=N/2.0+diff/2.0
+        stim2_mean=N/2.0-diff/2.0
+        stim1_var=low_var
+        if trial_info[i,0]==2:
+            stim1_var=high_var
+        stim2_var=low_var
+        if trial_info[i,1]==2:
+            stim2_var=high_var
+        stim1_start=trial_start_time
+        stim1_end=stim1_start+stim_duration
+        stim2_start=stim1_end+isi
+        stim2_end=stim2_start+stim_duration
+        stim1=Stimulus(stim1_mean, stim1_var, stim1_start, stim1_end)
+        stim2=Stimulus(stim2_mean, stim2_var, stim2_start, stim2_end)
+        stimuli.extend([stim1,stim2])
+        trial_start_time+=2*stim_duration+isi+iti
+
+    voxel_monitor=run_restricted_pop_code(pop_class, N, network_params, stimuli, trial_duration, report='text')
+
+    f = h5py.File(output_file, 'w')
+    f['y'] = voxel_monitor['y'].values
+    f.close()
+#    fig=plt.figure()
+#    plt.plot(prob_voxel_monitor['y'][0], 'b', label='probabilistic')
+#    plt.plot(samp_voxel_monitor['y'][0], 'r', label='sharpening')
+#    plt.legend(loc='best')
+#    plt.show()
+    #fname='%s.baseline-%s.%s.%s.bold' % (design,baseline,edesc,pop_class.__name__)
+    #save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    #save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+    #plt.close(fig)
+
 if __name__=='__main__':
     #demo(150, default_params, 2.0*second, 50,75,5,15, 100*ms, 300*ms)
     #test_simulation()
-    run_mean_adaptation_simulation()
+    #run_mean_adaptation_simulation()
     #run_uncertainty_adaptation_simulation()
     #run_isi_simulation()
     #run_full_adaptation_simulation()
+    run_correlation_analysis('/home/jbonaiuto/Projects/fmri_adaptation/trials_for_simulation.mat')
 
