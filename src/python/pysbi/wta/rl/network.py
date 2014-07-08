@@ -136,7 +136,8 @@ def simulate_existing_subjects(final_data_dir, local_data_dir, num_virtual_subje
     for i in range(num_virtual_subjects):
         virtual_subj_data=FileInfo(os.path.join(final_data_dir,'virtual_subject_%d.control.h5' % i))
         alpha=virtual_subj_data.alpha
-        beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
+        #beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
+        beta=(virtual_subj_data.background_freq/Hz*-17.29)+148.14
         stim_file_name=find_matching_subject_stim_file(os.path.join(local_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
         file_base='virtual_subject_'+str(i)+'.%s'
         out_file=os.path.join(local_data_dir,'%s.h5' % file_base)
@@ -150,7 +151,8 @@ def simulate_existing_subjects(final_data_dir, local_data_dir, num_virtual_subje
 def simulate_subject(stim_mat_file, wta_params, alpha, beta, output_file, background=None, p_dcs=0*pA, i_dcs=0*pA,
                      dcs_start_time=0*ms):
     if background is None:
-        background_freq=(beta-87.46)/-12.5
+        #background_freq=(beta-87.46)/-12.5
+        background_freq=(beta-148.14)/-17.29
     else:
         background_freq=background
     run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=p_dcs, i_dcs=i_dcs,
@@ -163,7 +165,8 @@ def resume_subject_simulation(data_dir, num_virtual_subjects):
         print(subj_filename)
         if os.path.exists(subj_filename):
             data=FileInfo(subj_filename)
-            beta=(data.background_freq/Hz*-12.5)+87.46
+            #beta=(data.background_freq/Hz*-12.5)+87.46
+            beta=(data.background_freq/Hz*-17.29)+148.14
             stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), data.prob_walk, 24)
             if stim_file_name is not None:
                 file_base='virtual_subject_'+str(i)+'.%s'
