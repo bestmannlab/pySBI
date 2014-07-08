@@ -17,7 +17,7 @@ def get_rerw_commands(mat_file, p_b_e, p_x_e, p_dcs, i_dcs, dcs_start_time, alph
     output_file='/tmp/wta-output/%s.h5' % file_desc
 
     cmds.append('--stim_mat_file')
-    cmds.append(mat_file)
+    cmds.append(os.path.join('/tmp/pySBI/data/rerw/subjects',mat_file))
     cmds.append('--p_b_e')
     cmds.append('%0.3f' % p_b_e)
     cmds.append('--p_x_e')
@@ -58,7 +58,7 @@ def launch_background_freq_processes(nodes, background_freq_range, p_b_e, p_x_e,
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 def launch_missing_background_freq_processes(nodes, background_freq_range, p_b_e, p_x_e, trials, start_nodes=True):
-    mat_file='/tmp/pySBI/data/rerw/subjects/value1_s1_t2.mat'
+    mat_file='value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
     if start_nodes:
@@ -109,11 +109,13 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
             i=np.random.choice(range(num_real_subjects))
             subj_id=i+1
             subj_stim_session_number=stim_order[i,LAT]
-            stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+            stim_file_name='value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number)
             subj_control_session_number=stim_order[i,NOSTIM1]
-            control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
-            if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
+            control_file_name='value%d_s%d_t2.mat' % (subj_id,subj_control_session_number)
+            if os.path.exists(os.path.join(data_dir,stim_file_name)) and \
+               os.path.exists(os.path.join(data_dir,control_file_name)):
                 break
+
 
         # Sample alpha from subject distribution - don't use subjects with high alpha
         alpha_hist,alpha_bins=np.histogram(alpha_vals[np.where(alpha_vals<.99)[0]], density=True)
@@ -131,19 +133,19 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
             alpha, beta, None, e_desc='virtual_subject.%d.control' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 4*pA, -2*pA, 0*second,
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 4*pA, -2*pA, 0*second,
             alpha, beta, None, e_desc='virtual_subject.%d.anode' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, -4*pA, 2*pA, 0*second,
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -4*pA, 2*pA, 0*second,
             alpha, beta, None, e_desc='virtual_subject.%d.cathode' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 2*pA, -4*pA, 0*second,
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 2*pA, -4*pA, 0*second,
             alpha, beta, None, e_desc='virtual_subject.%d.anode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, -2*pA, 4*pA, 0*second,
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -2*pA, 4*pA, 0*second,
             alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
