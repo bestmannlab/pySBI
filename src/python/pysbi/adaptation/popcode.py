@@ -20,6 +20,19 @@ default_params=Parameters(
 class PopulationCode(NeuronGroup):
 
     def __init__(self, N, params=default_params):
+#        eqs=Equations('''
+#            dr/dt=x/tau_r1-r/tau_r2      : 1
+#            da/dt=(eta*r)/tau_ar-a/tau_a : 1
+#            e=1.0-a                      : 1
+#            tau_a                        : second
+#            tau_r1                       : second
+#            tau_r2                       : second
+#            tau_ar                       : second
+#            eta                          : 1
+#            total_e                      : 1
+#            total_r                      : 1
+#            x                            : 1
+#            ''')
         eqs=Equations('''
             dr/dt=x/tau_r1-r/tau_r2      : 1
             da/dt=(eta*r)/tau_ar-a/tau_a : 1
@@ -29,10 +42,8 @@ class PopulationCode(NeuronGroup):
             tau_r2                       : second
             tau_ar                       : second
             eta                          : 1
-            total_e                      : 1
-            total_r                      : 1
             x                            : 1
-            ''')
+        ''')
         NeuronGroup.__init__(self, N, model=eqs, compile=True, freeze=True)
 
         self.N=N
@@ -42,8 +53,8 @@ class PopulationCode(NeuronGroup):
         self.tau_r2=self.params.tau_r2
         self.tau_ar=self.params.tau_ar
         self.eta=self.params.eta
-        self.total_e=linked_var(self,'e',func=sum)
-        self.total_r=linked_var(self,'r',func=sum)
+        #self.total_e=linked_var(self,'e',func=sum)
+        #self.total_r=linked_var(self,'r',func=sum)
 
     def get_population_function(self, x, var):
         pass
@@ -73,7 +84,29 @@ class Stimulus:
         self.start_time=start_time
         self.end_time=end_time
 
-def run_pop_code(pop_class, N, network_params, stimuli, trial_duration):
+def run_restricted_pop_code(pop_class, N, network_params, stimuli, trial_duration, report=None):
+    pop=pop_class(N,network_params)
+    #pop_monitor=MultiStateMonitor(pop, vars=['x','r','e','total_e','total_r'], record=True)
+    pop_monitor=MultiStateMonitor(pop, vars=['x','e'], record=True)
+    voxel=Voxel()
+
+    @network_operation(when='start')
+    def get_pop_input():
+        pop.x=0.0
+        for stimulus in stimuli:
+            if stimulus.start_time<defaultclock.t<stimulus.end_time:
+                pop.x+=pop.get_population_function(stimulus.x,stimulus.var)
+
+    net=Network(pop, pop_monitor, get_pop_input)
+    reinit_default_clock()
+    net.run(trial_duration, report=report)
+
+    g_total=np.sum(np.clip(pop_monitor['e'].values,0,1) * pop_monitor['x'].values, axis=0)+0.1
+    voxel_monitor=get_bold_signal(g_total, voxel.params, range(int(stimuli[0].start_time/defaultclock.dt)), trial_duration)
+
+    return voxel_monitor
+
+def run_pop_code(pop_class, N, network_params, stimuli, trial_duration, report=None):
     pop=pop_class(N,network_params)
     pop_monitor=MultiStateMonitor(pop, vars=['x','r','e','total_e','total_r'], record=True)
     voxel=Voxel()
@@ -87,7 +120,7 @@ def run_pop_code(pop_class, N, network_params, stimuli, trial_duration):
 
     net=Network(pop, pop_monitor, get_pop_input)
     reinit_default_clock()
-    net.run(trial_duration)
+    net.run(trial_duration, report=report)
 
     g_total=np.sum(np.clip(pop_monitor['e'].values,0,1) * pop_monitor['x'].values, axis=0)+0.1
     voxel_monitor=get_bold_signal(g_total, voxel.params, range(int(stimuli[0].start_time/defaultclock.dt)), trial_duration)
