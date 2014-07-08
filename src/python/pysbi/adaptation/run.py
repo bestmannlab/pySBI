@@ -686,7 +686,11 @@ if __name__=='__main__':
     #run_full_adaptation_simulation()
     ap = argparse.ArgumentParser(description='Run the fMRI adaptation correlation simulation')
     ap.add_argument('--mat_file', type=str, default=None, help='Stimulation mat file')
+    ap.add_argument('--pop_class', type=str, default=None, help='Population code class')
     ap.add_argument('--output_file', type=str, default=None, help='Simulation output file')
     argvals = ap.parse_args()
-    run_correlation_analysis(argvals.mat_file, argvals.output_file)
+    pop_class=SamplingPopulationCode
+    if argvals.pop_class=='prob':
+        pop_class=ProbabilisticPopulationCode
+    run_correlation_analysis(argvals.mat_file, pop_class, argvals.output_file)
 
