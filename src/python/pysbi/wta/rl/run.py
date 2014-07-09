@@ -57,7 +57,7 @@ def launch_background_freq_processes(nodes, background_freq_range, p_b_e, p_x_e,
                 background_freq, e_desc='trial.%d' % trial)
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-def launch_missing_background_freq_processes(nodes, background_freq_range, p_b_e, p_x_e, trials, start_nodes=True):
+def launch_missing_background_freq_processes(nodes, data_dir, background_freq_range, p_b_e, p_x_e, trials, start_nodes=True):
     mat_file='value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
@@ -70,7 +70,7 @@ def launch_missing_background_freq_processes(nodes, background_freq_range, p_b_e
             cmds, log_file_template, out_file=get_rerw_commands(mat_file, p_b_e, p_x_e, 0*pA, 0*pA, 0*second, 0.4, 5.0,
                 background_freq, e_desc='trial.%d' % trial)
             out_path,out_filename=os.path.split(out_file)
-            if not os.path.exists(os.path.join('/data/ezrcluster/data/output',out_filename)):
+            if not os.path.exists(os.path.join(data_dir,out_filename)):
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
 
