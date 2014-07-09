@@ -61,10 +61,6 @@ def launch_missing_background_freq_processes(nodes, data_dir, background_freq_ra
     mat_file='value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
-
     for background_freq in background_freq_range:
         for trial in range(trials):
             cmds, log_file_template, out_file=get_rerw_commands(mat_file, p_b_e, p_x_e, 0*pA, 0*pA, 0*second, 0.4, 5.0,
@@ -72,6 +68,9 @@ def launch_missing_background_freq_processes(nodes, data_dir, background_freq_ra
             out_path,out_filename=os.path.split(out_file)
             if not os.path.exists(os.path.join(data_dir,out_filename)):
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
 
 
 def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file,
@@ -89,9 +88,6 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
 
     # Setup launcher
     launcher=Launcher(nodes)
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
 
     # Get subject alpha and beta values
     f = h5py.File(behavioral_param_file)
@@ -149,6 +145,9 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
             alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
 
 if __name__=='__main__':
     launch_virtual_subject_processes({}, '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects', 24, 25,
