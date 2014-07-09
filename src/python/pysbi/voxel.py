@@ -1,8 +1,8 @@
 from math import exp
-from brian import Equations, NeuronGroup, Parameters, second, network_operation, defaultclock, Network, reinit_default_clock
+from brian import Equations, NeuronGroup, Parameters, second, network_operation, defaultclock, Network, reinit_default_clock, Clock
 from brian.monitor import MultiStateMonitor
 from brian.neurongroup import linked_var
-from brian.stdunits import nS
+from brian.stdunits import nS, ms
 
 import numpy as np
 
@@ -221,7 +221,7 @@ class LFPSource(NeuronGroup):
         self.LFP=linked_var(pyramidal_group, 'I_abs', func=sum)
 
 class Voxel(NeuronGroup):
-    def __init__(self, params=default_params, network=None):
+    def __init__(self, clock, params=default_params, network=None):
         eqs=Equations('''
         G_total                                                       : siemens
         G_total_exc                                                   : siemens
@@ -244,7 +244,7 @@ class Voxel(NeuronGroup):
         k2                                                            : 1
         k3                                                            : 1
         ''')
-        NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
+        NeuronGroup.__init__(self, 1, model=eqs, clock=clock, compile=True, freeze=True)
         self.params=params
         self.G_base=params.G_base
         self.eta=params.eta
@@ -271,13 +271,15 @@ class Voxel(NeuronGroup):
             self.G_total_exc = linked_var(network, 'g_syn_exc', func=sum)
 
 def get_bold_signal(g_total, voxel_params, baseline_range, trial_duration):
-    voxel=Voxel(params=voxel_params)
-    voxel.G_base=g_total[baseline_range[0]:baseline_range[1]].mean()
-    voxel_monitor = MultiStateMonitor(voxel, vars=['G_total','s','f_in','v','f_out','q','y'], record=True)
+    simulation_clock=Clock(dt=1*ms)
 
-    @network_operation(when='start')
+    voxel=Voxel(simulation_clock, params=voxel_params)
+    voxel.G_base=g_total[baseline_range[0]:baseline_range[1]].mean()
+    voxel_monitor = MultiStateMonitor(voxel, vars=['G_total','s','f_in','v','f_out','q','y'], record=True, clock=simulation_clock)
+
+    @network_operation(when='start', clock=simulation_clock)
     def get_input():
-        idx=int(defaultclock.t/defaultclock.dt)
+        idx=int(simulation_clock.t/simulation_clock.dt)
         if idx<baseline_range[0]:
             voxel.G_total=voxel.G_base
         elif idx<len(g_total):
@@ -286,7 +288,7 @@ def get_bold_signal(g_total, voxel_params, baseline_range, trial_duration):
             voxel.G_total=voxel.G_base
 
     net=Network(voxel, get_input, voxel_monitor)
-    reinit_default_clock()
+    #reinit_default_clock()
     bold_trial_duration=10*second
     if trial_duration+6*second>bold_trial_duration:
         bold_trial_duration=trial_duration+6*second
