@@ -135,7 +135,7 @@ class TestVoxel(NeuronGroup):
 
 
 class ZhengVoxel(NeuronGroup):
-    def __init__(self, params=zheng_params, network=None):
+    def __init__(self, clock, params=zheng_params, network=None):
         eqs=Equations('''
         G_total                                                       : siemens
         G_total_exc                                                   : siemens
@@ -171,7 +171,7 @@ class ZhengVoxel(NeuronGroup):
         k                                                             : 1
         r                                                             : 1
         ''' % (params.e_base, params.g_0, params.phi, params.e_base, params.g_0))
-        NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
+        NeuronGroup.__init__(self, 1, model=eqs, clock=clock, compile=True, freeze=True)
 
         self.params=params
         self.G_base=params.G_base

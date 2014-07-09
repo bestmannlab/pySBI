@@ -104,7 +104,7 @@ def run_restricted_pop_code(pop_class, N, network_params, stimuli, trial_duratio
     net.run(trial_duration, report=report)
 
     g_total=np.sum(np.clip(pop_monitor['e'].values,0,1) * pop_monitor['x'].values, axis=0)+0.1
-    voxel_monitor=get_bold_signal(g_total, voxel.default_params, range(int(stimuli[0].start_time/defaultclock.dt)), trial_duration)
+    voxel_monitor=get_bold_signal(g_total, voxel.default_params, range(int(stimuli[0].start_time/simulation_clock.dt)), trial_duration)
 
     return voxel_monitor
 
@@ -126,7 +126,7 @@ def run_pop_code(pop_class, N, network_params, stimuli, trial_duration, report=N
     net.run(trial_duration, report=report)
 
     g_total=np.sum(np.clip(pop_monitor['e'].values,0,1) * pop_monitor['x'].values, axis=0)+0.1
-    voxel_monitor=get_bold_signal(g_total, voxel.default_params, range(int(stimuli[0].start_time/defaultclock.dt)), trial_duration)
+    voxel_monitor=get_bold_signal(g_total, voxel.default_params, range(int(stimuli[0].start_time/simulation_clock.dt)), trial_duration)
 
     # There is only one peak with rapid design
     if trial_duration>6*second:
