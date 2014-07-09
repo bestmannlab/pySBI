@@ -375,121 +375,129 @@ def run_isi_simulation():
     plt.close(fig)
 
 
-def test_simulation():
+def test_simulation(design):
     N=150
     network_params=default_params
-    network_params.tau_a=5*second
-    trial_duration=10*second
-    #isi=6*second
-    isi=100*ms
-    #stim_duration=100*ms
-    stim_duration=300*ms
+    sim_params=rapid_design_params
+    network_params.tau_ar=100*ms
+    if design=='long':
+        network_params.tau_a=5*second
+        sim_params=long_design_params
     var=10
     x1=50
     x2=100
     stim1_start_time=1*second
-    stim1_end_time=stim1_start_time+stim_duration
-    stim2_start_time=stim1_end_time+isi
-    stim2_end_time=stim2_start_time+stim_duration
+    stim1_end_time=stim1_start_time+sim_params.stim_dur
+    stim2_start_time=stim1_end_time+sim_params.isi
+    stim2_end_time=stim2_start_time+sim_params.stim_dur
 
-    same_pop_monitor,same_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x1,x1], [var,var],
-        [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],trial_duration)
-    diff_pop_monitor,diff_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x1,x2], [var,var],
-        [stim1_start_time,stim2_start_time], [stim1_end_time,stim2_end_time],trial_duration)
-    single_pop_monitor,single_voxel_monitor=run_pop_code(ProbabilisticPopulationCode, N, network_params, [x1], [var],
-        [stim1_start_time], [stim1_end_time], trial_duration)
+    same_pop_monitor,same_voxel_monitor,same_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [Stimulus(x1,var,stim1_start_time,stim1_end_time),
+         Stimulus(x1,var,stim2_start_time,stim2_end_time)],
+        sim_params.trial_duration)
+    diff_pop_monitor,diff_voxel_monitor,diff_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+        [Stimulus(x1,var,stim1_start_time,stim1_end_time),
+         Stimulus(x2,var,stim2_start_time,stim2_end_time)],
+        sim_params.trial_duration)
+#    single_pop_monitor,single_voxel_monitor,single_y_max=run_pop_code(ProbabilisticPopulationCode, N, network_params,
+#        [Stimulus(x1,var,stim1_start_time,stim1_end_time)],
+#        sim_params.trial_duration)
 
-    data_dir='../../data/adaptation/adaptation_test/rapid'
+    data_dir='../../data/adaptation/adaptation_test'
     fig=plt.figure()
-    plt.subplot(311)
+    #plt.subplot(311)
+    plt.subplot(211)
     plt.title('Same')
     plt.imshow(same_pop_monitor['r'][:],aspect='auto')
     plt.xlabel('time')
     plt.ylabel('neuron')
     plt.colorbar()
-    plt.subplot(312)
+    #plt.subplot(312)
+    plt.subplot(212)
     plt.title('Different')
     plt.imshow(diff_pop_monitor['r'][:],aspect='auto')
     plt.xlabel('time')
     plt.ylabel('neuron')
     plt.colorbar()
-    plt.subplot(313)
-    plt.title('Single')
-    plt.imshow(single_pop_monitor['r'][:],aspect='auto')
-    plt.xlabel('time')
-    plt.ylabel('neuron')
-    plt.colorbar()
-    fname='firing_rate.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+#    plt.subplot(313)
+#    plt.title('Single')
+#    plt.imshow(single_pop_monitor['r'][:],aspect='auto')
+#    plt.xlabel('time')
+#    plt.ylabel('neuron')
+#    plt.colorbar()
+    fname='%s.firing_rate' % design
+    #save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
     fig=plt.figure()
-    plt.subplot(311)
+    #plt.subplot(311)
+    plt.subplot(211)
     plt.title('Same')
     plt.imshow(same_pop_monitor['e'][:],aspect='auto')
     plt.xlabel('time')
     plt.ylabel('neuron')
     plt.colorbar()
     plt.clim(0,1)
-    plt.subplot(312)
+    #plt.subplot(312)
+    plt.subplot(212)
     plt.title('Different')
     plt.imshow(diff_pop_monitor['e'][:],aspect='auto')
     plt.xlabel('time')
     plt.ylabel('neuron')
     plt.colorbar()
     plt.clim(0,1)
-    plt.subplot(313)
-    plt.title('Single')
-    plt.imshow(single_pop_monitor['e'][:],aspect='auto')
-    plt.xlabel('time')
-    plt.ylabel('neuron')
-    plt.colorbar()
-    plt.clim(0,1)
-    fname='efficacy.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+#    plt.subplot(313)
+#    plt.title('Single')
+#    plt.imshow(single_pop_monitor['e'][:],aspect='auto')
+#    plt.xlabel('time')
+#    plt.ylabel('neuron')
+#    plt.colorbar()
+#    plt.clim(0,1)
+    fname='%s.efficacy' % design
+    #save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
     fig=plt.figure()
     plt.title('BOLD')
     plt.plot(same_voxel_monitor['y'][0],label='same')
     plt.plot(diff_voxel_monitor['y'][0],label='different')
-    plt.plot(single_voxel_monitor['y'][0],label='single')
+    #plt.plot(single_voxel_monitor['y'][0],label='single')
     plt.legend(loc='best')
-    fname='bold.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+    fname='%s.bold' % design
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
     fig=plt.figure()
     plt.plot(same_pop_monitor['total_e'][0],label='same')
     plt.plot(diff_pop_monitor['total_e'][0],label='different')
-    plt.plot(single_pop_monitor['total_e'][0],label='single')
+    #plt.plot(single_pop_monitor['total_e'][0],label='single')
     plt.legend(loc='best')
-    fname='total_e.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+    fname='%s.total_e' % design
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
     fig=plt.figure()
     plt.plot(same_pop_monitor['total_r'][0],label='same')
     plt.plot(diff_pop_monitor['total_r'][0],label='different')
-    plt.plot(single_pop_monitor['total_r'][0],label='single')
+    #plt.plot(single_pop_monitor['total_r'][0],label='single')
     plt.legend(loc='best')
-    fname='total_r.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+    fname='%s.total_r' % design
+    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
     fig=plt.figure()
-    plt.plot(same_voxel_monitor['G_total'][0][0:100000],label='same')
-    plt.plot(diff_voxel_monitor['G_total'][0][0:100000],label='different')
-    plt.plot(single_voxel_monitor['G_total'][0][0:100000],label='single')
+    plt.plot(same_voxel_monitor['G_total'][0][0:20000],label='same')
+    plt.plot(diff_voxel_monitor['G_total'][0][0:20000],label='different')
+    #plt.plot(single_voxel_monitor['G_total'][0][0:100000],label='single')
     plt.legend(loc='best')
-    fname='g_total.%s'
-    save_to_png(fig, os.path.join(data_dir,fname % 'png'))
-    save_to_eps(fig, os.path.join(data_dir,fname % 'eps'))
+    fname='%s.g_total' % design
+    #save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
 
