@@ -639,8 +639,7 @@ def run_correlation_analysis(stim_mat_file, pop_class, output_file):
     stim_duration=300*ms
     isi=100*ms
     iti=2.5*second
-    #trials=trial_info.shape[0]
-    trials=10
+    trials=trial_info.shape[0]
 
     network_params=default_params
 
