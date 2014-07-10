@@ -639,7 +639,8 @@ def run_correlation_analysis(stim_mat_file, pop_class, output_file):
     stim_duration=300*ms
     isi=100*ms
     iti=2.5*second
-    trials=trial_info.shape[0]
+    #trials=trial_info.shape[0]
+    trials=10
 
     network_params=default_params
 
@@ -675,6 +676,7 @@ def run_correlation_analysis(stim_mat_file, pop_class, output_file):
 
     f = h5py.File(output_file, 'w')
     f['y'] = voxel_monitor['y'].values
+    f['g_total'] = voxel_monitor['G_total'].values
     f.close()
 #    fig=plt.figure()
 #    plt.plot(prob_voxel_monitor['y'][0], 'b', label='probabilistic')
