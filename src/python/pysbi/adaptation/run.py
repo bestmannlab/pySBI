@@ -639,6 +639,7 @@ def run_correlation_analysis(stim_mat_file, pop_class, output_file):
     stim_duration=300*ms
     isi=100*ms
     iti=2.5*second
+    trials=trial_info.shape[0]
 
     network_params=default_params
 
@@ -646,12 +647,12 @@ def run_correlation_analysis(stim_mat_file, pop_class, output_file):
     low_var=5
     high_var=15
 
-    trial_duration=2*trial_info.shape[0]*stim_duration+trial_info.shape[0]*isi+(trial_info.shape[0]-1)*iti
+    trial_duration=2*trials*stim_duration+trials*isi+trials*iti
 
     stimuli=[]
-    trial_start_time=0*second
+    trial_start_time=iti
 
-    for i in range(trial_info.shape[0]):
+    for i in range(trials):
         diff=trial_info[i,2]
         stim1_mean=N/2.0+diff/2.0
         stim2_mean=N/2.0-diff/2.0
