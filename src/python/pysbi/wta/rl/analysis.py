@@ -582,6 +582,14 @@ def debug_trial_plot(file_name):
         plt.ylabel('Firing Rate (Hz)')
         plt.show()
 
+def rename_data_files(data_dir):
+    for file_name in os.listdir(data_dir):
+        if os.path.isfile(os.path.join(data_dir, file_name)):
+            if 'dcs_start_time' in file_name:
+                filename_parts=file_name.split('.')
+                new_filename='rl.virtual_subject.%s.%s.h5' % (filename_parts[23],filename_parts[24])
+                print(new_filename)
+
 if __name__=='__main__':
 #    report=RLReport('/data/projects/pySBI/rl','virtual_subject_%d.%s',
 #        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
