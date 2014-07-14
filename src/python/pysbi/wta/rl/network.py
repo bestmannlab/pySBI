@@ -1,16 +1,12 @@
 import argparse
-import os
-import subprocess
-from brian.clock import defaultclock
-from brian.stdunits import ms, pA, Hz
+from brian.stdunits import ms, pA
 from brian.units import second
 import numpy as np
 import scipy.io
 import h5py
 from pysbi.util.utils import get_response_time
 from pysbi.wta.network import default_params, run_wta
-from pysbi.wta.rl.analysis import FileInfo
-from pysbi.wta.rl.fit import fit_behavior, stim_order, LAT, NOSTIM1
+from pysbi.wta.rl.fit import fit_behavior
 
 
 def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
@@ -132,22 +128,6 @@ def run_rl_simulation(mat_file, wta_params, alpha=0.4, background_freq=5.0, p_dc
         f['rts']=rts
         f.close()
 
-def simulate_existing_subjects(final_data_dir, local_data_dir, num_virtual_subjects):
-    for i in range(num_virtual_subjects):
-        virtual_subj_data=FileInfo(os.path.join(final_data_dir,'virtual_subject_%d.control.h5' % i))
-        alpha=virtual_subj_data.alpha
-        #beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
-        beta=(virtual_subj_data.background_freq/Hz*-17.29)+148.14
-        stim_file_name=find_matching_subject_stim_file(os.path.join(local_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
-        file_base='virtual_subject_'+str(i)+'.%s'
-        out_file=os.path.join(local_data_dir,'%s.h5' % file_base)
-        log_filename='%s.txt' % file_base
-        log_file=open(log_filename,'wb')
-        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
-              stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
-              str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
-        subprocess.Popen(args,stdout=log_file)
-
 def simulate_subject(stim_mat_file, wta_params, alpha, beta, output_file, background=None, p_dcs=0*pA, i_dcs=0*pA,
                      dcs_start_time=0*ms):
     if background is None:
@@ -158,130 +138,6 @@ def simulate_subject(stim_mat_file, wta_params, alpha, beta, output_file, backgr
     run_rl_simulation(stim_mat_file, wta_params, alpha=alpha, background_freq=background_freq, p_dcs=p_dcs, i_dcs=i_dcs,
         dcs_start_time=dcs_start_time, output_file=output_file)
 
-
-def resume_subject_simulation(data_dir, num_virtual_subjects):
-    for i in range(num_virtual_subjects):
-        subj_filename=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
-        print(subj_filename)
-        if os.path.exists(subj_filename):
-            data=FileInfo(subj_filename)
-            #beta=(data.background_freq/Hz*-12.5)+87.46
-            beta=(data.background_freq/Hz*-17.29)+148.14
-            stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), data.prob_walk, 24)
-            if stim_file_name is not None:
-                file_base='virtual_subject_'+str(i)+'.%s'
-                out_file='../../data/rerw/%s.h5' % file_base
-                log_filename='%s.txt' % file_base
-                log_file=open(log_filename,'wb')
-                args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','nothing','--stim_mat_file',
-                      stim_file_name,'--p_b_e',str(data.wta_params.p_b_e),'--p_x_e',str(data.wta_params.p_x_e),
-                      '--alpha',str(data.alpha),'--beta',str(beta), '--output_file',out_file]
-                subprocess.Popen(args,stdout=log_file)
-            else:
-                print('stim file for subjec %d not found' % i)
-
-def find_matching_subject_stim_file(data_dir, control_prob_walk, num_real_subjects):
-    for j in range(num_real_subjects):
-        subj_id=j+1
-        subj_stim_session_number=stim_order[j,LAT]
-        stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
-        subj_control_session_number=stim_order[j,NOSTIM1]
-        control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
-        if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
-            mat = scipy.io.loadmat(control_file_name)
-            prob_idx=-1
-            for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
-                if dtype=='probswalk':
-                    prob_idx=idx
-            prob_walk=mat['store']['dat'][0][0][0][0][prob_idx]
-            prob_walk=prob_walk.astype(np.float32, copy=False)
-            match=True
-            for k in range(prob_walk.shape[0]):
-                for l in range(prob_walk.shape[1]):
-                    if not prob_walk[k,l]==control_prob_walk[k,l]:
-                        match=False
-                        break
-            if match:
-                return stim_file_name
-    return None
-
-def simulate_single_subject(data_dir, num_real_subjects, subj_idx, behavioral_param_file, p_b_e, p_x_e):
-    f = h5py.File(behavioral_param_file)
-    control_group=f['control']
-    alpha_vals=np.array(control_group['alpha'])
-    beta_vals=np.array(control_group['beta'])
-    stim_file_name=None
-    control_file_name=None
-    while True:
-        i=np.random.choice(range(num_real_subjects))
-        subj_id=i+1
-        subj_stim_session_number=stim_order[i,LAT]
-        stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
-        subj_control_session_number=stim_order[i,NOSTIM1]
-        control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
-        if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
-            break
-    alpha_hist,alpha_bins=np.histogram(alpha_vals, density=True)
-    bin_width=alpha_bins[1]-alpha_bins[0]
-    alpha_bin=np.random.choice(alpha_bins[:-1], p=alpha_hist*bin_width)
-    alpha=alpha_bin+np.random.rand()*bin_width
-    beta_hist,beta_bins=np.histogram(beta_vals, density=True)
-    bin_width=beta_bins[1]-beta_bins[0]
-    beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
-    beta=beta_bin+np.random.rand()*bin_width
-    file_base='virtual_subject_'+str(subj_idx)+'.%s'
-    out_file='../../data/rerw/%s.h5' % file_base
-    log_filename='%s.txt' % file_base
-    log_file=open(log_filename,'wb')
-    args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
-          stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
-          '--output_file',out_file]
-    subprocess.Popen(args,stdout=log_file)
-
-def simulate_subjects(data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file, p_b_e, p_x_e):
-    f = h5py.File(behavioral_param_file)
-    control_group=f['control']
-    alpha_vals=np.array(control_group['alpha'])
-    beta_vals=np.array(control_group['beta'])
-    for j in range(num_virtual_subjects):
-        stim_file_name=None
-        control_file_name=None
-        while True:
-            i=np.random.choice(range(num_real_subjects))
-            subj_id=i+1
-            subj_stim_session_number=stim_order[i,LAT]
-            stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
-            subj_control_session_number=stim_order[i,NOSTIM1]
-            control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
-            if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
-                break
-        alpha_hist,alpha_bins=np.histogram(alpha_vals, density=True)
-        bin_width=alpha_bins[1]-alpha_bins[0]
-        alpha_bin=np.random.choice(alpha_bins[:-1], p=alpha_hist*bin_width)
-        alpha=alpha_bin+np.random.rand()*bin_width
-        beta_hist,beta_bins=np.histogram(beta_vals, density=True)
-        bin_width=beta_bins[1]-beta_bins[0]
-        beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
-        beta=beta_bin+np.random.rand()*bin_width
-        file_base='virtual_subject_'+str(j)+'.%s'
-        out_file='../../data/rerw/%s.h5' % file_base
-        log_filename='%s.txt' % file_base
-        log_file=open(log_filename,'wb')
-        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file',control_file_name,'--stim_mat_file',
-              stim_file_name,'--p_b_e',str(p_b_e),'--p_x_e',str(p_x_e),'--alpha',str(alpha),'--beta',str(beta),
-              '--output_file',out_file]
-        subprocess.Popen(args,stdout=log_file)
-
-def launch_background_freq_processes(background_freq_range, p_b_e, p_x_e, trials):
-    for background_freq in background_freq_range:
-        for trial in range(trials):
-            file_base='noise.background_%.2f.p_b_e_%0.4f.p_x_e_%0.4f.trial_%d' % (background_freq,p_b_e,p_x_e,trial)
-            out_file='../../data/rerw/%s.h5' % file_base
-            log_filename='%s.txt' % file_base
-            log_file=open(log_filename,'wb')
-            args=['nohup','python','pysbi/wta/rl/network.py','--background',str(background_freq),'--p_b_e',str(p_b_e),
-                  '--p_x_e',str(p_x_e),'--output_file',out_file]
-            subprocess.Popen(args,stdout=log_file)
 
 if __name__=='__main__':
     #simulate_subjects('../../data/rerw/subjects/',24,50,'../../data/rerw/subjects/fitted_behavioral_params.h5',0.03,0.06)
