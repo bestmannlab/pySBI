@@ -158,7 +158,7 @@ def launch_extra_virtual_subject_processes(nodes, subj_data_dir, virtual_subj_da
     launcher=Launcher(nodes)
 
     for i in range(num_virtual_subjects):
-        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'virtual_subject_%d.control.h5' % i))
+        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.virtual_subject_%d.control.h5' % i))
         alpha=virtual_subj_data.alpha
         #beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
         beta=(virtual_subj_data.background_freq/Hz*-17.29)+148.14
