@@ -440,10 +440,41 @@ class StimConditionReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
-        #self.condition_alphas=np.zeros(self.num_subjects)
-        #self.condition_betas=np.zeros(self.num_subjects)
         self.condition_alphas=[]
         self.condition_betas=[]
+        self.small_beta_small_ev_diff_chosen_rates=[]
+        self.small_beta_small_ev_diff_unchosen_rates=[]
+        self.small_beta_med_ev_diff_chosen_rates=[]
+        self.small_beta_med_ev_diff_unchosen_rates=[]
+        self.small_beta_large_ev_diff_chosen_rates=[]
+        self.small_beta_large_ev_diff_unchosen_rates=[]
+        self.med_beta_small_ev_diff_chosen_rates=[]
+        self.med_beta_small_ev_diff_unchosen_rates=[]
+        self.med_beta_med_ev_diff_chosen_rates=[]
+        self.med_beta_med_ev_diff_unchosen_rates=[]
+        self.med_beta_large_ev_diff_chosen_rates=[]
+        self.med_beta_large_ev_diff_unchosen_rates=[]
+        self.large_beta_small_ev_diff_chosen_rates=[]
+        self.large_beta_small_ev_diff_unchosen_rates=[]
+        self.large_beta_med_ev_diff_chosen_rates=[]
+        self.large_beta_med_ev_diff_unchosen_rates=[]
+        self.large_beta_large_ev_diff_chosen_rates=[]
+        self.large_beta_large_ev_diff_unchosen_rates=[]
+
+        for virtual_subj_id in range(self.num_subjects):
+            print('subject %d' % virtual_subj_id)
+            session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+            session_report_dir=os.path.join(self.reports_dir,session_prefix)
+            session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+            data=FileInfo(session_report_file)
+            self.condition_alphas.append(data.est_alpha)
+            self.condition_betas.append(data.est_beta)
+
+        self.condition_alphas=np.array(self.condition_alphas)
+        self.condition_betas=np.array(self.condition_betas)
+
+        hist,bins=np.histogram(self.condition_betas, bins=10)
+        bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
             print('subject %d' % virtual_subj_id)
@@ -452,28 +483,39 @@ class StimConditionReport:
             session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
             session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
             data=FileInfo(session_report_file)
-            if data.est_alpha<.98:
-                session_report.create_report(data)
-                self.sessions.append(session_report)
+            session_report.create_report(data)
+            self.sessions.append(session_report)
+            if session_report.est_beta>=bins[0] and session_report.est_beta<bins[3]:
+                self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+            elif session_report.est_beta>=bins[3] and session_report.est_beta<bins[6]:
+                self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+            elif session_report.est_beta>=bins[6] and session_report.est_beta<bins[-1]:
+                self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
 
-                #self.condition_alphas[virtual_subj_id]=session_report.est_alpha
-                #self.condition_betas[virtual_subj_id]=session_report.est_beta
-                self.condition_alphas.append(session_report.est_alpha)
-                self.condition_betas.append(session_report.est_beta)
-
-        self.condition_alphas=np.array(self.condition_alphas)
-        self.condition_betas=np.array(self.condition_betas)
 
         # Create beta bar plot
         furl='img/beta_dist'
         fname = os.path.join(self.reports_dir, furl)
         self.beta_url = '%s.png' % furl
-        hist,bins=np.histogram(self.condition_betas, bins=10)
-        bin_width=bins[1]-bins[0]
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width)
+            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width, range=[0,20])
             ax.set_xlabel('Beta')
             ax.set_ylabel('% of Subjects')
             save_to_png(fig, '%s.png' % fname)
@@ -496,29 +538,63 @@ class StimConditionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-#        # Create ev diff firing rate plot
-#        furl='img/ev_diff_firing_rate.%s' % self.file_prefix
-#        fname = os.path.join(self.reports_dir, furl)
-#        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
-#
-#        self.small_chosen_firing_rates,self.small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
-#        self.med_chosen_firing_rates,self.med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
-#        self.large_chosen_firing_rates,self.large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
-#        if not os.path.exists('%s.png' % fname):
-#            fig=Figure()
-#            ax=fig.add_subplot(1,1,1)
-#            ax.plot(np.mean(self.small_chosen_firing_rates,axis=0),'b',label='chosen, small')
-#            ax.plot(np.mean(self.small_unchosen_firing_rates,axis=0),'b--',label='unchosen, small')
-#            ax.plot(np.mean(self.med_chosen_firing_rates,axis=0),'g',label='chosen, med')
-#            ax.plot(np.mean(self.med_unchosen_firing_rates,axis=0),'g--',label='unchosen, med')
-#            ax.plot(np.mean(self.large_chosen_firing_rates,axis=0),'r',label='chosen, large')
-#            ax.plot(np.mean(self.large_unchosen_firing_rates,axis=0),'r--',label='unchosen, large')
-#            ax.set_xlabel('Time')
-#            ax.set_ylabel('Firing Rate (Hz)')
-#            ax.legend(loc='best')
-#            save_to_png(fig, '%s.png' % fname)
-#            save_to_eps(fig, '%s.eps' % fname)
-#            plt.close(fig)
+        # Create ev diff firing rate plot
+        furl='img/small_ev_diff_firing_rate.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.plot(np.mean(self.small_beta_small_ev_diff_chosen_firing_rates,axis=0),'b',label='small beta, chosen')
+            ax.plot(np.mean(self.small_beta_small_ev_diff_unchosen_firing_rates,axis=0),'b--',label='small beta, unchosen')
+            ax.plot(np.mean(self.med_beta_small_ev_diff_chosen_firing_rates,axis=0),'g',label='med beta, chosen')
+            ax.plot(np.mean(self.med_beta_small_ev_diff_unchosen_firing_rates,axis=0),'g--',label='med beta, unchosen')
+            ax.plot(np.mean(self.large_beta_small_ev_diff_chosen_firing_rates,axis=0),'r',label='large beta, chosen')
+            ax.plot(np.mean(self.large_beta_small_ev_diff_unchosen_firing_rates,axis=0),'r--',label='large beta, unchosen')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc='best')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        furl='img/med_ev_diff_firing_rate.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.plot(np.mean(self.small_beta_med_ev_diff_chosen_firing_rates,axis=0),'b',label='small beta, chosen')
+            ax.plot(np.mean(self.small_beta_med_ev_diff_unchosen_firing_rates,axis=0),'b--',label='small beta, unchosen')
+            ax.plot(np.mean(self.med_beta_med_ev_diff_chosen_firing_rates,axis=0),'g',label='med beta, chosen')
+            ax.plot(np.mean(self.med_beta_med_ev_diff_unchosen_firing_rates,axis=0),'g--',label='med beta, unchosen')
+            ax.plot(np.mean(self.large_beta_med_ev_diff_chosen_firing_rates,axis=0),'r',label='large beta, chosen')
+            ax.plot(np.mean(self.large_beta_med_ev_diff_unchosen_firing_rates,axis=0),'r--',label='large beta, unchosen')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc='best')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        furl='img/large_ev_diff_firing_rate.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.plot(np.mean(self.small_beta_large_ev_diff_chosen_firing_rates,axis=0),'b',label='small beta, chosen')
+            ax.plot(np.mean(self.small_beta_large_ev_diff_unchosen_firing_rates,axis=0),'b--',label='small beta, unchosen')
+            ax.plot(np.mean(self.med_beta_large_ev_diff_chosen_firing_rates,axis=0),'g',label='med beta, chosen')
+            ax.plot(np.mean(self.med_beta_large_ev_diff_unchosen_firing_rates,axis=0),'g--',label='med beta, unchosen')
+            ax.plot(np.mean(self.large_beta_large_ev_diff_chosen_firing_rates,axis=0),'r',label='large beta, chosen')
+            ax.plot(np.mean(self.large_beta_large_ev_diff_unchosen_firing_rates,axis=0),'r--',label='large beta, unchosen')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc='best')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
