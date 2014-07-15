@@ -521,7 +521,25 @@ class StimConditionReport:
                 self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                 self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
 
-
+        self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
+        self.small_beta_small_ev_diff_unchosen_rates=np.array(self.small_beta_small_ev_diff_unchosen_rates)
+        self.small_beta_med_ev_diff_chosen_rates=np.array(self.small_beta_med_ev_diff_chosen_rates)
+        self.small_beta_med_ev_diff_unchosen_rates=np.array(self.small_beta_med_ev_diff_unchosen_rates)
+        self.small_beta_large_ev_diff_chosen_rates=np.array(self.small_beta_large_ev_diff_chosen_rates)
+        self.small_beta_large_ev_diff_unchosen_rates=np.array(self.small_beta_large_ev_diff_unchosen_rates)
+        self.med_beta_small_ev_diff_chosen_rates=np.array(self.med_beta_small_ev_diff_chosen_rates)
+        self.med_beta_small_ev_diff_unchosen_rates=np.array(self.med_beta_small_ev_diff_unchosen_rates)
+        self.med_beta_med_ev_diff_chosen_rates=np.array(self.med_beta_med_ev_diff_chosen_rates)
+        self.med_beta_med_ev_diff_unchosen_rates=np.array(self.med_beta_med_ev_diff_unchosen_rates)
+        self.med_beta_large_ev_diff_chosen_rates=np.array(self.med_beta_large_ev_diff_chosen_rates)
+        self.med_beta_large_ev_diff_unchosen_rates=np.array(self.med_beta_large_ev_diff_unchosen_rates)
+        self.large_beta_small_ev_diff_chosen_rates=np.array(self.large_beta_small_ev_diff_chosen_rates)
+        self.large_beta_small_ev_diff_unchosen_rates=np.array(self.large_beta_small_ev_diff_unchosen_rates)
+        self.large_beta_med_ev_diff_chosen_rates=np.array(self.large_beta_med_ev_diff_chosen_rates)
+        self.large_beta_med_ev_diff_unchosen_rates=np.array(self.large_beta_med_ev_diff_unchosen_rates)
+        self.large_beta_large_ev_diff_chosen_rates=np.array(self.large_beta_large_ev_diff_chosen_rates)
+        self.large_beta_large_ev_diff_unchosen_rates=np.array(self.large_beta_large_ev_diff_unchosen_rates)
+        
         # Create beta bar plot
         furl='img/beta_dist'
         fname = os.path.join(self.reports_dir, furl)
