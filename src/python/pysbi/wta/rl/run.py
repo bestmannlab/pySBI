@@ -241,11 +241,11 @@ def find_matching_subject_stim_file(data_dir, control_prob_walk, num_real_subjec
     for j in range(num_real_subjects):
         subj_id=j+1
         subj_stim_session_number=stim_order[j,LAT]
-        stim_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number))
+        stim_file_name='value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number)
         subj_control_session_number=stim_order[j,NOSTIM1]
-        control_file_name=os.path.join(data_dir,'value%d_s%d_t2.mat' % (subj_id,subj_control_session_number))
-        if os.path.exists(stim_file_name) and os.path.exists(control_file_name):
-            mat = scipy.io.loadmat(control_file_name)
+        control_file_name='value%d_s%d_t2.mat' % (subj_id,subj_control_session_number)
+        if os.path.exists(os.path.join(data_dir,stim_file_name)) and os.path.exists(os.path.join(data_dir,control_file_name)):
+            mat = scipy.io.loadmat(os.path.join(data_dir,control_file_name))
             prob_idx=-1
             for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
                 if dtype=='probswalk':
