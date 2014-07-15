@@ -1,6 +1,15 @@
 *.pyc
+data/*.h5
+data/neglect
 data/rerw/*.h5
+data/rerw/*.png
+data/rerw/subjects/*.png
+data/rerw/virtual_subjects
 data/adaptation
+data/reports
+data/dcs
+data/wta-two_param
 conf/config.properties
+.smt
 .idea
 pySBI.tgz
