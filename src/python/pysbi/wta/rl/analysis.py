@@ -456,8 +456,9 @@ class StimConditionReport:
         self.num_subjects=num_subjects
 
         self.sessions=[]
+        self.excluded_sessions=[]
 
-    def create_report(self):
+    def create_report(self, excluded=None):
         make_report_dirs(self.reports_dir)
 
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
@@ -487,8 +488,11 @@ class StimConditionReport:
 
         for virtual_subj_id in range(self.num_subjects):
             data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (virtual_subj_id,self.stim_condition)))
-            self.condition_alphas.append(data.est_alpha)
-            self.condition_betas.append(data.est_beta)
+            if (excluded is None and data.est_alpha<.98) or virtual_subj_id not in excluded:
+                self.condition_alphas.append(data.est_alpha)
+                self.condition_betas.append(data.est_beta)
+            else:
+                self.excluded_sessions.append(virtual_subj_id)
 
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
@@ -497,36 +501,37 @@ class StimConditionReport:
         bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
-            print('subject %d' % virtual_subj_id)
-            session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
-            session_report_dir=os.path.join(self.reports_dir,session_prefix)
-            session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-            session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
-            data=FileInfo(session_report_file)
-            session_report.create_report(data)
-            self.sessions.append(session_report)
-            if bins[0] <= session_report.est_beta < bins[3]:
-                self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-            elif bins[3] <= session_report.est_beta < bins[6]:
-                self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-            elif bins[6] <= session_report.est_beta < bins[-1]:
-                self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-            self.condition_perc_correct.append(session_report.perc_correct_response)
+            if not virtual_subj_id in excluded:
+                print('subject %d' % virtual_subj_id)
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_dir=os.path.join(self.reports_dir,session_prefix)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
+                data=FileInfo(session_report_file)
+                session_report.create_report(data)
+                self.sessions.append(session_report)
+                if bins[0] <= session_report.est_beta < bins[3]:
+                    self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                    self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                    self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                    self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                    self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                    self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+                elif bins[3] <= session_report.est_beta < bins[6]:
+                    self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                    self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                    self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                    self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                    self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                    self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+                elif bins[6] <= session_report.est_beta < bins[-1]:
+                    self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+                    self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+                    self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+                    self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+                    self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+                    self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+                self.condition_perc_correct.append(session_report.perc_correct_response)
 
         self.condition_perc_correct=np.array(self.condition_perc_correct)
         self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
@@ -754,12 +759,14 @@ class RLReport:
         self.stim_condition_chosen_rates={}
         self.stim_condition_unchosen_rates={}
         self.stim_condition_rate_diffs={}
+        excluded=None
         for stim_condition in self.stim_conditions:
             print(stim_condition)
             stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
             self.stim_condition_reports[stim_condition] = StimConditionReport(self.data_dir, self.file_prefix,
                 stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
-            self.stim_condition_reports[stim_condition].create_report()
+            self.stim_condition_reports[stim_condition].create_report(excluded=excluded)
+            excluded=self.stim_condition_reports[stim_condition].excluded_sessions
             
             self.stim_condition_chosen_rates[stim_condition]=[]
             self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_chosen_rates)
@@ -831,6 +838,38 @@ class RLReport:
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
+
+        # Create alpha - % correct plot
+        furl='img/alpha_perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.alpha_perc_correct_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
+                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+        ax.set_xlabel('Alpha')
+        ax.set_ylabel('Prop Correct')
+        ax.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create beta - % correct plot
+        furl='img/beta_perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.beta_perc_correct_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            ax.plot(self.stim_condition_reports[stim_condition].condition_betas,
+                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+        ax.set_xlabel('Beta')
+        ax.set_ylabel('Prop Correct')
+        ax.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         self.num_trials=self.stim_condition_reports['control'].sessions[0].num_trials
         self.alpha=self.stim_condition_reports['control'].sessions[0].alpha
