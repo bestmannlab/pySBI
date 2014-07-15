@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from scipy import stats
 import shutil
 import subprocess
