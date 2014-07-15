@@ -676,7 +676,7 @@ class RLReport:
                 std_diffs.append(np.std(self.stim_condition_rate_diffs[stim_condition])/len(self.stim_condition_rate_diffs[stim_condition]))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax.bar(pos,mean_diffs,width=.5,yerr=std_diffs,align='center')
-            plt.xticks(pos, self.stim_conditions)
+            ax.set_xticks(pos, self.stim_conditions)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
