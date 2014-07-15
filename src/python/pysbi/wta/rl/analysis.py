@@ -312,8 +312,8 @@ class SessionReport:
                 data.trial_i_rates[trial], rt=rt)
             if trial_data.choice<0:
                 self.perc_no_response+=1.0
-                if trial_data.correct:
-                    self.perc_correct_response+=1.0
+            elif trial_data.correct:
+                self.perc_correct_response+=1.0
             self.trials.append(trial_data)
         self.perc_correct_response=self.perc_correct_response/(self.num_trials-self.perc_correct_response)*100.0
         self.perc_no_response=self.perc_no_response/self.num_trials*100.0
