@@ -81,6 +81,7 @@ class FileInfo:
 
         self.trial_e_rates=[]
         self.trial_i_rates=[]
+        self.trial_correct=[]
         for i in range(self.num_trials):
             f_trial=f['trial %d' % i]
             self.trial_e_rates.append(np.array(f_trial['e_rates']))
@@ -182,7 +183,7 @@ class SessionReport:
         self.beta=(data.background_freq/Hz*-17.29)+148.14
         self.est_alpha=data.est_alpha
         self.est_beta=data.est_beta
-        self.prop_correct=data.prop_correct*100.0
+        self.prop_correctly_predicted=data.prop_correct*100.0
 
         self.num_groups=data.num_groups
         self.trial_duration=data.trial_duration
@@ -298,6 +299,7 @@ class SessionReport:
 
 
         self.perc_no_response=0.0
+        self.perc_correct_response=0.0
         self.trials=[]
         for trial in range(self.num_trials):
             trial_ev=data.vals[:,trial]*data.mags[:,trial]
@@ -310,7 +312,10 @@ class SessionReport:
                 data.trial_i_rates[trial], rt=rt)
             if trial_data.choice<0:
                 self.perc_no_response+=1.0
+                if trial_data.correct:
+                    self.perc_correct_response+=1.0
             self.trials.append(trial_data)
+        self.perc_correct_response=self.perc_correct_response/(self.num_trials-self.perc_correct_response)*100.0
         self.perc_no_response=self.perc_no_response/self.num_trials*100.0
 
         #create report

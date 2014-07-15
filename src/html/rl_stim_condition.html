@@ -197,7 +197,8 @@
         <th>Background rate</th>
         <th>Estimated alpha</th>
         <th>Estimated beta</th>
-        <th>% correct</th>
+        <th>% correctly predicted</th>
+        <th>% correct responses</th>
         <th>% no response</th>
     </tr>
     </thead>
@@ -210,7 +211,8 @@
         <td>{{ session_data.background_freq|round(2) }}</td>
         <td>{{ session_data.est_alpha|round(3) }}</td>
         <td>{{ session_data.est_beta|round(3) }}</td>
-        <td>{{ session_data.prop_correct|round(2) }}</td>
+        <td>{{ session_data.prop_correctly_predicted|round(2) }}</td>
+        <td>{{ session_data.perc_correct_response|round(2) }}</td>
         <td>{{ session_data.perc_no_response|round(2) }}</td>
     </tr>
     {% endfor %}
