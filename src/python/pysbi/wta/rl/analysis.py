@@ -497,11 +497,11 @@ class StimConditionReport:
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
 
-        hist,bins=np.histogram(self.condition_betas, bins=10, range=[0,20])
+        hist,bins=np.histogram(self.condition_betas, bins=10)
         bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
-            if excluded is None or virtual_subj_id not in excluded:
+            if virtual_subj_id not in self.excluded_sessions:
                 print('subject %d' % virtual_subj_id)
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
