@@ -170,13 +170,11 @@ class SessionReport:
         unchosen_firing_rates=np.array(unchosen_firing_rates)
         return chosen_firing_rates, unchosen_firing_rates
 
-    def create_report(self):
+    def create_report(self, data):
         make_report_dirs(self.reports_dir)
 
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
-
-        data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix))
 
         self.num_trials=data.num_trials
         self.alpha=data.alpha
@@ -339,10 +337,12 @@ class BackgroundBetaReport:
                 print('background=%0.2f Hz, trial %d' % (background_freq, trial))
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
-                if os.path.exists(os.path.join(self.data_dir,'%s.h5' % session_prefix)):
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                if os.path.exists(session_report_file):
                     session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
-                    session_report.create_report()
+                    data=FileInfo(session_report_file)
+                    session_report.create_report(data)
                     self.sessions.append(session_report)
                     #background_vals[idx*self.trials+trial]=background_freq
                     background_vals.append([background_freq])
@@ -440,20 +440,29 @@ class StimConditionReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
-        self.condition_alphas=np.zeros(self.num_subjects)
-        self.condition_betas=np.zeros(self.num_subjects)
+        #self.condition_alphas=np.zeros(self.num_subjects)
+        #self.condition_betas=np.zeros(self.num_subjects)
+        self.condition_alphas=[]
+        self.condition_betas=[]
 
         for virtual_subj_id in range(self.num_subjects):
             print('subject %d' % virtual_subj_id)
             session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
             session_report_dir=os.path.join(self.reports_dir,session_prefix)
+            session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
             session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
-            session_report.create_report()
-            self.sessions.append(session_report)
+            data=FileInfo(session_report_file)
+            if data.est_alpha<.98:
+                session_report.create_report(data)
+                self.sessions.append(session_report)
 
-            self.condition_alphas[virtual_subj_id]=session_report.est_alpha
-            self.condition_betas[virtual_subj_id]=session_report.est_beta
+                #self.condition_alphas[virtual_subj_id]=session_report.est_alpha
+                #self.condition_betas[virtual_subj_id]=session_report.est_beta
+                self.condition_alphas.append(session_report.est_alpha)
+                self.condition_betas.append(session_report.est_beta)
 
+        self.condition_alphas=np.array(self.condition_alphas)
+        self.condition_betas=np.array(self.condition_betas)
 
         # Create beta bar plot
         furl='img/beta_dist'
