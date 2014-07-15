@@ -626,12 +626,52 @@ class RLReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
+        self.stim_condition_chosen_rates={}
+        self.stim_condition_unchosen_rates={}
         for stim_condition in self.stim_conditions:
             print(stim_condition)
             stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
             self.stim_condition_reports[stim_condition] = StimConditionReport(self.data_dir, self.file_prefix,
                 stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
             self.stim_condition_reports[stim_condition].create_report()
+            
+            self.stim_condition_chosen_rates[stim_condition]=[]
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_chosen_rates)
+
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
+
+        # Create ev diff firing rate plot
+        furl='img/ev_diff_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                ax.plot(np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0),'b',label='%s, chosen' % stim_condition)
+                ax.plot(np.mean(self.stim_condition_unchosen_rates[stim_condition],axis=0),'b--',label='%s, unchosen' % stim_condition)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc='best')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
 
         self.num_trials=self.stim_condition_reports['control'].sessions[0].num_trials
         self.alpha=self.stim_condition_reports['control'].sessions[0].alpha
@@ -682,6 +722,7 @@ class RLReport:
                 self.stim_beta_std_change[stim_condition]=np.std(beta_diff)
                 self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(self.stim_condition_reports['control'].condition_betas,
                     self.stim_condition_reports[stim_condition].condition_betas)
+
 
         #create report
         template_file='rl.html'
