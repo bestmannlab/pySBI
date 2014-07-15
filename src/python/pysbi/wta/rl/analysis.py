@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from scipy import stats
 import shutil
 import subprocess
@@ -250,15 +252,16 @@ class SessionReport:
         large_chosen_firing_rates,large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
 
         fig=Figure()
-        plt.plot(np.mean(small_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[0],bins[3]))
-        plt.plot(np.mean(small_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[0],bins[3]))
-        plt.plot(np.mean(med_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[3],bins[6]))
-        plt.plot(np.mean(med_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[3],bins[6]))
-        plt.plot(np.mean(large_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[6],bins[-1]))
-        plt.plot(np.mean(large_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[6],bins[-1]))
-        plt.xlabel('Time')
-        plt.ylabel('Firing Rate (Hz)')
-        plt.legend(loc='best')
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(np.mean(small_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[0],bins[3]))
+        ax.plot(np.mean(small_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[0],bins[3]))
+        ax.plot(np.mean(med_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[3],bins[6]))
+        ax.plot(np.mean(med_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[3],bins[6]))
+        ax.plot(np.mean(large_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[6],bins[-1]))
+        ax.plot(np.mean(large_unchosen_firing_rates,axis=0),label='unchosen, %.3f-%.3f' % (bins[6],bins[-1]))
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
