@@ -489,8 +489,8 @@ class StimConditionReport:
         for virtual_subj_id in range(self.num_subjects):
             data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (virtual_subj_id,self.stim_condition)))
             if (excluded is None and data.est_alpha<.98) or (excluded is not None and virtual_subj_id not in excluded):
-                self.condition_alphas.append(data.est_alpha)
-                self.condition_betas.append(data.est_beta)
+                self.condition_alphas.append([data.est_alpha])
+                self.condition_betas.append([data.est_beta])
             else:
                 self.excluded_sessions.append(virtual_subj_id)
 
@@ -531,7 +531,7 @@ class StimConditionReport:
                     self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                     self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                     self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                self.condition_perc_correct.append(session_report.perc_correct_response)
+                self.condition_perc_correct.append([session_report.perc_correct_response])
 
         self.condition_perc_correct=np.array(self.condition_perc_correct)
         self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
