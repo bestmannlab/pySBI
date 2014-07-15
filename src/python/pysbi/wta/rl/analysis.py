@@ -587,9 +587,19 @@ class StimConditionReport:
         furl='img/alpha_perc_correct'
         fname = os.path.join(self.reports_dir, furl)
         self.alpha_perc_correct_url='%s.png' % furl
+        clf = LinearRegression()
+        clf.fit(self.condition_alphas, self.condition_perc_correct/100.0)
+        self.alpha_perc_correct_a = clf.coef_[0][0]
+        self.alpha_perc_correct_b = clf.intercept_[0]
+        self.alpha_perc_correct_r_sqr=clf.score(self.condition_alphas, self.condition_perc_correct/100.0)        
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.condition_alphas,self.condition_perc_correct/100.0,'o')
+        ax.plot([0.0, 1.0], [self.alpha_perc_correct_a * 0.0 + self.alpha_perc_correct_b,
+                             self.alpha_perc_correct_a * 1.0 + self.alpha_perc_correct_b],
+            label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
+        ax.legend(loc=0)
+        ax.plot()
         ax.set_xlabel('Alpha')
         ax.set_ylabel('Prop Correct')
         save_to_png(fig, '%s.png' % fname)
@@ -600,9 +610,19 @@ class StimConditionReport:
         furl='img/beta_perc_correct'
         fname = os.path.join(self.reports_dir, furl)
         self.beta_perc_correct_url='%s.png' % furl
+        clf = LinearRegression()
+        clf.fit(self.condition_betas, self.condition_perc_correct/100.0)
+        self.beta_perc_correct_a = clf.coef_[0][0]
+        self.beta_perc_correct_b = clf.intercept_[0]
+        self.beta_perc_correct_r_sqr=clf.score(self.condition_betas, self.condition_perc_correct/100.0)
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.condition_betas,self.condition_perc_correct/100.0,'o')
+        max_x=np.max(self.condition_betas)+1.0
+        ax.plot([0.0, max_x], [self.beta_perc_correct_a * 0.0 + self.beta_perc_correct_b,
+                             self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
+            label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
+        ax.legend(loc=0)
         ax.set_xlabel('Beta')
         ax.set_ylabel('Prop Correct')
         save_to_png(fig, '%s.png' % fname)
