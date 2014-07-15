@@ -456,7 +456,7 @@ class StimConditionReport:
 
 
         # Create beta bar plot
-        furl='img/beta_dist.%s' % self.file_prefix
+        furl='img/beta_dist' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
         self.beta_url = '%s.png' % furl
         hist,bins=np.histogram(self.condition_betas, bins=10)
@@ -472,7 +472,7 @@ class StimConditionReport:
             plt.close(fig)
 
         # Create alpha bar plot
-        furl='img/alpha_dist.%s' % self.file_prefix
+        furl='img/alpha_dist' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
         self.alpha_url = '%s.png' % furl
         hist,bins=np.histogram(self.condition_alphas, bins=10)
