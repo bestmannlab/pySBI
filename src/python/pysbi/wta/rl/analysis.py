@@ -488,7 +488,7 @@ class StimConditionReport:
 
         for virtual_subj_id in range(self.num_subjects):
             data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (virtual_subj_id,self.stim_condition)))
-            if (excluded is None and data.est_alpha<.98) or virtual_subj_id not in excluded:
+            if (excluded is None and data.est_alpha<.98) or (excluded is not None and virtual_subj_id not in excluded):
                 self.condition_alphas.append(data.est_alpha)
                 self.condition_betas.append(data.est_beta)
             else:
