@@ -11,7 +11,7 @@ import numpy as np
 from scikits.learn.linear_model import LinearRegression
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps, get_response_time
+from pysbi.util.utils import save_to_png, save_to_eps, get_response_time
 from pysbi.wta.network import default_params
 from pysbi.wta.rl.fit import rescorla_td_prediction
 
@@ -147,10 +147,11 @@ class TrialData:
             plt.close(fig)
 
 class SessionReport:
-    def __init__(self, data_dir, file_prefix, reports_dir, edesc):
+    def __init__(self, session_id, data_dir, file_prefix, reports_dir, edesc):
         self.data_dir=data_dir
         self.reports_dir=reports_dir
         self.file_prefix=file_prefix
+        self.session_id=session_id
         self.edesc=edesc
 
     def create_report(self):
@@ -281,7 +282,7 @@ class BackgroundBetaReport:
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
                 if os.path.exists(os.path.join(self.data_dir,'%s.h5' % session_prefix)):
-                    session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
+                    session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
                     session_report.create_report()
                     self.sessions.append(session_report)
@@ -388,7 +389,7 @@ class StimConditionReport:
             print('subject %d' % virtual_subj_id)
             session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
             session_report_dir=os.path.join(self.reports_dir,session_prefix)
-            session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
+            session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
             session_report.create_report()
             self.sessions.append(session_report)
 
@@ -597,7 +598,6 @@ if __name__=='__main__':
 #        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
 #        '/data/projects/pySBI/rl/report',50,'')
 #    report.create_report()
-    plot_trials_ev_diff('../../data/rerw/virtual_subjects','rl.virtual_subject.7.control.h5')
-    #plot_mean_firing_rate('../../data/rerw/virtual_subjects','rl.virtual_subject.7.control.h5')
-    #debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
-    #plot_firing_rate_diff_ev_diff('../../data/rerw/virtual_subjects','rl.virtual_subject.7.control.h5')
+    #plot_trials_ev_diff('../../data/rerw','virtual_subject_0.control.h5')
+    #plot_mean_firing_rate('../../data/rerw','virtual_subject_0.control.h5')
+    debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
