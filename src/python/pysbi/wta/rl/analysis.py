@@ -242,7 +242,7 @@ class SessionReport:
         # Create ev diff firing rate plot
         furl='img/ev_diff_firing_rate.%s' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
-        self.ev_diff_firing_rate_url = '%s.png' % furl
+        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
 
         if not os.path.exists('%s.png' % fname):
             ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
