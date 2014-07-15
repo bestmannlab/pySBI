@@ -243,10 +243,10 @@ class SessionReport:
         furl='img/ev_diff_firing_rate.%s' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
         self.ev_diff_url = '%s.png' % furl
+        ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+        hist,bins=np.histogram(np.array(ev_diff), bins=10)
+        bin_width=bins[1]-bins[0]
         if not os.path.exists('%s.png' % fname):
-            ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-            hist,bins=np.histogram(np.array(ev_diff), bins=10)
-            bin_width=bins[1]-bins[0]
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.bar(bins[:-1], hist/float(len(ev_diff)), width=bin_width)
@@ -261,21 +261,18 @@ class SessionReport:
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_ev_diff_url = '%s.png' % furl
 
+        self.small_chosen_firing_rates,self.small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
+        self.med_chosen_firing_rates,self.med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
+        self.large_chosen_firing_rates,self.large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
         if not os.path.exists('%s.png' % fname):
-            ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-            hist,bins=np.histogram(np.array(ev_diff), bins=10)
-            small_chosen_firing_rates,small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
-            med_chosen_firing_rates,med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
-            large_chosen_firing_rates,large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
-
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ax.plot(np.mean(small_chosen_firing_rates,axis=0),'b',label='chosen, small')
-            ax.plot(np.mean(small_unchosen_firing_rates,axis=0),'b--',label='unchosen, small')
-            ax.plot(np.mean(med_chosen_firing_rates,axis=0),'g',label='chosen, med')
-            ax.plot(np.mean(med_unchosen_firing_rates,axis=0),'g--',label='unchosen, med')
-            ax.plot(np.mean(large_chosen_firing_rates,axis=0),'r',label='chosen, large')
-            ax.plot(np.mean(large_unchosen_firing_rates,axis=0),'r--',label='unchosen, large')
+            ax.plot(np.mean(self.small_chosen_firing_rates,axis=0),'b',label='chosen, small')
+            ax.plot(np.mean(self.small_unchosen_firing_rates,axis=0),'b--',label='unchosen, small')
+            ax.plot(np.mean(self.med_chosen_firing_rates,axis=0),'g',label='chosen, med')
+            ax.plot(np.mean(self.med_unchosen_firing_rates,axis=0),'g--',label='unchosen, med')
+            ax.plot(np.mean(self.large_chosen_firing_rates,axis=0),'r',label='chosen, large')
+            ax.plot(np.mean(self.large_unchosen_firing_rates,axis=0),'r--',label='unchosen, large')
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc='best')
@@ -456,6 +453,63 @@ class StimConditionReport:
 
             self.condition_alphas[virtual_subj_id]=session_report.est_alpha
             self.condition_betas[virtual_subj_id]=session_report.est_beta
+
+
+        # Create beta bar plot
+        furl='img/beta_dist.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.beta_url = '%s.png' % furl
+        hist,bins=np.histogram(self.condition_betas, bins=10)
+        bin_width=bins[1]-bins[0]
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width)
+            ax.set_xlabel('Beta')
+            ax.set_ylabel('% of Subjects')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create alpha bar plot
+        furl='img/alpha_dist.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.alpha_url = '%s.png' % furl
+        hist,bins=np.histogram(self.condition_alphas, bins=10)
+        bin_width=bins[1]-bins[0]
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.bar(bins[:-1], hist/float(len(self.condition_alphas)), width=bin_width)
+            ax.set_xlabel('Alpha')
+            ax.set_ylabel('% of Subjects')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+#        # Create ev diff firing rate plot
+#        furl='img/ev_diff_firing_rate.%s' % self.file_prefix
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
+#
+#        self.small_chosen_firing_rates,self.small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
+#        self.med_chosen_firing_rates,self.med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
+#        self.large_chosen_firing_rates,self.large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
+#        if not os.path.exists('%s.png' % fname):
+#            fig=Figure()
+#            ax=fig.add_subplot(1,1,1)
+#            ax.plot(np.mean(self.small_chosen_firing_rates,axis=0),'b',label='chosen, small')
+#            ax.plot(np.mean(self.small_unchosen_firing_rates,axis=0),'b--',label='unchosen, small')
+#            ax.plot(np.mean(self.med_chosen_firing_rates,axis=0),'g',label='chosen, med')
+#            ax.plot(np.mean(self.med_unchosen_firing_rates,axis=0),'g--',label='unchosen, med')
+#            ax.plot(np.mean(self.large_chosen_firing_rates,axis=0),'r',label='chosen, large')
+#            ax.plot(np.mean(self.large_unchosen_firing_rates,axis=0),'r--',label='unchosen, large')
+#            ax.set_xlabel('Time')
+#            ax.set_ylabel('Firing Rate (Hz)')
+#            ax.legend(loc='best')
+#            save_to_png(fig, '%s.png' % fname)
+#            save_to_eps(fig, '%s.eps' % fname)
+#            plt.close(fig)
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
