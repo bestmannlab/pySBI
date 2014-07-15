@@ -147,24 +147,11 @@ class TrialData:
             plt.close(fig)
 
 class SessionReport:
-    def __init__(self, session_id, data_dir, file_prefix, reports_dir, edesc):
-        self.session_id=session_id
+    def __init__(self, data_dir, file_prefix, reports_dir, edesc):
         self.data_dir=data_dir
         self.reports_dir=reports_dir
         self.file_prefix=file_prefix
         self.edesc=edesc
-
-    def sort_trial_firing_rates(self, data, ev_diff, min_ev_diff, max_ev_diff):
-        trials = np.where((ev_diff >= min_ev_diff) & (ev_diff < max_ev_diff))[0]
-        chosen_firing_rates = []
-        unchosen_firing_rates = []
-        for trial in trials:
-            if data.choice[trial] > -1:
-                chosen_firing_rates.append(data.trial_e_rates[trial][data.choice[trial], :])
-                unchosen_firing_rates.append(data.trial_e_rates[trial][1 - data.choice[trial], :])
-        chosen_firing_rates = np.array(chosen_firing_rates)
-        unchosen_firing_rates = np.array(unchosen_firing_rates)
-        return chosen_firing_rates, unchosen_firing_rates
 
     def create_report(self):
         make_report_dirs(self.reports_dir)
@@ -235,33 +222,6 @@ class SessionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-        # Create mean firing rate plots
-        ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-        hist,bins=np.histogram(np.array(ev_diff), bins=10)
-        small_chosen_firing_rates, small_unchosen_firing_rates = self.sort_trial_firing_rates(data, ev_diff, bins[0],
-            bins[3])
-        med_chosen_firing_rates, med_unchosen_firing_rates = self.sort_trial_firing_rates(data, ev_diff, bins[3],
-            bins[6])
-        large_chosen_firing_rates, large_unchosen_firing_rates = self.sort_trial_firing_rates(data, ev_diff, bins[6],
-            bins[-1])
-
-        furl='img/mean_firing_rate.ev_diff.%s' % self.file_prefix
-        fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
-        fig=plt.figure()
-        plt.plot(np.mean(small_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[0],bins[3]))
-        plt.plot(np.mean(small_unchosen_firing_rates,axis=0), label='unchosen, %.3f-%.3f' % (bins[0],bins[3]))
-        plt.plot(np.mean(med_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[3],bins[6]))
-        plt.plot(np.mean(med_unchosen_firing_rates,axis=0), label='unchosen, %.3f-%.3f' % (bins[3],bins[6]))
-        plt.plot(np.mean(large_chosen_firing_rates,axis=0),label='chosen, %.3f-%.3f' % (bins[6],bins[-1]))
-        plt.plot(np.mean(large_unchosen_firing_rates,axis=0), label='unchosen, %.3f-%.3f' % (bins[6],bins[-1]))
-        plt.legend('loc=best')
-        plt.xlabel('Time')
-        plt.ylabel('Mean Firing Rate (Hz)')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
         self.perc_no_response=0.0
         self.trials=[]
         for trial in range(self.num_trials):
@@ -321,7 +281,7 @@ class BackgroundBetaReport:
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
                 if os.path.exists(os.path.join(self.data_dir,'%s.h5' % session_prefix)):
-                    session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
+                    session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
                     session_report.create_report()
                     self.sessions.append(session_report)
@@ -428,7 +388,7 @@ class StimConditionReport:
             print('subject %d' % virtual_subj_id)
             session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
             session_report_dir=os.path.join(self.reports_dir,session_prefix)
-            session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
+            session_report=SessionReport(self.data_dir, session_prefix, session_report_dir, self.edesc)
             session_report.create_report()
             self.sessions.append(session_report)
 
@@ -560,28 +520,8 @@ def plot_mean_firing_rate(data_dir, file_name):
     data=FileInfo(os.path.join(data_dir,file_name))
     ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
 
-    hist,bins=np.histogram(np.array(ev_diff), bins=10)
-    bin_width=bins[1]-bins[0]
-
-    plot_ev_diff_firing_rate(data,ev_diff,bins[0],bins[0]+bin_width)
-    plot_ev_diff_firing_rate(data,ev_diff,bins[4],bins[4]+bin_width)
-    plot_ev_diff_firing_rate(data,ev_diff,bins[9],bins[9]+bin_width)
-    plot_ev_diff_firing_rate(data,ev_diff,0.0,100.0)
-    plt.show()
-
-def plot_firing_rate_diff_ev_diff(data_dir, file_name):
-    data=FileInfo(os.path.join(data_dir,file_name))
-    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-    success_ev_diffs=[]
-    rate_diff=[]
-    for i in range(len(ev_diff)):
-        if data.choice[i]>-1:
-            success_ev_diffs.append(ev_diff[i])
-            rate_diff.append(np.mean(data.trial_e_rates[i][data.choice[i],8000:9499])-np.mean(data.trial_e_rates[i][1-data.choice[i],8000:9499]))
-    plt.plot(np.array(success_ev_diffs),np.array(rate_diff),'o')
-    plt.show()
-
-def plot_ev_diff_firing_rate(data,ev_diff,min_ev_diff,max_ev_diff):
+    min_ev_diff=0.5
+    max_ev_diff=0.6
     trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
     chosen_firing_rates=[]
     unchosen_firing_rates=[]
@@ -596,8 +536,7 @@ def plot_ev_diff_firing_rate(data,ev_diff,min_ev_diff,max_ev_diff):
     fig=plt.figure()
     plt.plot(np.mean(chosen_firing_rates,axis=0))
     plt.plot(np.mean(unchosen_firing_rates,axis=0))
-    plt.title('ev_diff=%.3f-%.3f' % (min_ev_diff,max_ev_diff))
-
+    plt.show()
 
 def debug_trial_plot(file_name):
     f = h5py.File(file_name)
