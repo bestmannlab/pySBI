@@ -204,8 +204,12 @@
         <td>{{ rinfo.est_beta|round(3) }}</td>
     </tr>
     <tr>
-        <td><strong>% correct</strong></td>
+        <td><strong>% correctly predicted</strong></td>
         <td>{{ rinfo.prop_correct|round(3) }}%</td>
+    </tr>
+    <tr>
+        <td><strong>% correct responses</strong></td>
+        <td>{{ rinfo.perc_correct_response|round(3) }}%</td>
     </tr>
     <tr>
         <td><strong>% no response</strong></td>
