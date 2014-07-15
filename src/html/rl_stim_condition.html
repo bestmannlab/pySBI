@@ -191,7 +191,7 @@
     <tbody>
     {% for session_data in rinfo.sessions %}
     <tr>
-        <td><a href="{{ session_data.furl }}">{{ loop.index }}</a></td>
+        <td><a href="{{ session_data.furl }}">{{ session_data.session_id }}</a></td>
         <td>{{ session_data.alpha|round(2) }}</td>
         <td>{{ session_data.beta|round(2) }}</td>
         <td>{{ session_data.background_freq|round(2) }}</td>
