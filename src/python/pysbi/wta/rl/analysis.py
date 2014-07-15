@@ -462,18 +462,14 @@ class StimConditionReport:
         self.large_beta_large_ev_diff_unchosen_rates=[]
 
         for virtual_subj_id in range(self.num_subjects):
-            print('subject %d' % virtual_subj_id)
-            session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
-            session_report_dir=os.path.join(self.reports_dir,session_prefix)
-            session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-            data=FileInfo(session_report_file)
+            data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (virtual_subj_id,self.stim_condition)))
             self.condition_alphas.append(data.est_alpha)
             self.condition_betas.append(data.est_beta)
 
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
 
-        hist,bins=np.histogram(self.condition_betas, bins=10)
+        hist,bins=np.histogram(self.condition_betas, bins=10, range=[0,20])
         bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
@@ -485,21 +481,21 @@ class StimConditionReport:
             data=FileInfo(session_report_file)
             session_report.create_report(data)
             self.sessions.append(session_report)
-            if session_report.est_beta>=bins[0] and session_report.est_beta<bins[3]:
+            if bins[0] <= session_report.est_beta < bins[3]:
                 self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                 self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                 self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
                 self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                 self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                 self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-            elif session_report.est_beta>=bins[3] and session_report.est_beta<bins[6]:
+            elif bins[3] <= session_report.est_beta < bins[6]:
                 self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                 self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                 self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
                 self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                 self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                 self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-            elif session_report.est_beta>=bins[6] and session_report.est_beta<bins[-1]:
+            elif bins[6] <= session_report.est_beta < bins[-1]:
                 self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                 self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                 self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
@@ -515,7 +511,7 @@ class StimConditionReport:
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width, range=[0,20])
+            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width)
             ax.set_xlabel('Beta')
             ax.set_ylabel('% of Subjects')
             save_to_png(fig, '%s.png' % fname)
