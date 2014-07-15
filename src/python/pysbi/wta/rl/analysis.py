@@ -678,6 +678,8 @@ class RLReport:
             ax.bar(pos,mean_diffs,width=.5,yerr=std_diffs,align='center',ecolor='k')
             ax.set_xticks(pos)
             ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Firing Rate Diff')
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
