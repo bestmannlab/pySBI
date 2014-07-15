@@ -501,7 +501,7 @@ class StimConditionReport:
         bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
-            if not virtual_subj_id in excluded:
+            if excluded is None or virtual_subj_id not in excluded:
                 print('subject %d' % virtual_subj_id)
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
