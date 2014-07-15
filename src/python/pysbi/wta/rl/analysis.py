@@ -628,6 +628,7 @@ class RLReport:
 
         self.stim_condition_chosen_rates={}
         self.stim_condition_unchosen_rates={}
+        self.stim_condition_rate_diffs={}
         for stim_condition in self.stim_conditions:
             print(stim_condition)
             stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
@@ -656,6 +657,28 @@ class RLReport:
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
+
+            self.stim_condition_rate_diffs[stim_condition]=[]
+            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rates[stim_condition],self.stim_condition_unchosen_rates[stim_condition]):
+                self.stim_condition_rate_diffs[stim_condition].append(chosen_rate[9000]-unchosen_rate[9000])
+
+        # Create rate diff firing rate plot
+        furl='img/firing_rate_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.firing_rate_diff_url = '%s.png' % furl
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            mean_diffs=[]
+            std_diffs=[]
+            for stim_condition in self.stim_conditions:
+                mean_diffs.append(np.mean(self.stim_condition_rate_diffs[stim_condition]))
+                std_diffs.append(np.std(self.stim_condition_rate_diffs[stim_condition])/len(self.stim_condition_rate_diffs[stim_condition]))
+            ax.bar(range(len(self.stim_conditions)),mean_diffs)
+            ax.errorbar(np.array(range(len(self.stim_conditions)))+0.5,std_diffs,'o')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
 
         # Create ev diff firing rate plot
         furl='img/ev_diff_firing_rate'
