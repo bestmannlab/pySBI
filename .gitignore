@@ -1,1 +1,6 @@
 *.pyc
+data/rerw/*.h5
+data/adaptation
+conf/config.properties
+.idea
+pySBI.tgz
