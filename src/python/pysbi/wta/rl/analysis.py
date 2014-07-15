@@ -535,7 +535,7 @@ class StimConditionReport:
             plt.close(fig)
 
         # Create ev diff firing rate plot
-        furl='img/small_ev_diff_firing_rate.%s' % self.file_prefix
+        furl='img/small_ev_diff_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
         if not os.path.exists('%s.png' % fname):
@@ -554,7 +554,7 @@ class StimConditionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-        furl='img/med_ev_diff_firing_rate.%s' % self.file_prefix
+        furl='img/med_ev_diff_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
         if not os.path.exists('%s.png' % fname):
@@ -573,7 +573,7 @@ class StimConditionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-        furl='img/large_ev_diff_firing_rate.%s' % self.file_prefix
+        furl='img/large_ev_diff_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
         if not os.path.exists('%s.png' % fname):
