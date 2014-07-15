@@ -593,8 +593,10 @@ class StimConditionReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.condition_alphas,self.condition_perc_correct/100.0,'o')
-        ax.plot([0.0, 1.0], [self.alpha_perc_correct_a * 0.0 + self.alpha_perc_correct_b,
-                             self.alpha_perc_correct_a * 1.0 + self.alpha_perc_correct_b],
+        min_x=np.min(self.condition_alphas)-.1
+        max_x=np.max(self.condition_alphas)+.1
+        ax.plot([min_x, max_x], [self.alpha_perc_correct_a * min_x + self.alpha_perc_correct_b,
+                                 self.alpha_perc_correct_a * max_x + self.alpha_perc_correct_b],
             label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
         ax.legend(loc=0)
         ax.plot()
@@ -616,9 +618,10 @@ class StimConditionReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(self.condition_betas,self.condition_perc_correct/100.0,'o')
+        min_x=np.min(self.condition_betas)-1.0
         max_x=np.max(self.condition_betas)+1.0
-        ax.plot([0.0, max_x], [self.beta_perc_correct_a * 0.0 + self.beta_perc_correct_b,
-                             self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
+        ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
+                                 self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
             label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
         ax.legend(loc=0)
         ax.set_xlabel('Beta')
@@ -861,6 +864,14 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
                 self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+            min_x=np.min(self.stim_condition_reports[stim_condition].condition_alphas)-0.1
+            max_x=np.max(self.stim_condition_reports[stim_condition].condition_alphas)+0.1
+            ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].alpha_perc_correct_a * min_x +
+                                     self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
+                                     self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
+                                     self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
+                label='r^2=%.3f' % self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr)
+        ax.legend(loc=0)
         ax.set_xlabel('Alpha')
         ax.set_ylabel('Prop Correct')
         ax.legend(loc='best')
@@ -877,6 +888,14 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             ax.plot(self.stim_condition_reports[stim_condition].condition_betas,
                 self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+            min_x=np.min(self.stim_condition_reports[stim_condition].condition_betas)+1.0
+            max_x=np.max(self.stim_condition_reports[stim_condition].condition_betas)+1.0
+            ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
+                                     self.stim_condition_reports[stim_condition].beta_perc_correct_b,
+                                     self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
+                                     self.stim_condition_reports[stim_condition].beta_perc_correct_b],
+                label='r^2=%.3f' % self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr)
+        ax.legend(loc=0)
         ax.set_xlabel('Beta')
         ax.set_ylabel('Prop Correct')
         ax.legend(loc='best')
