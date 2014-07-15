@@ -599,7 +599,6 @@ class StimConditionReport:
                                  self.alpha_perc_correct_a * max_x + self.alpha_perc_correct_b],
             label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
         ax.legend(loc=0)
-        ax.plot()
         ax.set_xlabel('Alpha')
         ax.set_ylabel('Prop Correct')
         save_to_png(fig, '%s.png' % fname)
@@ -859,41 +858,77 @@ class RLReport:
         furl='img/alpha_perc_correct'
         fname = os.path.join(self.reports_dir, furl)
         self.alpha_perc_correct_url = '%s.png' % furl
+        all_condition_alphas=[]
+        all_condition_perc_correct=[]
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
-                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+            baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
+                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
             min_x=np.min(self.stim_condition_reports[stim_condition].condition_alphas)-0.1
             max_x=np.max(self.stim_condition_reports[stim_condition].condition_alphas)+0.1
             ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].alpha_perc_correct_a * min_x +
                                      self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
                                      self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
                                      self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
-                label='r^2=%.3f' % self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr)
+                label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
+                color=baseline.get_color())
+
+            all_condition_alphas.extend(self.stim_condition_reports[stim_condition].condition_alphas)
+            all_condition_perc_correct.extend(self.stim_condition_reports[stim_condition].condition_perc_correct/100.0)
         ax.legend(loc=0)
         ax.set_xlabel('Alpha')
         ax.set_ylabel('Prop Correct')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-
+        
+        furl='img/all_alpha_perc_corect'
+        fname = os.path.join(self.reports_dir, furl)
+        self.all_alpha_perc_correct_url = '%s.png' % furl
+        all_condition_alphas_vec=np.zeros([len(all_condition_alphas,1)])
+        all_condition_alphas_vec[:]=all_condition_alphas
+        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct,1)])
+        all_condition_perc_correct_vec[:]=all_condition_perc_correct
+        clf = LinearRegression()
+        clf.fit(all_condition_alphas_vec, all_condition_perc_correct_vec)
+        self.alpha_perc_correct_a = clf.coef_[0][0]
+        self.alpha_perc_correct_b = clf.intercept_[0]
+        self.alpha_perc_correct_r_sqr=clf.score(all_condition_alphas_vec, all_condition_perc_correct_vec/100.0)
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(all_condition_alphas_vec, all_condition_perc_correct,'o')
+        min_x=np.min(all_condition_alphas_vec)-.1
+        max_x=np.max(all_condition_alphas_vec)+.1
+        ax.plot([min_x, max_x], [self.alpha_perc_correct_a * min_x + self.alpha_perc_correct_b,
+                                 self.alpha_perc_correct_a * max_x + self.alpha_perc_correct_b],
+            label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
+        ax.legend(loc=0)
+        ax.set_xlabel('Alpha')
+        ax.set_ylabel('Prop Correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        
         # Create beta - % correct plot
         furl='img/beta_perc_correct'
         fname = os.path.join(self.reports_dir, furl)
         self.beta_perc_correct_url = '%s.png' % furl
+        all_condition_betas=[]
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            ax.plot(self.stim_condition_reports[stim_condition].condition_betas,
-                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o',label=stim_condition)
+            baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_betas,
+                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
             min_x=np.min(self.stim_condition_reports[stim_condition].condition_betas)+1.0
             max_x=np.max(self.stim_condition_reports[stim_condition].condition_betas)+1.0
             ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_b,
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_b],
-                label='r^2=%.3f' % self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr)
+                label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
+                color=baseline.get_color())
+            all_condition_betas.extend(self.stim_condition_reports[stim_condition].condition_betas)
         ax.legend(loc=0)
         ax.set_xlabel('Beta')
         ax.set_ylabel('Prop Correct')
@@ -901,6 +936,33 @@ class RLReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+        furl='img/all_beta_perc_corect'
+        fname = os.path.join(self.reports_dir, furl)
+        self.all_beta_perc_correct_url = '%s.png' % furl
+        all_condition_betas_vec=np.zeros([len(all_condition_betas,1)])
+        all_condition_betas_vec[:]=all_condition_betas
+        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct,1)])
+        all_condition_perc_correct_vec[:]=all_condition_perc_correct
+        clf = LinearRegression()
+        clf.fit(all_condition_betas_vec, all_condition_perc_correct_vec)
+        self.beta_perc_correct_a = clf.coef_[0][0]
+        self.beta_perc_correct_b = clf.intercept_[0]
+        self.beta_perc_correct_r_sqr=clf.score(all_condition_betas_vec, all_condition_perc_correct)
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(all_condition_betas_vec, all_condition_perc_correct,'o')
+        min_x=np.min(all_condition_betas_vec)-.1
+        max_x=np.max(all_condition_betas_vec)+.1
+        ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
+                                 self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
+            label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
+        ax.legend(loc=0)
+        ax.set_xlabel('Beta')
+        ax.set_ylabel('Prop Correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        
         self.num_trials=self.stim_condition_reports['control'].sessions[0].num_trials
         self.alpha=self.stim_condition_reports['control'].sessions[0].alpha
 
