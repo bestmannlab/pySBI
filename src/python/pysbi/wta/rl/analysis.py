@@ -465,6 +465,7 @@ class StimConditionReport:
 
         self.condition_alphas=[]
         self.condition_betas=[]
+        self.condition_perc_correct=[]
         self.small_beta_small_ev_diff_chosen_rates=[]
         self.small_beta_small_ev_diff_unchosen_rates=[]
         self.small_beta_med_ev_diff_chosen_rates=[]
@@ -525,7 +526,9 @@ class StimConditionReport:
                 self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                 self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                 self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+            self.condition_perc_correct.append(session_report.perc_correct_response)
 
+        self.condition_perc_correct=np.array(self.condition_perc_correct)
         self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
         self.small_beta_small_ev_diff_unchosen_rates=np.array(self.small_beta_small_ev_diff_unchosen_rates)
         self.small_beta_med_ev_diff_chosen_rates=np.array(self.small_beta_med_ev_diff_chosen_rates)
@@ -575,6 +578,33 @@ class StimConditionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
+        # Create alpha - perc correct plot
+        furl='img/alpha_perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.alpha_perc_correct_url='%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(self.condition_alphas,self.condition_perc_correct/100.0,'o')
+        ax.set_xlabel('Alpha')
+        ax.set_ylabel('Prop Correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create beta - perc correct plot
+        furl='img/beta_perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.beta_perc_correct_url='%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(self.condition_betas,self.condition_perc_correct/100.0,'o')
+        ax.set_xlabel('Beta')
+        ax.set_ylabel('Prop Correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create beta - perc correct plot
         # Create ev diff firing rate plot
         furl='img/small_ev_diff_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
