@@ -688,7 +688,7 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             for stim_condition in self.stim_conditions:
-                base_line=ax.plot(np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0),label='%s, chosen' % stim_condition)
+                base_line,=ax.plot(np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0),label='%s, chosen' % stim_condition)
                 ax.plot(np.mean(self.stim_condition_unchosen_rates[stim_condition],axis=0),color=base_line.get_color(),linestyle='dashed',label='%s, unchosen' % stim_condition)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
