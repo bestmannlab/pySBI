@@ -497,14 +497,6 @@ class StimConditionReport:
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
 
-#        hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.mean(self.condition_betas)-np.std(self.condition_betas),
-#                                                                     np.mean(self.condition_betas)+np.std(self.condition_betas)])
-#        print(hist)
-#        print(bins)
-#        print(np.min(self.condition_betas))
-#        print(np.mean(self.condition_betas))
-#        print(np.std(self.condition_betas))
-#        bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
@@ -563,6 +555,8 @@ class StimConditionReport:
         furl='img/beta_dist'
         fname = os.path.join(self.reports_dir, furl)
         self.beta_url = '%s.png' % furl
+        hist,bins=np.histogram(self.condition_betas, bins=10)
+        bin_width=bins[1]-bins[0]
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width)
