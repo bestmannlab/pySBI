@@ -497,14 +497,14 @@ class StimConditionReport:
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
 
-        hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.mean(self.condition_betas)-np.std(self.condition_betas),
-                                                                     np.mean(self.condition_betas)+np.std(self.condition_betas)])
-        print(hist)
-        print(bins)
-        print(np.min(self.condition_betas))
-        print(np.mean(self.condition_betas))
-        print(np.std(self.condition_betas))
-        bin_width=bins[1]-bins[0]
+#        hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.mean(self.condition_betas)-np.std(self.condition_betas),
+#                                                                     np.mean(self.condition_betas)+np.std(self.condition_betas)])
+#        print(hist)
+#        print(bins)
+#        print(np.min(self.condition_betas))
+#        print(np.mean(self.condition_betas))
+#        print(np.std(self.condition_betas))
+#        bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
@@ -516,21 +516,21 @@ class StimConditionReport:
                 data=FileInfo(session_report_file)
                 session_report.create_report(data)
                 self.sessions.append(session_report)
-                if bins[0] <= session_report.est_beta < bins[3]:
+                if session_report.est_beta < np.mean(self.condition_betas)-.5*np.std(self.condition_betas):
                     self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                     self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                     self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
                     self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                     self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                     self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                elif bins[3] <= session_report.est_beta < bins[6]:
+                elif np.mean(self.condition_betas)-.5*np.std(self.condition_betas) <= session_report.est_beta < np.mean(self.condition_betas)+.5*np.std(self.condition_betas):
                     self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                     self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                     self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
                     self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
                     self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
                     self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                elif bins[6] <= session_report.est_beta < bins[-1]:
+                elif session_report.est_beta >= np.mean(self.condition_betas)+.5*np.std(self.condition_betas):
                     self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
                     self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
                     self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
