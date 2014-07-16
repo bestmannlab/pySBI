@@ -116,3 +116,9 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
                     rt=time-stim_start_time
                     break
     return rt,decision_idx
+
+def reject_outliers(data, m = 2.):
+    d = np.abs(data - np.median(data))
+    mdev = np.median(d)
+    s = d/mdev if mdev else 0
+    return data[s<m]
