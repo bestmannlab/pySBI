@@ -497,8 +497,8 @@ class StimConditionReport:
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
 
-        hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.min(self.condition_betas),
-                                                                     np.mean(self.condition_betas)+2*np.std(self.condition_betas)])
+        hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.mean(self.condition_betas)-np.std(self.condition_betas),
+                                                                     np.mean(self.condition_betas)+np.std(self.condition_betas)])
         print(hist)
         print(bins)
         print(np.min(self.condition_betas))
