@@ -1121,10 +1121,10 @@ def rename_data_files(data_dir):
                 shutil.copyfile(os.path.join(data_dir,file_name),os.path.join(data_dir,new_filename))
 
 if __name__=='__main__':
-#    report=RLReport('/data/projects/pySBI/rl','virtual_subject_%d.%s',
-#        ['anode','anode_control_1','anode_control_2','cathode','cathode_control_1','cathode_control_2','control'],
-#        '/data/projects/pySBI/rl/report',50,'')
-#    report.create_report()
+    report=RLReport('/data/ezrcluster/data/output/','rl.virtual_subject.%d.%s',
+        ['control','anode','anode_control_1','cathode','cathode_control_1'],'/data/pySBI/reports/rl/virtual_subjects',
+        25,'')
+    report.create_report()
     #plot_trials_ev_diff('../../data/rerw','virtual_subject_0.control.h5')
     #plot_mean_firing_rate('../../data/rerw','virtual_subject_0.control.h5')
-    debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
+    #debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
