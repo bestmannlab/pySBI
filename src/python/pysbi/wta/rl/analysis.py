@@ -499,6 +499,11 @@ class StimConditionReport:
 
         hist,bins=np.histogram(self.condition_betas, bins=10, range=[np.min(self.condition_betas),
                                                                      np.mean(self.condition_betas)+2*np.std(self.condition_betas)])
+        print(hist)
+        print(bins)
+        print(np.min(self.condition_betas))
+        print(np.mean(self.condition_betas))
+        print(np.std(self.condition_betas))
         bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
