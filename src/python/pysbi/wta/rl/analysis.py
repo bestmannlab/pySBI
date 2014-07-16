@@ -499,6 +499,8 @@ class StimConditionReport:
 
         hist,bins=np.histogram(self.condition_betas, bins=10)
         bin_width=bins[1]-bins[0]
+        print(hist)
+        print(bins)
 
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
