@@ -797,6 +797,7 @@ class RLReport:
             self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_chosen_rates)
             self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_chosen_rates)
             self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_chosen_rates)
+            self.stim_condition_chosen_rates[stim_condition]=np.array(self.stim_condition_chosen_rates[stim_condition])
 
             self.stim_condition_unchosen_rates[stim_condition]=[]
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_unchosen_rates)
@@ -808,6 +809,7 @@ class RLReport:
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
             self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
+            self.stim_condition_unchosen_rates[stim_condition]=np.array(self.stim_condition_unchosen_rates[stim_condition])
 
             self.stim_condition_rate_diffs[stim_condition]=[]
             for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rates[stim_condition],self.stim_condition_unchosen_rates[stim_condition]):
