@@ -1013,8 +1013,8 @@ class RLReport:
                            self.stim_condition_reports['control'].condition_alphas
                 self.stim_alpha_mean_change[stim_condition]=np.mean(alpha_diff)
                 self.stim_alpha_std_change[stim_condition]=np.std(alpha_diff)
-                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(self.stim_condition_reports['control'].condition_alphas,
-                    self.stim_condition_reports[stim_condition].condition_alphas)
+                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_alphas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
 
                 # Create beta plot
                 furl='img/%s_beta' % stim_condition
@@ -1029,8 +1029,8 @@ class RLReport:
                            self.stim_condition_reports['control'].condition_betas
                 self.stim_beta_mean_change[stim_condition]=np.mean(beta_diff)
                 self.stim_beta_std_change[stim_condition]=np.std(beta_diff)
-                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(self.stim_condition_reports['control'].condition_betas,
-                    self.stim_condition_reports[stim_condition].condition_betas)
+                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_betas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
 
 
         #create report
