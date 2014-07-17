@@ -890,9 +890,9 @@ class RLReport:
         furl='img/all_alpha_perc_corect'
         fname = os.path.join(self.reports_dir, furl)
         self.all_alpha_perc_correct_url = '%s.png' % furl
-        all_condition_alphas_vec=np.zeros([len(all_condition_alphas,1)])
+        all_condition_alphas_vec=np.zeros([len(all_condition_alphas),1])
         all_condition_alphas_vec[:]=all_condition_alphas
-        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct,1)])
+        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct),1])
         all_condition_perc_correct_vec[:]=all_condition_perc_correct
         clf = LinearRegression()
         clf.fit(all_condition_alphas_vec, all_condition_perc_correct_vec)
@@ -943,9 +943,9 @@ class RLReport:
         furl='img/all_beta_perc_corect'
         fname = os.path.join(self.reports_dir, furl)
         self.all_beta_perc_correct_url = '%s.png' % furl
-        all_condition_betas_vec=np.zeros([len(all_condition_betas,1)])
+        all_condition_betas_vec=np.zeros([len(all_condition_betas),1])
         all_condition_betas_vec[:]=all_condition_betas
-        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct,1)])
+        all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct),1])
         all_condition_perc_correct_vec[:]=all_condition_perc_correct
         clf = LinearRegression()
         clf.fit(all_condition_betas_vec, all_condition_perc_correct_vec)
