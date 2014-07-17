@@ -612,15 +612,21 @@ class StimConditionReport:
         fname = os.path.join(self.reports_dir, furl)
         self.beta_perc_correct_url='%s.png' % furl
         clf = LinearRegression()
-        clf.fit(self.condition_betas, self.condition_perc_correct/100.0)
+
+        d = np.abs(self.condition_betas - np.median(self.condition_betas))
+        mdev = np.median(d)
+        s = d/mdev if mdev else 0
+        filtered_betas=self.condition_betas[s<2]
+        filtered_perc_correct=self.condition_perc_correct[s<2]/100.0
+        clf.fit(filtered_betas, filtered_perc_correct/100.0)
         self.beta_perc_correct_a = clf.coef_[0][0]
         self.beta_perc_correct_b = clf.intercept_[0]
-        self.beta_perc_correct_r_sqr=clf.score(self.condition_betas, self.condition_perc_correct/100.0)
+        self.beta_perc_correct_r_sqr=clf.score(filtered_betas, filtered_perc_correct)
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        ax.plot(self.condition_betas,self.condition_perc_correct/100.0,'o')
-        min_x=np.min(self.condition_betas)-1.0
-        max_x=np.max(self.condition_betas)+1.0
+        ax.plot(filtered_betas,filtered_perc_correct,'o')
+        min_x=np.min(filtered_betas)-1.0
+        max_x=np.max(filtered_betas)+1.0
         ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
                                  self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
             label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
@@ -922,10 +928,14 @@ class RLReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_betas,
-                self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
-            min_x=np.min(self.stim_condition_reports[stim_condition].condition_betas)+1.0
-            max_x=np.max(self.stim_condition_reports[stim_condition].condition_betas)+1.0
+            d = np.abs(self.stim_condition_reports[stim_condition].condition_betas - np.median(self.stim_condition_reports[stim_condition].condition_betas))
+            mdev = np.median(d)
+            s = d/mdev if mdev else 0
+            filtered_betas=self.stim_condition_reports[stim_condition].condition_betas[s<2]
+            filtered_perc_correct=self.stim_condition_reports[stim_condition].condition_perc_correct[s<2]/100.0
+            baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o')
+            min_x=np.min(filtered_betas)+1.0
+            max_x=np.max(filtered_betas)+1.0
             ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_b,
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
@@ -947,16 +957,21 @@ class RLReport:
         all_condition_betas_vec[:]=all_condition_betas
         all_condition_perc_correct_vec=np.zeros([len(all_condition_perc_correct),1])
         all_condition_perc_correct_vec[:]=all_condition_perc_correct
+        d = np.abs(all_condition_betas_vec - np.median(all_condition_betas_vec))
+        mdev = np.median(d)
+        s = d/mdev if mdev else 0
+        filtered_betas=all_condition_betas_vec[s<2]
+        filtered_perc_correct=all_condition_perc_correct_vec[s<2]/100.0
         clf = LinearRegression()
-        clf.fit(all_condition_betas_vec, all_condition_perc_correct_vec)
+        clf.fit(filtered_betas, filtered_perc_correct)
         self.beta_perc_correct_a = clf.coef_[0][0]
         self.beta_perc_correct_b = clf.intercept_[0]
-        self.beta_perc_correct_r_sqr=clf.score(all_condition_betas_vec, all_condition_perc_correct_vec)
+        self.beta_perc_correct_r_sqr=clf.score(filtered_betas, filtered_perc_correct)
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        ax.plot(all_condition_betas_vec, all_condition_perc_correct,'o')
-        min_x=np.min(all_condition_betas_vec)-.1
-        max_x=np.max(all_condition_betas_vec)+.1
+        ax.plot(filtered_betas, filtered_perc_correct,'o')
+        min_x=np.min(filtered_betas)-.1
+        max_x=np.max(filtered_perc_correct)+.1
         ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
                                  self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
             label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
