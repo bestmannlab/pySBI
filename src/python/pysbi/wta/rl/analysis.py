@@ -936,7 +936,7 @@ class RLReport:
             filtered_betas=self.stim_condition_reports[stim_condition].condition_betas[s<2]
             filtered_perc_correct=self.stim_condition_reports[stim_condition].condition_perc_correct[s<2]/100.0
             baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o')
-            min_x=np.min(filtered_betas)+1.0
+            min_x=np.min(filtered_betas)-1.0
             max_x=np.max(filtered_betas)+1.0
             ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
                                      self.stim_condition_reports[stim_condition].beta_perc_correct_b,
@@ -974,8 +974,8 @@ class RLReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         ax.plot(filtered_betas, filtered_perc_correct,'o')
-        min_x=np.min(filtered_betas)-.1
-        max_x=np.max(filtered_perc_correct)+.1
+        min_x=np.min(filtered_betas)-1
+        max_x=np.max(filtered_betas)+1
         ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
                                  self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
             label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
