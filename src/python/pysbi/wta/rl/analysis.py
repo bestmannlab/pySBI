@@ -616,9 +616,11 @@ class StimConditionReport:
         d = np.abs(self.condition_betas - np.median(self.condition_betas))
         mdev = np.median(d)
         s = d/mdev if mdev else 0
-        filtered_betas=self.condition_betas[s<2,:]
-        filtered_perc_correct=self.condition_perc_correct[s<2,:]/100.0
-        clf.fit(filtered_betas, filtered_perc_correct/100.0)
+        filtered_betas=self.condition_betas[s<2]
+        filtered_betas=np.reshape(filtered_betas,(len(filtered_betas),1))
+        filtered_perc_correct=self.condition_perc_correct[s<2]/100.0
+        filtered_perc_correct=np.reshape(filtered_perc_correct,(len(filtered_perc_correct),1))
+        clf.fit(filtered_betas, filtered_perc_correct)
         self.beta_perc_correct_a = clf.coef_[0][0]
         self.beta_perc_correct_b = clf.intercept_[0]
         self.beta_perc_correct_r_sqr=clf.score(filtered_betas, filtered_perc_correct)
@@ -960,8 +962,10 @@ class RLReport:
         d = np.abs(all_condition_betas_vec - np.median(all_condition_betas_vec))
         mdev = np.median(d)
         s = d/mdev if mdev else 0
-        filtered_betas=all_condition_betas_vec[s<2,:]
-        filtered_perc_correct=all_condition_perc_correct_vec[s<2,:]/100.0
+        filtered_betas=all_condition_betas_vec[s<2]
+        filtered_betas=np.reshape(filtered_betas,(len(filtered_betas),1))
+        filtered_perc_correct=all_condition_perc_correct_vec[s<2]/100.0
+        filtered_perc_correct=np.reshape(filtered_perc_correct,(len(filtered_perc_correct),1))
         clf = LinearRegression()
         clf.fit(filtered_betas, filtered_perc_correct)
         self.beta_perc_correct_a = clf.coef_[0][0]
