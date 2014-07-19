@@ -5,6 +5,7 @@ import scipy.io
 from brian import pA, second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
+from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import stim_order, LAT, NOSTIM1
 
 def get_rerw_commands(mat_file, p_dcs, i_dcs, dcs_start_time, alpha, beta, background_freq, e_desc=''):
@@ -135,6 +136,25 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
             e_desc='virtual_subject.%d.anode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 4*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_1' % j)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
+
+
+def launch_extra_virtual_subject_processes(nodes, virtual_subj_data_dir, num_virtual_subjects, start_nodes=True):
+    # Setup launcher
+    launcher=Launcher(nodes)
+
+    for i in range(num_virtual_subjects):
+        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.virtual_subject.%d.anode.h5' % i))
+        alpha=virtual_subj_data.alpha
+        beta=virtual_subj_data.beta
+        stim_file_name=virtual_subj_data.mat_file
+
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, 0*pA, 0*second, alpha, beta, None,
             e_desc='virtual_subject.%d.anode_control_2' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
@@ -149,10 +169,6 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, 2*pA, 0*second, alpha, beta, None,
             e_desc='virtual_subject.%d.anode_control_5' % i)
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 4*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.cathode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 0*pA, 0*second, alpha, beta, None,
@@ -175,31 +191,6 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
 
-
-def find_matching_subject_stim_file(data_dir, control_prob_walk, num_real_subjects):
-    for j in range(num_real_subjects):
-        subj_id=j+1
-        subj_stim_session_number=stim_order[j,LAT]
-        stim_file_name='value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number)
-        subj_control_session_number=stim_order[j,NOSTIM1]
-        control_file_name='value%d_s%d_t2.mat' % (subj_id,subj_control_session_number)
-        if os.path.exists(os.path.join(data_dir,stim_file_name)) and os.path.exists(os.path.join(data_dir,control_file_name)):
-            mat = scipy.io.loadmat(os.path.join(data_dir,control_file_name))
-            prob_idx=-1
-            for idx,(dtype,o) in enumerate(mat['store']['dat'][0][0].dtype.descr):
-                if dtype=='probswalk':
-                    prob_idx=idx
-            prob_walk=mat['store']['dat'][0][0][0][0][prob_idx]
-            prob_walk=prob_walk.astype(np.float32, copy=False)
-            match=True
-            for k in range(prob_walk.shape[0]):
-                for l in range(prob_walk.shape[1]):
-                    if not prob_walk[k,l]==control_prob_walk[k,l]:
-                        match=False
-                        break
-            if match:
-                return stim_file_name
-    return None
 
 if __name__=='__main__':
     launch_virtual_subject_processes({}, '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects', 24, 25,
