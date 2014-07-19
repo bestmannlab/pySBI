@@ -2,10 +2,9 @@ import h5py
 import numpy as np
 import os
 import scipy.io
-from brian import pA, second, Hz
+from brian import pA, second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
-from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import stim_order, LAT, NOSTIM1
 
 def get_rerw_commands(mat_file, p_dcs, i_dcs, dcs_start_time, alpha, beta, background_freq, e_desc=''):
@@ -41,42 +40,43 @@ def launch_background_freq_processes(nodes, background_freq_range, trials, start
     mat_file='/tmp/pySBI/data/rerw/subjects/value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
 
     for background_freq in background_freq_range:
         for trial in range(trials):
             cmds, log_file_template, out_file=get_rerw_commands(mat_file, 0*pA, 0*pA, 0*second, 0.4, 5.0,
-                background_freq, e_desc='trial.%d' % trial)
+                background_freq, e_desc='background_freq.%.3f.trial.%d' % (background_freq,trial))
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-def launch_missing_background_freq_processes(nodes, data_dir, background_freq_range, p_b_e, p_x_e, trials, start_nodes=True):
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
+
+
+def launch_missing_background_freq_processes(nodes, data_dir, background_freq_range, trials, start_nodes=True):
     mat_file='value1_s1_t2.mat'
 
     launcher=Launcher(nodes)
     for background_freq in background_freq_range:
         for trial in range(trials):
-            cmds, log_file_template, out_file=get_rerw_commands(mat_file, p_b_e, p_x_e, 0*pA, 0*pA, 0*second, 0.4, 5.0,
-                background_freq, e_desc='trial.%d' % trial)
+            cmds, log_file_template, out_file=get_rerw_commands(mat_file, 0*pA, 0*pA, 0*second, 0.4, 5.0,
+                background_freq, e_desc='background_freq.%.3f.trial.%d' % (background_freq,trial))
             out_path,out_filename=os.path.split(out_file)
             if not os.path.exists(os.path.join(data_dir,out_filename)):
                 launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
 
 
 def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file,
-                                     p_b_e, p_x_e, start_nodes=True):
+                                     start_nodes=True):
     """
     nodes = nodes to run simulation on
     data_dir = directory containing subject data
     num_real_subjects = number of real subjects
     num_virtual_subjects = number of virtual subjects to run
     behavioral_param_file = file containing subject fitted behavioral parameters
-    p_b_e
-    p_x_e
     start_nodes = whether or not to start nodes
     """
 
@@ -119,115 +119,62 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
         beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
         beta=beta_bin+np.random.rand()*bin_width
 
-        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, p_b_e, p_x_e, 0*pA, 0*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.control' % j)
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, 0*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.control' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 4*pA, -2*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode' % j)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, -2*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -4*pA, 2*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode' % j)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, 2*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 2*pA, -4*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_1' % j)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, -4*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -2*pA, 4*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_1' % j)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode_control_2' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
-
-
-def launch_extra_virtual_subject_processes(nodes, subj_data_dir, virtual_subj_data_dir, num_virtual_subjects, p_b_e,
-                                           p_x_e, start_nodes=True):
-    # Setup launcher
-    launcher=Launcher(nodes)
-
-    for i in range(num_virtual_subjects):
-        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.virtual_subject.%d.control.h5' % i))
-        alpha=virtual_subj_data.alpha
-        #beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
-        beta=(virtual_subj_data.background_freq/Hz*-17.29)+148.14
-        stim_file_name=find_matching_subject_stim_file(subj_data_dir, virtual_subj_data.prob_walk, 24)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 2*pA, 0*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_2' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, 4*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode_control_3' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 2*pA, 4*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_3' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode_control_4' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 4*pA, 0*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_4' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, 2*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.anode_control_5' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, 4*pA, 2*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.anode_control_5' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 4*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_1' % j)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -2*pA, 0*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_2' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_2' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -2*pA, -4*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_3' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, -4*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_3' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -4*pA, 0*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_4' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_4' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, p_b_e, p_x_e, -4*pA, -2*pA, 0*second,
-            alpha, beta, None, e_desc='virtual_subject.%d.cathode_control_5' % i)
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, -2*pA, 0*second, alpha, beta, None,
+            e_desc='virtual_subject.%d.cathode_control_5' % i)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
 
-#def simulate_existing_subjects(final_data_dir, local_data_dir, num_virtual_subjects):
-#    for i in range(num_virtual_subjects):
-#        virtual_subj_data=FileInfo(os.path.join(final_data_dir,'virtual_subject_%d.control.h5' % i))
-#        alpha=virtual_subj_data.alpha
-#        #beta=(virtual_subj_data.background_freq/Hz*-12.5)+87.46
-#        beta=(virtual_subj_data.background_freq/Hz*-17.29)+148.14
-#        stim_file_name=find_matching_subject_stim_file(os.path.join(local_data_dir,'subjects'), virtual_subj_data.prob_walk, 24)
-#        file_base='virtual_subject_'+str(i)+'.%s'
-#        out_file=os.path.join(local_data_dir,'%s.h5' % file_base)
-#        log_filename='%s.txt' % file_base
-#        log_file=open(log_filename,'wb')
-#        args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','','--stim_mat_file',
-#              stim_file_name,'--p_b_e',str(virtual_subj_data.wta_params.p_b_e),'--p_x_e',
-#              str(virtual_subj_data.wta_params.p_x_e),'--alpha',str(alpha),'--beta',str(beta),'--output_file',out_file]
-#        subprocess.Popen(args,stdout=log_file)
-#
-#def resume_subject_simulation(data_dir, num_virtual_subjects):
-#    for i in range(num_virtual_subjects):
-#        subj_filename=os.path.join(data_dir,'virtual_subject_%d.control.h5' % i)
-#        print(subj_filename)
-#        if os.path.exists(subj_filename):
-#            data=FileInfo(subj_filename)
-#            #beta=(data.background_freq/Hz*-12.5)+87.46
-#            beta=(data.background_freq/Hz*-17.29)+148.14
-#            stim_file_name=find_matching_subject_stim_file(os.path.join(data_dir,'subjects'), data.prob_walk, 24)
-#            if stim_file_name is not None:
-#                file_base='virtual_subject_'+str(i)+'.%s'
-#                out_file='../../data/rerw/%s.h5' % file_base
-#                log_filename='%s.txt' % file_base
-#                log_file=open(log_filename,'wb')
-#                args=['nohup','python','pysbi/wta/rl/network.py','--control_mat_file','nothing','--stim_mat_file',
-#                      stim_file_name,'--p_b_e',str(data.wta_params.p_b_e),'--p_x_e',str(data.wta_params.p_x_e),
-#                      '--alpha',str(data.alpha),'--beta',str(beta), '--output_file',out_file]
-#                subprocess.Popen(args,stdout=log_file)
-#            else:
-#                print('stim file for subjec %d not found' % i)
 
 def find_matching_subject_stim_file(data_dir, control_prob_walk, num_real_subjects):
     for j in range(num_real_subjects):
