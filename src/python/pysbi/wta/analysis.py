@@ -37,7 +37,7 @@ def parse_output_file_name(output_file):
     return num_groups,input_pattern,duration,p_b_e,p_x_e,p_e_e,p_e_i,p_i_i,p_i_e,p_dcs,i_dcs
 
 class FileInfo():
-    def __init__(self, file_name):
+    def __init__(self, file_name, upper_resp_threshold=30, lower_resp_threshold=None, dt=.1*ms):
         self.file_name=file_name
         f = h5py.File(file_name)
 
@@ -190,7 +190,8 @@ class FileInfo():
             f_rates=f['firing_rates']
             self.e_firing_rates=np.array(f_rates['e_rates'])
             self.i_firing_rates=np.array(f_rates['i_rates'])
-            self.rt,self.choice=get_response_time(self.e_firing_rates, self.stim_start_time, self.stim_end_time)
+            self.rt,self.choice=get_response_time(self.e_firing_rates, self.stim_start_time, self.stim_end_time,
+                upper_threshold=upper_resp_threshold, lower_threshold=lower_resp_threshold, dt=dt)
 
         self.background_rate=None
         if 'background_rate' in f:
@@ -2152,6 +2153,49 @@ def test_fano(file_name, time_window):
     plt.plot(i_fano)
     plt.show()
 
+def analyze_input_test(data_dir, trials):
+    input_diffs=np.zeros(trials)
+    choice_made=np.zeros(trials)
+    correct_choice=np.zeros(trials)
+    for trial in range(trials):
+        filename=os.path.join(data_dir,'trial.%d.h5' % trial)
+        data=FileInfo(filename, dt=.5*ms)
+        input_diffs[trial]=np.abs(data.input_freq[0]-data.input_freq[1])
+        if data.choice>-1:
+            choice_made[trial]=1.0
+            if data.input_freq[data.choice]>data.input_freq[1-data.choice]:
+                correct_choice[trial]=1.0
+    fig=plt.figure()
+    hist,bins=np.histogram(input_diffs, bins=10)
+    bin_width=bins[1]-bins[0]
+    plt.bar(bins[:-1], hist/float(input_diffs.shape[0]), width=bin_width)
+    plt.xlabel('Input Diffs')
+    plt.ylabel('% of Trials')
+
+    bin_perc_choice_made=np.zeros(10)
+    bin_perc_correct=np.zeros(10)
+    for i in range(trials):
+        bin_idx=-1
+        for j in range(10):
+            if bins[j] <= input_diffs[i] < bins[j+1]:
+                bin_idx=j
+                break
+        bin_perc_choice_made[bin_idx]+=choice_made[i]
+        bin_perc_correct[bin_idx]+=correct_choice[i]
+    bin_perc_choice_made=bin_perc_choice_made/hist
+    bin_perc_correct=bin_perc_correct/hist
+
+    fig=plt.figure()
+    plt.bar(bins[:-1], bin_perc_choice_made, width=bin_width)
+    plt.xlabel('Input Diffs')
+    plt.ylabel('% Choice Made')
+
+    fig=plt.figure()
+    plt.bar(bins[:-1], bin_perc_correct, width=bin_width)
+    plt.xlabel('Input Diffs')
+    plt.ylabel('% Correct')
+    plt.show()
+
 
 if __name__=='__main__':
     #p_range=np.array(range(1,11))*.01
@@ -2166,4 +2210,5 @@ if __name__=='__main__':
 #        '/home/jbonaiuto/Projects/pySBI/data/reports/dcs/comparison_4s','')
     #test_fano('../../data/dcs/wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080.p_dcs.0.0000.i_dcs.0.0000.control.contrast.0.0000.trial.0.h5', 50*ms)
     #test_fano2('../../data/dcs/test_dcs_fano.h5', 200*ms)
-    test_fano3('../../data/dcs/test_dcs_fano.h5', 500*ms)
+    #test_fano3('../../data/dcs/test_dcs_fano.h5', 500*ms)
+    analyze_input_test('../../data/rerw/input_test',20)
