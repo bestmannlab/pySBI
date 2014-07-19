@@ -231,10 +231,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
        dcs_start_time = time to start the stimulation
     """
 
-    last_rates=[None,None]
-
     start_time = time()
     simulation_clock=Clock(dt=.5*ms)
+    input_update_clock=Clock(dt=50*ms)
 
     # Init simulation parameters
     stim_start_time=1*second
@@ -254,19 +253,14 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
         task_inputs=task_inputs, clock=simulation_clock)
 
-    @network_operation(when='start', clock=simulation_clock)
+    @network_operation(when='start', clock=input_update_clock)
     def set_task_inputs():
         for idx in range(len(task_inputs)):
             rate=1*Hz
             if stim_start_time<=simulation_clock.t<stim_end_time:
-                time_idx=int((simulation_clock.t-stim_start_time)/simulation_clock.dt)
-                if last_rates[idx] is None or time_idx%(int(50*ms/simulation_clock.dt))==0:
-                    rate=input_freq[idx]*Hz+np.random.randn()*4*Hz
-                    if rate<1*Hz:
-                        rate=1*Hz
-                    last_rates[idx]=rate
-                else:
-                    rate=last_rates[idx]
+                rate=input_freq[idx]*Hz+np.random.randn()*4*Hz
+                if rate<1*Hz:
+                    rate=1*Hz
             task_inputs[idx]._S[0, :]=rate
 
     @network_operation(clock=simulation_clock)
