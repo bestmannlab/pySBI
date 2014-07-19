@@ -97,10 +97,10 @@ def rt_function(x, a, k, tr):
     return a/(k*x)*np.tanh(a*k*x)+tr
 
 
-def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None):
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None, dt=.1*ms):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]
-    times=np.array(range(len(rate_1)))*.0001
+    times=np.array(range(len(rate_1)))*(dt/second)
     rt=None
     decision_idx=-1
     for idx,time in enumerate(times):
