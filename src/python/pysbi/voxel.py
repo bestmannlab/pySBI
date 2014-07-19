@@ -213,11 +213,11 @@ class ZhengVoxel(NeuronGroup):
             self.G_total_exc = linked_var(network, 'g_syn_exc', func=sum)
 
 class LFPSource(NeuronGroup):
-    def __init__(self, pyramidal_group):
+    def __init__(self, pyramidal_group, clock=defaultclock):
         eqs=Equations('''
          LFP : amp
         ''')
-        NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True)
+        NeuronGroup.__init__(self, 1, model=eqs, compile=True, freeze=True, clock=clock)
         self.LFP=linked_var(pyramidal_group, 'I_abs', func=sum)
 
 class Voxel(NeuronGroup):
