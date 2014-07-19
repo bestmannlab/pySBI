@@ -502,7 +502,6 @@ class StimConditionReport:
         self.condition_betas=np.array(self.condition_betas)
 
         hist,bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
-        bin_width=bins[1]-bins[0]
 
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
@@ -968,7 +967,7 @@ class RLReport:
         s = d/mdev if mdev else 0
         filtered_betas=all_condition_betas_vec[s<2]
         filtered_betas=np.reshape(filtered_betas,(len(filtered_betas),1))
-        filtered_perc_correct=all_condition_perc_correct_vec[s<2]/100.0
+        filtered_perc_correct=all_condition_perc_correct_vec[s<2]
         filtered_perc_correct=np.reshape(filtered_perc_correct,(len(filtered_perc_correct),1))
         clf = LinearRegression()
         clf.fit(filtered_betas, filtered_perc_correct)
