@@ -9,7 +9,7 @@ from pysbi.wta.network import default_params, run_wta, pyr_params, inh_params
 from pysbi.wta.rl.fit import fit_behavior
 
 
-def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
+def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
                       output_file=None):
     mat = scipy.io.loadmat(mat_file)
     prob_idx=-1
@@ -29,6 +29,8 @@ def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dc
     num_groups=2
     exp_rew=np.array([0.5, 0.5])
     trial_duration=4*second
+    #background_freq=(beta-87.46)/-12.5
+    background_freq=(beta-148.14)/-17.29
 
     trials=prob_walk.shape[1]
 
@@ -42,6 +44,7 @@ def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dc
         f = h5py.File(output_file, 'w')
         f.attrs['trials']=trials
         f.attrs['alpha']=alpha
+        f.attrs['beta']=beta
         f.attrs['mat_file']=mat_file
         f.attrs['resp_threshold']=resp_thresh
         f.attrs['num_groups'] = num_groups
@@ -139,16 +142,6 @@ def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dc
         f['rts']=rts
         f.close()
 
-def simulate_subject(stim_mat_file, alpha, beta, output_file, background=None, p_dcs=0*pA, i_dcs=0*pA,
-                     dcs_start_time=0*ms):
-    if background is None:
-        #background_freq=(beta-87.46)/-12.5
-        background_freq=(beta-148.14)/-17.29
-    else:
-        background_freq=background
-    run_rl_simulation(stim_mat_file, alpha=alpha, background_freq=background_freq, p_dcs=p_dcs, i_dcs=i_dcs,
-        dcs_start_time=dcs_start_time, output_file=output_file)
-
 
 if __name__=='__main__':
     ap = argparse.ArgumentParser(description='Simulate a subject')
@@ -158,11 +151,9 @@ if __name__=='__main__':
     ap.add_argument('--dcs_start_time', type=float, default=0.0, help='Time to start dcs')
     ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
     ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
-    ap.add_argument('--background', type=float, default=None, help='Background firing rate (Hz)')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
 
     argvals = ap.parse_args()
 
-    simulate_subject(argvals.stim_mat_file, argvals.alpha, argvals.beta, argvals.output_file,
-        background=argvals.background, p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA,
-        dcs_start_time=argvals.dcs_start_time*second)
+    run_rl_simulation(argvals.stim_mat_file, alpha=argvals.alpha, beta=argvals.beta, p_dcs=argvals.p_dcs*pA,
+        i_dcs=argvals.i_dcs*pA, dcs_start_time=argvals.dcs_start_time*second, output_file=argvals.output_file)
