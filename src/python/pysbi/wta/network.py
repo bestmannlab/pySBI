@@ -1,16 +1,17 @@
 from numpy.matlib import randn, rand
 from time import time
 import brian
-from brian.clock import reinit_default_clock, defaultclock
+from brian.clock import defaultclock, Clock
 from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
+from brian.connections import DelayConnection
 from brian.experimental.model_documentation import document_network, labels_from_namespace, LaTeXDocumentWriter
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current, InjectedCurrent
 from brian.network import Network, network_operation
 from brian.neurongroup import NeuronGroup
-from brian.stdunits import pF, nS, mV, ms, Hz, pA
+from brian.stdunits import pF, nS, mV, ms, Hz, pA, nF
 from brian.tools.parameters import Parameters
 from brian.units import siemens, second
 import argparse
@@ -18,10 +19,28 @@ import numpy as np
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 from pysbi.wta.monitor import WTAMonitor, write_output
-
 brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
                              gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
                              usecodegenreset = True)
+
+pyr_params=Parameters(
+    C=0.5*nF,
+    gL=25*nS,
+    refractory=2*ms,
+    w_nmda = 0.165 * nS,
+    w_ampa_ext = 2.1*nS,
+    w_ampa_rec = 0.05*nS,
+    w_gaba = 1.3*nS,
+)
+inh_params=Parameters(
+    C=0.2*nF,
+    gL=20*nS,
+    refractory=1*ms,
+    w_nmda = 0.13 * nS,
+    w_ampa_ext = 1.62*nS,
+    w_ampa_rec = 0.04*nS,
+    w_gaba = 1.0*nS,
+)
 
 # Default parameters for a WTA network with multiple inhibitory populations
 default_params=Parameters(
@@ -42,27 +61,11 @@ default_params=Parameters(
     tau1_nmda = 2*ms,
     tau2_nmda = 100*ms,
     tau_gaba_a = 5*ms,
-    #tau1_gaba_b = 10*ms,
-    #tau2_gaba_b =100*ms,
-    pyr_w_ampa_ext=2.1*nS,
-    pyr_w_ampa_bak=2.1*nS,
-    pyr_w_ampa_rec=0.05*nS,
-    int_w_ampa_ext=1.62*nS,
-    int_w_ampa_bak=1.62*nS,
-    int_w_ampa_rec=0.04*nS,
-    pyr_w_nmda=0.165*nS,
-    int_w_nmda=0.13*nS,
-    pyr_w_gaba_a=1.3*nS,
-    int_w_gaba_a=1.0*nS,
-    #w_gaba_b_min=0.1*nS,
-    #w_gaba_b_max=0.6*nS,
     # Connection probabilities
-    p_b_e=0.03,
-    p_x_e=0.01,
-    p_e_e=0.03,
-    p_e_i=0.08,
-    p_i_i=0.2,
-    p_i_e=0.08,
+    p_e_e=0.08,
+    p_e_i=0.1,
+    p_i_i=0.1,
+    p_i_e=0.2,
 )
 
 # WTA network class - extends Brian's NeuronGroup
@@ -74,12 +77,13 @@ class WTANetworkGroup(NeuronGroup):
     #       params = network parameters
     #       background_input = background input source
     #       task_inputs = task input sources
-    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None):
+    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None, clock=defaultclock):
         self.N=N
         self.num_groups=num_groups
         self.params=params
         self.background_input=background_input
         self.task_inputs=task_inputs
+        self.f=.15
 
         ## Set up equations
 
@@ -108,22 +112,16 @@ class WTANetworkGroup(NeuronGroup):
         eqs += exp_synapse('g_gaba_a', params.tau_gaba_a, siemens)
         eqs += Current('I_gaba_a=(g_gaba_a+g_muscimol)*(E-vm): amp', E=params.E_gaba_a)
 
-        # GABA-B conductance
-        #eqs += biexp_synapse('g_gaba_b', params.tau1_gaba_b, params.tau2_gaba_b, siemens)
-        #eqs += Current('I_gaba_b=g_gaba_b*(E-vm): amp', E=params.E_gaba_b)
-
         eqs +=InjectedCurrent('I_dcs: amp')
 
         # Total synaptic conductance
-        #eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a+g_gaba_b : siemens')
         eqs += Equations('g_syn=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda+g_gaba_a : siemens')
         eqs += Equations('g_syn_exc=g_ampa_r+g_ampa_x+g_ampa_b+g_V*g_nmda : siemens')
         # Total synaptic current
-        #eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5+(I_gaba_b**2)**.5 : amp')
         eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5 : amp')
 
-        NeuronGroup.__init__(self, N*num_groups, model=eqs, threshold=-20*mV, refractory=1*ms, reset=params.Vr,
-            compile=True, freeze=True)
+        NeuronGroup.__init__(self, N, model=eqs, threshold=-20*mV, refractory=1*ms, reset=params.Vr,
+            compile=True, freeze=True, clock=clock)
 
         self.init_subpopulations()
 
@@ -132,48 +130,34 @@ class WTANetworkGroup(NeuronGroup):
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
         # Main excitatory subpopulation
-        e_size=int(self.N*.8)
-        self.group_e=self.subgroup(e_size)
-        # regular spiking params (from Naud et al., 2008)
-        self.group_e.C=104*pF
-        self.group_e.gL=4.3*nS
-        self.group_e.EL=-65*mV
-        self.group_e.VT=-52*mV
-        self.group_e.DeltaT=0.8*mV
-        #self.group_e.reset=-53*mV
-        #self.group_e._refractory_time=2*ms
+        self.e_size=int(self.N*.8)
+        self.group_e=self.subgroup(self.e_size)
+        self.group_e.C=pyr_params.C
+        self.group_e.gL=pyr_params.gL
+        self.group_e._refractory_time=pyr_params.refractory
 
         # Main inhibitory subpopulation
-        i_size=int(self.N*.2)
-        self.group_i=self.subgroup(i_size)
-        # continuous non-adapting interneuron params (from Naud et al., 2008)
-        self.group_i.C=59*pF
-        self.group_i.gL=2.9*nS
-        self.group_i.EL=-62*mV
-        self.group_i.VT=-42*mV
-        self.group_i.DeltaT=3.0*mV
-        #self.group_i.reset=-54*mV
-        #self.group_i._refractory_time=1*ms
+        self.i_size=int(self.N*.2)
+        self.group_i=self.subgroup(self.i_size)
+        self.group_i.C=inh_params.C
+        self.group_i.gL=inh_params.gL
+        self.group_i._refractory_time=inh_params.refractory
 
         # Input-specific sub-subpopulations
         self.groups_e=[]
         for i in range(self.num_groups):
-            subgroup_e=self.group_e.subgroup(int(e_size/self.num_groups))
+            subgroup_e=self.group_e.subgroup(int(self.f*self.e_size))
             self.groups_e.append(subgroup_e)
 
         # Initialize state variables
-        self.vm = self.params.EL+randn(self.N*self.num_groups)*10*mV
-        self.group_e.g_ampa_r = rand(e_size)*self.params.pyr_w_ampa_rec*.01
-        self.group_e.g_ampa_b = rand(e_size)*self.params.pyr_w_ampa_ext*.01
-        self.group_e.g_ampa_x = rand(e_size)*self.params.pyr_w_ampa_ext*.01
-        self.group_e.g_nmda = rand(e_size)*self.params.pyr_w_nmda*.01
-        self.group_e.g_gaba_a = rand(e_size)*self.params.pyr_w_gaba_a*.01
-        self.group_i.g_ampa_r = rand(i_size)*self.params.int_w_ampa_rec*.01
-        self.group_i.g_ampa_b = rand(i_size)*self.params.int_w_ampa_ext*.01
-        self.group_i.g_ampa_x = rand(i_size)*self.params.int_w_ampa_ext*.01
-        self.group_i.g_nmda = rand(i_size)*self.params.int_w_nmda*.01
-        self.group_i.g_gaba_a = rand(i_size)*self.params.int_w_gaba_a*.01
-#        self.g_gaba_b = self.params.w_gaba_a_min+randn(self.N*self.num_groups)*(self.params.w_gaba_a_max-self.params.w_gaba_a_min)*.1
+        self.vm = self.params.EL+randn(self.N)*mV
+        self.group_e.g_ampa_b = rand(self.e_size)*pyr_params.w_ampa_ext*2.0
+        self.group_e.g_nmda = rand(self.e_size)*pyr_params.w_nmda*2.0
+        self.group_e.g_gaba_a = rand(self.e_size)*pyr_params.w_gaba*2.0
+        self.group_i.g_ampa_r = rand(self.i_size)*inh_params.w_ampa_rec
+        self.group_i.g_ampa_b = rand(self.i_size)*inh_params.w_ampa_ext*2.0
+        self.group_i.g_nmda = inh_params.w_nmda*100.0+10.0*nS*randn(self.i_size)
+        self.group_i.g_gaba_a = rand(self.i_size)*inh_params.w_gaba*2.0
 
 
     ## Initialize network connectivity
@@ -185,41 +169,40 @@ class WTANetworkGroup(NeuronGroup):
 
             # E population - recurrent connections
             self.connections['e%d->e%d_ampa' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
-                'g_ampa_r', self.params.pyr_w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False)
+                'g_ampa_r', pyr_params.w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False)
             self.connections['e%d->e%d_nmda' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
-                'g_nmda', self.params.pyr_w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False)
+                'g_nmda', pyr_params.w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False)
 
-            # E -> I excitatory connections
-            self.connections['e%d->i_ampa' % i]=init_connection(self.groups_e[i], self.group_i, 'g_ampa_r',
-                self.params.int_w_ampa_rec, self.params.p_e_i, .5*ms)
-            self.connections['e%d->i_nmda' % i]=init_connection(self.groups_e[i], self.group_i, 'g_nmda',
-                self.params.int_w_nmda, self.params.p_e_i, .5*ms)
+        # E -> I excitatory connections
+        self.connections['e->i_ampa']=init_connection(self.group_e, self.group_i, 'g_ampa_r', inh_params.w_ampa_rec,
+            self.params.p_e_i, .5*ms)
+        self.connections['e->i_nmda']=init_connection(self.group_e, self.group_i, 'g_nmda', inh_params.w_nmda,
+            self.params.p_e_i, .5*ms)
 
-            # I -> E - inhibitory connections
-            self.connections['i->e%d_gabaa' % i]=init_connection(self.group_i, self.groups_e[i], 'g_gaba_a',
-                self.params.pyr_w_gaba_a, self.params.p_i_e, .5*ms)
-            #self.connections.append(init_rand_weight_connection(self.group_i, self.groups_e[i], 'g_gaba_b',
-            #    self.params.w_gaba_b_min, self.params.w_gaba_b_max, self.params.p_i_e, (0*ms, 5*ms)))
+        # I -> E - inhibitory connections
+        self.connections['i->e_gabaa']=init_connection(self.group_i, self.group_e, 'g_gaba_a', pyr_params.w_gaba,
+            self.params.p_i_e, .5*ms)
 
         # I population - recurrent connections
-        self.connections['i->i_gabaa']=init_connection(self.group_i, self.group_i, 'g_gaba_a', self.params.int_w_gaba_a,
+        self.connections['i->i_gabaa']=init_connection(self.group_i, self.group_i, 'g_gaba_a', inh_params.w_gaba,
             self.params.p_i_i, .5*ms, allow_self_conn=False)
-        #self.connections.append(init_rand_weight_connection(self.group_i, self.group_i, 'g_gaba_b', self.params.w_gaba_b_min,
-        #    self.params.w_gaba_b_max, self.params.p_i_i, (0*ms, 5*ms), allow_self_conn=False))
 
         if self.background_input is not None:
             # Background -> E+I population connections
-            self.connections['b->e_ampa']=init_connection(self.background_input, self.group_e, 'g_ampa_b',
-                self.params.pyr_w_ampa_bak, self.params.p_b_e, .5*ms)
-            self.connections['b->i_ampa']=init_connection(self.background_input, self.group_i, 'g_ampa_b',
-                self.params.int_w_ampa_bak, self.params.p_b_e, .5*ms)
+            self.connections['b->ampa']=DelayConnection(self.background_input, self, 'g_ampa_b', delay=.5*ms)
+            self.connections['b->ampa'][:,:]=0
+            for i in xrange(len(self.background_input)):
+                if i<int(self.N*.8):
+                    self.connections['b->ampa'][i,i]=pyr_params.w_ampa_ext
+                else:
+                    self.connections['b->ampa'][i,i]=inh_params.w_ampa_ext
 
         if self.task_inputs is not None:
             # Task input -> E population connections
             for i in range(self.num_groups):
-                self.connections['t%d->e%d_ampa' % (i,i)]=init_connection(self.task_inputs[i], self.groups_e[i],
-                    'g_ampa_x', self.params.pyr_w_ampa_ext, self.params.p_x_e, .5*ms)
-
+                self.connections['t%d->e%d_ampa' % (i,i)]=DelayConnection(self.task_inputs[i], self.groups_e[i],
+                    'g_ampa_x')
+                self.connections['t%d->e%d_ampa' % (i,i)].connect_one_to_one(weight=pyr_params.w_ampa_ext, delay=.5*ms)
 
 
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, output_file=None,
@@ -248,7 +231,10 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
        dcs_start_time = time to start the stimulation
     """
 
+    last_rates=[None,None]
+
     start_time = time()
+    simulation_clock=Clock(dt=.5*ms)
 
     # Init simulation parameters
     stim_start_time=1*second
@@ -256,50 +242,58 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 
     # Total size of the network (excitatory and inhibitory cells)
     network_group_size=2000
-    background_input_size=5000
-    task_input_size=1000
+    background_input_size=2000
+    task_input_size=int(network_group_size*.8*.15)
 
-    # Create network inputs
-    def make_task_rate_function(rate):
-        return lambda t: ((stim_start_time<t<stim_end_time and rate) or 1*Hz)
-    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz)
+    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz, clock=simulation_clock)
     task_inputs=[]
     for i in range(num_groups):
-        rate=input_freq[i]*Hz
-        task_inputs.append(PoissonGroup(task_input_size, rates=make_task_rate_function(rate)))
+        task_inputs.append(PoissonGroup(task_input_size, rates=1*Hz, clock=simulation_clock))
 
     # Create WTA network
     wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
-        task_inputs=task_inputs)
+        task_inputs=task_inputs, clock=simulation_clock)
 
-    #wta_network.group_e.EL+=p_dcs
-    #wta_network.group_i.EL+=i_dcs
-    @network_operation
+    @network_operation(when='start', clock=simulation_clock)
+    def set_task_inputs():
+        for idx in range(len(task_inputs)):
+            rate=1*Hz
+            if stim_start_time<=simulation_clock.t<stim_end_time:
+                time_idx=int((simulation_clock.t-stim_start_time)/simulation_clock.dt)
+                if last_rates[idx] is None or time_idx%(int(50*ms/simulation_clock.dt))==0:
+                    rate=input_freq[idx]*Hz+np.random.randn()*4*Hz
+                    if rate<1*Hz:
+                        rate=1*Hz
+                    last_rates[idx]=rate
+                else:
+                    rate=last_rates[idx]
+            task_inputs[idx]._S[0, :]=rate
+
+    @network_operation(clock=simulation_clock)
     def inject_current(c):
-        if defaultclock.t>dcs_start_time:
+        if simulation_clock.t>dcs_start_time:
             wta_network.group_e.I_dcs=p_dcs
             wta_network.group_i.I_dcs=i_dcs
 
     # LFP source
-    lfp_source=LFPSource(wta_network.group_e)
+    lfp_source=LFPSource(wta_network.group_e, clock=simulation_clock)
 
     # Create voxel
-    voxel=Voxel(network=wta_network)
+    voxel=Voxel(simulation_clock, network=wta_network)
 
     # Create network monitor
     wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, record_lfp=record_lfp, record_voxel=record_voxel,
         record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate,
-        record_inputs=record_inputs, save_summary_only=save_summary_only)
+        record_inputs=record_inputs, save_summary_only=save_summary_only, clock=simulation_clock)
 
-    @network_operation(when='start')
+    @network_operation(when='start', clock=simulation_clock)
     def inject_muscimol():
         if muscimol_amount>0:
             wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
 
     # Create Brian network and reset clock
-    net=Network(background_input, task_inputs, wta_network, lfp_source, voxel, wta_network.connections.values(),
+    net=Network(background_input, task_inputs,set_task_inputs, wta_network, lfp_source, voxel, wta_network.connections.values(),
         wta_monitor.monitors.values(), inject_muscimol, inject_current)
-    reinit_default_clock()
     print "Initialization time: %.2fs" % (time() - start_time)
 
 #    writer=LaTeXDocumentWriter()
