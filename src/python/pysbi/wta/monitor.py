@@ -17,20 +17,22 @@ class WTAMonitor():
     #       record_firing_rate = record firing rate if true
     #       record_inputs = record inputs if true
     def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
-                 record_spikes=True, record_firing_rate=True, record_inputs=False, save_summary_only=False):
+                 record_spikes=True, record_firing_rate=True, record_inputs=False, save_summary_only=False,
+                 clock=defaultclock):
         self.num_groups=network.num_groups
         self.N=network.N
         self.monitors={}
         self.save_summary_only=save_summary_only
+        self.clock=clock
 
         # LFP monitor
         if record_lfp:
-            self.monitors['lfp'] = StateMonitor(lfp_source, 'LFP', record=0)
+            self.monitors['lfp'] = StateMonitor(lfp_source, 'LFP', record=0, clock=clock)
 
         # Voxel monitor
         if record_voxel:
             self.monitors['voxel'] = MultiStateMonitor(voxel, vars=['G_total','G_total_exc','y'],
-                record=True)
+                record=True, clock=clock)
 
         # Network monitor
         if record_neuron_state:
@@ -43,7 +45,7 @@ class WTAMonitor():
             self.monitors['network'] = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b',
                                                                         'g_gaba_a', 'g_nmda','I_ampa_r','I_ampa_x',
                                                                         'I_ampa_b','I_gaba_a','I_nmda'], 
-                record=self.record_idx)
+                record=self.record_idx, clock=clock)
 
         # Population rate monitors
         if record_firing_rate:
@@ -467,7 +469,7 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
 
     else:
         f_summary=f.create_group('summary')
-        endIdx=int(stim_end_time/defaultclock.dt)
+        endIdx=int(stim_end_time/self.clock.dt)
         startIdx=endIdx-500
         e_mean_final=[]
         e_max=[]
