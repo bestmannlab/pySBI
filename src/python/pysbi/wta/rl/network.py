@@ -42,7 +42,8 @@ def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dc
         f = h5py.File(output_file, 'w')
         f.attrs['trials']=trials
         f.attrs['alpha']=alpha
-
+        f.attrs['mat_file']=mat_file
+        f.attrs['resp_threshold']=resp_thresh
         f.attrs['num_groups'] = num_groups
         f.attrs['trial_duration'] = trial_duration
         f.attrs['background_freq'] = background_freq
@@ -99,14 +100,16 @@ def run_rl_simulation(mat_file, alpha=0.4, background_freq=5.0, p_dcs=0*pA, i_dc
             record_neuron_state=False, record_spikes=False, record_firing_rate=True, record_inputs=False,
             plot_output=False)
 
-        trial_group=f.create_group('trial %d' % trial)
         e_rates = []
         for i in range(num_groups):
             e_rates.append(trial_monitor.monitors['excitatory_rate_%d' % i].smooth_rate(width=5 * ms, filter='gaussian'))
-        trial_group['e_rates'] = np.array(e_rates)
-
         i_rates = [trial_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
-        trial_group['i_rates'] = np.array(i_rates)
+
+        if output_file is not None:
+            trial_group=f.create_group('trial %d' % trial)
+            trial_group['e_rates'] = np.array(e_rates)
+
+            trial_group['i_rates'] = np.array(i_rates)
 
         rt,decision_idx=get_response_time(e_rates, 1*second, trial_duration-1*second, upper_threshold=resp_thresh,
             lower_threshold=None, dt=.5*ms)
