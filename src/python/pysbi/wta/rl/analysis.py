@@ -538,16 +538,16 @@ class StimConditionReport:
 #        self.large_beta_large_ev_diff_chosen_rates=[]
 #        self.large_beta_large_ev_diff_unchosen_rates=[]
 #
-#        for virtual_subj_id in range(self.num_subjects):
-#            if virtual_subj_id not in self.excluded_sessions:
-#                print('subject %d' % virtual_subj_id)
-#                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
-#                session_report_dir=os.path.join(self.reports_dir,session_prefix)
-#                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-#                session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
-#                data=FileInfo(session_report_file)
-#                session_report.create_report(self.version, data)
-#                self.sessions.append(session_report)
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                print('subject %d' % virtual_subj_id)
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_dir=os.path.join(self.reports_dir,session_prefix)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
+                data=FileInfo(session_report_file)
+                session_report.create_report(self.version, data)
+                self.sessions.append(session_report)
 #                if bins[0] <= session_report.est_beta < bins[3]:
 #                    self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
 #                    self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
@@ -569,9 +569,9 @@ class StimConditionReport:
 #                    self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
 #                    self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
 #                    self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-#                self.condition_perc_correct.append([session_report.perc_correct_response])
+                self.condition_perc_correct.append([session_report.perc_correct_response])
 #
-#        self.condition_perc_correct=np.array(self.condition_perc_correct)
+        self.condition_perc_correct=np.array(self.condition_perc_correct)
 #        self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
 #        self.small_beta_small_ev_diff_unchosen_rates=np.array(self.small_beta_small_ev_diff_unchosen_rates)
 #        self.small_beta_med_ev_diff_chosen_rates=np.array(self.small_beta_med_ev_diff_chosen_rates)
