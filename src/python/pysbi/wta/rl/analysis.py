@@ -462,10 +462,11 @@ class StimConditionReport:
         self.sessions=[]
         self.excluded_sessions=[]
 
-    def create_report(self, excluded=None):
+    def create_report(self, version, excluded=None):
         make_report_dirs(self.reports_dir)
 
-        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.version=version
+        #self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
         self.condition_alphas=[]
@@ -795,7 +796,7 @@ class RLReport:
             stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
             self.stim_condition_reports[stim_condition] = StimConditionReport(self.data_dir, self.file_prefix,
                 stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
-            self.stim_condition_reports[stim_condition].create_report(excluded=excluded)
+            self.stim_condition_reports[stim_condition].create_report(self.version, excluded=excluded)
             excluded=self.stim_condition_reports[stim_condition].excluded_sessions
             
             self.stim_condition_chosen_rates[stim_condition]=[]
