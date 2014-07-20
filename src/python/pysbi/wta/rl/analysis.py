@@ -164,6 +164,30 @@ class SessionReport:
         self.session_id=session_id
         self.edesc=edesc
 
+    def compute_trial_rate_stats(self, data, min_ev_diff, max_ev_diff):
+        ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+        trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+
+        chosen_rate_sum=np.zeros(data.trial_e_rates[0][0,:].shape)
+        unchosen_rate_sum=np.zeros(data.trial_e_rates[0][0,:].shape)
+        trial_count=0.0
+        for trial in trials:
+            if data.choice[trial]>-1:
+                chosen_rate_sum+=data.trial_e_rates[trial][data.choice[trial],:]
+                unchosen_rate_sum+=data.trial_e_rates[trial][1-data.choice[trial],:]
+                trial_count+=1
+        chosen_rate_mean=chosen_rate_sum/trial_count
+        unchosen_rate_mean=unchosen_rate_sum/trial_count
+        chosen_rate_std_sum=np.zeros(chosen_rate_mean.shape)
+        unchosen_rate_std_sum=np.zeros(unchosen_rate_mean.shape)
+        for trial in trials:
+            if data.choice[trial]>-1:
+                chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
+                unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
+        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/trial_count-1)/np.sqrt(trial_count)
+        return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
+
     def sort_trials(self, data, min_ev_diff, max_ev_diff):
         ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
         trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
@@ -267,36 +291,43 @@ class SessionReport:
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_ev_diff_url = '%s.png' % furl
 
-        self.small_chosen_firing_rates,self.small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
-        self.med_chosen_firing_rates,self.med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
-        self.large_chosen_firing_rates,self.large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
+#        small_chosen_firing_rates,small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
+#        med_chosen_firing_rates,med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
+#        large_chosen_firing_rates,large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
+        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats(data, 
+            bins[0], bins[3])
+        med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_stats(data,
+            bins[3], bins[6])
+        large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_stats(data,
+            bins[6], bins[-1])
+        
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            mean_firing=np.mean(self.small_chosen_firing_rates,axis=0)
-            std_firing=np.std(self.small_chosen_firing_rates,axis=0)/np.sqrt(self.small_chosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'b',label='chosen, small')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-            mean_firing=np.mean(self.small_unchosen_firing_rates,axis=0)
-            std_firing=np.std(self.small_unchosen_firing_rates,axis=0)/np.sqrt(self.small_unchosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'b--',label='unchosen, small')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-            mean_firing=np.mean(self.med_chosen_firing_rates,axis=0)
-            std_firing=np.std(self.med_chosen_firing_rates,axis=0)/np.sqrt(self.med_chosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'g',label='chosen, med')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-            mean_firing=np.mean(self.med_unchosen_firing_rates,axis=0)
-            std_firing=np.std(self.med_unchosen_firing_rates,axis=0)/np.sqrt(self.med_unchosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'g--',label='unchosen, med')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-            mean_firing=np.mean(self.large_chosen_firing_rates,axis=0)
-            std_firing=np.std(self.large_chosen_firing_rates,axis=0)/np.sqrt(self.large_chosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'r',label='chosen, large')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-            mean_firing=np.mean(self.large_unchosen_firing_rates,axis=0)
-            std_firing=np.std(self.large_unchosen_firing_rates,axis=0)/np.sqrt(self.large_unchosen_firing_rates.shape[0])
-            baseline,=ax.plot(mean_firing,'r--',label='unchosen, large')
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+            baseline,=ax.plot(small_chosen_mean,'b',label='chosen, small')
+            ax.fill_between(range(len(small_chosen_mean)),
+                small_chosen_mean-small_chosen_std_err,small_chosen_mean+small_chosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
+            baseline,=ax.plot(small_unchosen_mean,'b--',label='unchosen, small')
+            ax.fill_between(range(len(small_unchosen_mean)),
+                small_unchosen_mean-small_unchosen_std_err,small_unchosen_mean+small_unchosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
+            baseline,=ax.plot(med_chosen_mean,'g',label='chosen, med')
+            ax.fill_between(range(len(med_chosen_mean)),
+                med_chosen_mean-med_chosen_std_err,med_chosen_mean+med_chosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
+            baseline,=ax.plot(med_unchosen_mean,'g--',label='unchosen, med')
+            ax.fill_between(range(len(med_unchosen_mean)),
+                med_unchosen_mean-med_unchosen_std_err,med_unchosen_mean+med_unchosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
+            baseline,=ax.plot(large_chosen_mean,'r',label='chosen, large')
+            ax.fill_between(range(len(large_chosen_mean)),
+                large_chosen_mean-large_chosen_std_err,large_chosen_mean+large_chosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
+            baseline,=ax.plot(large_unchosen_mean,'r--',label='unchosen, large')
+            ax.fill_between(range(len(large_unchosen_mean)),
+                large_unchosen_mean-large_unchosen_std_err,large_unchosen_mean+large_unchosen_std_err,alpha=0.5,
+                facecolor=baseline.get_color())
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -475,25 +506,6 @@ class StimConditionReport:
         self.condition_alphas=[]
         self.condition_betas=[]
         self.condition_perc_correct=[]
-        self.small_beta_small_ev_diff_chosen_rates=[]
-        self.small_beta_small_ev_diff_unchosen_rates=[]
-        self.small_beta_med_ev_diff_chosen_rates=[]
-        self.small_beta_med_ev_diff_unchosen_rates=[]
-        self.small_beta_large_ev_diff_chosen_rates=[]
-        self.small_beta_large_ev_diff_unchosen_rates=[]
-        self.med_beta_small_ev_diff_chosen_rates=[]
-        self.med_beta_small_ev_diff_unchosen_rates=[]
-        self.med_beta_med_ev_diff_chosen_rates=[]
-        self.med_beta_med_ev_diff_unchosen_rates=[]
-        self.med_beta_large_ev_diff_chosen_rates=[]
-        self.med_beta_large_ev_diff_unchosen_rates=[]
-        self.large_beta_small_ev_diff_chosen_rates=[]
-        self.large_beta_small_ev_diff_unchosen_rates=[]
-        self.large_beta_med_ev_diff_chosen_rates=[]
-        self.large_beta_med_ev_diff_unchosen_rates=[]
-        self.large_beta_large_ev_diff_chosen_rates=[]
-        self.large_beta_large_ev_diff_unchosen_rates=[]
-
         for virtual_subj_id in range(self.num_subjects):
             data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (virtual_subj_id,self.stim_condition)))
             #if (excluded is None and data.est_alpha<.98) or (excluded is not None and virtual_subj_id not in excluded):
@@ -507,58 +519,77 @@ class StimConditionReport:
 
         hist,bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
 
-        for virtual_subj_id in range(self.num_subjects):
-            if virtual_subj_id not in self.excluded_sessions:
-                print('subject %d' % virtual_subj_id)
-                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
-                session_report_dir=os.path.join(self.reports_dir,session_prefix)
-                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-                session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
-                data=FileInfo(session_report_file)
-                session_report.create_report(self.version, data)
-                self.sessions.append(session_report)
-                if bins[0] <= session_report.est_beta < bins[3]:
-                    self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                    self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                    self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                    self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                    self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                    self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                elif bins[3] <= session_report.est_beta < bins[6]:
-                    self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                    self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                    self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                    self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                    self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                    self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                elif bins[6] <= session_report.est_beta < bins[-1]:
-                    self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
-                    self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
-                    self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
-                    self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
-                    self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
-                    self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
-                self.condition_perc_correct.append([session_report.perc_correct_response])
-
-        self.condition_perc_correct=np.array(self.condition_perc_correct)
-        self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
-        self.small_beta_small_ev_diff_unchosen_rates=np.array(self.small_beta_small_ev_diff_unchosen_rates)
-        self.small_beta_med_ev_diff_chosen_rates=np.array(self.small_beta_med_ev_diff_chosen_rates)
-        self.small_beta_med_ev_diff_unchosen_rates=np.array(self.small_beta_med_ev_diff_unchosen_rates)
-        self.small_beta_large_ev_diff_chosen_rates=np.array(self.small_beta_large_ev_diff_chosen_rates)
-        self.small_beta_large_ev_diff_unchosen_rates=np.array(self.small_beta_large_ev_diff_unchosen_rates)
-        self.med_beta_small_ev_diff_chosen_rates=np.array(self.med_beta_small_ev_diff_chosen_rates)
-        self.med_beta_small_ev_diff_unchosen_rates=np.array(self.med_beta_small_ev_diff_unchosen_rates)
-        self.med_beta_med_ev_diff_chosen_rates=np.array(self.med_beta_med_ev_diff_chosen_rates)
-        self.med_beta_med_ev_diff_unchosen_rates=np.array(self.med_beta_med_ev_diff_unchosen_rates)
-        self.med_beta_large_ev_diff_chosen_rates=np.array(self.med_beta_large_ev_diff_chosen_rates)
-        self.med_beta_large_ev_diff_unchosen_rates=np.array(self.med_beta_large_ev_diff_unchosen_rates)
-        self.large_beta_small_ev_diff_chosen_rates=np.array(self.large_beta_small_ev_diff_chosen_rates)
-        self.large_beta_small_ev_diff_unchosen_rates=np.array(self.large_beta_small_ev_diff_unchosen_rates)
-        self.large_beta_med_ev_diff_chosen_rates=np.array(self.large_beta_med_ev_diff_chosen_rates)
-        self.large_beta_med_ev_diff_unchosen_rates=np.array(self.large_beta_med_ev_diff_unchosen_rates)
-        self.large_beta_large_ev_diff_chosen_rates=np.array(self.large_beta_large_ev_diff_chosen_rates)
-        self.large_beta_large_ev_diff_unchosen_rates=np.array(self.large_beta_large_ev_diff_unchosen_rates)
+#        self.small_beta_small_ev_diff_chosen_rates=[]
+#        self.small_beta_small_ev_diff_unchosen_rates=[]
+#        self.small_beta_med_ev_diff_chosen_rates=[]
+#        self.small_beta_med_ev_diff_unchosen_rates=[]
+#        self.small_beta_large_ev_diff_chosen_rates=[]
+#        self.small_beta_large_ev_diff_unchosen_rates=[]
+#        self.med_beta_small_ev_diff_chosen_rates=[]
+#        self.med_beta_small_ev_diff_unchosen_rates=[]
+#        self.med_beta_med_ev_diff_chosen_rates=[]
+#        self.med_beta_med_ev_diff_unchosen_rates=[]
+#        self.med_beta_large_ev_diff_chosen_rates=[]
+#        self.med_beta_large_ev_diff_unchosen_rates=[]
+#        self.large_beta_small_ev_diff_chosen_rates=[]
+#        self.large_beta_small_ev_diff_unchosen_rates=[]
+#        self.large_beta_med_ev_diff_chosen_rates=[]
+#        self.large_beta_med_ev_diff_unchosen_rates=[]
+#        self.large_beta_large_ev_diff_chosen_rates=[]
+#        self.large_beta_large_ev_diff_unchosen_rates=[]
+#
+#        for virtual_subj_id in range(self.num_subjects):
+#            if virtual_subj_id not in self.excluded_sessions:
+#                print('subject %d' % virtual_subj_id)
+#                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+#                session_report_dir=os.path.join(self.reports_dir,session_prefix)
+#                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+#                session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
+#                data=FileInfo(session_report_file)
+#                session_report.create_report(self.version, data)
+#                self.sessions.append(session_report)
+#                if bins[0] <= session_report.est_beta < bins[3]:
+#                    self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+#                    self.small_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+#                    self.small_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+#                    self.small_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+#                    self.small_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+#                    self.small_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+#                elif bins[3] <= session_report.est_beta < bins[6]:
+#                    self.med_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+#                    self.med_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+#                    self.med_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+#                    self.med_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+#                    self.med_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+#                    self.med_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+#                elif bins[6] <= session_report.est_beta < bins[-1]:
+#                    self.large_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
+#                    self.large_beta_small_ev_diff_unchosen_rates.extend(session_report.small_unchosen_firing_rates)
+#                    self.large_beta_med_ev_diff_chosen_rates.extend(session_report.med_chosen_firing_rates)
+#                    self.large_beta_med_ev_diff_unchosen_rates.extend(session_report.med_unchosen_firing_rates)
+#                    self.large_beta_large_ev_diff_chosen_rates.extend(session_report.large_chosen_firing_rates)
+#                    self.large_beta_large_ev_diff_unchosen_rates.extend(session_report.large_unchosen_firing_rates)
+#                self.condition_perc_correct.append([session_report.perc_correct_response])
+#
+#        self.condition_perc_correct=np.array(self.condition_perc_correct)
+#        self.small_beta_small_ev_diff_chosen_rates=np.array(self.small_beta_small_ev_diff_chosen_rates)
+#        self.small_beta_small_ev_diff_unchosen_rates=np.array(self.small_beta_small_ev_diff_unchosen_rates)
+#        self.small_beta_med_ev_diff_chosen_rates=np.array(self.small_beta_med_ev_diff_chosen_rates)
+#        self.small_beta_med_ev_diff_unchosen_rates=np.array(self.small_beta_med_ev_diff_unchosen_rates)
+#        self.small_beta_large_ev_diff_chosen_rates=np.array(self.small_beta_large_ev_diff_chosen_rates)
+#        self.small_beta_large_ev_diff_unchosen_rates=np.array(self.small_beta_large_ev_diff_unchosen_rates)
+#        self.med_beta_small_ev_diff_chosen_rates=np.array(self.med_beta_small_ev_diff_chosen_rates)
+#        self.med_beta_small_ev_diff_unchosen_rates=np.array(self.med_beta_small_ev_diff_unchosen_rates)
+#        self.med_beta_med_ev_diff_chosen_rates=np.array(self.med_beta_med_ev_diff_chosen_rates)
+#        self.med_beta_med_ev_diff_unchosen_rates=np.array(self.med_beta_med_ev_diff_unchosen_rates)
+#        self.med_beta_large_ev_diff_chosen_rates=np.array(self.med_beta_large_ev_diff_chosen_rates)
+#        self.med_beta_large_ev_diff_unchosen_rates=np.array(self.med_beta_large_ev_diff_unchosen_rates)
+#        self.large_beta_small_ev_diff_chosen_rates=np.array(self.large_beta_small_ev_diff_chosen_rates)
+#        self.large_beta_small_ev_diff_unchosen_rates=np.array(self.large_beta_small_ev_diff_unchosen_rates)
+#        self.large_beta_med_ev_diff_chosen_rates=np.array(self.large_beta_med_ev_diff_chosen_rates)
+#        self.large_beta_med_ev_diff_unchosen_rates=np.array(self.large_beta_med_ev_diff_unchosen_rates)
+#        self.large_beta_large_ev_diff_chosen_rates=np.array(self.large_beta_large_ev_diff_chosen_rates)
+#        self.large_beta_large_ev_diff_unchosen_rates=np.array(self.large_beta_large_ev_diff_unchosen_rates)
         
         # Create beta bar plot
         furl='img/beta_dist'
@@ -648,113 +679,113 @@ class StimConditionReport:
 
         # Create beta - perc correct plot
         # Create ev diff firing rate plot
-        furl='img/small_ev_diff_firing_rate'
-        fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
-        fig=Figure()
-        ax=fig.add_subplot(1,1,1)
-        mean_firing=np.mean(self.small_beta_small_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_small_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.small_beta_small_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_small_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_small_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_small_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_small_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_small_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_small_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_small_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_small_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_small_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Firing Rate (Hz)')
-        ax.legend(loc=0)
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-        furl='img/med_ev_diff_firing_rate'
-        fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
-        fig=Figure()
-        ax=fig.add_subplot(1,1,1)
-        mean_firing=np.mean(self.small_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.small_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Firing Rate (Hz)')
-        ax.legend(loc=0)
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-        furl='img/large_ev_diff_firing_rate'
-        fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
-        fig=Figure()
-        ax=fig.add_subplot(1,1,1)
-        mean_firing=np.mean(self.small_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.small_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.small_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.med_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.med_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_med_ev_diff_chosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_chosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        mean_firing=np.mean(self.large_beta_med_ev_diff_unchosen_rates,axis=0)
-        std_firing=np.std(self.large_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_unchosen_rates.shape[0])
-        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Firing Rate (Hz)')
-        ax.legend(loc=0)
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
+#        furl='img/small_ev_diff_firing_rate'
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
+#        fig=Figure()
+#        ax=fig.add_subplot(1,1,1)
+#        mean_firing=np.mean(self.small_beta_small_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_small_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.small_beta_small_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_small_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_small_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_small_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_small_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_small_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_small_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_small_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_small_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_small_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_small_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_small_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        ax.set_xlabel('Time')
+#        ax.set_ylabel('Firing Rate (Hz)')
+#        ax.legend(loc=0)
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#
+#        furl='img/med_ev_diff_firing_rate'
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
+#        fig=Figure()
+#        ax=fig.add_subplot(1,1,1)
+#        mean_firing=np.mean(self.small_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.small_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        ax.set_xlabel('Time')
+#        ax.set_ylabel('Firing Rate (Hz)')
+#        ax.legend(loc=0)
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#
+#        furl='img/large_ev_diff_firing_rate'
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
+#        fig=Figure()
+#        ax=fig.add_subplot(1,1,1)
+#        mean_firing=np.mean(self.small_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b',label='small beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.small_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.small_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.small_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'b--',label='small beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g',label='med beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.med_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.med_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.med_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'g--',label='med beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_med_ev_diff_chosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_med_ev_diff_chosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_chosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r',label='large beta, chosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        mean_firing=np.mean(self.large_beta_med_ev_diff_unchosen_rates,axis=0)
+#        std_firing=np.std(self.large_beta_med_ev_diff_unchosen_rates,axis=0)/np.sqrt(self.large_beta_med_ev_diff_unchosen_rates.shape[0])
+#        baseline,=ax.plot(mean_firing,'r--',label='large beta, unchosen')
+#        ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=baseline.get_color())
+#        ax.set_xlabel('Time')
+#        ax.set_ylabel('Firing Rate (Hz)')
+#        ax.legend(loc=0)
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
 
         self.num_trials=self.sessions[0].num_trials
         self.alpha=self.sessions[0].alpha
@@ -802,76 +833,76 @@ class RLReport:
             self.stim_condition_reports[stim_condition].create_report(self.version, excluded=excluded)
             excluded=self.stim_condition_reports[stim_condition].excluded_sessions
             
-            self.stim_condition_chosen_rates[stim_condition]=[]
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_chosen_rates)
-            self.stim_condition_chosen_rates[stim_condition]=np.array(self.stim_condition_chosen_rates[stim_condition])
+#            self.stim_condition_chosen_rates[stim_condition]=[]
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_chosen_rates)
+#            self.stim_condition_chosen_rates[stim_condition]=np.array(self.stim_condition_chosen_rates[stim_condition])
+#
+#            self.stim_condition_unchosen_rates[stim_condition]=[]
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
+#            self.stim_condition_unchosen_rates[stim_condition]=np.array(self.stim_condition_unchosen_rates[stim_condition])
 
-            self.stim_condition_unchosen_rates[stim_condition]=[]
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
-            self.stim_condition_unchosen_rates[stim_condition]=np.array(self.stim_condition_unchosen_rates[stim_condition])
+#            self.stim_condition_rate_diffs[stim_condition]=[]
+#            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rates[stim_condition],self.stim_condition_unchosen_rates[stim_condition]):
+#                self.stim_condition_rate_diffs[stim_condition].append(chosen_rate[9000]-unchosen_rate[9000])
 
-            self.stim_condition_rate_diffs[stim_condition]=[]
-            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rates[stim_condition],self.stim_condition_unchosen_rates[stim_condition]):
-                self.stim_condition_rate_diffs[stim_condition].append(chosen_rate[9000]-unchosen_rate[9000])
-
-        # Create rate diff firing rate plot
-        furl='img/firing_rate_diff'
-        fname = os.path.join(self.reports_dir, furl)
-        self.firing_rate_diff_url = '%s.png' % furl
-        fig=Figure()
-        ax=fig.add_subplot(1,1,1)
-        mean_diffs=[]
-        std_diffs=[]
-        for stim_condition in self.stim_conditions:
-            mean_diffs.append(np.mean(self.stim_condition_rate_diffs[stim_condition]))
-            std_diffs.append(np.std(self.stim_condition_rate_diffs[stim_condition])/np.sqrt(len(self.stim_condition_rate_diffs[stim_condition])))
-        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
-        ax.bar(pos,mean_diffs,width=.5,yerr=std_diffs,align='center',ecolor='k')
-        ax.set_xticks(pos)
-        ax.set_xticklabels(self.stim_conditions)
-        ax.set_xlabel('Condition')
-        ax.set_ylabel('Firing Rate Diff')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-        # Create ev diff firing rate plot
-        furl='img/ev_diff_firing_rate'
-        fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
-        fig=Figure()
-        ax=fig.add_subplot(1,1,1)
-        for stim_condition in self.stim_conditions:
-            mean_firing=np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0)
-            std_firing=np.std(self.stim_condition_chosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_chosen_rates[stim_condition].shape[0])
-            base_line,=ax.plot(mean_firing,label='%s, chosen' % stim_condition)
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
-            mean_firing=np.mean(self.stim_condition_unchosen_rates[stim_condition],axis=0)
-            std_firing=np.std(self.stim_condition_unchosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_unchosen_rates[stim_condition].shape[0])
-            base_line,=ax.plot(mean_firing,color=base_line.get_color(),linestyle='dashed',label='%s, unchosen' % stim_condition)
-            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Firing Rate (Hz)')
-        ax.legend(loc=0)
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
+#        # Create rate diff firing rate plot
+#        furl='img/firing_rate_diff'
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.firing_rate_diff_url = '%s.png' % furl
+#        fig=Figure()
+#        ax=fig.add_subplot(1,1,1)
+#        mean_diffs=[]
+#        std_diffs=[]
+#        for stim_condition in self.stim_conditions:
+#            mean_diffs.append(np.mean(self.stim_condition_rate_diffs[stim_condition]))
+#            std_diffs.append(np.std(self.stim_condition_rate_diffs[stim_condition])/np.sqrt(len(self.stim_condition_rate_diffs[stim_condition])))
+#        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+#        ax.bar(pos,mean_diffs,width=.5,yerr=std_diffs,align='center',ecolor='k')
+#        ax.set_xticks(pos)
+#        ax.set_xticklabels(self.stim_conditions)
+#        ax.set_xlabel('Condition')
+#        ax.set_ylabel('Firing Rate Diff')
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#
+#        # Create ev diff firing rate plot
+#        furl='img/ev_diff_firing_rate'
+#        fname = os.path.join(self.reports_dir, furl)
+#        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
+#        fig=Figure()
+#        ax=fig.add_subplot(1,1,1)
+#        for stim_condition in self.stim_conditions:
+#            mean_firing=np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0)
+#            std_firing=np.std(self.stim_condition_chosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_chosen_rates[stim_condition].shape[0])
+#            base_line,=ax.plot(mean_firing,label='%s, chosen' % stim_condition)
+#            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
+#            mean_firing=np.mean(self.stim_condition_unchosen_rates[stim_condition],axis=0)
+#            std_firing=np.std(self.stim_condition_unchosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_unchosen_rates[stim_condition].shape[0])
+#            base_line,=ax.plot(mean_firing,color=base_line.get_color(),linestyle='dashed',label='%s, unchosen' % stim_condition)
+#            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
+#        ax.set_xlabel('Time')
+#        ax.set_ylabel('Firing Rate (Hz)')
+#        ax.legend(loc=0)
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
 
         # Create alpha - % correct plot
         furl='img/alpha_perc_correct'
