@@ -178,10 +178,10 @@ class SessionReport:
         unchosen_firing_rates=np.array(unchosen_firing_rates)
         return chosen_firing_rates, unchosen_firing_rates
 
-    def create_report(self, data):
+    def create_report(self, version, data):
         make_report_dirs(self.reports_dir)
 
-        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.version = version
         self.edesc=self.edesc
 
         self.num_trials=data.num_trials
@@ -372,7 +372,7 @@ class BackgroundBetaReport:
                     session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
                     data=FileInfo(session_report_file)
-                    session_report.create_report(data)
+                    session_report.create_report(self.version, data)
                     self.sessions.append(session_report)
                     #background_vals[idx*self.trials+trial]=background_freq
                     background_vals.append([background_freq])
@@ -515,7 +515,7 @@ class StimConditionReport:
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 session_report=SessionReport(virtual_subj_id, self.data_dir, session_prefix, session_report_dir, self.edesc)
                 data=FileInfo(session_report_file)
-                session_report.create_report(data)
+                session_report.create_report(self.version, data)
                 self.sessions.append(session_report)
                 if bins[0] <= session_report.est_beta < bins[3]:
                     self.small_beta_small_ev_diff_chosen_rates.extend(session_report.small_chosen_firing_rates)
