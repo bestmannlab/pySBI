@@ -9,7 +9,7 @@ from pysbi.wta.network import default_params, run_wta, pyr_params, inh_params
 from pysbi.wta.rl.fit import fit_behavior
 
 
-def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
+def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms,
                       output_file=None):
     mat = scipy.io.loadmat(mat_file)
     prob_idx=-1
@@ -29,8 +29,9 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, p_dcs=0*pA, i_dcs=0*pA, dcs
     num_groups=2
     exp_rew=np.array([0.5, 0.5])
     trial_duration=4*second
-    #background_freq=(beta-87.46)/-12.5
-    background_freq=(beta-148.14)/-17.29
+    if background_freq is None:
+        #background_freq=(beta-87.46)/-12.5
+        background_freq=(beta-148.14)/-17.29
 
     trials=prob_walk.shape[1]
 
@@ -151,9 +152,11 @@ if __name__=='__main__':
     ap.add_argument('--dcs_start_time', type=float, default=0.0, help='Time to start dcs')
     ap.add_argument('--alpha', type=float, default=0.4, help='Learning rate')
     ap.add_argument('--beta', type=float, default=5.0, help='Temperature')
+    ap.add_argument('--background', type=float, default=None, help='Background firing rate (Hz)')
     ap.add_argument('--output_file', type=str, default=None, help='HDF5 output file')
 
     argvals = ap.parse_args()
 
-    run_rl_simulation(argvals.stim_mat_file, alpha=argvals.alpha, beta=argvals.beta, p_dcs=argvals.p_dcs*pA,
-        i_dcs=argvals.i_dcs*pA, dcs_start_time=argvals.dcs_start_time*second, output_file=argvals.output_file)
+    run_rl_simulation(argvals.stim_mat_file, alpha=argvals.alpha, beta=argvals.beta, background_freq=argvals.background,
+        p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA, dcs_start_time=argvals.dcs_start_time*second,
+        output_file=argvals.output_file)
