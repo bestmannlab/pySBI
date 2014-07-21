@@ -152,12 +152,12 @@ class TrialData:
                 ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
             if self.rt:
-                rt_idx=(1*second+self.rt)/(1000*ms)
+                rt_idx=(1*second+self.rt)/second
                 ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
-            plt.ylim([0,10+max_pop_rate])
+            ax.set_ylim([0,10+max_pop_rate])
             ax.legend(loc=0)
-            plt.xlabel('Time (ms)')
-            plt.ylabel('Firing Rate (Hz)')
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Firing Rate (Hz)')
 
             # Plot interneuron firing rate
             ax = fig.add_subplot(2,1,2)
@@ -165,11 +165,11 @@ class TrialData:
                 ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
             if self.rt:
-                rt_idx=(1*second+self.rt)/(1000*ms)
+                rt_idx=(1*second+self.rt)/second
                 ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
-            plt.ylim([0,10+max_pop_rate])
-            plt.xlabel('Time (ms)')
-            plt.ylabel('Firing Rate (Hz)')
+            ax.set_ylim([0,10+max_pop_rate])
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Firing Rate (Hz)')
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
