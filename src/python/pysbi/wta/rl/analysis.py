@@ -320,31 +320,31 @@ class SessionReport:
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            baseline,=ax.plot(small_chosen_mean,'b',label='chosen, small')
-            ax.fill_between(range(len(small_chosen_mean)),
+            baseline,=ax.plot(np.array(range(len(small_chosen_mean))) *.5*ms, small_chosen_mean,'b',label='chosen, small')
+            ax.fill_between(np.array(range(len(small_chosen_mean))) *.5*ms,
                 small_chosen_mean-small_chosen_std_err,small_chosen_mean+small_chosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            baseline,=ax.plot(small_unchosen_mean,'b--',label='unchosen, small')
-            ax.fill_between(range(len(small_unchosen_mean)),
+            baseline,=ax.plot(np.array(range(len(small_unchosen_mean))) *.5*ms, small_unchosen_mean,'b--',label='unchosen, small')
+            ax.fill_between(np.array(range(len(small_unchosen_mean))) *.5*ms,
                 small_unchosen_mean-small_unchosen_std_err,small_unchosen_mean+small_unchosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            baseline,=ax.plot(med_chosen_mean,'g',label='chosen, med')
-            ax.fill_between(range(len(med_chosen_mean)),
+            baseline,=ax.plot(np.array(range(len(med_chosen_mean))) *.5*ms, med_chosen_mean,'g',label='chosen, med')
+            ax.fill_between(np.array(range(len(med_chosen_mean))) *.5*ms,
                 med_chosen_mean-med_chosen_std_err,med_chosen_mean+med_chosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            baseline,=ax.plot(med_unchosen_mean,'g--',label='unchosen, med')
-            ax.fill_between(range(len(med_unchosen_mean)),
+            baseline,=ax.plot(np.array(range(len(med_unchosen_mean))) *.5*ms, med_unchosen_mean,'g--',label='unchosen, med')
+            ax.fill_between(np.array(range(len(med_unchosen_mean))) *.5*ms,
                 med_unchosen_mean-med_unchosen_std_err,med_unchosen_mean+med_unchosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            baseline,=ax.plot(large_chosen_mean,'r',label='chosen, large')
-            ax.fill_between(range(len(large_chosen_mean)),
+            baseline,=ax.plot(np.array(range(len(large_chosen_mean))) *.5*ms, large_chosen_mean,'r',label='chosen, large')
+            ax.fill_between(np.array(range(len(large_chosen_mean))) *.5*ms,
                 large_chosen_mean-large_chosen_std_err,large_chosen_mean+large_chosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            baseline,=ax.plot(large_unchosen_mean,'r--',label='unchosen, large')
-            ax.fill_between(range(len(large_unchosen_mean)),
+            baseline,=ax.plot(np.array(range(len(large_unchosen_mean))) *.5*ms, large_unchosen_mean,'r--',label='unchosen, large')
+            ax.fill_between(np.array(range(len(large_unchosen_mean))) *.5*ms,
                 large_unchosen_mean-large_unchosen_std_err,large_unchosen_mean+large_unchosen_std_err,alpha=0.5,
                 facecolor=baseline.get_color())
-            ax.set_xlabel('Time')
+            ax.set_xlabel('Time (s)')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
