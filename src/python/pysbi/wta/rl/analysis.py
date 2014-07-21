@@ -399,6 +399,7 @@ class BackgroundBetaReport:
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                print(session_report_file)
                 if os.path.exists(session_report_file):
                     session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
