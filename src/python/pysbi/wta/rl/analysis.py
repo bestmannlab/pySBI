@@ -564,26 +564,6 @@ class StimConditionReport:
         beta_hist,beta_bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
         ev_diff_hist,ev_diff_bins=np.histogram(np.array(ev_diff), bins=10)
 
-#        self.small_beta_small_ev_diff_chosen_rates=[]
-#        self.small_beta_small_ev_diff_unchosen_rates=[]
-#        self.small_beta_med_ev_diff_chosen_rates=[]
-#        self.small_beta_med_ev_diff_unchosen_rates=[]
-#        self.small_beta_large_ev_diff_chosen_rates=[]
-#        self.small_beta_large_ev_diff_unchosen_rates=[]
-#        self.med_beta_small_ev_diff_chosen_rates=[]
-#        self.med_beta_small_ev_diff_unchosen_rates=[]
-#        self.med_beta_med_ev_diff_chosen_rates=[]
-#        self.med_beta_med_ev_diff_unchosen_rates=[]
-#        self.med_beta_large_ev_diff_chosen_rates=[]
-#        self.med_beta_large_ev_diff_unchosen_rates=[]
-#        self.large_beta_small_ev_diff_chosen_rates=[]
-#        self.large_beta_small_ev_diff_unchosen_rates=[]
-#        self.large_beta_med_ev_diff_chosen_rates=[]
-#        self.large_beta_med_ev_diff_unchosen_rates=[]
-#        self.large_beta_large_ev_diff_chosen_rates=[]
-#        self.large_beta_large_ev_diff_unchosen_rates=[]
-#
-        
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
                 print('subject %d' % virtual_subj_id)
@@ -893,8 +873,10 @@ class RLReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
-        self.stim_condition_chosen_rates={}
-        self.stim_condition_unchosen_rates={}
+        self.stim_condition_chosen_rate_means={}
+        self.stim_condition_chosen_rate_std_err={}
+        self.stim_condition_unchosen_rate_means={}
+        self.stim_condition_unchosen_rate_std_err={}
         self.stim_condition_rate_diffs={}
         excluded=None
         for stim_condition in self.stim_conditions:
@@ -904,36 +886,17 @@ class RLReport:
                 stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
             self.stim_condition_reports[stim_condition].create_report(self.version, excluded=excluded)
             excluded=self.stim_condition_reports[stim_condition].excluded_sessions
-            
-#            self.stim_condition_chosen_rates[stim_condition]=[]
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_chosen_rates)
-#            self.stim_condition_chosen_rates[stim_condition]=np.array(self.stim_condition_chosen_rates[stim_condition])
-#
-#            self.stim_condition_unchosen_rates[stim_condition]=[]
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_small_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_med_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].small_beta_large_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_small_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_med_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].med_beta_large_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_small_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_med_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition].extend(self.stim_condition_reports[stim_condition].large_beta_large_ev_diff_unchosen_rates)
-#            self.stim_condition_unchosen_rates[stim_condition]=np.array(self.stim_condition_unchosen_rates[stim_condition])
 
-#            self.stim_condition_rate_diffs[stim_condition]=[]
-#            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rates[stim_condition],self.stim_condition_unchosen_rates[stim_condition]):
-#                self.stim_condition_rate_diffs[stim_condition].append(chosen_rate[9000]-unchosen_rate[9000])
+            self.stim_condition_chosen_rate_means[stim_condition],\
+            self.stim_condition_chosen_rate_std_err[stim_condition],\
+            self.stim_condition_unchosen_rate_means[stim_condition],\
+            self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_stats(0,10000,0,100)
 
-#        # Create rate diff firing rate plot
+#            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rate_means[stim_condition],
+#                self.stim_condition_unchosen_rate_means[stim_condition]):
+#                self.stim_condition_rate_diffs[stim_condition]=np.mean(chosen_rate[int(900*ms/.5*ms):int(990*ms/.5*ms)])-np.mean(unchosen_rate[int(900*ms/.5*ms):int(900*ms/.5*ms)])
+
+        # Create rate diff firing rate plot
 #        furl='img/firing_rate_diff'
 #        fname = os.path.join(self.reports_dir, furl)
 #        self.firing_rate_diff_url = '%s.png' % furl
@@ -953,28 +916,31 @@ class RLReport:
 #        save_to_png(fig, '%s.png' % fname)
 #        save_to_eps(fig, '%s.eps' % fname)
 #        plt.close(fig)
-#
-#        # Create ev diff firing rate plot
-#        furl='img/ev_diff_firing_rate'
-#        fname = os.path.join(self.reports_dir, furl)
-#        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
-#        fig=Figure()
-#        ax=fig.add_subplot(1,1,1)
-#        for stim_condition in self.stim_conditions:
-#            mean_firing=np.mean(self.stim_condition_chosen_rates[stim_condition],axis=0)
-#            std_firing=np.std(self.stim_condition_chosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_chosen_rates[stim_condition].shape[0])
-#            base_line,=ax.plot(mean_firing,label='%s, chosen' % stim_condition)
-#            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
-#            mean_firing=np.mean(self.stim_condition_unchosen_rates[stim_condition],axis=0)
-#            std_firing=np.std(self.stim_condition_unchosen_rates[stim_condition],axis=0)/np.sqrt(self.stim_condition_unchosen_rates[stim_condition].shape[0])
-#            base_line,=ax.plot(mean_firing,color=base_line.get_color(),linestyle='dashed',label='%s, unchosen' % stim_condition)
-#            ax.fill_between(range(len(mean_firing)),mean_firing-std_firing,mean_firing+std_firing,alpha=0.5,facecolor=base_line.get_color())
-#        ax.set_xlabel('Time')
-#        ax.set_ylabel('Firing Rate (Hz)')
-#        ax.legend(loc=0)
-#        save_to_png(fig, '%s.png' % fname)
-#        save_to_eps(fig, '%s.eps' % fname)
-#        plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/ev_diff_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            base_line,=ax.plot(self.stim_condition_chosen_rate_means[stim_condition],label='%s, chosen' % stim_condition)
+            ax.fill_between(range(len(self.stim_condition_chosen_rate_means[stim_condition])),
+                self.stim_condition_chosen_rate_means[stim_condition]-self.stim_condition_chosen_rate_std_err[stim_condition],
+                self.stim_condition_chosen_rate_means[stim_condition]+self.stim_condition_chosen_rate_std_err[stim_condition],
+                alpha=0.5,facecolor=base_line.get_color())
+            base_line,=ax.plot(self.stim_condition_unchosen_rate_means[stim_condition],color=base_line.get_color(),
+                linestyle='dashed',label='%s, unchosen' % stim_condition)
+            ax.fill_between(range(len(self.stim_condition_unchosen_rate_means[stim_condition])),
+                self.stim_condition_unchosen_rate_means[stim_condition]-self.stim_condition_unchosen_rate_std_err[stim_condition],
+                self.stim_condition_unchosen_rate_means[stim_condition]+self.stim_condition_unchosen_rate_std_err[stim_condition],
+                alpha=0.5,facecolor=base_line.get_color())
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         # Create alpha - % correct plot
         furl='img/alpha_perc_correct'
