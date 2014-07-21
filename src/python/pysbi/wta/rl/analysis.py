@@ -149,7 +149,7 @@ class TrialData:
             # Plot pyramidal neuron firing rate
             ax=fig.add_subplot(2,1,1)
             for i, pop_rate in enumerate(e_firing_rates):
-                ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+                ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
             if self.rt:
                 rt_idx=(1*second+self.rt)/(5*ms)
@@ -162,7 +162,7 @@ class TrialData:
             # Plot interneuron firing rate
             ax = fig.add_subplot(2,1,2)
             for i, pop_rate in enumerate(i_firing_rates):
-                ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+                ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
             if self.rt:
                 rt_idx=(1*second+self.rt)/(5*ms)
