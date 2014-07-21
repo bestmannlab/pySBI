@@ -229,7 +229,8 @@ class SessionReport:
         self.num_trials=data.num_trials
         self.alpha=data.alpha
         #self.beta=(data.background_freq/Hz*-12.5)+87.46
-        self.beta=(data.background_freq/Hz*-17.29)+148.14
+        #self.beta=(data.background_freq/Hz*-17.29)+148.14
+        self.beta=(data.background_freq/Hz*-.17)+161.08
         self.est_alpha=data.est_alpha
         self.est_beta=data.est_beta
         self.prop_correctly_predicted=data.prop_correct*100.0

@@ -31,7 +31,9 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
     trial_duration=4*second
     if background_freq is None:
         #background_freq=(beta-87.46)/-12.5
-        background_freq=(beta-148.14)/-17.29
+        #background_freq=(beta-148.14)/-17.29
+        background_freq=(beta-161.08)/-.17
+
 
     trials=prob_walk.shape[1]
 
