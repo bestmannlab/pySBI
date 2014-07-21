@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 from scipy import stats
+import copy
 import shutil
 import subprocess
 from brian import second, farad, siemens, volt, Hz, ms, amp
@@ -192,7 +193,7 @@ class SessionReport:
             if data.choice[trial]>-1:
                 chosen_rate_sum+=data.trial_e_rates[trial][data.choice[trial],:]
                 unchosen_rate_sum+=data.trial_e_rates[trial][1-data.choice[trial],:]
-                trial_count+=1
+                trial_count+=1.0
         chosen_rate_mean=chosen_rate_sum/trial_count
         unchosen_rate_mean=unchosen_rate_sum/trial_count
         chosen_rate_std_sum=np.zeros(chosen_rate_mean.shape)
@@ -202,7 +203,7 @@ class SessionReport:
                 chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                 unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
         chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/trial_count-1)/np.sqrt(trial_count)
+        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
 
     def sort_trials(self, data, min_ev_diff, max_ev_diff):
@@ -236,7 +237,7 @@ class SessionReport:
         self.num_groups=data.num_groups
         self.trial_duration=data.trial_duration
         self.background_freq=data.background_freq
-        self.wta_params=data.wta_params
+        self.wta_params=copy.deepcopy(data.wta_params)
 
         fit_vals=rescorla_td_prediction(data.rew, data.choice, data.est_alpha)
         fit_probs=np.zeros(fit_vals.shape)
@@ -308,10 +309,7 @@ class SessionReport:
         fname = os.path.join(self.reports_dir, furl)
         self.mean_firing_rate_ev_diff_url = '%s.png' % furl
 
-#        small_chosen_firing_rates,small_unchosen_firing_rates=self.sort_trials(data, bins[0], bins[3])
-#        med_chosen_firing_rates,med_unchosen_firing_rates=self.sort_trials(data, bins[3], bins[6])
-#        large_chosen_firing_rates,large_unchosen_firing_rates=self.sort_trials(data, bins[6], bins[-1])
-        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats(data, 
+        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats(data,
             bins[0], bins[3])
         med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_stats(data,
             bins[3], bins[6])
