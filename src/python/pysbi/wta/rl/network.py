@@ -97,9 +97,11 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
         print('Trial %d' % trial)
         vals[:,trial]=exp_rew
         ev=vals[:,trial]*mags[:,trial]
-        inputs[0,trial]=ev[0]-ev[1]
-        inputs[1,trial]=ev[1]-ev[0]
-        inputs[:,trial]=40.0+40.0*(inputs[:,trial]+1.0)*.5
+#        inputs[0,trial]=ev[0]-ev[1]
+#        inputs[1,trial]=ev[1]-ev[0]
+        inputs[0,trial]=ev[0]
+        inputs[1,trial]=ev[1]
+        inputs[:,trial]=40.0+40.0*inputs[:,trial]
 
         trial_monitor=run_wta(default_params, num_groups, inputs[:,trial], trial_duration, background_freq=background_freq,
             p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=dcs_start_time, record_lfp=False, record_voxel=False,
