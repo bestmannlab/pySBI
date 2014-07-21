@@ -54,18 +54,35 @@ class FileInfo:
         self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
         self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
         self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
-        self.wta_params.pyr_w_ampa_ext=float(f.attrs['pyr_w_ampa_ext'])*siemens
-        self.wta_params.pyr_w_ampa_bak=float(f.attrs['pyr_w_ampa_bak'])*siemens
-        self.wta_params.pyr_w_ampa_rec=float(f.attrs['pyr_w_ampa_rec'])*siemens
-        self.wta_params.int_w_ampa_ext=float(f.attrs['int_w_ampa_ext'])*siemens
-        self.wta_params.int_w_ampa_bak=float(f.attrs['int_w_ampa_bak'])*siemens
-        self.wta_params.int_w_ampa_rec=float(f.attrs['int_w_ampa_rec'])*siemens
-        self.wta_params.pyr_w_nmda=float(f.attrs['pyr_w_nmda'])*siemens
-        self.wta_params.int_w_nmda=float(f.attrs['int_w_nmda'])*siemens
-        self.wta_params.pyr_w_gaba_a=float(f.attrs['pyr_w_gaba_a'])*siemens
-        self.wta_params.int_w_gaba_a=float(f.attrs['int_w_gaba_a'])*siemens
-        self.wta_params.p_b_e=float(f.attrs['p_b_e'])
-        self.wta_params.p_x_e=float(f.attrs['p_x_e'])
+        if 'pyr_w_ampa_ext' in f.attrs:
+            self.wta_params.pyr_w_ampa_ext=float(f.attrs['pyr_w_ampa_ext'])*siemens
+            self.wta_params.pyr_w_ampa_bak=float(f.attrs['pyr_w_ampa_bak'])*siemens
+            self.wta_params.pyr_w_ampa_rec=float(f.attrs['pyr_w_ampa_rec'])*siemens
+            self.wta_params.int_w_ampa_ext=float(f.attrs['int_w_ampa_ext'])*siemens
+            self.wta_params.int_w_ampa_bak=float(f.attrs['int_w_ampa_bak'])*siemens
+            self.wta_params.int_w_ampa_rec=float(f.attrs['int_w_ampa_rec'])*siemens
+            self.wta_params.pyr_w_nmda=float(f.attrs['pyr_w_nmda'])*siemens
+            self.wta_params.int_w_nmda=float(f.attrs['int_w_nmda'])*siemens
+            self.wta_params.pyr_w_gaba_a=float(f.attrs['pyr_w_gaba_a'])*siemens
+            self.wta_params.int_w_gaba_a=float(f.attrs['int_w_gaba_a'])*siemens
+        else:
+            pyr_param_group=f['pyr_params']
+            self.wta_params.pyr_w_ampa_ext=float(pyr_param_group.attrs['w_ampa_ext'])*siemens
+            self.wta_params.pyr_w_ampa_bak=float(pyr_param_group.attrs['w_ampa_ext'])*siemens
+            self.wta_params.pyr_w_ampa_rec=float(pyr_param_group.attrs['w_ampa_rec'])*siemens
+            self.wta_params.pyr_w_nmda=float(pyr_param_group.attrs['w_nmda'])*siemens
+            self.wta_params.pyr_w_gaba_a=float(pyr_param_group.attrs['w_gaba'])*siemens
+
+            inh_param_group=f['inh_params']
+            self.wta_params.int_w_ampa_ext=float(inh_param_group.attrs['w_ampa_ext'])*siemens
+            self.wta_params.int_w_ampa_bak=float(inh_param_group.attrs['w_ampa_ext'])*siemens
+            self.wta_params.int_w_ampa_rec=float(inh_param_group.attrs['w_ampa_rec'])*siemens
+            self.wta_params.int_w_nmda=float(inh_param_group.attrs['w_nmda'])*siemens
+            self.wta_params.int_w_gaba_a=float(inh_param_group.attrs['w_gaba'])*siemens
+
+        if 'p_b_e' in f.attrs:
+            self.wta_params.p_b_e=float(f.attrs['p_b_e'])
+            self.wta_params.p_x_e=float(f.attrs['p_x_e'])
         self.wta_params.p_e_e=float(f.attrs['p_e_e'])
         self.wta_params.p_e_i=float(f.attrs['p_e_i'])
         self.wta_params.p_i_i=float(f.attrs['p_i_i'])
@@ -399,7 +416,6 @@ class BackgroundBetaReport:
                 session_prefix=self.file_prefix % (background_freq,trial)
                 session_report_dir=os.path.join(self.reports_dir,session_prefix)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-                print(session_report_file)
                 if os.path.exists(session_report_file):
                     session_report=SessionReport(trial, self.data_dir, session_prefix, session_report_dir, self.edesc)
                     session_report.subject=trial
