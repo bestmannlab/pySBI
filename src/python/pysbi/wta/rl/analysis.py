@@ -112,7 +112,20 @@ class FileInfo:
             self.trial_i_rates.append(np.array(f_trial['i_rates']))
         f.close()
 
-
+def plot_mean_rate(ax, rate_mean, rate_std_err, color, style, label, dt):
+    time_ticks=np.array(range(len(rate_mean)))*dt
+    if color is not None and style is not None:
+        baseline,=ax.plot(time_ticks, rate_mean, color=color, linestyle=style, label=label)
+    elif color is not None:
+        baseline,=ax.plot(time_ticks, rate_mean, color=color, label=label)
+    elif style is not None:
+        baseline,=ax.plot(time_ticks, rate_mean, linestyle=style, label=label)
+    else:
+        baseline,=ax.plot(time_ticks, rate_mean, label=label)
+    ax.fill_between(time_ticks, rate_mean-rate_std_err, rate_mean+rate_std_err, alpha=0.5, 
+        facecolor=baseline.get_color())
+    return baseline
+    
 class TrialData:
     def __init__(self, trial, trial_duration, val, ev, inputs, choice, rew, file_prefix, reports_dir, e_firing_rates,
                  i_firing_rates, rt=None, upper_resp_threshold=30, lower_resp_threshold=None, dt=.1*ms):
@@ -320,30 +333,12 @@ class SessionReport:
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            baseline,=ax.plot(np.array(range(len(small_chosen_mean))) *.5*ms, small_chosen_mean,'b',label='chosen, small')
-            ax.fill_between(np.array(range(len(small_chosen_mean))) *.5*ms,
-                small_chosen_mean-small_chosen_std_err,small_chosen_mean+small_chosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
-            baseline,=ax.plot(np.array(range(len(small_unchosen_mean))) *.5*ms, small_unchosen_mean,'b--',label='unchosen, small')
-            ax.fill_between(np.array(range(len(small_unchosen_mean))) *.5*ms,
-                small_unchosen_mean-small_unchosen_std_err,small_unchosen_mean+small_unchosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
-            baseline,=ax.plot(np.array(range(len(med_chosen_mean))) *.5*ms, med_chosen_mean,'g',label='chosen, med')
-            ax.fill_between(np.array(range(len(med_chosen_mean))) *.5*ms,
-                med_chosen_mean-med_chosen_std_err,med_chosen_mean+med_chosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
-            baseline,=ax.plot(np.array(range(len(med_unchosen_mean))) *.5*ms, med_unchosen_mean,'g--',label='unchosen, med')
-            ax.fill_between(np.array(range(len(med_unchosen_mean))) *.5*ms,
-                med_unchosen_mean-med_unchosen_std_err,med_unchosen_mean+med_unchosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
-            baseline,=ax.plot(np.array(range(len(large_chosen_mean))) *.5*ms, large_chosen_mean,'r',label='chosen, large')
-            ax.fill_between(np.array(range(len(large_chosen_mean))) *.5*ms,
-                large_chosen_mean-large_chosen_std_err,large_chosen_mean+large_chosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
-            baseline,=ax.plot(np.array(range(len(large_unchosen_mean))) *.5*ms, large_unchosen_mean,'r--',label='unchosen, large')
-            ax.fill_between(np.array(range(len(large_unchosen_mean))) *.5*ms,
-                large_unchosen_mean-large_unchosen_std_err,large_unchosen_mean+large_unchosen_std_err,alpha=0.5,
-                facecolor=baseline.get_color())
+            plot_mean_rate(ax, small_chosen_mean, small_chosen_std_err, 'b', None, 'chosen, small', .5*ms)
+            plot_mean_rate(ax, small_unchosen_mean, small_unchosen_std_err, 'b', 'dashed', 'unchosen, small', .5*ms)
+            plot_mean_rate(ax, med_chosen_mean, med_chosen_std_err, 'g', None, 'chosen, med', .5*ms)
+            plot_mean_rate(ax, med_unchosen_mean, med_unchosen_std_err, 'g', 'dashed', 'unchosen, med', .5*ms)
+            plot_mean_rate(ax, large_chosen_mean, large_chosen_std_err, 'r', None, 'chosen, large', .5*ms)
+            plot_mean_rate(ax, large_unchosen_mean, large_unchosen_std_err, 'r', 'dashed', 'unchosen, large', .5*ms)
             ax.set_xlabel('Time (s)')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -512,6 +507,21 @@ class StimConditionReport:
         self.sessions=[]
         self.excluded_sessions=[]
 
+    def compute_baseline_rates(self):
+        pyr_rates=[]
+        inh_rates=[]
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                print('subject %d' % virtual_subj_id)
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                for trial in range(len(data.trial_e_rates)):
+                    pyr_rates.append((data.trial_e_rates[trial][0,500*ms/.5*ms:750*ms/.5*ms]+
+                                      data.trial_e_rates[trial][1,500*ms/.5*ms:750*ms/.5*ms])/2.0)
+                    inh_rates.append(data.trial_i_rates[trial][500*ms/.5*ms:750*ms/.5*ms])
+        return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(len(pyr_rates)),np.mean(inh_rates),\
+               np.std(inh_rates)/np.sqrt(len(inh_rates))
 
     def compute_trial_rate_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
@@ -734,36 +744,18 @@ class StimConditionReport:
         self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        baseline,=ax.plot(small_beta_small_ev_diff_chosen_mean,'b',label='small beta, chosen')
-        ax.fill_between(range(len(small_beta_small_ev_diff_chosen_mean)),
-            small_beta_small_ev_diff_chosen_mean-small_beta_small_ev_diff_chosen_std_err,
-            small_beta_small_ev_diff_chosen_mean+small_beta_small_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(small_beta_small_ev_diff_unchosen_mean,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(small_beta_small_ev_diff_unchosen_mean)),
-            small_beta_small_ev_diff_unchosen_mean-small_beta_small_ev_diff_unchosen_std_err,
-            small_beta_small_ev_diff_unchosen_mean+small_beta_small_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_small_ev_diff_chosen_mean,'g',label='med beta, chosen')
-        ax.fill_between(range(len(med_beta_small_ev_diff_chosen_mean)),
-            med_beta_small_ev_diff_chosen_mean-med_beta_small_ev_diff_chosen_std_err,
-            med_beta_small_ev_diff_chosen_mean+med_beta_small_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_small_ev_diff_unchosen_mean,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(med_beta_small_ev_diff_unchosen_mean)),
-            med_beta_small_ev_diff_unchosen_mean-med_beta_small_ev_diff_unchosen_std_err,
-            med_beta_small_ev_diff_unchosen_mean+med_beta_small_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_small_ev_diff_chosen_mean,'r',label='large beta, chosen')
-        ax.fill_between(range(len(large_beta_small_ev_diff_chosen_mean)),
-            large_beta_small_ev_diff_chosen_mean-large_beta_small_ev_diff_chosen_std_err,
-            large_beta_small_ev_diff_chosen_mean+large_beta_small_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_small_ev_diff_unchosen_mean,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(large_beta_small_ev_diff_unchosen_mean)),
-            large_beta_small_ev_diff_unchosen_mean-large_beta_small_ev_diff_unchosen_std_err,
-            large_beta_small_ev_diff_unchosen_mean+large_beta_small_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
+        plot_mean_rate(ax, small_beta_small_ev_diff_chosen_mean, small_beta_small_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_small_ev_diff_unchosen_mean, small_beta_small_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_small_ev_diff_chosen_mean, med_beta_small_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_small_ev_diff_unchosen_mean, med_beta_small_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_small_ev_diff_chosen_mean, large_beta_small_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_small_ev_diff_unchosen_mean, large_beta_small_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -776,36 +768,18 @@ class StimConditionReport:
         self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        baseline,=ax.plot(small_beta_med_ev_diff_chosen_mean,'b',label='small beta, chosen')
-        ax.fill_between(range(len(small_beta_med_ev_diff_chosen_mean)),
-            small_beta_med_ev_diff_chosen_mean-small_beta_med_ev_diff_chosen_std_err,
-            small_beta_med_ev_diff_chosen_mean+small_beta_med_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(small_beta_med_ev_diff_unchosen_mean,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(small_beta_med_ev_diff_unchosen_mean)),
-            small_beta_med_ev_diff_unchosen_mean-small_beta_med_ev_diff_unchosen_std_err,
-            small_beta_med_ev_diff_unchosen_mean+small_beta_med_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_med_ev_diff_chosen_mean,'g',label='med beta, chosen')
-        ax.fill_between(range(len(med_beta_med_ev_diff_chosen_mean)),
-            med_beta_med_ev_diff_chosen_mean-med_beta_med_ev_diff_chosen_std_err,
-            med_beta_med_ev_diff_chosen_mean+med_beta_med_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_med_ev_diff_unchosen_mean,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(med_beta_med_ev_diff_unchosen_mean)),
-            med_beta_med_ev_diff_unchosen_mean-med_beta_med_ev_diff_unchosen_std_err,
-            med_beta_med_ev_diff_unchosen_mean+med_beta_med_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_med_ev_diff_chosen_mean,'r',label='large beta, chosen')
-        ax.fill_between(range(len(large_beta_med_ev_diff_chosen_mean)),
-            large_beta_med_ev_diff_chosen_mean-large_beta_med_ev_diff_chosen_std_err,
-            large_beta_med_ev_diff_chosen_mean+large_beta_med_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_med_ev_diff_unchosen_mean,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(large_beta_med_ev_diff_unchosen_mean)),
-            large_beta_med_ev_diff_unchosen_mean-large_beta_med_ev_diff_unchosen_std_err,
-            large_beta_med_ev_diff_unchosen_mean+large_beta_med_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
+        plot_mean_rate(ax, small_beta_med_ev_diff_chosen_mean, small_beta_med_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_med_ev_diff_unchosen_mean, small_beta_med_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_med_ev_diff_chosen_mean, med_beta_med_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_med_ev_diff_unchosen_mean, med_beta_med_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_med_ev_diff_chosen_mean, large_beta_med_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_med_ev_diff_unchosen_mean, large_beta_med_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)        
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -818,36 +792,18 @@ class StimConditionReport:
         self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        baseline,=ax.plot(small_beta_large_ev_diff_chosen_mean,'b',label='small beta, chosen')
-        ax.fill_between(range(len(small_beta_large_ev_diff_chosen_mean)),
-            small_beta_large_ev_diff_chosen_mean-small_beta_large_ev_diff_chosen_std_err,
-            small_beta_large_ev_diff_chosen_mean+small_beta_large_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(small_beta_large_ev_diff_unchosen_mean,'b--',label='small beta, unchosen')
-        ax.fill_between(range(len(small_beta_large_ev_diff_unchosen_mean)),
-            small_beta_large_ev_diff_unchosen_mean-small_beta_large_ev_diff_unchosen_std_err,
-            small_beta_large_ev_diff_unchosen_mean+small_beta_large_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_large_ev_diff_chosen_mean,'g',label='med beta, chosen')
-        ax.fill_between(range(len(med_beta_large_ev_diff_chosen_mean)),
-            med_beta_large_ev_diff_chosen_mean-med_beta_large_ev_diff_chosen_std_err,
-            med_beta_large_ev_diff_chosen_mean+med_beta_large_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(med_beta_large_ev_diff_unchosen_mean,'g--',label='med beta, unchosen')
-        ax.fill_between(range(len(med_beta_large_ev_diff_unchosen_mean)),
-            med_beta_large_ev_diff_unchosen_mean-med_beta_large_ev_diff_unchosen_std_err,
-            med_beta_large_ev_diff_unchosen_mean+med_beta_large_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_large_ev_diff_chosen_mean,'r',label='large beta, chosen')
-        ax.fill_between(range(len(large_beta_large_ev_diff_chosen_mean)),
-            large_beta_large_ev_diff_chosen_mean-large_beta_large_ev_diff_chosen_std_err,
-            large_beta_large_ev_diff_chosen_mean+large_beta_large_ev_diff_chosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
-        baseline,=ax.plot(large_beta_large_ev_diff_unchosen_mean,'r--',label='large beta, unchosen')
-        ax.fill_between(range(len(large_beta_large_ev_diff_unchosen_mean)),
-            large_beta_large_ev_diff_unchosen_mean-large_beta_large_ev_diff_unchosen_std_err,
-            large_beta_large_ev_diff_unchosen_mean+large_beta_large_ev_diff_unchosen_std_err,alpha=0.5,
-            facecolor=baseline.get_color())
+        plot_mean_rate(ax, small_beta_large_ev_diff_chosen_mean, small_beta_large_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_large_ev_diff_unchosen_mean, small_beta_large_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_large_ev_diff_chosen_mean, med_beta_large_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_large_ev_diff_unchosen_mean, med_beta_large_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_large_ev_diff_chosen_mean, large_beta_large_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_large_ev_diff_unchosen_mean, large_beta_large_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -893,7 +849,8 @@ class RLReport:
         self.stim_condition_chosen_rate_std_err={}
         self.stim_condition_unchosen_rate_means={}
         self.stim_condition_unchosen_rate_std_err={}
-        self.stim_condition_rate_diffs={}
+        self.stim_condition_rate_diff_means={}
+        self.stim_condition_rate_diff_stderrs={}
         excluded=None
         for stim_condition in self.stim_conditions:
             print(stim_condition)
@@ -940,17 +897,12 @@ class RLReport:
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            base_line,=ax.plot(self.stim_condition_chosen_rate_means[stim_condition],label='%s, chosen' % stim_condition)
-            ax.fill_between(range(len(self.stim_condition_chosen_rate_means[stim_condition])),
-                self.stim_condition_chosen_rate_means[stim_condition]-self.stim_condition_chosen_rate_std_err[stim_condition],
-                self.stim_condition_chosen_rate_means[stim_condition]+self.stim_condition_chosen_rate_std_err[stim_condition],
-                alpha=0.5,facecolor=base_line.get_color())
-            base_line,=ax.plot(self.stim_condition_unchosen_rate_means[stim_condition],color=base_line.get_color(),
-                linestyle='dashed',label='%s, unchosen' % stim_condition)
-            ax.fill_between(range(len(self.stim_condition_unchosen_rate_means[stim_condition])),
-                self.stim_condition_unchosen_rate_means[stim_condition]-self.stim_condition_unchosen_rate_std_err[stim_condition],
-                self.stim_condition_unchosen_rate_means[stim_condition]+self.stim_condition_unchosen_rate_std_err[stim_condition],
-                alpha=0.5,facecolor=base_line.get_color())
+            baseline=plot_mean_rate(ax, self.stim_condition_chosen_rate_means[stim_condition],
+                self.stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                .5*ms)
+            plot_mean_rate(ax, self.stim_condition_unchosen_rate_means[stim_condition],
+                self.stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1159,27 +1111,27 @@ def plot_trials_ev_diff(data_dir,file_name):
     plt.bar(bins[:-1], hist/float(len(ev_diff)), width=bin_width)
     plt.show()
 
-def plot_mean_firing_rate(data_dir, file_name):
-    data=FileInfo(os.path.join(data_dir,file_name))
-    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-
-    min_ev_diff=0.5
-    max_ev_diff=0.6
-    trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
-    chosen_firing_rates=[]
-    unchosen_firing_rates=[]
-    for trial in trials:
-        if data.choice[trial]>-1:
-            chosen_firing_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
-            unchosen_firing_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
-
-    chosen_firing_rates=np.array(chosen_firing_rates)
-    unchosen_firing_rates=np.array(unchosen_firing_rates)
-
-    fig=plt.figure()
-    plt.plot(np.mean(chosen_firing_rates,axis=0))
-    plt.plot(np.mean(unchosen_firing_rates,axis=0))
-    plt.show()
+#def plot_mean_firing_rate(data_dir, file_name):
+#    data=FileInfo(os.path.join(data_dir,file_name))
+#    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+#
+#    min_ev_diff=0.5
+#    max_ev_diff=0.6
+#    trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+#    chosen_firing_rates=[]
+#    unchosen_firing_rates=[]
+#    for trial in trials:
+#        if data.choice[trial]>-1:
+#            chosen_firing_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
+#            unchosen_firing_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
+#
+#    chosen_firing_rates=np.array(chosen_firing_rates)
+#    unchosen_firing_rates=np.array(unchosen_firing_rates)
+#
+#    fig=plt.figure()
+#    plt.plot(np.mean(chosen_firing_rates,axis=0))
+#    plt.plot(np.mean(unchosen_firing_rates,axis=0))
+#    plt.show()
 
 def debug_trial_plot(file_name):
     f = h5py.File(file_name)
