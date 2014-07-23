@@ -195,7 +195,7 @@ class SessionReport:
         self.session_id=session_id
         self.edesc=edesc
 
-    def compute_trial_rate_stats_pyr(self, data, min_ev_diff, max_ev_diff):
+    def compute_trial_rate_pyr_stats(self, data, min_ev_diff, max_ev_diff):
         ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
         trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
 
@@ -326,11 +326,11 @@ class SessionReport:
         furl='img/ev_diff_pyr_firing_rate.%s' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_ev_diff_url = '%s.png' % furl
-        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
+        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_pyr_stats(data,
             bins[0], bins[3])
-        med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
+        med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_pyr_stats(data,
             bins[3], bins[6])
-        large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
+        large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_pyr_stats(data,
             bins[6], bins[-1])
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
@@ -575,7 +575,7 @@ class StimConditionReport:
                         diff_rates.append(chosen_mean-unchosen_mean)
         return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
-    def compute_trial_rate_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
+    def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
         chosen_rate_sum=np.zeros(data.trial_e_rates[0][0,:].shape)
         unchosen_rate_sum=np.zeros(data.trial_e_rates[0][0,:].shape)
@@ -613,6 +613,39 @@ class StimConditionReport:
         chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
+
+    def compute_trial_rate_inh_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
+        data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
+        rate_sum=np.zeros(data.trial_i_rates[0][0,:].shape)
+        trial_count=0.0
+
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                if min_beta <= data.est_beta < max_beta:
+                    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+                    trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+                    for trial in trials:
+                        if data.choice[trial]>-1:
+                            rate_sum+=data.trial_i_rates[trial][0,:]
+                            trial_count+=1
+        rate_mean=rate_sum/trial_count
+        rate_std_sum=np.zeros(rate_mean.shape)
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                if min_beta <= data.est_beta < max_beta:
+                    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+                    trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+                    for trial in trials:
+                        if data.choice[trial]>-1:
+                            rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
+        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        return rate_mean,rate_std_err
     
     def create_report(self, version, excluded=None):
         make_report_dirs(self.reports_dir)
@@ -654,54 +687,6 @@ class StimConditionReport:
 
         self.condition_perc_correct=np.array(self.condition_perc_correct)
 
-        small_beta_small_ev_diff_chosen_mean,\
-        small_beta_small_ev_diff_chosen_std_err,\
-        small_beta_small_ev_diff_unchosen_mean,\
-        small_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[0], beta_bins[3],
-            ev_diff_bins[0], ev_diff_bins[3])
-        small_beta_med_ev_diff_chosen_mean,\
-        small_beta_med_ev_diff_chosen_std_err,\
-        small_beta_med_ev_diff_unchosen_mean,\
-        small_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[0], beta_bins[3],
-            ev_diff_bins[3], ev_diff_bins[6])
-        small_beta_large_ev_diff_chosen_mean,\
-        small_beta_large_ev_diff_chosen_std_err,\
-        small_beta_large_ev_diff_unchosen_mean,\
-        small_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[0], beta_bins[3],
-            ev_diff_bins[6], ev_diff_bins[-1])
-
-        med_beta_small_ev_diff_chosen_mean,\
-        med_beta_small_ev_diff_chosen_std_err,\
-        med_beta_small_ev_diff_unchosen_mean,\
-        med_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[3], beta_bins[6],
-            ev_diff_bins[0], ev_diff_bins[3])
-        med_beta_med_ev_diff_chosen_mean,\
-        med_beta_med_ev_diff_chosen_std_err,\
-        med_beta_med_ev_diff_unchosen_mean,\
-        med_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[3], beta_bins[6],
-            ev_diff_bins[3], ev_diff_bins[6])
-        med_beta_large_ev_diff_chosen_mean,\
-        med_beta_large_ev_diff_chosen_std_err,\
-        med_beta_large_ev_diff_unchosen_mean,\
-        med_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[3], beta_bins[6],
-            ev_diff_bins[6], ev_diff_bins[-1])
-
-        large_beta_small_ev_diff_chosen_mean,\
-        large_beta_small_ev_diff_chosen_std_err,\
-        large_beta_small_ev_diff_unchosen_mean,\
-        large_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[6], beta_bins[-1],
-            ev_diff_bins[0], ev_diff_bins[3])
-        large_beta_med_ev_diff_chosen_mean,\
-        large_beta_med_ev_diff_chosen_std_err,\
-        large_beta_med_ev_diff_unchosen_mean,\
-        large_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[6], beta_bins[-1],
-            ev_diff_bins[3], ev_diff_bins[6])
-        large_beta_large_ev_diff_chosen_mean,\
-        large_beta_large_ev_diff_chosen_std_err,\
-        large_beta_large_ev_diff_unchosen_mean,\
-        large_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_stats(beta_bins[6], beta_bins[-1],
-            ev_diff_bins[6], ev_diff_bins[-1])
-        
         # Create beta bar plot
         furl='img/beta_dist'
         fname = os.path.join(self.reports_dir, furl)
@@ -789,9 +774,24 @@ class StimConditionReport:
         plt.close(fig)
 
         # Create ev diff firing rate plot
-        furl='img/small_ev_diff_firing_rate'
+        small_beta_small_ev_diff_chosen_mean,\
+        small_beta_small_ev_diff_chosen_std_err,\
+        small_beta_small_ev_diff_unchosen_mean,\
+        small_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[0], ev_diff_bins[3])
+        med_beta_small_ev_diff_chosen_mean,\
+        med_beta_small_ev_diff_chosen_std_err,\
+        med_beta_small_ev_diff_unchosen_mean,\
+        med_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[0], ev_diff_bins[3])
+        large_beta_small_ev_diff_chosen_mean,\
+        large_beta_small_ev_diff_chosen_std_err,\
+        large_beta_small_ev_diff_unchosen_mean,\
+        large_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[0], ev_diff_bins[3])
+        furl='img/small_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_small_ev_diff_url = '%s.png' % furl
+        self.mean_pyr_firing_rate_small_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_small_ev_diff_chosen_mean, small_beta_small_ev_diff_chosen_std_err, 'b', None,
@@ -813,9 +813,24 @@ class StimConditionReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-        furl='img/med_ev_diff_firing_rate'
+        small_beta_med_ev_diff_chosen_mean,\
+        small_beta_med_ev_diff_chosen_std_err,\
+        small_beta_med_ev_diff_unchosen_mean,\
+        small_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[3], ev_diff_bins[6])
+        med_beta_med_ev_diff_chosen_mean,\
+        med_beta_med_ev_diff_chosen_std_err,\
+        med_beta_med_ev_diff_unchosen_mean,\
+        med_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[3], ev_diff_bins[6])
+        large_beta_med_ev_diff_chosen_mean,\
+        large_beta_med_ev_diff_chosen_std_err,\
+        large_beta_med_ev_diff_unchosen_mean,\
+        large_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[3], ev_diff_bins[6])
+        furl='img/med_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_med_ev_diff_url = '%s.png' % furl
+        self.mean_pyr_firing_rate_med_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_med_ev_diff_chosen_mean, small_beta_med_ev_diff_chosen_std_err, 'b', None,
@@ -837,9 +852,142 @@ class StimConditionReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-        furl='img/large_ev_diff_firing_rate'
+        small_beta_large_ev_diff_chosen_mean,\
+        small_beta_large_ev_diff_chosen_std_err,\
+        small_beta_large_ev_diff_unchosen_mean,\
+        small_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        med_beta_large_ev_diff_chosen_mean,\
+        med_beta_large_ev_diff_chosen_std_err,\
+        med_beta_large_ev_diff_unchosen_mean,\
+        med_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        large_beta_large_ev_diff_chosen_mean,\
+        large_beta_large_ev_diff_chosen_std_err,\
+        large_beta_large_ev_diff_unchosen_mean,\
+        large_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_pyr_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        furl='img/large_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_large_ev_diff_url = '%s.png' % furl
+        self.mean_pyr_firing_rate_large_ev_diff_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        plot_mean_rate(ax, small_beta_large_ev_diff_chosen_mean, small_beta_large_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_large_ev_diff_unchosen_mean, small_beta_large_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_large_ev_diff_chosen_mean, med_beta_large_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_large_ev_diff_unchosen_mean, med_beta_large_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_large_ev_diff_chosen_mean, large_beta_large_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_large_ev_diff_unchosen_mean, large_beta_large_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create ev diff firing rate plot
+        small_beta_small_ev_diff_chosen_mean,\
+        small_beta_small_ev_diff_chosen_std_err,\
+        small_beta_small_ev_diff_unchosen_mean,\
+        small_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[0], ev_diff_bins[3])
+        med_beta_small_ev_diff_chosen_mean,\
+        med_beta_small_ev_diff_chosen_std_err,\
+        med_beta_small_ev_diff_unchosen_mean,\
+        med_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[0], ev_diff_bins[3])
+        large_beta_small_ev_diff_chosen_mean,\
+        large_beta_small_ev_diff_chosen_std_err,\
+        large_beta_small_ev_diff_unchosen_mean,\
+        large_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[0], ev_diff_bins[3])
+        furl='img/small_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_small_ev_diff_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        plot_mean_rate(ax, small_beta_small_ev_diff_chosen_mean, small_beta_small_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_small_ev_diff_unchosen_mean, small_beta_small_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_small_ev_diff_chosen_mean, med_beta_small_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_small_ev_diff_unchosen_mean, med_beta_small_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_small_ev_diff_chosen_mean, large_beta_small_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_small_ev_diff_unchosen_mean, large_beta_small_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        small_beta_med_ev_diff_chosen_mean,\
+        small_beta_med_ev_diff_chosen_std_err,\
+        small_beta_med_ev_diff_unchosen_mean,\
+        small_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[3], ev_diff_bins[6])
+        med_beta_med_ev_diff_chosen_mean,\
+        med_beta_med_ev_diff_chosen_std_err,\
+        med_beta_med_ev_diff_unchosen_mean,\
+        med_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[3], ev_diff_bins[6])
+        large_beta_med_ev_diff_chosen_mean,\
+        large_beta_med_ev_diff_chosen_std_err,\
+        large_beta_med_ev_diff_unchosen_mean,\
+        large_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[3], ev_diff_bins[6])
+        furl='img/med_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_med_ev_diff_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        plot_mean_rate(ax, small_beta_med_ev_diff_chosen_mean, small_beta_med_ev_diff_chosen_std_err, 'b', None,
+            'small beta, chosen', .5*ms)
+        plot_mean_rate(ax, small_beta_med_ev_diff_unchosen_mean, small_beta_med_ev_diff_unchosen_std_err, 'b', 'dashed',
+            'small beta, unchosen', .5*ms)
+        plot_mean_rate(ax, med_beta_med_ev_diff_chosen_mean, med_beta_med_ev_diff_chosen_std_err, 'g', None,
+            'med beta, chosen', .5*ms)
+        plot_mean_rate(ax, med_beta_med_ev_diff_unchosen_mean, med_beta_med_ev_diff_unchosen_std_err, 'g', 'dashed',
+            'med beta, unchosen', .5*ms)
+        plot_mean_rate(ax, large_beta_med_ev_diff_chosen_mean, large_beta_med_ev_diff_chosen_std_err, 'r', None,
+            'large beta, chosen', .5*ms)
+        plot_mean_rate(ax, large_beta_med_ev_diff_unchosen_mean, large_beta_med_ev_diff_unchosen_std_err, 'r', 'dashed',
+            'large beta, unchosen', .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        small_beta_large_ev_diff_chosen_mean,\
+        small_beta_large_ev_diff_chosen_std_err,\
+        small_beta_large_ev_diff_unchosen_mean,\
+        small_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        med_beta_large_ev_diff_chosen_mean,\
+        med_beta_large_ev_diff_chosen_std_err,\
+        med_beta_large_ev_diff_unchosen_mean,\
+        med_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        large_beta_large_ev_diff_chosen_mean,\
+        large_beta_large_ev_diff_chosen_std_err,\
+        large_beta_large_ev_diff_unchosen_mean,\
+        large_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+            ev_diff_bins[6], ev_diff_bins[-1])
+        furl='img/large_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_large_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_large_ev_diff_chosen_mean, small_beta_large_ev_diff_chosen_std_err, 'b', None,
@@ -899,6 +1047,8 @@ class RLReport:
         self.stim_condition_chosen_rate_std_err={}
         self.stim_condition_unchosen_rate_means={}
         self.stim_condition_unchosen_rate_std_err={}
+        self.stim_condition_inh_rate_means={}
+        self.stim_condition_inh_rate_std_err={}
         excluded=None
         for stim_condition in self.stim_conditions:
             print(stim_condition)
@@ -911,7 +1061,9 @@ class RLReport:
             self.stim_condition_chosen_rate_means[stim_condition],\
             self.stim_condition_chosen_rate_std_err[stim_condition],\
             self.stim_condition_unchosen_rate_means[stim_condition],\
-            self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_stats_pyr(0,10000,0,100)
+            self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,0,100)
+            self.stim_condition_inh_rate_means[stim_condition],\
+            self.stim_condition_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,0,100)
 
         # Create baseline rate plot
         furl='img/baseline_rate'
@@ -990,9 +1142,9 @@ class RLReport:
         plt.close(fig)
 
         # Create ev diff firing rate plot
-        furl='img/ev_diff_firing_rate'
+        furl='img/ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
+        self.mean_pyr_firing_rate_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
@@ -1002,6 +1154,23 @@ class RLReport:
             plot_mean_rate(ax, self.stim_condition_unchosen_rate_means[stim_condition],
                 self.stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                 '%s, unchosen' % stim_condition, .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_ev_diff_url = '%s.png' % furl
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            baseline=plot_mean_rate(ax, self.stim_condition_inh_rate_means[stim_condition],
+                self.stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
