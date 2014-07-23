@@ -520,7 +520,7 @@ class StimConditionReport:
                 for trial in range(len(data.trial_e_rates)):
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
-                    inh_rates.append(np.mean(data.trial_i_rates[trial][int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
+                    inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
         return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
 
     def compute_ev_diff_rates(self):
