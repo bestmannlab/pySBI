@@ -507,6 +507,21 @@ class StimConditionReport:
         self.sessions=[]
         self.excluded_sessions=[]
 
+    def compute_baseline_diff_rates(self):
+        pyr_rate_diffs=[]
+        trials=0
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                trials+=1.0
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                for trial in range(len(data.trial_e_rates)):
+                    rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    pyr_rate_diffs.append(np.abs(rate1-rate2))
+        return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
+
     def compute_baseline_rates(self):
         pyr_rates=[]
         inh_rates=[]
@@ -904,6 +919,28 @@ class RLReport:
         ax.set_xticklabels(self.stim_conditions)
         ax.set_xlabel('Condition')
         ax.set_ylabel('Interneuron Rate')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create baseline diff plot
+        furl='img/baseline_diff_rate'
+        fname=os.path.join(self.reports_dir,furl)
+        self.baseline_diff_rate_url='%s.png' % furl
+        fig=Figure()
+        baseline_diff_means=[]
+        baseline_diff_std_errs=[]
+        for stim_condition in self.stim_conditions:
+            baseline_diff_mean,baseline_diff_std_err=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates()
+            baseline_diff_means.append(baseline_diff_mean)
+            baseline_diff_std_errs.append(baseline_diff_std_err)
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(1,1,1)
+        ax.bar(pos,baseline_diff_means, width=.5,yerr=baseline_diff_std_errs,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Pyramidal Rate Diff')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
