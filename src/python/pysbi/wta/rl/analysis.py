@@ -892,38 +892,26 @@ class StimConditionReport:
         plt.close(fig)
 
         # Create ev diff firing rate plot
-        small_beta_small_ev_diff_chosen_mean,\
-        small_beta_small_ev_diff_chosen_std_err,\
-        small_beta_small_ev_diff_unchosen_mean,\
-        small_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+        small_beta_small_ev_diff_mean,\
+        small_beta_small_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
             ev_diff_bins[0], ev_diff_bins[3])
-        med_beta_small_ev_diff_chosen_mean,\
-        med_beta_small_ev_diff_chosen_std_err,\
-        med_beta_small_ev_diff_unchosen_mean,\
-        med_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+        med_beta_small_ev_diff_mean,\
+        med_beta_small_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
             ev_diff_bins[0], ev_diff_bins[3])
-        large_beta_small_ev_diff_chosen_mean,\
-        large_beta_small_ev_diff_chosen_std_err,\
-        large_beta_small_ev_diff_unchosen_mean,\
-        large_beta_small_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+        large_beta_small_ev_diff_mean,\
+        large_beta_small_ev_diff_std_err,=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
             ev_diff_bins[0], ev_diff_bins[3])
         furl='img/small_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_small_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        plot_mean_rate(ax, small_beta_small_ev_diff_chosen_mean, small_beta_small_ev_diff_chosen_std_err, 'b', None,
+        plot_mean_rate(ax, small_beta_small_ev_diff_mean, small_beta_small_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
-        plot_mean_rate(ax, small_beta_small_ev_diff_unchosen_mean, small_beta_small_ev_diff_unchosen_std_err, 'b', 'dashed',
-            'small beta, unchosen', .5*ms)
-        plot_mean_rate(ax, med_beta_small_ev_diff_chosen_mean, med_beta_small_ev_diff_chosen_std_err, 'g', None,
+        plot_mean_rate(ax, med_beta_small_ev_diff_mean, med_beta_small_ev_diff_std_err, 'g', None,
             'med beta, chosen', .5*ms)
-        plot_mean_rate(ax, med_beta_small_ev_diff_unchosen_mean, med_beta_small_ev_diff_unchosen_std_err, 'g', 'dashed',
-            'med beta, unchosen', .5*ms)
-        plot_mean_rate(ax, large_beta_small_ev_diff_chosen_mean, large_beta_small_ev_diff_chosen_std_err, 'r', None,
+        plot_mean_rate(ax, large_beta_small_ev_diff_mean, large_beta_small_ev_diff_std_err, 'r', None,
             'large beta, chosen', .5*ms)
-        plot_mean_rate(ax, large_beta_small_ev_diff_unchosen_mean, large_beta_small_ev_diff_unchosen_std_err, 'r', 'dashed',
-            'large beta, unchosen', .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -931,38 +919,26 @@ class StimConditionReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-        small_beta_med_ev_diff_chosen_mean,\
-        small_beta_med_ev_diff_chosen_std_err,\
-        small_beta_med_ev_diff_unchosen_mean,\
-        small_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+        small_beta_med_ev_diff_mean,\
+        small_beta_med_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
             ev_diff_bins[3], ev_diff_bins[6])
-        med_beta_med_ev_diff_chosen_mean,\
-        med_beta_med_ev_diff_chosen_std_err,\
-        med_beta_med_ev_diff_unchosen_mean,\
-        med_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+        med_beta_med_ev_diff_mean,\
+        med_beta_med_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
             ev_diff_bins[3], ev_diff_bins[6])
-        large_beta_med_ev_diff_chosen_mean,\
-        large_beta_med_ev_diff_chosen_std_err,\
-        large_beta_med_ev_diff_unchosen_mean,\
-        large_beta_med_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+        large_beta_med_ev_diff_mean,\
+        large_beta_med_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
             ev_diff_bins[3], ev_diff_bins[6])
         furl='img/med_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_med_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        plot_mean_rate(ax, small_beta_med_ev_diff_chosen_mean, small_beta_med_ev_diff_chosen_std_err, 'b', None,
+        plot_mean_rate(ax, small_beta_med_ev_diff_mean, small_beta_med_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
-        plot_mean_rate(ax, small_beta_med_ev_diff_unchosen_mean, small_beta_med_ev_diff_unchosen_std_err, 'b', 'dashed',
-            'small beta, unchosen', .5*ms)
-        plot_mean_rate(ax, med_beta_med_ev_diff_chosen_mean, med_beta_med_ev_diff_chosen_std_err, 'g', None,
+        plot_mean_rate(ax, med_beta_med_ev_diff_mean, med_beta_med_ev_diff_std_err, 'g', None,
             'med beta, chosen', .5*ms)
-        plot_mean_rate(ax, med_beta_med_ev_diff_unchosen_mean, med_beta_med_ev_diff_unchosen_std_err, 'g', 'dashed',
-            'med beta, unchosen', .5*ms)
-        plot_mean_rate(ax, large_beta_med_ev_diff_chosen_mean, large_beta_med_ev_diff_chosen_std_err, 'r', None,
+        plot_mean_rate(ax, large_beta_med_ev_diff_mean, large_beta_med_ev_diff_std_err, 'r', None,
             'large beta, chosen', .5*ms)
-        plot_mean_rate(ax, large_beta_med_ev_diff_unchosen_mean, large_beta_med_ev_diff_unchosen_std_err, 'r', 'dashed',
-            'large beta, unchosen', .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -970,38 +946,26 @@ class StimConditionReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-        small_beta_large_ev_diff_chosen_mean,\
-        small_beta_large_ev_diff_chosen_std_err,\
-        small_beta_large_ev_diff_unchosen_mean,\
-        small_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
+        small_beta_large_ev_diff_mean,\
+        small_beta_large_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[0], beta_bins[3],
             ev_diff_bins[6], ev_diff_bins[-1])
-        med_beta_large_ev_diff_chosen_mean,\
-        med_beta_large_ev_diff_chosen_std_err,\
-        med_beta_large_ev_diff_unchosen_mean,\
-        med_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
+        med_beta_large_ev_diff_mean,\
+        med_beta_large_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[3], beta_bins[6],
             ev_diff_bins[6], ev_diff_bins[-1])
-        large_beta_large_ev_diff_chosen_mean,\
-        large_beta_large_ev_diff_chosen_std_err,\
-        large_beta_large_ev_diff_unchosen_mean,\
-        large_beta_large_ev_diff_unchosen_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
+        large_beta_large_ev_diff_mean,\
+        large_beta_large_ev_diff_std_err=self.compute_trial_rate_inh_stats(beta_bins[6], beta_bins[-1],
             ev_diff_bins[6], ev_diff_bins[-1])
         furl='img/large_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_large_ev_diff_url = '%s.png' % furl
         fig=Figure()
         ax=fig.add_subplot(1,1,1)
-        plot_mean_rate(ax, small_beta_large_ev_diff_chosen_mean, small_beta_large_ev_diff_chosen_std_err, 'b', None,
+        plot_mean_rate(ax, small_beta_large_ev_diff_mean, small_beta_large_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
-        plot_mean_rate(ax, small_beta_large_ev_diff_unchosen_mean, small_beta_large_ev_diff_unchosen_std_err, 'b', 'dashed',
-            'small beta, unchosen', .5*ms)
-        plot_mean_rate(ax, med_beta_large_ev_diff_chosen_mean, med_beta_large_ev_diff_chosen_std_err, 'g', None,
+        plot_mean_rate(ax, med_beta_large_ev_diff_mean, med_beta_large_ev_diff_std_err, 'g', None,
             'med beta, chosen', .5*ms)
-        plot_mean_rate(ax, med_beta_large_ev_diff_unchosen_mean, med_beta_large_ev_diff_unchosen_std_err, 'g', 'dashed',
-            'med beta, unchosen', .5*ms)
-        plot_mean_rate(ax, large_beta_large_ev_diff_chosen_mean, large_beta_large_ev_diff_chosen_std_err, 'r', None,
+        plot_mean_rate(ax, large_beta_large_ev_diff_mean, large_beta_large_ev_diff_std_err, 'r', None,
             'large beta, chosen', .5*ms)
-        plot_mean_rate(ax, large_beta_large_ev_diff_unchosen_mean, large_beta_large_ev_diff_unchosen_std_err, 'r', 'dashed',
-            'large beta, unchosen', .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
