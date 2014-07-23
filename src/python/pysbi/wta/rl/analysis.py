@@ -869,6 +869,40 @@ class RLReport:
 #                self.stim_condition_unchosen_rate_means[stim_condition]):
 #                self.stim_condition_rate_diffs[stim_condition]=np.mean(chosen_rate[int(900*ms/.5*ms):int(990*ms/.5*ms)])-np.mean(unchosen_rate[int(900*ms/.5*ms):int(900*ms/.5*ms)])
 
+        # Create baseline rate plot
+        furl='img/baseline_rate'
+        fname=os.path.join(self.reports_dir,furl)
+        self.baseline_rate_url='%s.png' % furl
+        fig=Figure()
+
+        pyr_means=[]
+        pyr_std_errs=[]
+        inh_means=[]
+        inh_sd_errs=[]
+
+        for stim_condition in self.stim_conditions:
+            pyr_mean,pyr_std_err,inh_mean,inh_std_err=self.stim_condition_reports[stim_condition].compute_baseline_rates()
+            pyr_means.append(pyr_mean)
+            pyr_std_errs.append(pyr_std_err)
+            inh_means.append(inh_mean)
+            inh_sd_errs.append(inh_std_err)
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(2,1,1)
+        ax.bar(pos,pyr_means, width=.5,yerr=pyr_std_errs,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Pyramidal Rate')
+        ax=fig.add_subplot(2,1,2)
+        ax.bar(pos,inh_means, width=.5,yerr=inh_sd_errs,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Interneuron Rate')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
         # Create rate diff firing rate plot
 #        furl='img/firing_rate_diff'
 #        fname = os.path.join(self.reports_dir, furl)
