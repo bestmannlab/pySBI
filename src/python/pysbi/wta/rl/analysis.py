@@ -548,8 +548,8 @@ class StimConditionReport:
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
-                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     diff_rates.append(chosen_mean-unchosen_mean)
         return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
