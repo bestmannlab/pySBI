@@ -510,8 +510,10 @@ class StimConditionReport:
     def compute_baseline_rates(self):
         pyr_rates=[]
         inh_rates=[]
+        trials=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
+                trials+=1.0
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
@@ -519,18 +521,22 @@ class StimConditionReport:
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
                     inh_rates.append(np.mean(data.trial_i_rates[trial][int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
-        return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(len(pyr_rates)),np.mean(inh_rates),\
-               np.std(inh_rates)/np.sqrt(len(inh_rates))
+        return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
 
-#    def compute_ev_diff_rates(self):
-#        diff_rates=[]
-#        for virtual_subj_id in range(self.num_subjects):
-#            if virtual_subj_id not in self.excluded_sessions:
-#                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
-#                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
-#                data=FileInfo(session_report_file)
-#                for trial in range(len(data.trial_e_rates)):
-#                    chosen_mean=
+    def compute_ev_diff_rates(self):
+        diff_rates=[]
+        trials=0
+        for virtual_subj_id in range(self.num_subjects):
+            if virtual_subj_id not in self.excluded_sessions:
+                trials+=1.0
+                session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
+                session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                for trial in range(len(data.trial_e_rates)):
+                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    diff_rates.append(chosen_mean-unchosen_mean)
+        return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
     def compute_trial_rate_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
@@ -856,8 +862,6 @@ class RLReport:
         self.stim_condition_chosen_rate_std_err={}
         self.stim_condition_unchosen_rate_means={}
         self.stim_condition_unchosen_rate_std_err={}
-        self.stim_condition_rate_diff_means={}
-        self.stim_condition_rate_diff_stderrs={}
         excluded=None
         for stim_condition in self.stim_conditions:
             print(stim_condition)
@@ -872,21 +876,15 @@ class RLReport:
             self.stim_condition_unchosen_rate_means[stim_condition],\
             self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_stats(0,10000,0,100)
 
-#            for chosen_rate,unchosen_rate in zip(self.stim_condition_chosen_rate_means[stim_condition],
-#                self.stim_condition_unchosen_rate_means[stim_condition]):
-#                self.stim_condition_rate_diffs[stim_condition]=np.mean(chosen_rate[int(900*ms/.5*ms):int(990*ms/.5*ms)])-np.mean(unchosen_rate[int(900*ms/.5*ms):int(900*ms/.5*ms)])
-
         # Create baseline rate plot
         furl='img/baseline_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_rate_url='%s.png' % furl
         fig=Figure()
-
         pyr_means=[]
         pyr_std_errs=[]
         inh_means=[]
         inh_sd_errs=[]
-
         for stim_condition in self.stim_conditions:
             pyr_mean,pyr_std_err,inh_mean,inh_std_err=self.stim_condition_reports[stim_condition].compute_baseline_rates()
             pyr_means.append(pyr_mean)
@@ -911,25 +909,26 @@ class RLReport:
         plt.close(fig)
 
         # Create rate diff firing rate plot
-#        furl='img/firing_rate_diff'
-#        fname = os.path.join(self.reports_dir, furl)
-#        self.firing_rate_diff_url = '%s.png' % furl
-#        fig=Figure()
-#        ax=fig.add_subplot(1,1,1)
-#        mean_diffs=[]
-#        std_diffs=[]
-#        for stim_condition in self.stim_conditions:
-#            mean_diffs.append(np.mean(self.stim_condition_rate_diffs[stim_condition]))
-#            std_diffs.append(np.std(self.stim_condition_rate_diffs[stim_condition])/np.sqrt(len(self.stim_condition_rate_diffs[stim_condition])))
-#        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
-#        ax.bar(pos,mean_diffs,width=.5,yerr=std_diffs,align='center',ecolor='k')
-#        ax.set_xticks(pos)
-#        ax.set_xticklabels(self.stim_conditions)
-#        ax.set_xlabel('Condition')
-#        ax.set_ylabel('Firing Rate Diff')
-#        save_to_png(fig, '%s.png' % fname)
-#        save_to_eps(fig, '%s.eps' % fname)
-#        plt.close(fig)
+        furl='img/firing_rate_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.firing_rate_diff_url = '%s.png' % furl
+        mean_diff_rates=[]
+        std_err_diff_rates=[]
+        for stim_condition in self.stim_conditions:
+            mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates()
+            mean_diff_rates.append(mean_diff_rate)
+            std_err_diff_rates.append(std_err_diff_rate)
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax.bar(pos,mean_diff_rates,width=.5,yerr=std_err_diff_rates,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Firing Rate Diff')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         # Create ev diff firing rate plot
         furl='img/ev_diff_firing_rate'
