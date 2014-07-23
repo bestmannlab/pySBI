@@ -512,11 +512,11 @@ class StimConditionReport:
         trials=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                trials+=1.0
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
+                    trials+=1.0
                     rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     pyr_rate_diffs.append(np.abs(rate1-rate2))
@@ -528,11 +528,11 @@ class StimConditionReport:
         trials=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                trials+=1.0
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
+                    trials+=1.0
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
                     inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
@@ -543,14 +543,15 @@ class StimConditionReport:
         trials=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                trials+=1.0
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
-                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    diff_rates.append(chosen_mean-unchosen_mean)
+                    if data.choice[trial]>-1:
+                        trials+=1.0
+                        chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        diff_rates.append(chosen_mean-unchosen_mean)
         return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
     def compute_trial_rate_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
