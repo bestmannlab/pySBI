@@ -195,7 +195,7 @@ class SessionReport:
         self.session_id=session_id
         self.edesc=edesc
 
-    def compute_trial_rate_stats(self, data, min_ev_diff, max_ev_diff):
+    def compute_trial_rate_stats_pyr(self, data, min_ev_diff, max_ev_diff):
         ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
         trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
 
@@ -219,19 +219,23 @@ class SessionReport:
         unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
 
-    def sort_trials(self, data, min_ev_diff, max_ev_diff):
+    def compute_trial_rate_stats_inh(self, data, min_ev_diff, max_ev_diff):
         ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
         trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
-        chosen_firing_rates=[]
-        unchosen_firing_rates=[]
+
+        rate_sum=np.zeros(data.trial_i_rates[0][0,:].shape)
+        trial_count=0.0
         for trial in trials:
             if data.choice[trial]>-1:
-                chosen_firing_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
-                unchosen_firing_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
-
-        chosen_firing_rates=np.array(chosen_firing_rates)
-        unchosen_firing_rates=np.array(unchosen_firing_rates)
-        return chosen_firing_rates, unchosen_firing_rates
+                rate_sum+=data.trial_i_rates[trial][0,:]
+                trial_count+=1.0
+        rate_mean=rate_sum/trial_count
+        rate_std_sum=np.zeros(rate_mean.shape)
+        for trial in trials:
+            if data.choice[trial]>-1:
+                rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
+        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        return rate_mean,rate_std_err
 
     def create_report(self, version, data):
         make_report_dirs(self.reports_dir)
@@ -319,17 +323,15 @@ class SessionReport:
             plt.close(fig)
 
         # Create ev diff firing rate plot
-        furl='img/ev_diff_firing_rate.%s' % self.file_prefix
+        furl='img/ev_diff_pyr_firing_rate.%s' % self.file_prefix
         fname = os.path.join(self.reports_dir, furl)
-        self.mean_firing_rate_ev_diff_url = '%s.png' % furl
-
-        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats(data,
+        self.mean_pyr_firing_rate_ev_diff_url = '%s.png' % furl
+        small_chosen_mean,small_chosen_std_err,small_unchosen_mean,small_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
             bins[0], bins[3])
-        med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_stats(data,
+        med_chosen_mean,med_chosen_std_err,med_unchosen_mean,med_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
             bins[3], bins[6])
-        large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_stats(data,
+        large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_stats_pyr(data,
             bins[6], bins[-1])
-        
         if not os.path.exists('%s.png' % fname):
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
@@ -346,6 +348,25 @@ class SessionReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
+        # Create ev diff firing rate plot
+        furl='img/ev_diff_inh_firing_rate.%s' % self.file_prefix
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_ev_diff_url = '%s.png' % furl
+        small_mean,small_std_err=self.compute_trial_rate_stats_inh(data, bins[0], bins[3])
+        med_mean,med_std_err=self.compute_trial_rate_stats_inh(data, bins[3], bins[6])
+        large_mean,large_std_err=self.compute_trial_rate_stats_inh(data, bins[6], bins[-1])
+        if not os.path.exists('%s.png' % fname):
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            plot_mean_rate(ax, small_mean, small_std_err, 'b', None, 'small', .5*ms)
+            plot_mean_rate(ax, med_mean, med_std_err, 'g', None, 'med', .5*ms)
+            plot_mean_rate(ax, large_mean, large_std_err, 'r', None, 'large', .5*ms)
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
 
         self.perc_no_response=0.0
         self.perc_correct_response=0.0
@@ -890,7 +911,7 @@ class RLReport:
             self.stim_condition_chosen_rate_means[stim_condition],\
             self.stim_condition_chosen_rate_std_err[stim_condition],\
             self.stim_condition_unchosen_rate_means[stim_condition],\
-            self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_stats(0,10000,0,100)
+            self.stim_condition_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_stats_pyr(0,10000,0,100)
 
         # Create baseline rate plot
         furl='img/baseline_rate'
