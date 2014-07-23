@@ -512,7 +512,6 @@ class StimConditionReport:
         inh_rates=[]
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                print('subject %d' % virtual_subj_id)
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
@@ -520,6 +519,7 @@ class StimConditionReport:
                     pyr_rates.append((data.trial_e_rates[trial][0,500*ms/.5*ms:750*ms/.5*ms]+
                                       data.trial_e_rates[trial][1,500*ms/.5*ms:750*ms/.5*ms])/2.0)
                     inh_rates.append(data.trial_i_rates[trial][500*ms/.5*ms:750*ms/.5*ms])
+        print(pyr_rates)
         return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(len(pyr_rates)),np.mean(inh_rates),\
                np.std(inh_rates)/np.sqrt(len(inh_rates))
 
@@ -531,7 +531,6 @@ class StimConditionReport:
 
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                print('subject %d' % virtual_subj_id)
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
@@ -549,7 +548,6 @@ class StimConditionReport:
         unchosen_rate_std_sum=np.zeros(unchosen_rate_mean.shape)
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
-                print('subject %d' % virtual_subj_id)
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
