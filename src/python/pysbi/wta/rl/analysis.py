@@ -561,7 +561,7 @@ class StimConditionReport:
                             chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                             unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
         chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/trial_count-1)/np.sqrt(trial_count)
+        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
     
     def create_report(self, version, excluded=None):
