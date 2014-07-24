@@ -1116,6 +1116,7 @@ class RLReport:
         ax.set_xticklabels(self.stim_conditions)
         ax.set_xlabel('Condition')
         ax.set_ylabel('% Correct')
+        ax.set_ylim([50,90])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
