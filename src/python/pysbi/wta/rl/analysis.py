@@ -1283,12 +1283,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
-                self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
-                self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
+                    self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1303,12 +1304,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_chosen_rate_means[stim_condition],
-                self.cathode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.cathode_stim_condition_unchosen_rate_means[stim_condition],
-                self.cathode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_chosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.cathode_stim_condition_unchosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1323,9 +1325,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_inh_rate_means[stim_condition],
-                self.anode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_inh_rate_means[stim_condition],
+                    self.anode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1340,9 +1343,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_inh_rate_means[stim_condition],
-                self.cathode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_inh_rate_means[stim_condition],
+                    self.cathode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1357,12 +1361,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],
-                self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
-                self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                    self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1377,12 +1382,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],
-                self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
-                self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1397,9 +1403,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_inh_rate_means[stim_condition],
-                self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_inh_rate_means[stim_condition],
+                    self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1414,9 +1421,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_inh_rate_means[stim_condition],
-                self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_inh_rate_means[stim_condition],
+                    self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1431,12 +1439,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],
-                self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
-                self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                    self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1451,12 +1460,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],
-                self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
-                self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1471,9 +1481,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_inh_rate_means[stim_condition],
-                self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_inh_rate_means[stim_condition],
+                    self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1488,9 +1499,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_inh_rate_means[stim_condition],
-                self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_inh_rate_means[stim_condition],
+                    self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1505,12 +1517,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],
-                self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
-                self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                    self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1525,12 +1538,13 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],
-                self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                .5*ms)
-            plot_mean_rate(ax, self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
-                self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
-                '%s, unchosen' % stim_condition, .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1545,9 +1559,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_inh_rate_means[stim_condition],
-                self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('anode'):
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_inh_rate_means[stim_condition],
+                    self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
@@ -1562,9 +1577,10 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_inh_rate_means[stim_condition],
-                self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                .5*ms)
+            if stim_condition=='control' or stim_condition.startswith('cathode'):
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_inh_rate_means[stim_condition],
+                    self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
