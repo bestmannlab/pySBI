@@ -1103,7 +1103,7 @@ class RLReport:
         furl='img/perc_correct'
         fname=os.path.join(self.reports_dir,furl)
         self.perc_correct_url='%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         perc_correct_mean=[]
         perc_correct_std_err=[]
         for stim_condition in self.stim_conditions:
@@ -1124,7 +1124,7 @@ class RLReport:
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
         self.perc_no_response_url='%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         perc_no_response_mean=[]
         perc_no_response_std_err=[]
         for stim_condition in self.stim_conditions:
@@ -1145,7 +1145,7 @@ class RLReport:
         furl='img/baseline_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_rate_url='%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         pyr_means=[]
         pyr_std_errs=[]
         inh_means=[]
@@ -1177,7 +1177,7 @@ class RLReport:
         furl='img/baseline_diff_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_diff_rate_url='%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         baseline_diff_means=[]
         baseline_diff_std_errs=[]
         for stim_condition in self.stim_conditions:
@@ -1205,7 +1205,7 @@ class RLReport:
             mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates()
             mean_diff_rates.append(mean_diff_rate)
             std_err_diff_rates.append(std_err_diff_rate)
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
         ax.bar(pos,mean_diff_rates,width=.5,yerr=std_err_diff_rates,align='center',ecolor='k')
@@ -1371,7 +1371,7 @@ class RLReport:
         self.alpha_perc_correct_url = '%s.png' % furl
         all_condition_alphas=[]
         all_condition_perc_correct=[]
-        fig=Figure()
+        fig=Figure(figsize=(16,12))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
@@ -1426,7 +1426,7 @@ class RLReport:
         fname = os.path.join(self.reports_dir, furl)
         self.beta_perc_correct_url = '%s.png' % furl
         all_condition_betas=[]
-        fig=Figure()
+        fig=Figure(figsize=(16,12))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             d = np.abs(self.stim_condition_reports[stim_condition].condition_betas - np.median(self.stim_condition_reports[stim_condition].condition_betas))
