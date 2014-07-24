@@ -1128,8 +1128,8 @@ class RLReport:
         perc_no_response_mean=[]
         perc_no_response_std_err=[]
         for stim_condition in self.stim_conditions:
-            perc_no_response_mean.append(np.mean(self.stim_condition_perc_no_response[stim_condition]))
-            perc_no_response_std_err.append(np.std(self.stim_condition_perc_no_response[stim_condition])/np.sqrt(len(self.stim_condition_perc_no_response[stim_condition])))
+            perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
+            perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
         pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
         ax=fig.add_subplot(2,1,1)
         ax.bar(pos,perc_no_response_mean, width=.5,yerr=perc_no_response_std_err,align='center',ecolor='k')
