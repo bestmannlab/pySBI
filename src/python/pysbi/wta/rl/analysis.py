@@ -1062,6 +1062,8 @@ class RLReport:
         self.stim_condition_large_ev_inh_rate_means={}
         self.stim_condition_large_ev_inh_rate_std_err={}
 
+        self.stim_condition_perc_correct={}
+        self.stim_condition_no_response={}
         for stim_condition in self.stim_conditions:
             self.stim_condition_chosen_rate_means[stim_condition],\
             self.stim_condition_chosen_rate_std_err[stim_condition],\
@@ -1090,6 +1092,54 @@ class RLReport:
             self.stim_condition_large_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
             self.stim_condition_large_ev_inh_rate_means[stim_condition],\
             self.stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
+
+            self.stim_condition_perc_correct[stim_condition]=[]
+            self.stim_condition_no_response[stim_condition]=[]
+            for session in self.stim_condition_reports[stim_condition].sessions:
+                self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
+                self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
+
+        # Create % correct plot
+        furl='img/perc_correct'
+        fname=os.path.join(self.reports_dir,furl)
+        self.perc_correct_url='%s.png' % furl
+        fig=Figure()
+        perc_correct_mean=[]
+        perc_correct_std_err=[]
+        for stim_condition in self.stim_conditions:
+            perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
+            perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(2,1,1)
+        ax.bar(pos,perc_correct_mean, width=.5,yerr=perc_correct_std_err,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('% Correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create perc no response plot
+        furl='img/perc_no_response'
+        fname=os.path.join(self.reports_dir,furl)
+        self.perc_no_response_url='%s.png' % furl
+        fig=Figure()
+        perc_no_response_mean=[]
+        perc_no_response_std_err=[]
+        for stim_condition in self.stim_conditions:
+            perc_no_response_mean.append(np.mean(self.stim_condition_perc_no_response[stim_condition]))
+            perc_no_response_std_err.append(np.std(self.stim_condition_perc_no_response[stim_condition])/np.sqrt(len(self.stim_condition_perc_no_response[stim_condition])))
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(2,1,1)
+        ax.bar(pos,perc_no_response_mean, width=.5,yerr=perc_no_response_std_err,align='center',ecolor='k')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('% No Response')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         # Create baseline rate plot
         furl='img/baseline_rate'
