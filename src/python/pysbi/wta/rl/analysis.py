@@ -219,7 +219,7 @@ class SessionReport:
             if data.choice[trial]>-1:
                 chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                 unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
-        if trial_count>0:
+        if trial_count>1:
             chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
             unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         else:
@@ -245,7 +245,7 @@ class SessionReport:
         for trial in trials:
             if data.choice[trial]>-1:
                 rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
-        if trial_count>0:
+        if trial_count>1:
             rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         else:
             rate_std_err=rate_std_sum
