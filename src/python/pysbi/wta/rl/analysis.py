@@ -237,12 +237,18 @@ class SessionReport:
             if data.choice[trial]>-1:
                 rate_sum+=data.trial_i_rates[trial][0,:]
                 trial_count+=1.0
-        rate_mean=rate_sum/trial_count
+        if trial_count>0:
+            rate_mean=rate_sum/trial_count
+        else:
+            rate_mean=rate_sum
         rate_std_sum=np.zeros(rate_mean.shape)
         for trial in trials:
             if data.choice[trial]>-1:
                 rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
-        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        if trial_count>0:
+            rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        else:
+            rate_std_err=rate_std_sum
         return rate_mean,rate_std_err
 
     def create_report(self, version, data):
@@ -341,7 +347,7 @@ class SessionReport:
         large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_pyr_stats(data,
             bins[6], bins[-1])
         if not os.path.exists('%s.png' % fname):
-            fig=Figure()
+            fig=Figure(figsize=(16,6))
             ax=fig.add_subplot(1,1,1)
             plot_mean_rate(ax, small_chosen_mean, small_chosen_std_err, 'b', None, 'chosen, small', .5*ms)
             plot_mean_rate(ax, small_unchosen_mean, small_unchosen_std_err, 'b', 'dashed', 'unchosen, small', .5*ms)
@@ -364,7 +370,7 @@ class SessionReport:
         med_mean,med_std_err=self.compute_trial_rate_stats_inh(data, bins[3], bins[6])
         large_mean,large_std_err=self.compute_trial_rate_stats_inh(data, bins[6], bins[-1])
         if not os.path.exists('%s.png' % fname):
-            fig=Figure()
+            fig=Figure(figsize=(16,6))
             ax=fig.add_subplot(1,1,1)
             plot_mean_rate(ax, small_mean, small_std_err, 'b', None, 'small', .5*ms)
             plot_mean_rate(ax, med_mean, med_std_err, 'g', None, 'med', .5*ms)
@@ -800,7 +806,7 @@ class StimConditionReport:
         furl='img/small_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_small_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_small_ev_diff_chosen_mean, small_beta_small_ev_diff_chosen_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -839,7 +845,7 @@ class StimConditionReport:
         furl='img/med_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_med_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_med_ev_diff_chosen_mean, small_beta_med_ev_diff_chosen_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -878,7 +884,7 @@ class StimConditionReport:
         furl='img/large_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_large_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_large_ev_diff_chosen_mean, small_beta_large_ev_diff_chosen_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -912,7 +918,7 @@ class StimConditionReport:
         furl='img/small_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_small_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_small_ev_diff_mean, small_beta_small_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -939,7 +945,7 @@ class StimConditionReport:
         furl='img/med_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_med_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_med_ev_diff_mean, small_beta_med_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -966,7 +972,7 @@ class StimConditionReport:
         furl='img/large_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_large_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         plot_mean_rate(ax, small_beta_large_ev_diff_mean, small_beta_large_ev_diff_std_err, 'b', None,
             'small beta, chosen', .5*ms)
@@ -1165,7 +1171,7 @@ class RLReport:
         furl='img/ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_chosen_rate_means[stim_condition],
@@ -1185,7 +1191,7 @@ class RLReport:
         furl='img/ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_inh_rate_means[stim_condition],
@@ -1202,7 +1208,7 @@ class RLReport:
         furl='img/small_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_small_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_small_ev_chosen_rate_means[stim_condition],
@@ -1222,7 +1228,7 @@ class RLReport:
         furl='img/small_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_small_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_small_ev_inh_rate_means[stim_condition],
@@ -1239,7 +1245,7 @@ class RLReport:
         furl='img/med_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_med_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_med_ev_chosen_rate_means[stim_condition],
@@ -1259,7 +1265,7 @@ class RLReport:
         furl='img/med_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_med_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_med_ev_inh_rate_means[stim_condition],
@@ -1276,7 +1282,7 @@ class RLReport:
         furl='img/large_ev_diff_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_pyr_firing_rate_large_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_large_ev_chosen_rate_means[stim_condition],
@@ -1296,7 +1302,7 @@ class RLReport:
         furl='img/large_ev_diff_inh_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.mean_inh_firing_rate_large_ev_diff_url = '%s.png' % furl
-        fig=Figure()
+        fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             baseline=plot_mean_rate(ax, self.stim_condition_large_ev_inh_rate_means[stim_condition],
