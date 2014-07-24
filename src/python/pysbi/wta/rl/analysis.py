@@ -207,16 +207,24 @@ class SessionReport:
                 chosen_rate_sum+=data.trial_e_rates[trial][data.choice[trial],:]
                 unchosen_rate_sum+=data.trial_e_rates[trial][1-data.choice[trial],:]
                 trial_count+=1.0
-        chosen_rate_mean=chosen_rate_sum/trial_count
-        unchosen_rate_mean=unchosen_rate_sum/trial_count
+        if trial_count>0:
+            chosen_rate_mean=chosen_rate_sum/trial_count
+            unchosen_rate_mean=unchosen_rate_sum/trial_count
+        else:
+            chosen_rate_mean=chosen_rate_sum
+            unchosen_rate_mean=unchosen_rate_sum
         chosen_rate_std_sum=np.zeros(chosen_rate_mean.shape)
         unchosen_rate_std_sum=np.zeros(unchosen_rate_mean.shape)
         for trial in trials:
             if data.choice[trial]>-1:
                 chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                 unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
-        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        if trial_count>0:
+            chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        else:
+            chosen_rate_std_err=chosen_rate_std_sum
+            unchosen_rate_std_err=unchosen_rate_std_sum
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
 
     def compute_trial_rate_stats_inh(self, data, min_ev_diff, max_ev_diff):
