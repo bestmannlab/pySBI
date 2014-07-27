@@ -1889,8 +1889,8 @@ class RLReport:
                 filtered_alpha_diffs=reject_outliers(alpha_diff)
                 self.stim_alpha_mean_change[stim_condition]=np.mean(filtered_alpha_diffs)
                 self.stim_alpha_std_change[stim_condition]=np.std(filtered_alpha_diffs)
-                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_alphas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
+                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(reject_outliers(np.squeeze(self.stim_condition_reports['control'].condition_alphas)),
+                    reject_outliers(np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas)))
 
                 # Create beta plot
                 furl='img/%s_beta' % stim_condition
@@ -1907,8 +1907,8 @@ class RLReport:
                 filtered_beta_diffs=reject_outliers(beta_diff)
                 self.stim_beta_mean_change[stim_condition]=np.mean(filtered_beta_diffs)
                 self.stim_beta_std_change[stim_condition]=np.std(filtered_beta_diffs)
-                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_betas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(reject_outliers(np.squeeze(self.stim_condition_reports['control'].condition_betas)),
+                    reject_outliers(np.squeeze(self.stim_condition_reports[stim_condition].condition_betas)))
 
 
         #create report
