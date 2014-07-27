@@ -561,9 +561,10 @@ class StimConditionReport:
                         rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         pyr_rate_diffs.append(np.abs(rate1-rate2))
-        W,p=stats.shapiro(pyr_rate_diffs)
-        print('p=%.4f' % p)
-        return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
+        #W,p=stats.shapiro(pyr_rate_diffs)
+        #print('p=%.4f' % p)
+        #return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
+        return pyr_rate_diffs,trials
 
     def compute_baseline_rates(self):
         pyr_rates=[]
@@ -599,9 +600,8 @@ class StimConditionReport:
                             chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             diff_rates.append(chosen_mean-unchosen_mean)
-        W,p=stats.shapiro(diff_rates)
-        print('p=%.4f' % p)
-        return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
+        #return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
+        return diff_rates,trials
 
     def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
@@ -1311,16 +1311,30 @@ class RLReport:
         furl='img/baseline_diff_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_diff_rate_url='%s.png' % furl
+        baseline_diff_means=[]
+        baseline_diff_std_errs=[]
+        stim_baseline_diffs={}
+        print('baseline diff')
+        for stim_condition in self.stim_conditions:
+            print(stim_condition)
+            stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
+            baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
+        self.baseline_diff_control_wilcoxon={}
+        self.baseline_diff_anode_wilcoxon={}
+        self.baseline_diff_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='anode' or stim_condition=='cathode':
+                self.baseline_diff_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['control'],
+                    stim_baseline_diffs[stim_condition])
+            elif stim_condition.startswith('anode_control'):
+                self.baseline_diff_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['anode'],
+                    stim_baseline_diffs[stim_condition])
+            elif stim_condition.startswith('cathode_control'):
+                self.baseline_diff_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['cathode'],
+                    stim_baseline_diffs[stim_condition])
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
-            baseline_diff_means=[]
-            baseline_diff_std_errs=[]
-            print('baseline diff')
-            for stim_condition in self.stim_conditions:
-                print(stim_condition)
-                baseline_diff_mean,baseline_diff_std_err=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
-                baseline_diff_means.append(baseline_diff_mean)
-                baseline_diff_std_errs.append(baseline_diff_std_err)
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(1,1,1)
             ax.bar(pos,baseline_diff_means, width=.5,yerr=baseline_diff_std_errs,align='center',ecolor='k')
@@ -1336,15 +1350,27 @@ class RLReport:
         furl='img/firing_rate_diff'
         fname = os.path.join(self.reports_dir, furl)
         self.firing_rate_diff_url = '%s.png' % furl
+        mean_diff_rates=[]
+        std_err_diff_rates=[]
+        stim_diffs={}
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            mean_diff_rates.append(np.mean(stim_diffs[stim_condition]))
+            std_err_diff_rates.append(np.std(stim_diffs[stim_condition])/np.sqrt(trials))
+        self.stim_diff_control_wilcoxon={}
+        self.stim_diff_anode_wilcoxon={}
+        self.stim_diff_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='anode' or stim_condition=='cathode':
+                self.stim_diff_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['control'],
+                    stim_diffs[stim_condition])
+            elif stim_condition.startswith('anode_control'):
+                self.stim_diff_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['anode'],
+                    stim_diffs[stim_condition])
+            elif stim_condition.startswith('cathode_control'):
+                self.stim_diff_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['cathode'],
+                    stim_diffs[stim_condition])
         if regenerate_plots:
-            mean_diff_rates=[]
-            std_err_diff_rates=[]
-            print('firing rate diff')
-            for stim_condition in self.stim_conditions:
-                print(stim_condition)
-                mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
-                mean_diff_rates.append(mean_diff_rate)
-                std_err_diff_rates.append(std_err_diff_rate)
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
