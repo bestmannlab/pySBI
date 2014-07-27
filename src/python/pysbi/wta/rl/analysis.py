@@ -681,7 +681,8 @@ class StimConditionReport:
         self.condition_perc_correct=[]
         self.ev_diff=[]
 
-        beta_hist,beta_bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
+        #beta_hist,beta_bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
+        beta_hist,beta_bins=np.histogram(self.condition_betas, bins=10)
         ev_diff_hist,ev_diff_bins=np.histogram(np.array(self.ev_diff), bins=10)
 
         for virtual_subj_id in range(self.num_subjects):
@@ -709,11 +710,13 @@ class StimConditionReport:
         fname = os.path.join(self.reports_dir, furl)
         self.beta_url = '%s.png' % furl
         if regenerate_plots:
-            hist,bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
+            #hist,bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
+            hist,bins=np.histogram(self.condition_betas, bins=10)
             bin_width=bins[1]-bins[0]
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ax.bar(bins[:-1], hist/float(len(reject_outliers(self.condition_betas))), width=bin_width)
+            #ax.bar(bins[:-1], hist/float(len(reject_outliers(self.condition_betas))), width=bin_width)
+            ax.bar(bins[:-1], hist/float(len(self.condition_betas)), width=bin_width)
             ax.set_xlabel('Beta')
             ax.set_ylabel('% of Subjects')
             save_to_png(fig, '%s.png' % fname)
