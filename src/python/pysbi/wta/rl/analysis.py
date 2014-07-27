@@ -579,11 +579,8 @@ class StimConditionReport:
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
                     inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
-        W,p=stats.shapiro(pyr_rates)
-        print('pyr, p=%.4f' % p)
-        W,p=stats.shapiro(inh_rates)
-        print('inh, p=%.4f' % p)
-        return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
+        #return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
+        return pyr_rates,inh_rates,trials
         #return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
 
     def compute_ev_diff_rates(self, min_ev_diff, max_ev_diff):
@@ -1229,13 +1226,13 @@ class RLReport:
         print('% no response')
         for stim_condition in self.stim_conditions:
             if stim_condition=='anode' or stim_condition=='cathode':
-                self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['control'],
+                self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['control'],
                     self.stim_condition_no_response[stim_condition])
             elif stim_condition.startswith('anode_control'):
-                self.no_response_anode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['anode'],
+                self.no_response_anode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['anode'],
                     self.stim_condition_no_response[stim_condition])
             elif stim_condition.startswith('cathode_control'):
-                self.no_response_cathode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['cathode'],
+                self.no_response_cathode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['cathode'],
                     self.stim_condition_no_response[stim_condition])
             perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
             perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
@@ -1257,20 +1254,42 @@ class RLReport:
         furl='img/baseline_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_rate_url='%s.png' % furl
+        pyr_means=[]
+        pyr_std_errs=[]
+        inh_means=[]
+        inh_sd_errs=[]
+        stim_pyr_rates={}
+        stim_inh_rates={}
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates()
+            pyr_means.append(np.mean(stim_pyr_rates[stim_condition]))
+            pyr_std_errs.append(np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials))
+            inh_means.append(np.mean(stim_inh_rates[stim_condition]))
+            inh_sd_errs.append(np.std(stim_inh_rates[stim_condition])/np.sqrt(trials))
+        self.baseline_pyr_control_wilcoxon={}
+        self.baseline_pyr_anode_wilcoxon={}
+        self.baseline_pyr_cathode_wilcoxon={}
+        self.baseline_inh_control_wilcoxon={}
+        self.baseline_inh_anode_wilcoxon={}
+        self.baseline_inh_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='anode' or stim_condition=='cathode':
+                self.baseline_pyr_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['control'],
+                    stim_pyr_rates[stim_condition])
+                self.baseline_inh_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['control'],
+                    stim_inh_rates[stim_condition])
+            elif stim_condition.startswith('anode_control'):
+                self.baseline_pyr_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['anode'], 
+                    stim_pyr_rates[stim_condition])
+                self.baseline_inh_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['anode'],
+                    stim_inh_rates[stim_condition])
+            elif stim_condition.startswith('cathode_control'):
+                self.baseline_pyr_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['cathode'],
+                    stim_pyr_rates[stim_condition])
+                self.baseline_inh_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['cathode'],
+                    stim_inh_rates[stim_condition])
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
-            pyr_means=[]
-            pyr_std_errs=[]
-            inh_means=[]
-            inh_sd_errs=[]
-            print('baseline rate')
-            for stim_condition in self.stim_conditions:
-                print(stim_condition)
-                pyr_mean,pyr_std_err,inh_mean,inh_std_err=self.stim_condition_reports[stim_condition].compute_baseline_rates()
-                pyr_means.append(pyr_mean)
-                pyr_std_errs.append(pyr_std_err)
-                inh_means.append(inh_mean)
-                inh_sd_errs.append(inh_std_err)
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(2,1,1)
             ax.bar(pos,pyr_means, width=.5,yerr=pyr_std_errs,align='center',ecolor='k')

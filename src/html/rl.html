@@ -183,25 +183,25 @@
 <h4>% Correct</h4>
 <img width="50%" src="{{ rinfo.perc_correct_url }}"/>
 {% for stim_condition in rinfo.perc_correct_control_ttest %}
-{{ stim_condition }}, p={{ rinfo.perc_correct_control_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_control_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 {% for stim_condition in rinfo.perc_correct_anode_ttest %}
-{{ stim_condition }}, p={{ rinfo.perc_correct_anode_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_anode_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 {% for stim_condition in rinfo.perc_correct_cathode_ttest %}
-{{ stim_condition }}, p={{ rinfo.perc_correct_cathode_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_cathode_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
 {% for stim_condition in rinfo.no_response_control_ttest %}
-{{ stim_condition }}, p={{ rinfo.no_response_control_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.no_response_control_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 {% for stim_condition in rinfo.no_response_anode_ttest %}
-{{ stim_condition }}, p={{ rinfo.no_response_anode_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.no_response_anode_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 {% for stim_condition in rinfo.no_response_cathode_ttest %}
-{{ stim_condition }}, p={{ rinfo.no_response_cathode_ttest[stim_condition][1]|round(4) }}
+<br>{{ stim_condition }}, p={{ rinfo.no_response_cathode_ttest[stim_condition][1]|round(4) }}
 {% endfor %}
 
 <h4>Mean Pyramidal Firing Rates</h4>
@@ -260,6 +260,26 @@
 
 <h4>Mean Baseline Rates</h4>
 <img width="50%" src="{{ rinfo.baseline_rate_url }}"/>
+<h5>Pyramidal</h5>
+{% for stim_condition in rinfo.baseline_pyr_control_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.baseline_pyr_anode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.baseline_pyr_cathode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
+<h5>Interneuron</h5>
+{% for stim_condition in rinfo.baseline_inh_control_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.baseline_inh_anode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.baseline_inh_cathode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][1]|round(4) }}
+{% endfor %}
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
