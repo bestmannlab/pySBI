@@ -1183,7 +1183,7 @@ class RLReport:
             perc_correct_std_err=[]
             print('perc correct')
             for stim_condition in self.stim_conditions:
-                W,p,a=stats.shapiro(self.stim_condition_perc_correct[stim_condition])
+                W,p=stats.shapiro(self.stim_condition_perc_correct[stim_condition])
                 print('%s, p=%.4f' % (stim_condition,p))
                 perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
                 perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
