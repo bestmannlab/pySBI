@@ -554,13 +554,13 @@ class StimConditionReport:
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
-                ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-                trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
-                for trial in trials:
-                    trials+=1.0
-                    rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    pyr_rate_diffs.append(np.abs(rate1-rate2))
+                for trial in range(len(data.trial_e_rates)):
+                    ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+                    if ev_diff>=min_ev_diff and ev_diff<max_ev_diff:
+                        trials+=1.0
+                        rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        pyr_rate_diffs.append(np.abs(rate1-rate2))
         return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
 
     def compute_baseline_rates(self):
@@ -588,14 +588,14 @@ class StimConditionReport:
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
-                ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
-                trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
-                for trial in trials:
-                    if data.choice[trial]>-1:
-                        trials+=1.0
-                        chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                        unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                        diff_rates.append(chosen_mean-unchosen_mean)
+                for trial in range(len(data.trial_e_rates)):
+                    ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+                    if ev_diff>=min_ev_diff and ev_diff<max_ev_diff:
+                        if data.choice[trial]>-1:
+                            trials+=1.0
+                            chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            diff_rates.append(chosen_mean-unchosen_mean)
         return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
     def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
