@@ -222,6 +222,7 @@ class SessionReport:
         if trial_count>1:
             #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
             chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
+            #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
             unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
         else:
             chosen_rate_std_err=chosen_rate_std_sum
@@ -1288,13 +1289,42 @@ class RLReport:
         fig=Figure(figsize=(16,6))
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
-            if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
+            if stim_condition=='control' or stim_condition=='anode':
                 baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
                     self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
                     .5*ms)
                 plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
                     self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                     '%s, unchosen' % stim_condition, .5*ms)
+            elif stim_condition=='cathode':
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_chosen_rate_means[stim_condition],
+                    self.cathode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.cathode_stim_condition_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_ev_diff_url = '%s.png' % furl
+        fig=Figure(figsize=(16,6))
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='control' or stim_condition=='anode':
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_inh_rate_means[stim_condition],
+                    self.anode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
+            elif stim_condition=='cathode':
+                baseline=plot_mean_rate(ax, self.cathode_stim_condition_inh_rate_means[stim_condition],
+                    self.cathode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
+                    .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
         ax.legend(loc=0)
