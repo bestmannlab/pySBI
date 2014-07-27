@@ -220,8 +220,9 @@ class SessionReport:
                 chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                 unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
         if trial_count>1:
-            chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-            unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
+            unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
         else:
             chosen_rate_std_err=chosen_rate_std_sum
             unchosen_rate_std_err=unchosen_rate_std_sum
@@ -246,7 +247,8 @@ class SessionReport:
             if data.choice[trial]>-1:
                 rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
         if trial_count>1:
-            rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
         else:
             rate_std_err=rate_std_sum
         return rate_mean,rate_std_err
@@ -346,21 +348,20 @@ class SessionReport:
             bins[3], bins[6])
         large_chosen_mean,large_chosen_std_err,large_unchosen_mean,large_unchosen_std_err=self.compute_trial_rate_pyr_stats(data,
             bins[6], bins[-1])
-        if not os.path.exists('%s.png' % fname):
-            fig=Figure(figsize=(16,6))
-            ax=fig.add_subplot(1,1,1)
-            plot_mean_rate(ax, small_chosen_mean, small_chosen_std_err, 'b', None, 'chosen, small', .5*ms)
-            plot_mean_rate(ax, small_unchosen_mean, small_unchosen_std_err, 'b', 'dashed', 'unchosen, small', .5*ms)
-            plot_mean_rate(ax, med_chosen_mean, med_chosen_std_err, 'g', None, 'chosen, med', .5*ms)
-            plot_mean_rate(ax, med_unchosen_mean, med_unchosen_std_err, 'g', 'dashed', 'unchosen, med', .5*ms)
-            plot_mean_rate(ax, large_chosen_mean, large_chosen_std_err, 'r', None, 'chosen, large', .5*ms)
-            plot_mean_rate(ax, large_unchosen_mean, large_unchosen_std_err, 'r', 'dashed', 'unchosen, large', .5*ms)
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Firing Rate (Hz)')
-            ax.legend(loc=0)
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
+        fig=Figure(figsize=(16,6))
+        ax=fig.add_subplot(1,1,1)
+        plot_mean_rate(ax, small_chosen_mean, small_chosen_std_err, 'b', None, 'chosen, small', .5*ms)
+        plot_mean_rate(ax, small_unchosen_mean, small_unchosen_std_err, 'b', 'dashed', 'unchosen, small', .5*ms)
+        plot_mean_rate(ax, med_chosen_mean, med_chosen_std_err, 'g', None, 'chosen, med', .5*ms)
+        plot_mean_rate(ax, med_unchosen_mean, med_unchosen_std_err, 'g', 'dashed', 'unchosen, med', .5*ms)
+        plot_mean_rate(ax, large_chosen_mean, large_chosen_std_err, 'r', None, 'chosen, large', .5*ms)
+        plot_mean_rate(ax, large_unchosen_mean, large_unchosen_std_err, 'r', 'dashed', 'unchosen, large', .5*ms)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         # Create ev diff firing rate plot
         furl='img/ev_diff_inh_firing_rate.%s' % self.file_prefix
@@ -369,18 +370,17 @@ class SessionReport:
         small_mean,small_std_err=self.compute_trial_rate_stats_inh(data, bins[0], bins[3])
         med_mean,med_std_err=self.compute_trial_rate_stats_inh(data, bins[3], bins[6])
         large_mean,large_std_err=self.compute_trial_rate_stats_inh(data, bins[6], bins[-1])
-        if not os.path.exists('%s.png' % fname):
-            fig=Figure(figsize=(16,6))
-            ax=fig.add_subplot(1,1,1)
-            plot_mean_rate(ax, small_mean, small_std_err, 'b', None, 'small', .5*ms)
-            plot_mean_rate(ax, med_mean, med_std_err, 'g', None, 'med', .5*ms)
-            plot_mean_rate(ax, large_mean, large_std_err, 'r', None, 'large', .5*ms)
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Firing Rate (Hz)')
-            ax.legend(loc=0)
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
+        fig=Figure(figsize=(16,6))
+        ax=fig.add_subplot(1,1,1)
+        plot_mean_rate(ax, small_mean, small_std_err, 'b', None, 'small', .5*ms)
+        plot_mean_rate(ax, med_mean, med_std_err, 'g', None, 'med', .5*ms)
+        plot_mean_rate(ax, large_mean, large_std_err, 'r', None, 'large', .5*ms)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         self.perc_no_response=0.0
         self.perc_correct_response=0.0
@@ -624,8 +624,10 @@ class StimConditionReport:
                         if data.choice[trial]>-1:
                             chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                             unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
-        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
+        #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
 
     def compute_trial_rate_inh_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
@@ -658,7 +660,8 @@ class StimConditionReport:
                     for trial in trials:
                         if data.choice[trial]>-1:
                             rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
-        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
         return rate_mean,rate_std_err
     
     def create_report(self, version, excluded=None):
@@ -1276,6 +1279,26 @@ class RLReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+        furl='img/ev_dff_pyr_firing_rate'
+        fname=os.path.join(self.reports_dir, furl)
+        self.mean_pyr_firing_rate_url = '%s.png' % furl
+        fig=Figure(figsize=(16,6))
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
+                baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
+                    self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
+                    .5*ms)
+                plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
+                    self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    '%s, unchosen' % stim_condition, .5*ms)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.legend(loc=0)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
         # Create ev diff firing rate plot
         furl='img/ev_diff_anode_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
@@ -1747,8 +1770,7 @@ class RLReport:
                 fname = os.path.join(self.reports_dir, furl)
                 self.stim_beta_change_urls[stim_condition] = '%s.png' % furl
                 fig=plot_param_diff(stim_condition,'beta',self.stim_condition_reports['control'].condition_betas,
-                    self.stim_condition_reports[stim_condition].condition_betas,
-                    (-10.0,10.0))
+                    self.stim_condition_reports[stim_condition].condition_betas)
                 save_to_png(fig, '%s.png' % fname)
                 plt.close(fig)
                 beta_diff=self.stim_condition_reports[stim_condition].condition_betas-\
@@ -1769,13 +1791,14 @@ class RLReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range):
+def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None):
     diff_vals=new_vals-orig_vals
     fig=plt.figure()
     hist,bins=np.histogram(np.array(diff_vals), bins=10, range=diff_range)
     bin_width=bins[1]-bins[0]
     plt.bar(bins[:-1], hist/float(len(diff_vals)), width=bin_width)
-    plt.xlim(diff_range)
+    if diff_range is not None:
+        plt.xlim(diff_range)
     plt.xlabel('Change in %s' % param_name)
     plt.ylabel('Proportion of Subjects')
     plt.title(cond_name)
