@@ -1834,7 +1834,7 @@ class RLReport:
             clf.fit(all_condition_betas_vec, all_condition_perc_correct_vec)
             self.beta_perc_correct_a = clf.coef_[0][0]
             self.beta_perc_correct_b = clf.intercept_[0]
-            self.beta_perc_correct_r_sqr=clf.score(filtered_betas, filtered_perc_correct)
+            self.beta_perc_correct_r_sqr=clf.score(all_condition_betas_vec, all_condition_perc_correct_vec)
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.plot(all_condition_betas, all_condition_perc_correct_vec,'o')
