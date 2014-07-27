@@ -70,7 +70,7 @@ def launch_missing_background_freq_processes(nodes, data_dir, background_freq_ra
         launcher.start_nodes()
 
 
-def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_virtual_subjects, behavioral_param_file,
+def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, virtual_subj_ids, behavioral_param_file,
                                      start_nodes=True):
     """
     nodes = nodes to run simulation on
@@ -91,7 +91,7 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
     beta_vals=np.array(control_group['beta'])
 
     # For each virtual subject
-    for j in range(num_virtual_subjects):
+    for virtual_subj_id in virtual_subj_ids:
 
         # Choose an actual subject
         stim_file_name=None
@@ -121,23 +121,23 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, num_vir
         beta=beta_bin+np.random.rand()*bin_width
 
         cmds, log_file_template, out_file=get_rerw_commands(control_file_name, 0*pA, 0*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.control' % j)
+            e_desc='virtual_subject.%d.control' % virtual_subj_id)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, -2*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.anode' % j)
+            e_desc='virtual_subject.%d.anode' % virtual_subj_id)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, 2*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.cathode' % j)
+            e_desc='virtual_subject.%d.cathode' % virtual_subj_id)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, -4*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.anode_control_1' % j)
+            e_desc='virtual_subject.%d.anode_control_1' % virtual_subj_id)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 4*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.cathode_control_1' % j)
+            e_desc='virtual_subject.%d.cathode_control_1' % virtual_subj_id)
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
     if start_nodes:
