@@ -1889,13 +1889,13 @@ def rename_data_files(data_dir):
                 shutil.copyfile(os.path.join(data_dir,file_name),os.path.join(data_dir,new_filename))
 
 if __name__=='__main__':
-    #report=RLReport('/data/ezrcluster/data/output/','rl.virtual_subject.%d.%s',
-    #    ['control','anode','anode_control_1','cathode','cathode_control_1'],'/data/pySBI/reports/rl/virtual_subjects',
-    #    25,'')
+    report=RLReport('/data/pySBI/rl/virtual_subjects.v2/','rl.virtual_subject.%d.%s',
+        ['control','anode','anode_control_4','anode_control_5','anode_control_6','cathode','cathode_control_4','cathode_control_5','cathode_control_6'],'/data/pySBI/reports/rl/virtual_subjects.v2',
+        25,'')
     #report.create_report()
     #plot_trials_ev_diff('../../data/rerw','virtual_subject_0.control.h5')
     #plot_mean_firing_rate('../../data/rerw','virtual_subject_0.control.h5')
     #debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
-    back_range=850+np.array(range(5))*20
-    report=BackgroundBetaReport('/data/pySBI/rl/background_beta.v2','rl.background_freq.%0.3f.trial.%d',back_range,'/data/pySBI/reports/rl/background.v2',10,'')
+    #back_range=850+np.array(range(5))*20
+    #report=BackgroundBetaReport('/data/pySBI/rl/background_beta.v2','rl.background_freq.%0.3f.trial.%d',back_range,'/data/pySBI/reports/rl/background.v2',10,'')
     report.create_report()
