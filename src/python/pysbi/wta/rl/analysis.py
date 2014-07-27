@@ -561,6 +561,8 @@ class StimConditionReport:
                         rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         pyr_rate_diffs.append(np.abs(rate1-rate2))
+        W,p=stats.shapiro(pyr_rate_diffs)
+        print('p=%.4f' % p)
         return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
 
     def compute_baseline_rates(self):
@@ -577,6 +579,10 @@ class StimConditionReport:
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
                     inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
+        W,p=stats.shapiro(pyr_rates)
+        print('pyr, p=%.4f' % p)
+        W,p=stats.shapiro(inh_rates)
+        print('inh, p=%.4f' % p)
         return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
         #return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
 
@@ -596,6 +602,8 @@ class StimConditionReport:
                             chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             diff_rates.append(chosen_mean-unchosen_mean)
+        W,p=stats.shapiro(diff_rates)
+        print('p=%.4f' % p)
         return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
     def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
@@ -1208,7 +1216,10 @@ class RLReport:
             fig=Figure(figsize=(20,6))
             perc_no_response_mean=[]
             perc_no_response_std_err=[]
+            print('% no response')
             for stim_condition in self.stim_conditions:
+                W,p=stats.shapiro(self.stim_condition_no_response[stim_condition])
+                print('%s, p=%.4f' % (stim_condition,p))
                 perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
                 perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
                 #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
@@ -1233,7 +1244,9 @@ class RLReport:
             pyr_std_errs=[]
             inh_means=[]
             inh_sd_errs=[]
+            print('baseline rate')
             for stim_condition in self.stim_conditions:
+                print(stim_condition)
                 pyr_mean,pyr_std_err,inh_mean,inh_std_err=self.stim_condition_reports[stim_condition].compute_baseline_rates()
                 pyr_means.append(pyr_mean)
                 pyr_std_errs.append(pyr_std_err)
@@ -1264,7 +1277,9 @@ class RLReport:
             fig=Figure(figsize=(20,6))
             baseline_diff_means=[]
             baseline_diff_std_errs=[]
+            print('baseline diff')
             for stim_condition in self.stim_conditions:
+                print(stim_condition)
                 baseline_diff_mean,baseline_diff_std_err=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
                 baseline_diff_means.append(baseline_diff_mean)
                 baseline_diff_std_errs.append(baseline_diff_std_err)
@@ -1286,7 +1301,9 @@ class RLReport:
         if regenerate_plots:
             mean_diff_rates=[]
             std_err_diff_rates=[]
+            print('firing rate diff')
             for stim_condition in self.stim_conditions:
+                print(stim_condition)
                 mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
                 mean_diff_rates.append(mean_diff_rate)
                 std_err_diff_rates.append(std_err_diff_rate)
