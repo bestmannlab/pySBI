@@ -1886,8 +1886,9 @@ class RLReport:
 
                 alpha_diff=self.stim_condition_reports[stim_condition].condition_alphas-\
                            self.stim_condition_reports['control'].condition_alphas
-                self.stim_alpha_mean_change[stim_condition]=np.mean(alpha_diff)
-                self.stim_alpha_std_change[stim_condition]=np.std(alpha_diff)
+                filtered_alpha_diffs=reject_outliers(alpha_diff)
+                self.stim_alpha_mean_change[stim_condition]=np.mean(filtered_alpha_diffs)
+                self.stim_alpha_std_change[stim_condition]=np.std(filtered_alpha_diffs)
                 self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_alphas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
 
@@ -1903,8 +1904,9 @@ class RLReport:
                     save_to_eps(fig, '%s.eps' % fname)
                 beta_diff=self.stim_condition_reports[stim_condition].condition_betas-\
                            self.stim_condition_reports['control'].condition_betas
-                self.stim_beta_mean_change[stim_condition]=np.mean(beta_diff)
-                self.stim_beta_std_change[stim_condition]=np.std(beta_diff)
+                filtered_beta_diffs=reject_outliers(beta_diff)
+                self.stim_beta_mean_change[stim_condition]=np.mean(filtered_beta_diffs)
+                self.stim_beta_std_change[stim_condition]=np.std(filtered_beta_diffs)
                 self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_betas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
 
@@ -1922,9 +1924,10 @@ class RLReport:
 def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None):
     diff_vals=new_vals-orig_vals
     fig=plt.figure()
-    hist,bins=np.histogram(np.array(diff_vals), bins=10, range=diff_range)
+    filtered_diffs=reject_outliers(np.array(diff_vals))
+    hist,bins=np.histogram(filtered_diffs, bins=10, range=diff_range)
     bin_width=bins[1]-bins[0]
-    plt.bar(bins[:-1], hist/float(len(diff_vals)), width=bin_width)
+    plt.bar(bins[:-1], hist/float(len(filtered_diffs)), width=bin_width)
     if diff_range is not None:
         plt.xlim(diff_range)
     plt.xlabel('Change in %s' % param_name)
