@@ -1877,6 +1877,7 @@ class RLReport:
                         self.stim_condition_reports[stim_condition].condition_alphas,
                         (-1.0,1.0))
                     save_to_png(fig, '%s.png' % fname)
+                    save_to_eps(fig, '%s.eps' % fname)
                     plt.close(fig)
 
                 alpha_diff=self.stim_condition_reports[stim_condition].condition_alphas-\
@@ -1895,6 +1896,7 @@ class RLReport:
                         self.stim_condition_reports[stim_condition].condition_betas)
                     save_to_png(fig, '%s.png' % fname)
                     plt.close(fig)
+                    save_to_eps(fig, '%s.eps' % fname)
                 beta_diff=self.stim_condition_reports[stim_condition].condition_betas-\
                            self.stim_condition_reports['control'].condition_betas
                 self.stim_beta_mean_change[stim_condition]=np.mean(beta_diff)
