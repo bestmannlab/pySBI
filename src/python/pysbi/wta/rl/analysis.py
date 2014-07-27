@@ -1900,6 +1900,10 @@ class RLReport:
         self.stim_beta_std_change={}
         self.alpha_wilcoxon_test={}
         self.beta_wilcoxon_test={}
+        self.anode_alpha_wilcoxon_test={}
+        self.anode_beta_wilcoxon_test={}
+        self.cathode_alpha_wilcoxon_test={}
+        self.cathode_beta_wilcoxon_test={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 # Create alpha plot
