@@ -397,7 +397,7 @@ class SessionReport:
             trial_data=TrialData(trial+1, data.trial_duration, data.vals[:,trial], trial_ev, data.inputs[:,trial],
                 data.choice[trial], data.rew[trial], trial_prefix, self.reports_dir, data.trial_e_rates[trial],
                 data.trial_i_rates[trial], rt=rt, upper_resp_threshold=30, lower_resp_threshold=None, dt=.5*ms,
-                regenerate_plots=regentrate_trial_plots)
+                regenerate_plots=regenerate_trial_plots)
             if trial_data.choice<0:
                 self.perc_no_response+=1.0
             elif trial_data.correct:
