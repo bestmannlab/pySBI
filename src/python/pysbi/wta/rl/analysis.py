@@ -1195,16 +1195,14 @@ class RLReport:
             if stim_condition=='anode' or stim_condition=='cathode':
                 self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
                     self.stim_condition_perc_correct[stim_condition])
-            if stim_condition.startswith('anode_control'):
+            elif stim_condition.startswith('anode_control'):
                 self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
                     self.stim_condition_perc_correct[stim_condition])
             elif stim_condition.startswith('cathode_control'):
                 self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
                     self.stim_condition_perc_correct[stim_condition])
             perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
-            perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
-            #perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition]))
-
+            perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))            
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1223,17 +1221,27 @@ class RLReport:
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
         self.perc_no_response_url='%s.png' % furl
+        self.no_response_control_wilcoxon={}
+        self.no_response_anode_wilcoxon={}
+        self.no_response_cathode_wilcoxon={}
+        perc_no_response_mean=[]
+        perc_no_response_std_err=[]
+        print('% no response')
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='anode' or stim_condition=='cathode':
+                self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['control'],
+                    self.stim_condition_no_response[stim_condition])
+            elif stim_condition.startswith('anode_control'):
+                self.no_response_anode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['anode'],
+                    self.stim_condition_no_response[stim_condition])
+            elif stim_condition.startswith('cathode_control'):
+                self.no_response_cathode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_no_response['cathode'],
+                    self.stim_condition_no_response[stim_condition])
+            perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
+            perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
+            #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
         if regenerate_plots:
-            fig=Figure(figsize=(20,6))
-            perc_no_response_mean=[]
-            perc_no_response_std_err=[]
-            print('% no response')
-            for stim_condition in self.stim_conditions:
-                W,p=stats.shapiro(self.stim_condition_no_response[stim_condition])
-                print('%s, p=%.4f' % (stim_condition,p))
-                perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
-                perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
-                #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
+            fig=Figure(figsize=(20,6))            
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(2,1,1)
             ax.bar(pos,perc_no_response_mean, width=.5,yerr=perc_no_response_std_err,align='center',ecolor='k')

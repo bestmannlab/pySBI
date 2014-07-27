@@ -194,6 +194,15 @@
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
+{% for stim_condition in rinfo.no_response_control_ttest %}
+{{ stim_condition }}, p={{ rinfo.no_response_control_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.no_response_anode_ttest %}
+{{ stim_condition }}, p={{ rinfo.no_response_anode_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.no_response_cathode_ttest %}
+{{ stim_condition }}, p={{ rinfo.no_response_cathode_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
 
 <h4>Mean Pyramidal Firing Rates</h4>
 <img width="50%" src="{{ rinfo.mean_pyr_firing_rate_url }}"/>
