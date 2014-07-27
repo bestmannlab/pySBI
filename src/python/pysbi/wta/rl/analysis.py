@@ -1185,17 +1185,28 @@ class RLReport:
         furl='img/perc_correct'
         fname=os.path.join(self.reports_dir,furl)
         self.perc_correct_url='%s.png' % furl
+
+        self.perc_correct_control_ttest={}
+        self.perc_correct_anode_ttest={}
+        self.perc_correct_cathode_ttest={}
+        perc_correct_mean=[]
+        perc_correct_std_err=[]
+        for stim_condition in self.stim_conditions:
+            if stim_condition=='anode' or stim_condition=='cathode':
+                self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
+                    self.stim_condition_perc_correct[stim_condition])
+            if stim_condition.startswith('anode_control'):
+                self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
+                    self.stim_condition_perc_correct[stim_condition])
+            elif stim_condition.startswith('cathode_control'):
+                self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
+                    self.stim_condition_perc_correct[stim_condition])
+            perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
+            perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
+            #perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition]))
+
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
-            perc_correct_mean=[]
-            perc_correct_std_err=[]
-            print('perc correct')
-            for stim_condition in self.stim_conditions:
-                W,p=stats.shapiro(self.stim_condition_perc_correct[stim_condition])
-                print('%s, p=%.4f' % (stim_condition,p))
-                perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
-                perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
-                #perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition]))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(2,1,1)
             ax.bar(pos,perc_correct_mean, width=.5,yerr=perc_correct_std_err,align='center',ecolor='k')
@@ -1932,14 +1943,14 @@ class RLReport:
 
         for stim_condition in self.stim_conditions:
             if stim_condition.startswith('anode_control'):
-                self.anode_alpha_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_alphas),
+                self.anode_alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_alphas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
-                self.anode_beta_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_betas),
+                self.anode_beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_betas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
             elif stim_condition.startswith('cathode_control'):
-                self.cathode_alpha_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_alphas),
+                self.cathode_alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_alphas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
-                self.cathode_beta_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_betas),
+                self.cathode_beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_betas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
 
 

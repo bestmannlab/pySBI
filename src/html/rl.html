@@ -182,6 +182,15 @@
 
 <h4>% Correct</h4>
 <img width="50%" src="{{ rinfo.perc_correct_url }}"/>
+{% for stim_condition in rinfo.perc_correct_control_ttest %}
+{{ stim_condition }}, p={{ rinfo.perc_correct_control_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.perc_correct_anode_ttest %}
+{{ stim_condition }}, p={{ rinfo.perc_correct_anode_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
+{% for stim_condition in rinfo.perc_correct_cathode_ttest %}
+{{ stim_condition }}, p={{ rinfo.perc_correct_cathode_ttest[stim_condition][1]|round(4) }}
+{% endfor %}
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
