@@ -1898,7 +1898,7 @@ class RLReport:
                 self.stim_beta_change_urls[stim_condition] = '%s.png' % furl
                 if regenerate_plots:
                     fig=plot_param_diff(stim_condition,'beta',self.stim_condition_reports['control'].condition_betas,
-                        self.stim_condition_reports[stim_condition].condition_betas)
+                        self.stim_condition_reports[stim_condition].condition_betas, (-10.0, 10.0))
                     save_to_png(fig, '%s.png' % fname)
                     plt.close(fig)
                     save_to_eps(fig, '%s.eps' % fname)
