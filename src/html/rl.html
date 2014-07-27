@@ -13,6 +13,8 @@
     $(document).ready(function()
             {
                 $("#stim_condition_table").tablesorter();
+                $("#anode_comparison_table").tablesorter();
+                $("#cathode_comparison_table").tablesorter();
             }
     );
 </script>
@@ -256,12 +258,12 @@
         <th>Interneuron DCS</th>
         <th>Alpha change</th>
         <th>Mean alpha change</th>
-        <th>T</th>
-        <th>p</th>
+        <th>T (compared to control)</th>
+        <th>p (compared to control)</th>
         <th>Beta change</th>
         <th>Mean beta change</th>
-        <th>t</th>
-        <th>p</th>
+        <th>T (compared to control)</th>
+        <th>p (compared to control)</th>
     </tr>
     </thead>
     <tbody>
@@ -314,5 +316,50 @@
     {% endfor %}
     </tbody>
 </table>
+
+<h4>Stimulation comparison</h4>
+<h5>Anode</h5>
+<table border="1" class="tablesorter" id="anode_comparison_table">
+    <thead>
+        <tr>
+            <th>Condition</th>
+            <th>T (compared to anode)</th>
+            <th>p (compared to anode)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stim_condition in rinfo.stim_condition_reports %}
+            {% if stim_condition.startswith('anode_control') %}
+                <tr>
+                    <td>{{ stim_condition }}</td>
+                    <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][0]|round(2) }}</td>
+                    <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][1]|round(4) }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+<h5>Cathode</h5>
+<table border="1" class="tablesorter" id="cathode_comparison_table">
+    <thead>
+    <tr>
+        <th>Condition</th>
+        <th>T (compared to cathode)</th>
+        <th>p (compared to cathode)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for stim_condition in rinfo.stim_condition_reports %}
+    {% if stim_condition.startswith('cathode_control') %}
+    <tr>
+        <td>{{ stim_condition }}</td>
+        <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][0]|round(2) }}</td>
+        <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][1]|round(4) }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+
 </body>
 </html>

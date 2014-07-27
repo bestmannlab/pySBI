@@ -1910,6 +1910,18 @@ class RLReport:
                 self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_betas),
                     np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
 
+        for stim_condition in self.stim_conditions:
+            if stim_condition.startwsith('anode_control'):
+                self.anode_alpha_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_alphas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
+                self.anode_beta_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_betas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+            elif stim_condition.startwsith('cathode_control'):
+                self.cathode_alpha_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_alphas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
+                self.cathode_beta_wilcoxon_test=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_betas),
+                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+
 
         #create report
         template_file='rl.html'
