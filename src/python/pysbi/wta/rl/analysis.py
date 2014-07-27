@@ -546,7 +546,7 @@ class StimConditionReport:
         self.sessions=[]
         self.excluded_sessions=[]
 
-    def compute_baseline_diff_rates(self):
+    def compute_baseline_diff_rates(self, min_ev_diff, max_ev_diff):
         pyr_rate_diffs=[]
         trials=0
         for virtual_subj_id in range(self.num_subjects):
@@ -554,7 +554,9 @@ class StimConditionReport:
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
-                for trial in range(len(data.trial_e_rates)):
+                ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+                trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+                for trial in trials:
                     trials+=1.0
                     rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
@@ -578,7 +580,7 @@ class StimConditionReport:
         return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
         #return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
 
-    def compute_ev_diff_rates(self):
+    def compute_ev_diff_rates(self, min_ev_diff, max_ev_diff):
         diff_rates=[]
         trials=0
         for virtual_subj_id in range(self.num_subjects):
@@ -586,7 +588,9 @@ class StimConditionReport:
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
-                for trial in range(len(data.trial_e_rates)):
+                ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+                trials=np.where((ev_diff>=min_ev_diff) & (ev_diff<max_ev_diff))[0]
+                for trial in trials:
                     if data.choice[trial]>-1:
                         trials+=1.0
                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
@@ -1258,7 +1262,7 @@ class RLReport:
             baseline_diff_means=[]
             baseline_diff_std_errs=[]
             for stim_condition in self.stim_conditions:
-                baseline_diff_mean,baseline_diff_std_err=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates()
+                baseline_diff_mean,baseline_diff_std_err=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
                 baseline_diff_means.append(baseline_diff_mean)
                 baseline_diff_std_errs.append(baseline_diff_std_err)
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1280,7 +1284,7 @@ class RLReport:
             mean_diff_rates=[]
             std_err_diff_rates=[]
             for stim_condition in self.stim_conditions:
-                mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates()
+                mean_diff_rate,std_err_diff_rate=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
                 mean_diff_rates.append(mean_diff_rate)
                 std_err_diff_rates.append(std_err_diff_rate)
             fig=Figure(figsize=(20,6))
