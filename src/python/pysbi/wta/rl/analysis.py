@@ -1301,7 +1301,7 @@ class RLReport:
                     self.cathode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
                     .5*ms)
                 plot_mean_rate(ax, self.cathode_stim_condition_unchosen_rate_means[stim_condition],
-                    self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
+                    self.cathode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                     '%s, unchosen' % stim_condition, .5*ms)
         ax.set_xlabel('Time')
         ax.set_ylabel('Firing Rate (Hz)')
