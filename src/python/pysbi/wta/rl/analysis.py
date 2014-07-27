@@ -220,10 +220,10 @@ class SessionReport:
                 chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                 unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
         if trial_count>1:
-            #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-            chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
-            #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-            unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
+            chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
+            unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
         else:
             chosen_rate_std_err=chosen_rate_std_sum
             unchosen_rate_std_err=unchosen_rate_std_sum
@@ -248,8 +248,8 @@ class SessionReport:
             if data.choice[trial]>-1:
                 rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
         if trial_count>1:
-            #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-            rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
+            rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+            #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
         else:
             rate_std_err=rate_std_sum
         return rate_mean,rate_std_err
@@ -559,7 +559,7 @@ class StimConditionReport:
                     rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                     pyr_rate_diffs.append(np.abs(rate1-rate2))
-        return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)#/np.sqrt(trials)
+        return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
 
     def compute_baseline_rates(self):
         pyr_rates=[]
@@ -575,8 +575,8 @@ class StimConditionReport:
                     pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
                     inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
-        #return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
-        return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
+        return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
+        #return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
 
     def compute_ev_diff_rates(self):
         diff_rates=[]
@@ -592,7 +592,7 @@ class StimConditionReport:
                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         diff_rates.append(chosen_mean-unchosen_mean)
-        return np.mean(diff_rates),np.std(diff_rates)#/np.sqrt(trials)
+        return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
 
     def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
@@ -629,10 +629,10 @@ class StimConditionReport:
                         if data.choice[trial]>-1:
                             chosen_rate_std_sum+=(data.trial_e_rates[trial][data.choice[trial],:]-chosen_rate_mean)**2.0
                             unchosen_rate_std_sum+=(data.trial_e_rates[trial][1-data.choice[trial],:]-unchosen_rate_mean)**2.0
-        #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
-        #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
+        chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        #chosen_rate_std_err=np.sqrt(chosen_rate_std_sum/(trial_count-1))
+        unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        #unchosen_rate_std_err=np.sqrt(unchosen_rate_std_sum/(trial_count-1))
         return chosen_rate_mean,chosen_rate_std_err,unchosen_rate_mean,unchosen_rate_std_err
 
     def compute_trial_rate_inh_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
@@ -665,8 +665,8 @@ class StimConditionReport:
                     for trial in trials:
                         if data.choice[trial]>-1:
                             rate_std_sum+=(data.trial_i_rates[trial][0,:]-rate_mean)**2.0
-        #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
-        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
+        rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
+        #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
         return rate_mean,rate_std_err
     
     def create_report(self, version, excluded=None, regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False):
@@ -1179,8 +1179,8 @@ class RLReport:
             perc_correct_std_err=[]
             for stim_condition in self.stim_conditions:
                 perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
-                #perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
-                perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition]))
+                perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))
+                #perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition]))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(2,1,1)
             ax.bar(pos,perc_correct_mean, width=.5,yerr=perc_correct_std_err,align='center',ecolor='k')
@@ -1203,8 +1203,8 @@ class RLReport:
             perc_no_response_std_err=[]
             for stim_condition in self.stim_conditions:
                 perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
-                #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
-                perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
+                perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
+                #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
             ax=fig.add_subplot(2,1,1)
             ax.bar(pos,perc_no_response_mean, width=.5,yerr=perc_no_response_std_err,align='center',ecolor='k')
