@@ -283,26 +283,26 @@
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
-{% for stim_condition in rinfo.baseline_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.baseline_diff_control_u %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_control_u[stim_condition][1]|round(4) }}
 {% endfor %}
-{% for stim_condition in rinfo.baseline_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.baseline_diff_anode_u %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_anode_u[stim_condition][1]|round(4) }}
 {% endfor %}
-{% for stim_condition in rinfo.baseline_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.baseline_diff_cathode_u %}
+<br>{{ stim_condition }}, p={{ rinfo.baseline_diff_cathode_u[stim_condition][1]|round(4) }}
 {% endfor %}
 
 <h4>Firing Rate Diffs (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.firing_rate_diff_url }}"/>
-{% for stim_condition in rinfo.stim_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.stim_diff_control_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.stim_diff_control_u %}
+<br>{{ stim_condition }}, p={{ rinfo.stim_diff_control_u[stim_condition][1]|round(4) }}
 {% endfor %}
-{% for stim_condition in rinfo.stim_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.stim_diff_anode_u %}
+<br>{{ stim_condition }}, p={{ rinfo.stim_diff_anode_u[stim_condition][1]|round(4) }}
 {% endfor %}
-{% for stim_condition in rinfo.stim_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, p={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.stim_diff_cathode_u %}
+<br>{{ stim_condition }}, p={{ rinfo.stim_diff_cathode_u[stim_condition][1]|round(4) }}
 {% endfor %}
 
 <h4>Stimulation Conditions</h4>

@@ -1320,19 +1320,25 @@ class RLReport:
             stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
             baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
-        self.baseline_diff_control_wilcoxon={}
-        self.baseline_diff_anode_wilcoxon={}
-        self.baseline_diff_cathode_wilcoxon={}
+        self.baseline_diff_control_u={}
+        self.baseline_diff_anode_u={}
+        self.baseline_diff_cathode_u={}
         for stim_condition in self.stim_conditions:
             if stim_condition=='anode' or stim_condition=='cathode':
-                self.baseline_diff_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['control'],
+                self.baseline_diff_control_u[stim_condition]=stats.mannwhitneyu(stim_baseline_diffs['control'],
                     stim_baseline_diffs[stim_condition])
+                # get two sided
+                self.baseline_diff_control_u[stim_condition][1]=self.baseline_diff_control_u[stim_condition][1]*2
             elif stim_condition.startswith('anode_control'):
-                self.baseline_diff_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['anode'],
+                self.baseline_diff_anode_u[stim_condition]=stats.mannwhitneyu(stim_baseline_diffs['anode'],
                     stim_baseline_diffs[stim_condition])
+                # get two sided
+                self.baseline_diff_anode_u[stim_condition][1]=self.baseline_diff_anode_u[stim_condition][1]*2
             elif stim_condition.startswith('cathode_control'):
-                self.baseline_diff_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_baseline_diffs['cathode'],
+                self.baseline_diff_cathode_u[stim_condition]=stats.mannwhitneyu(stim_baseline_diffs['cathode'],
                     stim_baseline_diffs[stim_condition])
+                # get two sided
+                self.baseline_diff_cathode_u[stim_condition][1]=self.baseline_diff_cathode_u[stim_condition][1]*2
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1357,19 +1363,25 @@ class RLReport:
             stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             mean_diff_rates.append(np.mean(stim_diffs[stim_condition]))
             std_err_diff_rates.append(np.std(stim_diffs[stim_condition])/np.sqrt(trials))
-        self.stim_diff_control_wilcoxon={}
-        self.stim_diff_anode_wilcoxon={}
-        self.stim_diff_cathode_wilcoxon={}
+        self.stim_diff_control_u={}
+        self.stim_diff_anode_u={}
+        self.stim_diff_cathode_u={}
         for stim_condition in self.stim_conditions:
             if stim_condition=='anode' or stim_condition=='cathode':
-                self.stim_diff_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['control'],
+                self.stim_diff_control_u[stim_condition]=stats.mannwhitneyu(stim_diffs['control'],
                     stim_diffs[stim_condition])
+                # get two sided
+                self.stim_diff_control_u[stim_condition][1]=self.stim_diff_control_u[stim_condition][1]*2
             elif stim_condition.startswith('anode_control'):
-                self.stim_diff_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['anode'],
+                self.stim_diff_anode_u[stim_condition]=stats.mannwhitneyu(stim_diffs['anode'],
                     stim_diffs[stim_condition])
+                # get two sided
+                self.stim_diff_anode_u[stim_condition][1]=self.stim_diff_anode_u[stim_condition][1]*2
             elif stim_condition.startswith('cathode_control'):
-                self.stim_diff_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_diffs['cathode'],
+                self.stim_diff_cathode_u[stim_condition]=stats.mannwhitneyu(stim_diffs['cathode'],
                     stim_diffs[stim_condition])
+                # get two sided
+                self.stim_diff_cathode_u[stim_condition][1]=self.stim_diff_cathode_u[stim_condition][1]*2
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
