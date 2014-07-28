@@ -2135,4 +2135,4 @@ if __name__=='__main__':
     #debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
     #back_range=850+np.array(range(5))*20
     #report=BackgroundBetaReport('/data/pySBI/rl/background_beta.v2','rl.background_freq.%0.3f.trial.%d',back_range,'/data/pySBI/reports/rl/background.v2',10,'')
-    report.create_report()
+    report.create_report(regenerate_plots=True)
