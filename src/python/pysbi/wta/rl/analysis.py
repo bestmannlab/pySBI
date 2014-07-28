@@ -1189,10 +1189,10 @@ class RLReport:
         perc_correct_mean=[]
         perc_correct_std_err=[]
         for stim_condition in self.stim_conditions:
-            if stim_condition=='anode' or stim_condition=='cathode':
+            if not stim_condition=='control':
                 self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
                     self.stim_condition_perc_correct[stim_condition])
-            elif stim_condition.startswith('anode_control'):
+            if stim_condition.startswith('anode_control'):
                 self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
                     self.stim_condition_perc_correct[stim_condition])
             elif stim_condition.startswith('cathode_control'):
@@ -1225,10 +1225,10 @@ class RLReport:
         perc_no_response_std_err=[]
         print('% no response')
         for stim_condition in self.stim_conditions:
-            if stim_condition=='anode' or stim_condition=='cathode':
+            if not stim_condition=='control':
                 self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['control'],
                     self.stim_condition_no_response[stim_condition])
-            elif stim_condition.startswith('anode_control'):
+            if stim_condition.startswith('anode_control'):
                 self.no_response_anode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['anode'],
                     self.stim_condition_no_response[stim_condition])
             elif stim_condition.startswith('cathode_control'):
@@ -1273,12 +1273,12 @@ class RLReport:
         self.baseline_inh_anode_wilcoxon={}
         self.baseline_inh_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
-            if stim_condition=='anode' or stim_condition=='cathode':
+            if not stim_condition=='control':
                 self.baseline_pyr_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['control'],
                     stim_pyr_rates[stim_condition])
                 self.baseline_inh_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['control'],
                     stim_inh_rates[stim_condition])
-            elif stim_condition.startswith('anode_control'):
+            if stim_condition.startswith('anode_control'):
                 self.baseline_pyr_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['anode'], 
                     stim_pyr_rates[stim_condition])
                 self.baseline_inh_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['anode'],
@@ -1314,9 +1314,7 @@ class RLReport:
         baseline_diff_means=[]
         baseline_diff_std_errs=[]
         stim_baseline_diffs={}
-        print('baseline diff')
         for stim_condition in self.stim_conditions:
-            print(stim_condition)
             stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
             baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
@@ -1324,11 +1322,11 @@ class RLReport:
         self.baseline_diff_anode_u={}
         self.baseline_diff_cathode_u={}
         for stim_condition in self.stim_conditions:
-            if stim_condition=='anode' or stim_condition=='cathode':
+            if not stim_condition=='control':
                 u,p=stats.mannwhitneyu(stim_baseline_diffs['control'], stim_baseline_diffs[stim_condition])
                 # get two sided p
                 self.baseline_diff_control_u[stim_condition]=(u,p*2.0)
-            elif stim_condition.startswith('anode_control'):
+            if stim_condition.startswith('anode_control'):
                 u,p=stats.mannwhitneyu(stim_baseline_diffs['anode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
                 self.baseline_diff_anode_u[stim_condition]=(u,p*2.0)
@@ -1364,11 +1362,11 @@ class RLReport:
         self.stim_diff_anode_u={}
         self.stim_diff_cathode_u={}
         for stim_condition in self.stim_conditions:
-            if stim_condition=='anode' or stim_condition=='cathode':
+            if not stim_condition=='control':
                 u,p=stats.mannwhitneyu(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
                 self.stim_diff_control_u[stim_condition]=(u,p*2.0)
-            elif stim_condition.startswith('anode_control'):
+            if stim_condition.startswith('anode_control'):
                 u,p=stats.mannwhitneyu(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
                 self.stim_diff_anode_u[stim_condition]=(u,p*2.0)
