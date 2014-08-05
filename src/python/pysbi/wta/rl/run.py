@@ -70,6 +70,62 @@ def launch_missing_background_freq_processes(nodes, data_dir, background_freq_ra
         launcher.start_nodes()
 
 
+def launch_baseline_virtual_subject_processes(nodes, data_dir, num_real_subjects, virtual_subj_ids, start_nodes=True):
+
+    alpha_range=(0.0, 1.0)
+    beta_range=(1.69,6.63)
+
+    # Setup launcher
+    launcher=Launcher(nodes)
+
+    # For each virtual subject
+    for virtual_subj_id in virtual_subj_ids:
+
+        # Choose an actual subject
+        stim_file_name=None
+        control_file_name=None
+        while True:
+            i=np.random.choice(range(num_real_subjects))
+            subj_id=i+1
+            subj_stim_session_number=stim_order[i,LAT]
+            stim_file_name='value%d_s%d_t2.mat' % (subj_id,subj_stim_session_number)
+            subj_control_session_number=stim_order[i,NOSTIM1]
+            control_file_name='value%d_s%d_t2.mat' % (subj_id,subj_control_session_number)
+            if os.path.exists(os.path.join(data_dir,stim_file_name)) and\
+               os.path.exists(os.path.join(data_dir,control_file_name)):
+                break
+
+        # Sample alpha from subject distribution
+        alpha=alpha_range[0]+np.random.rand()*(alpha_range[1]-alpha_range[0])
+
+        # Sample beta from subject distribution - don't use subjects with high alpha
+        beta=beta_range[0]+np.random.rand()*(beta_range[1]-beta_range[0])
+
+        cmds, log_file_template, out_file=get_rerw_commands(control_file_name, 0*pA, 0*pA, 0*second, alpha, beta, None,
+            e_desc='baseline.virtual_subject.%d.control' % virtual_subj_id)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, -2*pA, 0*second, alpha, beta, None,
+            e_desc='baseline.virtual_subject.%d.anode' % virtual_subj_id)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, 2*pA, 0*second, alpha, beta, None,
+            e_desc='baseline.virtual_subject.%d.cathode' % virtual_subj_id)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, -4*pA, 0*second, alpha, beta, None,
+            e_desc='baseline.virtual_subject.%d.anode_control_1' % virtual_subj_id)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 4*pA, 0*second, alpha, beta, None,
+            e_desc='baseline.virtual_subject.%d.cathode_control_1' % virtual_subj_id)
+        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+
+    if start_nodes:
+        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
+        launcher.start_nodes()
+
+
 def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, virtual_subj_ids, behavioral_param_file,
                                      start_nodes=True):
     """
