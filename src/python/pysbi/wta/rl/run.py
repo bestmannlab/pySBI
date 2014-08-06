@@ -247,22 +247,22 @@ def launch_extra_virtual_subject_processes(nodes, virtual_subj_data_dir, virtual
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
 
-def launch_extra_virtual_subject_processes2(nodes, virtual_subj_data_dir, virtual_subj_ids, start_nodes=True):
+def launch_extra_virtual_subject_processes2(nodes, virtual_subj_data_dir, virtual_subj_ids, file_prefix, start_nodes=True):
     # Setup launcher
     launcher=Launcher(nodes)
 
     for virtual_subj_id in virtual_subj_ids:
-        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.virtual_subject.%d.anode.h5' % virtual_subj_id))
+        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'%s.%d.anode.h5' % (file_prefix,virtual_subj_id)))
         alpha=virtual_subj_data.alpha
         beta=virtual_subj_data.beta
         stim_file_name=virtual_subj_data.mat_file
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 0*pA, -2*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.anode_control_6' % virtual_subj_id)
+            e_desc='%s.%d.anode_control_6' % (file_prefix,virtual_subj_id))
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
         cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 0*pA, 2*pA, 0*second, alpha, beta, None,
-            e_desc='virtual_subject.%d.cathode_control_6' % virtual_subj_id)
+            e_desc='%s.%d.cathode_control_6' % (file_prefix,virtual_subj_id))
         launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
     if start_nodes:
