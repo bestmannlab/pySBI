@@ -1223,7 +1223,6 @@ class RLReport:
         self.no_response_cathode_wilcoxon={}
         perc_no_response_mean=[]
         perc_no_response_std_err=[]
-        print('% no response')
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['control'],
