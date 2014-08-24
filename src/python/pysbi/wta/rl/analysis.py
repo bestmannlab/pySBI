@@ -1178,6 +1178,9 @@ class RLReport:
             for session in self.stim_condition_reports[stim_condition].sessions:
                 self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
                 self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
+        for stim_condition in self.stim_conditions:
+            self.stim_condition_perc_correct[stim_condition]=np.array(self.stim_condition_perc_correct[stim_condition])
+            self.stim_condition_no_response[stim_condition]=np.array(self.stim_condition_no_response[stim_condition])
 
         # Create % correct plot
         furl='img/perc_correct'
