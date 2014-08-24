@@ -183,8 +183,7 @@
 <h4>% Correct</h4>
 <img width="50%" src="{{ rinfo.perc_correct_url }}"/>
 <h5>Friedman Test</h5>
-chi sq={{ rinfo.perc_correct_freidman[0] }}
-<br>p={{ rinfo.perc_correct_freidman[1] }}
+p={{ rinfo.perc_correct_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.perc_correct_control_ttest %}
 <br>{{ stim_condition }}, p={{ rinfo.perc_correct_control_ttest[stim_condition][1]|round(4) }}
@@ -200,6 +199,8 @@ chi sq={{ rinfo.perc_correct_freidman[0] }}
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
+<h5>Friedman Test</h5>
+p={{ rinfo.no_response_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.no_response_control_wilcoxon %}
 <br>{{ stim_condition }}, p={{ rinfo.no_response_control_wilcoxon[stim_condition][1]|round(4) }}

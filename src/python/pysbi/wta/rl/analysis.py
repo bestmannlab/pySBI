@@ -1239,6 +1239,7 @@ class RLReport:
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
         self.perc_no_response_url='%s.png' % furl
+        self.no_response_freidman=stats.friedmanchisquare(self.stim_condition_no_response.values())
         self.no_response_control_wilcoxon={}
         self.no_response_anode_wilcoxon={}
         self.no_response_cathode_wilcoxon={}
@@ -1246,14 +1247,17 @@ class RLReport:
         perc_no_response_std_err=[]
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
-                self.no_response_control_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['control'],
+                T,p=stats.wilcoxon(self.stim_condition_no_response['control'],
                     self.stim_condition_no_response[stim_condition])
+                self.no_response_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
-                self.no_response_anode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['anode'],
+                T,p=stats.wilcoxon(self.stim_condition_no_response['anode'],
                     self.stim_condition_no_response[stim_condition])
+                self.no_response_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                self.no_response_cathode_wilcoxon[stim_condition]=stats.wilcoxon(self.stim_condition_no_response['cathode'],
+                T,p=stats.wilcoxon(self.stim_condition_no_response['cathode'],
                     self.stim_condition_no_response[stim_condition])
+                self.no_response_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
             perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
             #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
