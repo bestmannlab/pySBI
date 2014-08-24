@@ -1978,12 +1978,20 @@ class RLReport:
         self.trial_duration=self.stim_condition_reports['control'].sessions[0].trial_duration
         self.wta_params=self.stim_condition_reports['control'].sessions[0].wta_params
 
+        condition_alphas={}
+        condition_betas={}
+        for stim_condition in self.stim_conditions:
+            condition_alphas[stim_condition]=np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas)
+            condition_betas[stim_condition]=np.squeeze(self.stim_condition_reports[stim_condition].condition_betas)
+
         self.stim_alpha_change_urls={}
         self.stim_beta_change_urls={}
         self.stim_alpha_mean_change={}
         self.stim_alpha_std_change={}
         self.stim_beta_mean_change={}
         self.stim_beta_std_change={}
+        self.alpha_friedman=stats.friedmanchisquare(condition_alphas.values())
+        self.beta_friedman=stats.friedmanchisquare(condition_betas.values())
         self.alpha_wilcoxon_test={}
         self.beta_wilcoxon_test={}
         self.anode_alpha_wilcoxon_test={}
@@ -2010,8 +2018,8 @@ class RLReport:
                 filtered_alpha_diffs=reject_outliers(alpha_diff)
                 self.stim_alpha_mean_change[stim_condition]=np.mean(filtered_alpha_diffs)
                 self.stim_alpha_std_change[stim_condition]=np.std(filtered_alpha_diffs)
-                self.alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_alphas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
+                T,p=stats.wilcoxon(condition_alphas['control'], condition_alphas[stim_condition])
+                self.alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
                 # Create beta plot
                 furl='img/%s_beta' % stim_condition
@@ -2028,20 +2036,20 @@ class RLReport:
                 filtered_beta_diffs=reject_outliers(beta_diff)
                 self.stim_beta_mean_change[stim_condition]=np.mean(filtered_beta_diffs)
                 self.stim_beta_std_change[stim_condition]=np.std(filtered_beta_diffs)
-                self.beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['control'].condition_betas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+                T,p=stats.wilcoxon(condition_betas['control'], condition_betas[stim_condition])
+                self.beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
         for stim_condition in self.stim_conditions:
             if stim_condition.startswith('anode_control'):
-                self.anode_alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_alphas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
-                self.anode_beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['anode'].condition_betas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+                T,p=stats.wilcoxon(condition_alphas['anode'], condition_alphas[stim_condition])
+                self.anode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(condition_betas['anode'], condition_betas[stim_condition])
+                self.anode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                self.cathode_alpha_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_alphas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_alphas))
-                self.cathode_beta_wilcoxon_test[stim_condition]=stats.wilcoxon(np.squeeze(self.stim_condition_reports['cathode'].condition_betas),
-                    np.squeeze(self.stim_condition_reports[stim_condition].condition_betas))
+                T,p=stats.wilcoxon(condition_alphas['cathode'], condition_alphas[stim_condition])
+                self.cathode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(condition_betas['cathode'], condition_betas[stim_condition])
+                self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
 
         #create report

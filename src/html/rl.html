@@ -336,6 +336,10 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 {% endfor %}
 
 <h4>Stimulation Conditions</h4>
+<h5>Friedman Test</h5>
+alpha: p={{ rinfo.alpha_friedman[1]|round(4) }}
+<br>
+beta: p={{ rinfo.beta_friedman[1]|round(4) }}
 <table border="1" class="tablesorter" id="stim_condition_table">
     <thead>
     <tr>
