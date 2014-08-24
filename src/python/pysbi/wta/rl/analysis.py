@@ -1183,21 +1183,42 @@ class RLReport:
         fname=os.path.join(self.reports_dir,furl)
         self.perc_correct_url='%s.png' % furl
 
-        self.perc_correct_control_ttest={}
-        self.perc_correct_anode_ttest={}
-        self.perc_correct_cathode_ttest={}
+        self.perc_correct_freidman=stats.friedmanchisquare(self.stim_condition_perc_correct.values())
+        #self.perc_correct_control_ttest={}
+        #self.perc_correct_anode_ttest={}
+        #self.perc_correct_cathode_ttest={}
+        self.perc_correct_control_wilcoxon={}
+        self.perc_correct_anode_wilcoxon={}
+        self.perc_correct_cathode_wilcoxon={}
+        num_comparisons=0.0
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                num_comparisons+=1.0
+            if stim_condition.startswith('anode_control'):
+                num_comparisons+=1.0
+            elif stim_condition.startswith('cathode_control'):
+                num_comparisons+=1.0
         perc_correct_mean=[]
         perc_correct_std_err=[]
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
-                self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
+                #self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
+                #    self.stim_condition_perc_correct[stim_condition])
+                T,p=stats.wilcoxon(self.stim_condition_perc_correct['control'],
                     self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
-                self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
+                #self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
+                #    self.stim_condition_perc_correct[stim_condition])
+                T,p=stats.wilcoxon(self.stim_condition_perc_correct['anode'],
                     self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
+                #self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
+                #    self.stim_condition_perc_correct[stim_condition])
+                T,p=stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
                     self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
             perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))            
         if regenerate_plots:
