@@ -1355,7 +1355,7 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             stim_baseline_diffs[stim_condition]=np.array(stim_baseline_diffs[stim_condition])
 
-        self.baseline_diff_freidman=stats.friedmanchisquare(*stim_baseline_diffs.values())
+        #self.baseline_diff_freidman=stats.friedmanchisquare(*stim_baseline_diffs.values())
         self.baseline_diff_control_u={}
         self.baseline_diff_anode_u={}
         self.baseline_diff_cathode_u={}
@@ -1399,7 +1399,7 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
 
-        self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        #self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
         self.stim_diff_control_u={}
         self.stim_diff_anode_u={}
         self.stim_diff_cathode_u={}

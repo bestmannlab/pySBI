@@ -311,10 +311,6 @@ p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
-<h5>Friedman Test</h5>
-chi_sq={{ rinfo.baseline_diff_freidman[0]|round(3) }}
-<br>
-p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_diff_control_u %}
 <br>{{ stim_condition }}, p={{ rinfo.baseline_diff_control_u[stim_condition][1]|round(4) }}
@@ -330,10 +326,6 @@ p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 
 <h4>Firing Rate Diffs (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.firing_rate_diff_url }}"/>
-<h5>Friedman Test</h5>
-chi_sq={{ rinfo.stim_diff_freidman[0]|round(3) }}
-<br>
-p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.stim_diff_control_u %}
 <br>{{ stim_condition }}, p={{ rinfo.stim_diff_control_u[stim_condition][1]|round(4) }}
