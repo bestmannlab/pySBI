@@ -1111,9 +1111,10 @@ class RLReport:
             self.cathode_stim_condition_large_ev_inh_rate_means={}
             self.cathode_stim_condition_large_ev_inh_rate_std_err={}
 
-            self.stim_condition_perc_correct={}
-            self.stim_condition_no_response={}
-            for stim_condition in self.stim_conditions:
+        self.stim_condition_perc_correct={}
+        self.stim_condition_no_response={}
+        for stim_condition in self.stim_conditions:
+            if regenerate_plots:
                 if stim_condition=='control' or stim_condition.startswith('anode'):
                     self.anode_stim_condition_chosen_rate_means[stim_condition],\
                     self.anode_stim_condition_chosen_rate_std_err[stim_condition],\
@@ -1172,11 +1173,11 @@ class RLReport:
                     self.cathode_stim_condition_large_ev_inh_rate_means[stim_condition],\
                     self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
 
-                self.stim_condition_perc_correct[stim_condition]=[]
-                self.stim_condition_no_response[stim_condition]=[]
-                for session in self.stim_condition_reports[stim_condition].sessions:
-                    self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
-                    self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
+            self.stim_condition_perc_correct[stim_condition]=[]
+            self.stim_condition_no_response[stim_condition]=[]
+            for session in self.stim_condition_reports[stim_condition].sessions:
+                self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
+                self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
 
         # Create % correct plot
         furl='img/perc_correct'
