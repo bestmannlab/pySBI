@@ -548,8 +548,9 @@ class StimConditionReport:
 
     def compute_baseline_diff_rates(self, min_ev_diff, max_ev_diff):
         pyr_rate_diffs=[]
-        trials=0
+        subjects=0
         for virtual_subj_id in range(self.num_subjects):
+            subj_pyr_rate_diffs=[]
             if virtual_subj_id not in self.excluded_sessions:
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
@@ -557,14 +558,15 @@ class StimConditionReport:
                 for trial in range(len(data.trial_e_rates)):
                     ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
                     if ev_diff>=min_ev_diff and ev_diff<max_ev_diff:
-                        trials+=1.0
+                        subjects+=1.0
                         rate1=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         rate2=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                        pyr_rate_diffs.append(np.abs(rate1-rate2))
+                        subj_pyr_rate_diffs.append(np.abs(rate1-rate2))
+            pyr_rate_diffs.append(np.mean(subj_pyr_rate_diffs))
         #W,p=stats.shapiro(pyr_rate_diffs)
         #print('p=%.4f' % p)
         #return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
-        return pyr_rate_diffs,trials
+        return pyr_rate_diffs,subjects
 
     def compute_baseline_rates(self):
         pyr_rates=[]
@@ -586,9 +588,10 @@ class StimConditionReport:
 
     def compute_ev_diff_rates(self, min_ev_diff, max_ev_diff):
         diff_rates=[]
-        trials=0
+        subjects=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
+                subj_diff_rates=[]
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
@@ -596,12 +599,13 @@ class StimConditionReport:
                     ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
                     if ev_diff>=min_ev_diff and ev_diff<max_ev_diff:
                         if data.choice[trial]>-1:
-                            trials+=1.0
+                            subjects+=1.0
                             chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            diff_rates.append(chosen_mean-unchosen_mean)
+                            subj_diff_rates.append(chosen_mean-unchosen_mean)
+                diff_rates.append(subj_diff_rates)
         #return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
-        return diff_rates,trials
+        return diff_rates,subjects
 
     def compute_trial_rate_pyr_stats(self, min_beta, max_beta, min_ev_diff, max_ev_diff):
         data=FileInfo(os.path.join(self.data_dir,'%s.h5' % self.file_prefix % (0,self.stim_condition)))
@@ -1355,23 +1359,23 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             stim_baseline_diffs[stim_condition]=np.array(stim_baseline_diffs[stim_condition])
 
-        #self.baseline_diff_freidman=stats.friedmanchisquare(*stim_baseline_diffs.values())
-        self.baseline_diff_control_u={}
-        self.baseline_diff_anode_u={}
-        self.baseline_diff_cathode_u={}
+        self.baseline_diff_freidman=stats.friedmanchisquare(*stim_baseline_diffs.values())
+        self.baseline_diff_control_wilcoxon={}
+        self.baseline_diff_anode_wilcoxon={}
+        self.baseline_diff_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
-                u,p=stats.mannwhitneyu(stim_baseline_diffs['control'], stim_baseline_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_baseline_diffs['control'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_control_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.baseline_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
-                u,p=stats.mannwhitneyu(stim_baseline_diffs['anode'], stim_baseline_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_baseline_diffs['anode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_anode_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.baseline_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                u,p=stats.mannwhitneyu(stim_baseline_diffs['cathode'], stim_baseline_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_baseline_diffs['cathode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_cathode_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.baseline_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1399,23 +1403,23 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
 
-        #self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
-        self.stim_diff_control_u={}
-        self.stim_diff_anode_u={}
-        self.stim_diff_cathode_u={}
+        self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        self.stim_diff_control_wilcoxon={}
+        self.stim_diff_anode_wilcoxon={}
+        self.stim_diff_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
-                u,p=stats.mannwhitneyu(stim_diffs['control'], stim_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_control_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.stim_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
-                u,p=stats.mannwhitneyu(stim_diffs['anode'], stim_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_anode_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.stim_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                u,p=stats.mannwhitneyu(stim_diffs['cathode'], stim_diffs[stim_condition])
+                T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_cathode_u[stim_condition]=(u,p*2.0*num_comparisons)
+                self.stim_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
