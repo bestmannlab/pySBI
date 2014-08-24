@@ -183,6 +183,8 @@
 <h4>% Correct</h4>
 <img width="50%" src="{{ rinfo.perc_correct_url }}"/>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.perc_correct_freidman[0]|round(3) }}
+<br>
 p={{ rinfo.perc_correct_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.perc_correct_control_ttest %}
@@ -200,6 +202,8 @@ p={{ rinfo.perc_correct_freidman[1]|round(4) }}
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.no_response_freidman[0]|round(3) }}
+<br>
 p={{ rinfo.no_response_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.no_response_control_wilcoxon %}
@@ -272,6 +276,8 @@ p={{ rinfo.no_response_freidman[1]|round(4) }}
 <img width="50%" src="{{ rinfo.baseline_rate_url }}"/>
 <h5>Pyramidal</h5>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.baseline_pyr_friedman[0]|round(3) }}
+<br>
 p={{ rinfo.baseline_pyr_friedman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_pyr_control_wilcoxon %}
@@ -287,6 +293,8 @@ p={{ rinfo.baseline_pyr_friedman[1]|round(4) }}
 {% endfor %}
 <h5>Interneuron</h5>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.baseline_inh_friedman[0]|round(3) }}
+<br>
 p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_inh_control_wilcoxon %}
@@ -304,6 +312,8 @@ p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.baseline_diff_freidman[0]|round(3) }}
+<br>
 p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_diff_control_u %}
@@ -321,6 +331,8 @@ p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 <h4>Firing Rate Diffs (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.firing_rate_diff_url }}"/>
 <h5>Friedman Test</h5>
+chi_sq={{ rinfo.stim_diff_freidman[0]|round(3) }}
+<br>
 p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.stim_diff_control_u %}
@@ -337,9 +349,11 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 
 <h4>Stimulation Conditions</h4>
 <h5>Friedman Test</h5>
-alpha: p={{ rinfo.alpha_friedman[1]|round(4) }}
+alpha: chi_sq={{ rinfo.alpha_friedman[0]|round(3) }}
+<br>p={{ rinfo.alpha_friedman[1]|round(4) }}
 <br>
-beta: p={{ rinfo.beta_friedman[1]|round(4) }}
+beta: chi_sq={{ rinfo.beta_friedman[0]|round(3) }}
+<br>p={{ rinfo.beta_friedman[1]|round(4) }}
 <table border="1" class="tablesorter" id="stim_condition_table">
     <thead>
     <tr>
