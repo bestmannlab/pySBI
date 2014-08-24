@@ -1052,8 +1052,9 @@ class RLReport:
             excluded=self.stim_condition_reports[stim_condition].excluded_sessions
             ev_diffs.extend(self.stim_condition_reports[stim_condition].ev_diff)
 
+        ev_diff_hist,ev_diff_bins=np.histogram(np.array(ev_diffs), bins=10)
+
         if regenerate_plots:
-            ev_diff_hist,ev_diff_bins=np.histogram(np.array(ev_diffs), bins=10)
 
             self.anode_stim_condition_chosen_rate_means={}
             self.anode_stim_condition_chosen_rate_std_err={}
