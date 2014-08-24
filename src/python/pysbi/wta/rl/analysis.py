@@ -1290,28 +1290,30 @@ class RLReport:
             pyr_std_errs.append(np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials))
             inh_means.append(np.mean(stim_inh_rates[stim_condition]))
             inh_sd_errs.append(np.std(stim_inh_rates[stim_condition])/np.sqrt(trials))
+        self.baseline_pyr_friedman=stats.friedmanchisquare(stim_pyr_rates.values())
         self.baseline_pyr_control_wilcoxon={}
         self.baseline_pyr_anode_wilcoxon={}
         self.baseline_pyr_cathode_wilcoxon={}
+        self.baseline_inh_friedman=stats.friedmanchisquare(stim_inh_rates.values())
         self.baseline_inh_control_wilcoxon={}
         self.baseline_inh_anode_wilcoxon={}
         self.baseline_inh_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
-                self.baseline_pyr_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['control'],
-                    stim_pyr_rates[stim_condition])
-                self.baseline_inh_control_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['control'],
-                    stim_inh_rates[stim_condition])
+                T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
+                self.baseline_inh_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
-                self.baseline_pyr_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['anode'], 
-                    stim_pyr_rates[stim_condition])
-                self.baseline_inh_anode_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['anode'],
-                    stim_inh_rates[stim_condition])
+                T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
-                self.baseline_pyr_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_pyr_rates['cathode'],
-                    stim_pyr_rates[stim_condition])
-                self.baseline_inh_cathode_wilcoxon[stim_condition]=stats.wilcoxon(stim_inh_rates['cathode'],
-                    stim_inh_rates[stim_condition])
+                T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks

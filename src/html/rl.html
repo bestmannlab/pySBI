@@ -271,6 +271,8 @@ p={{ rinfo.no_response_freidman[1]|round(4) }}
 <h4>Mean Baseline Rates</h4>
 <img width="50%" src="{{ rinfo.baseline_rate_url }}"/>
 <h5>Pyramidal</h5>
+<h5>Friedman Test</h5>
+p={{ rinfo.baseline_pyr_friedman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_pyr_control_wilcoxon %}
 <br>{{ stim_condition }}, p={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][1]|round(4) }}
@@ -284,6 +286,8 @@ p={{ rinfo.no_response_freidman[1]|round(4) }}
 <br>{{ stim_condition }}, p={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 <h5>Interneuron</h5>
+<h5>Friedman Test</h5>
+p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_inh_control_wilcoxon %}
 <br>{{ stim_condition }}, p={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][1]|round(4) }}
