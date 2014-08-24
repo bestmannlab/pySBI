@@ -1294,6 +1294,9 @@ class RLReport:
             pyr_std_errs.append(np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials))
             inh_means.append(np.mean(stim_inh_rates[stim_condition]))
             inh_sd_errs.append(np.std(stim_inh_rates[stim_condition])/np.sqrt(trials))
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition]=np.array(stim_pyr_rates[stim_condition])
+            stim_inh_rates[stim_condition]=np.array(stim_inh_rates[stim_condition])
         self.baseline_pyr_friedman=stats.friedmanchisquare(*stim_pyr_rates.values())
         self.baseline_pyr_control_wilcoxon={}
         self.baseline_pyr_anode_wilcoxon={}
@@ -1348,6 +1351,9 @@ class RLReport:
             stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
             baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
+        for stim_condition in self.stim_conditions:
+            stim_baseline_diffs[stim_condition]=np.array(stim_baseline_diffs[stim_condition])
+
         self.baseline_diff_freidman=stats.friedmanchisquare(*stim_baseline_diffs.values())
         self.baseline_diff_control_u={}
         self.baseline_diff_anode_u={}
@@ -1389,6 +1395,9 @@ class RLReport:
             stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             mean_diff_rates.append(np.mean(stim_diffs[stim_condition]))
             std_err_diff_rates.append(np.std(stim_diffs[stim_condition])/np.sqrt(trials))
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
+
         self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
         self.stim_diff_control_u={}
         self.stim_diff_anode_u={}
