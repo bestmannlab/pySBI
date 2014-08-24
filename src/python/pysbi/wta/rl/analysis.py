@@ -1386,6 +1386,7 @@ class RLReport:
             stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             mean_diff_rates.append(np.mean(stim_diffs[stim_condition]))
             std_err_diff_rates.append(np.std(stim_diffs[stim_condition])/np.sqrt(trials))
+        self.stim_diff_freidman=stats.friedmanchisquare(stim_diffs.values())
         self.stim_diff_control_u={}
         self.stim_diff_anode_u={}
         self.stim_diff_cathode_u={}
@@ -1393,15 +1394,15 @@ class RLReport:
             if not stim_condition=='control':
                 u,p=stats.mannwhitneyu(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_control_u[stim_condition]=(u,p*2.0)
+                self.stim_diff_control_u[stim_condition]=(u,p*2.0*num_comparisons)
             if stim_condition.startswith('anode_control'):
                 u,p=stats.mannwhitneyu(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_anode_u[stim_condition]=(u,p*2.0)
+                self.stim_diff_anode_u[stim_condition]=(u,p*2.0*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
                 u,p=stats.mannwhitneyu(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_cathode_u[stim_condition]=(u,p*2.0)
+                self.stim_diff_cathode_u[stim_condition]=(u,p*2.0*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
