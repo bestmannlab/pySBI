@@ -1345,6 +1345,7 @@ class RLReport:
             stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
             baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
             baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
+        self.baseline_diff_freidman=stats.friedmanchisquare(stim_baseline_diffs.values())
         self.baseline_diff_control_u={}
         self.baseline_diff_anode_u={}
         self.baseline_diff_cathode_u={}
@@ -1352,15 +1353,15 @@ class RLReport:
             if not stim_condition=='control':
                 u,p=stats.mannwhitneyu(stim_baseline_diffs['control'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_control_u[stim_condition]=(u,p*2.0)
+                self.baseline_diff_control_u[stim_condition]=(u,p*2.0*num_comparisons)
             if stim_condition.startswith('anode_control'):
                 u,p=stats.mannwhitneyu(stim_baseline_diffs['anode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_anode_u[stim_condition]=(u,p*2.0)
+                self.baseline_diff_anode_u[stim_condition]=(u,p*2.0*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
                 u,p=stats.mannwhitneyu(stim_baseline_diffs['cathode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_cathode_u[stim_condition]=(u,p*2.0)
+                self.baseline_diff_cathode_u[stim_condition]=(u,p*2.0*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks

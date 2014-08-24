@@ -303,6 +303,8 @@ p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
+<h5>Friedman Test</h5>
+p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_diff_control_u %}
 <br>{{ stim_condition }}, p={{ rinfo.baseline_diff_control_u[stim_condition][1]|round(4) }}
