@@ -571,19 +571,23 @@ class StimConditionReport:
     def compute_baseline_rates(self):
         pyr_rates=[]
         inh_rates=[]
-        trials=0
+        subjects=0
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
+                subj_pyr_rates=[]
+                subj_inh_rates=[]
                 session_prefix=self.file_prefix % (virtual_subj_id,self.stim_condition)
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
-                    trials+=1.0
-                    pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
+                    subjects+=1.0
+                    subj_pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
                                       data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
-                    inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
+                    subj_inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
+                pyr_rates.append(np.mean(subj_pyr_rates))
+                inh_rates.append(np.mean(subj_inh_rates))
         #return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
-        return pyr_rates,inh_rates,trials
+        return pyr_rates,inh_rates,subjects
         #return np.mean(pyr_rates),np.std(pyr_rates),np.mean(inh_rates),np.std(inh_rates)
 
     def compute_ev_diff_rates(self, min_ev_diff, max_ev_diff):
@@ -603,7 +607,7 @@ class StimConditionReport:
                             chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                             subj_diff_rates.append(chosen_mean-unchosen_mean)
-                diff_rates.append(subj_diff_rates)
+                diff_rates.append(np.mean(subj_diff_rates))
         #return np.mean(diff_rates),np.std(diff_rates)/np.sqrt(trials)
         return diff_rates,subjects
 
