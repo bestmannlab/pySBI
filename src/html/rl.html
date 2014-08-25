@@ -182,6 +182,10 @@
 
 <h4>% Correct</h4>
 <img width="50%" src="{{ rinfo.perc_correct_url }}"/>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}={{ rinfo.perc_correct_mean[stim_condition] }} +/- {{ rinfo.perc_correct_std[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.perc_correct_freidman[0]|round(3) }}
 <br>
@@ -201,6 +205,10 @@ p={{ rinfo.perc_correct_freidman[1]|round(4) }}
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}={{ rinfo.perc_no_response_mean[stim_condition] }} +/- {{ rinfo.perc_no_response_std_err[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.no_response_freidman[0]|round(3) }}
 <br>
@@ -275,6 +283,10 @@ p={{ rinfo.no_response_freidman[1]|round(4) }}
 <h4>Mean Baseline Rates</h4>
 <img width="50%" src="{{ rinfo.baseline_rate_url }}"/>
 <h5>Pyramidal</h5>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}: {{ rinfo.baseline_pyr_means[stim_condition] }} +/- {{ rinfo.baseline_pyr_std_errs[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.baseline_pyr_friedman[0]|round(3) }}
 <br>
@@ -292,6 +304,10 @@ p={{ rinfo.baseline_pyr_friedman[1]|round(4) }}
 <br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][0]|round(4) }}, p={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 <h5>Interneuron</h5>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}: {{ rinfo.baseline_inh_means[stim_condition] }} +/- {{ rinfo.baseline_inh_std_errs[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.baseline_inh_friedman[0]|round(3) }}
 <br>
@@ -311,6 +327,10 @@ p={{ rinfo.baseline_inh_friedman[1]|round(4) }}
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
 <img width="50%" src="{{ rinfo.baseline_diff_rate_url }}"/>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}: {{ rinfo.baseline_diff_means[stim_condition] }} +/- {{ rinfo.baseline_diff_std_errs[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.baseline_diff_freidman[0]|round(3) }}
 <br>
@@ -330,6 +350,10 @@ p={{ rinfo.baseline_diff_freidman[1]|round(4) }}
 
 <h4>Firing Rate Diffs (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.firing_rate_diff_url }}"/>
+{% for stim_condition in rinfo.stim_conditions %}
+<br>
+{{ stim_condition }}: {{ rinfo.mean_diff_rates[stim_condition] }} +/- {{ rinfo.std_err_diff_rates[stim_condition] }}
+{% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.stim_diff_freidman[0]|round(3) }}
 <br>

@@ -1211,6 +1211,8 @@ class RLReport:
                 num_comparisons+=1.0
             elif stim_condition.startswith('cathode_control'):
                 num_comparisons+=1.0
+        self.perc_correct_mean={}
+        self.perc_correct_std={}
         perc_correct_mean=[]
         perc_correct_std_err=[]
         for stim_condition in self.stim_conditions:
@@ -1232,8 +1234,11 @@ class RLReport:
                 T,p=stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
                     self.stim_condition_perc_correct[stim_condition])
                 self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
-            perc_correct_mean.append(np.mean(self.stim_condition_perc_correct[stim_condition]))
-            perc_correct_std_err.append(np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition])))            
+            self.perc_correct_mean[stim_condition]=np.mean(self.stim_condition_perc_correct[stim_condition])
+            self.perc_correct_std[stim_condition]=np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition]))
+            perc_correct_mean.append(self.perc_correct_mean[stim_condition])
+            perc_correct_std_err.append(self.perc_correct_std[stim_condition])
+
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1258,6 +1263,8 @@ class RLReport:
         self.no_response_cathode_wilcoxon={}
         perc_no_response_mean=[]
         perc_no_response_std_err=[]
+        self.perc_no_response_mean={}
+        self.perc_no_response_std_err={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(self.stim_condition_no_response['control'],
@@ -1271,8 +1278,10 @@ class RLReport:
                 T,p=stats.wilcoxon(self.stim_condition_no_response['cathode'],
                     self.stim_condition_no_response[stim_condition])
                 self.no_response_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
-            perc_no_response_mean.append(np.mean(self.stim_condition_no_response[stim_condition]))
-            perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition])))
+            self.perc_no_response_mean[stim_condition]=np.mean(self.stim_condition_no_response[stim_condition])
+            self.perc_no_response_std_err[stim_condition]=np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition]))
+            perc_no_response_mean.append(self.perc_no_response_mean[stim_condition])
+            perc_no_response_std_err.append(self.perc_no_response_std_err[stim_condition])
             #perc_no_response_std_err.append(np.std(self.stim_condition_no_response[stim_condition]))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))            
@@ -1295,14 +1304,22 @@ class RLReport:
         pyr_std_errs=[]
         inh_means=[]
         inh_sd_errs=[]
+        self.baseline_pyr_means={}
+        self.baseline_pyr_std_errs={}
+        self.baseline_inh_means={}
+        self.baseline_inh_std_errs={}
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
             stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates()
-            pyr_means.append(np.mean(stim_pyr_rates[stim_condition]))
-            pyr_std_errs.append(np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials))
-            inh_means.append(np.mean(stim_inh_rates[stim_condition]))
-            inh_sd_errs.append(np.std(stim_inh_rates[stim_condition])/np.sqrt(trials))
+            self.baseline_pyr_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
+            self.baseline_pyr_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
+            pyr_means.append(self.baseline_pyr_means[stim_condition])
+            pyr_std_errs.append(self.baseline_pyr_std_errs[stim_condition])
+            self.baseline_inh_means[stim_condition]=np.mean(stim_inh_rates[stim_condition])
+            self.baseline_inh_std_errs[stim_condition]=np.std(stim_inh_rates[stim_condition])/np.sqrt(trials)
+            inh_means.append(self.baseline_inh_means[stim_condition])
+            inh_sd_errs.append(self.baseline_inh_std_errs[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_pyr_rates[stim_condition]=np.array(stim_pyr_rates[stim_condition])
             stim_inh_rates[stim_condition]=np.array(stim_inh_rates[stim_condition])
@@ -1353,13 +1370,17 @@ class RLReport:
         furl='img/baseline_diff_rate'
         fname=os.path.join(self.reports_dir,furl)
         self.baseline_diff_rate_url='%s.png' % furl
+        self.baseline_diff_means={}
+        self.baseline_diff_std_errs={}
         baseline_diff_means=[]
         baseline_diff_std_errs=[]
         stim_baseline_diffs={}
         for stim_condition in self.stim_conditions:
             stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
-            baseline_diff_means.append(np.mean(stim_baseline_diffs[stim_condition]))
-            baseline_diff_std_errs.append(np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials))
+            self.baseline_diff_means[stim_condition]=np.mean(stim_baseline_diffs[stim_condition])
+            self.baseline_diff_std_errs[stim_condition]=np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials)
+            baseline_diff_means.append(self.baseline_diff_means[stim_condition])
+            baseline_diff_std_errs.append(self.baseline_diff_std_errs[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_baseline_diffs[stim_condition]=np.array(stim_baseline_diffs[stim_condition])
 
@@ -1397,13 +1418,17 @@ class RLReport:
         furl='img/firing_rate_diff'
         fname = os.path.join(self.reports_dir, furl)
         self.firing_rate_diff_url = '%s.png' % furl
+        self.mean_diff_rates={}
+        self.std_err_diff_rates={}
         mean_diff_rates=[]
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
-            mean_diff_rates.append(np.mean(stim_diffs[stim_condition]))
-            std_err_diff_rates.append(np.std(stim_diffs[stim_condition])/np.sqrt(trials))
+            self.mean_diff_rates[stim_condition]=np.mean(stim_diffs[stim_condition])
+            self.std_err_diff_rates[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
+            mean_diff_rates.append(self.mean_diff_rates[stim_condition])
+            std_err_diff_rates.append(self.std_err_diff_rates[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
 
