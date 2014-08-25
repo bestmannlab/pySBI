@@ -187,16 +187,16 @@ chi_sq={{ rinfo.perc_correct_freidman[0]|round(3) }}
 <br>
 p={{ rinfo.perc_correct_freidman[1]|round(4) }}
 <h5>Compared to control</h5>
-{% for stim_condition in rinfo.perc_correct_control_ttest %}
-<br>{{ stim_condition }}, p={{ rinfo.perc_correct_control_ttest[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.perc_correct_control_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_control_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 <h5>Compared to anode</h5>
-{% for stim_condition in rinfo.perc_correct_anode_ttest %}
-<br>{{ stim_condition }}, p={{ rinfo.perc_correct_anode_ttest[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.perc_correct_anode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 <h5>Compared to cathode</h5>
-{% for stim_condition in rinfo.perc_correct_cathode_ttest %}
-<br>{{ stim_condition }}, p={{ rinfo.perc_correct_cathode_ttest[stim_condition][1]|round(4) }}
+{% for stim_condition in rinfo.perc_correct_cathode_wilcoxon %}
+<br>{{ stim_condition }}, p={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 
 <h4>% No Response</h4>
