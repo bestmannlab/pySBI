@@ -2097,15 +2097,7 @@ class RLReport:
                 T,p=stats.wilcoxon(condition_betas['cathode'], condition_betas[stim_condition])
                 self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
-        subject_alphas=[]
-        subject_betas=[]
-        subject_pyr_rate_diff=[]
-        for stim_condition in self.stim_conditions:
-            subject_alphas.extend(self.stim_condition_reports[stim_condition].condition_alphas)
-            subject_betas.extend(self.stim_condition_reports[stim_condition].condition_betas)
-            subject_pyr_rate_diff.extend(self.stim_condition_reports[stim_condition].compute_ev_diff_rates(0,1000))
-
-
+        
         furl='img/beta_pyr_rate_diff'
         fname = os.path.join(self.reports_dir, furl)
         self.beta_pyr_rate_diff_url = '%s.png' % furl
@@ -2115,17 +2107,19 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 stim_report=self.stim_condition_reports[stim_condition]
                 for virtual_subj_id in range(stim_report.num_subjects):
-                    subj_diff_rates=[]
-                    session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
-                    session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
-                    data=FileInfo(session_report_file)
-                    for trial in range(len(data.trial_e_rates)):
-                        if data.choice[trial]>-1:
-                            chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            subj_diff_rates.append(chosen_mean-unchosen_mean)
-                    subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
-                    subject_betas.append(data.est_beta)
+                    if not virtual_subj_id in stim_report.excluded_sessions:
+                        subj_diff_rates=[]
+                        session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
+                        session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                        data=FileInfo(session_report_file)
+                        for trial in range(len(data.trial_e_rates)):
+                            if data.choice[trial]>-1:
+                                chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                subj_diff_rates.append(chosen_mean-unchosen_mean)
+                        subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
+                        subject_betas.append(data.est_beta)
+            
             subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
             subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
             clf = LinearRegression()
@@ -2143,6 +2137,50 @@ class RLReport:
                 label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
+            ax.set_ylabel('Pyr Rate Diff')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        furl='img/alpha_pyr_rate_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.alpha_pyr_rate_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            subject_alphas=[]
+            subject_pyr_rate_diff=[]
+            for stim_condition in self.stim_conditions:
+                stim_report=self.stim_condition_reports[stim_condition]
+                for virtual_subj_id in range(stim_report.num_subjects):
+                    if not virtual_subj_id in stim_report.excluded_sessions:
+                        subj_diff_rates=[]
+                        session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
+                        session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                        data=FileInfo(session_report_file)
+                        for trial in range(len(data.trial_e_rates)):
+                            if data.choice[trial]>-1:
+                                chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                subj_diff_rates.append(chosen_mean-unchosen_mean)
+                        subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
+                        subject_alphas.append(data.est_alpha)
+
+            subject_alphas_vec=np.reshape(np.array(subject_alphas),(len(subject_alphas),1))
+            subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
+            clf = LinearRegression()
+            clf.fit(subject_alphas_vec, subject_pyr_rate_diff_vec)
+            self.alpha_pyr_rate_diff_a = clf.coef_[0][0]
+            self.alpha_pyr_rate_diff_b = clf.intercept_[0]
+            self.alpha_pyr_rate_diff_r_sqr=clf.score(subject_alphas_vec, subject_pyr_rate_diff_vec)
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.plot(subject_alphas_vec, subject_pyr_rate_diff_vec,'o')
+            min_x=np.min(subject_alphas_vec)-1
+            max_x=np.max(subject_alphas_vec)+1
+            ax.plot([min_x, max_x], [self.alpha_pyr_rate_diff_a * min_x + self.alpha_pyr_rate_diff_b,
+                                     self.alpha_pyr_rate_diff_a * max_x + self.alpha_pyr_rate_diff_b],
+                label='r^2=%.3f' % self.alpha_pyr_rate_diff_r_sqr)
+            ax.legend(loc=0)
+            ax.set_xlabel('Alpha')
             ax.set_ylabel('Pyr Rate Diff')
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
