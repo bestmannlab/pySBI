@@ -2110,10 +2110,24 @@ class RLReport:
         fname = os.path.join(self.reports_dir, furl)
         self.beta_pyr_rate_diff_url = '%s.png' % furl
         if regenerate_plots:
-            subject_betas_vec=np.zeros([len(subject_betas),1])
-            subject_betas_vec[:]=subject_betas
-            subject_pyr_rate_diff_vec=np.zeros([len(subject_pyr_rate_diff),1])
-            subject_pyr_rate_diff_vec[:]=np.array(subject_pyr_rate_diff)
+            subject_betas=[]
+            subject_pyr_rate_diff=[]
+            for stim_condition in self.stim_conditions:
+                stim_report=self.stim_condition_reports[stim_condition]
+                for virtual_subj_id in range(stim_report.num_subjects):
+                    subj_diff_rates=[]
+                    session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
+                    session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                    data=FileInfo(session_report_file)
+                    for trial in range(len(data.trial_e_rates)):
+                        if data.choice[trial]>-1:
+                            chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            subj_diff_rates.append(chosen_mean-unchosen_mean)
+                    subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
+                    subject_betas.append(data.est_beta)
+            subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
+            subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
             clf = LinearRegression()
             clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
             self.beta_pyr_rate_diff_a = clf.coef_[0][0]
