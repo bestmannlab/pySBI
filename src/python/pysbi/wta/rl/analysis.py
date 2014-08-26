@@ -2097,6 +2097,42 @@ class RLReport:
                 T,p=stats.wilcoxon(condition_betas['cathode'], condition_betas[stim_condition])
                 self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
+        subject_alphas=[]
+        subject_betas=[]
+        subject_pyr_rate_diff=[]
+        for stim_condition in self.stim_conditions:
+            subject_alphas.extend(self.stim_condition_reports[stim_condition].condition_alphas)
+            subject_betas.extend(self.stim_condition_reports[stim_condition].condition_betas)
+            subject_pyr_rate_diff.extend(self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3]))
+
+
+        furl='img/beta_pyr_rate_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.beta_pyr_rate_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            subject_betas_vec=np.zeros([len(subject_betas),1])
+            subject_betas_vec[:]=subject_betas
+            subject_pyr_rate_diff_vec=np.zeros([len(subject_pyr_rate_diff),1])
+            subject_pyr_rate_diff_vec[:]=subject_pyr_rate_diff
+            clf = LinearRegression()
+            clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
+            self.beta_pyr_rate_diff_a = clf.coef_[0][0]
+            self.beta_pyr_rate_diff_b = clf.intercept_[0]
+            self.beta_pyr_rate_diff_r_sqr=clf.score(subject_betas_vec, subject_pyr_rate_diff_vec)
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ax.plot(subject_betas_vec, subject_pyr_rate_diff_vec,'o')
+            min_x=np.min(subject_betas_vec)-1
+            max_x=np.max(subject_betas_vec)+1
+            ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
+                                     self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
+                label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
+            ax.legend(loc=0)
+            ax.set_xlabel('Beta')
+            ax.set_ylabel('Pyr Rate Diff')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
 
         #create report
         template_file='rl.html'
