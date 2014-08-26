@@ -2107,7 +2107,7 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 stim_report=self.stim_condition_reports[stim_condition]
                 for virtual_subj_id in range(stim_report.num_subjects):
-                    if not virtual_subj_id in stim_report.excluded_sessions:
+                    if not virtual_subj_id in stim_report.excluded_sessions and data.est_beta<30.0:
                         subj_diff_rates=[]
                         session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
                         session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
