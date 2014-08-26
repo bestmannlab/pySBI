@@ -2103,7 +2103,7 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             subject_alphas.extend(self.stim_condition_reports[stim_condition].condition_alphas)
             subject_betas.extend(self.stim_condition_reports[stim_condition].condition_betas)
-            subject_pyr_rate_diff.extend(self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3]))
+            subject_pyr_rate_diff.extend(self.stim_condition_reports[stim_condition].compute_ev_diff_rates(0,1000))
 
 
         furl='img/beta_pyr_rate_diff'
@@ -2113,7 +2113,7 @@ class RLReport:
             subject_betas_vec=np.zeros([len(subject_betas),1])
             subject_betas_vec[:]=subject_betas
             subject_pyr_rate_diff_vec=np.zeros([len(subject_pyr_rate_diff),1])
-            subject_pyr_rate_diff_vec[:]=subject_pyr_rate_diff
+            subject_pyr_rate_diff_vec[:]=np.array(subject_pyr_rate_diff)
             clf = LinearRegression()
             clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
             self.beta_pyr_rate_diff_a = clf.coef_[0][0]
