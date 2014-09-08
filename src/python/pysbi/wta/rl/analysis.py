@@ -2307,12 +2307,14 @@ def plot_param_diff(cond_name, param_name, orig_vals, new_vals, val_range=None):
     orig_hist,orig_bins=np.histogram(filtered_orig, bins=10, range=val_range)
     orig_bin_width=orig_bins[1]-orig_bins[0]
     bar=plt.bar(orig_bins[:-1], orig_hist/float(len(filtered_orig)), width=orig_bin_width)
-    bar[0].set_color('b')
+    for b in bar:
+        b.set_color('b')
     filtered_new=reject_outliers(np.array(new_vals))
     new_hist,new_bins=np.histogram(filtered_new, bins=10, range=val_range)
     new_bin_width=new_bins[1]-new_bins[0]
     bar=plt.bar(new_bins[:-1], new_hist/float(len(filtered_new)), width=new_bin_width)
-    bar[0].set_color('r')
+    for b in bar:
+        b.set_color('r')
     if val_range is not None:
         plt.xlim(val_range)
     plt.xlabel(param_name)
