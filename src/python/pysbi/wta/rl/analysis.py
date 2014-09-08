@@ -2132,7 +2132,14 @@ class RLReport:
                     save_to_png(fig, '%s.png' % fname)
                     save_to_eps(fig, '%s.eps' % fname)
                     plt.close(fig)
-                    
+
+                    fname = os.path.join(self.reports_dir, 'img/%s_alpha_bar' % stim_condition)
+                    fig=plot_params(stim_condition,'alpha',self.stim_condition_reports['control'].condition_alphas,
+                        self.stim_condition_reports[stim_condition].condition_alphas)
+                    save_to_png(fig, '%s.png' % fname)
+                    save_to_eps(fig, '%s.eps' % fname)
+                    plt.close(fig)
+
                 alpha_diff=self.stim_condition_reports[stim_condition].condition_alphas-\
                            self.stim_condition_reports['control'].condition_alphas
                 filtered_alpha_diffs=reject_outliers(alpha_diff)
@@ -2150,8 +2157,16 @@ class RLReport:
                         self.stim_condition_reports[stim_condition].condition_betas,(0,15.0))
                         #(-10.0, 10.0))
                     save_to_png(fig, '%s.png' % fname)
-                    plt.close(fig)
                     save_to_eps(fig, '%s.eps' % fname)
+                    plt.close(fig)
+
+                    fname = os.path.join(self.reports_dir, 'img/%s_beta_bar' % stim_condition)
+                    fig=plot_params(stim_condition,'alpha',self.stim_condition_reports['control'].condition_betas,
+                        self.stim_condition_reports[stim_condition].condition_betas)
+                    save_to_png(fig, '%s.png' % fname)
+                    save_to_eps(fig, '%s.eps' % fname)
+                    plt.close(fig)
+
                 beta_diff=self.stim_condition_reports[stim_condition].condition_betas-\
                            self.stim_condition_reports['control'].condition_betas
                 filtered_beta_diffs=reject_outliers(beta_diff)
@@ -2291,16 +2306,34 @@ def plot_param_diff(cond_name, param_name, orig_vals, new_vals, val_range=None):
     filtered_orig=reject_outliers(np.array(orig_vals))
     orig_hist,orig_bins=np.histogram(filtered_orig, bins=10, range=val_range)
     orig_bin_width=orig_bins[1]-orig_bins[0]
-    plt.bar(orig_bins[:-1], orig_hist/float(len(filtered_orig)),'b', width=orig_bin_width)
+    bar=plt.bar(orig_bins[:-1], orig_hist/float(len(filtered_orig)), width=orig_bin_width)
+    bar[0].set_color('b')
     filtered_new=reject_outliers(np.array(new_vals))
     new_hist,new_bins=np.histogram(filtered_new, bins=10, range=val_range)
     new_bin_width=new_bins[1]-new_bins[0]
-    plt.bar(new_bins[:-1], new_hist/float(len(filtered_new)),'r', width=new_bin_width)
+    bar=plt.bar(new_bins[:-1], new_hist/float(len(filtered_new)), width=new_bin_width)
+    bar[0].set_color('r')
     if val_range is not None:
         plt.xlim(val_range)
     plt.xlabel(param_name)
     plt.ylabel('Proportion of Subjects')
     plt.title(cond_name)
+    return fig
+
+def plot_params(cond_name, param_name, orig_vals, new_vals, val_range=None):
+    fig=plt.figure()
+    pos = np.arange(2)+0.5    # Center bars on the Y-axis ticks
+    ax=fig.add_subplot(2,1,1)
+    filtered_orig=reject_outliers(np.array(orig_vals))
+    filtered_new=reject_outliers(np.array(new_vals))
+    bar=ax.bar(pos,[np.mean(filtered_orig),np.mean(filtered_new)], width=.5,
+        yerr=[np.std(filtered_orig),np.std(filtered_new)],align='center',ecolor='k')
+    bar[0].set_color('b')
+    bar[1].set_color('r')
+    ax.set_xticks(pos)
+    ax.set_xticklabels(['Control',cond_name])
+    ax.set_xlabel('Condition')
+    ax.set_ylabel(param_name)
     return fig
 
 def plot_trials_ev_diff(data_dir,file_name):
