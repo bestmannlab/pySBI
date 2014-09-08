@@ -1253,6 +1253,21 @@ class RLReport:
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
+            fname=os.path.join(self.reports_dir,'img/perc_correct_anode_only')
+            fig=Figure()
+            pos = np.arange(2)+0.5
+            ax=fig.add_subplot(2,1,1)
+            ax.bar(pos,[self.perc_correct_mean['control'],self.perc_correct_mean['anode']],width=.5,
+                yerr=[self.perc_correct_std['control'],self.perc_correct_std['anode']],align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(['Control','Anode'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50,90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+            
         # Create perc no response plot
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
@@ -2112,12 +2127,12 @@ class RLReport:
                 if regenerate_plots:
                     fig=plot_param_diff(stim_condition,'alpha',
                         self.stim_condition_reports['control'].condition_alphas,
-                        self.stim_condition_reports[stim_condition].condition_alphas,
-                        (-1.0,1.0))
+                        self.stim_condition_reports[stim_condition].condition_alphas,(0.0,1.0))
+                        #(-1.0,1.0))
                     save_to_png(fig, '%s.png' % fname)
                     save_to_eps(fig, '%s.eps' % fname)
                     plt.close(fig)
-
+                    
                 alpha_diff=self.stim_condition_reports[stim_condition].condition_alphas-\
                            self.stim_condition_reports['control'].condition_alphas
                 filtered_alpha_diffs=reject_outliers(alpha_diff)
@@ -2132,7 +2147,8 @@ class RLReport:
                 self.stim_beta_change_urls[stim_condition] = '%s.png' % furl
                 if regenerate_plots:
                     fig=plot_param_diff(stim_condition,'beta',self.stim_condition_reports['control'].condition_betas,
-                        self.stim_condition_reports[stim_condition].condition_betas, (-10.0, 10.0))
+                        self.stim_condition_reports[stim_condition].condition_betas,(0,15.0))
+                        #(-10.0, 10.0))
                     save_to_png(fig, '%s.png' % fname)
                     plt.close(fig)
                     save_to_eps(fig, '%s.eps' % fname)
@@ -2256,15 +2272,32 @@ class RLReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None):
-    diff_vals=new_vals-orig_vals
+#def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None):
+#    diff_vals=new_vals-orig_vals
+#    fig=plt.figure()
+#    filtered_diffs=reject_outliers(np.array(diff_vals))
+#    hist,bins=np.histogram(filtered_diffs, bins=10, range=diff_range)
+#    bin_width=bins[1]-bins[0]
+#    plt.bar(bins[:-1], hist/float(len(filtered_diffs)), width=bin_width)
+#    if diff_range is not None:
+#        plt.xlim(diff_range)
+#    plt.xlabel('Change in %s' % param_name)
+#    plt.ylabel('Proportion of Subjects')
+#    plt.title(cond_name)
+#    return fig
+
+def plot_param_diff(cond_name, param_name, orig_vals, new_vals, val_range=None):
     fig=plt.figure()
-    filtered_diffs=reject_outliers(np.array(diff_vals))
-    hist,bins=np.histogram(filtered_diffs, bins=10, range=diff_range)
-    bin_width=bins[1]-bins[0]
-    plt.bar(bins[:-1], hist/float(len(filtered_diffs)), width=bin_width)
-    if diff_range is not None:
-        plt.xlim(diff_range)
+    filtered_orig=reject_outliers(np.array(orig_vals))
+    orig_hist,orig_bins=np.histogram(filtered_orig, bins=10, range=val_range)
+    orig_bin_width=orig_bins[1]-orig_bins[0]
+    plt.bar(orig_bins[:-1], orig_hist/float(len(filtered_orig)), width=orig_bin_width)
+    filtered_new=reject_outliers(np.array(new_vals))
+    new_hist,new_bins=np.histogram(filtered_new, bins=10, range=val_range)
+    new_bin_width=new_bins[1]-new_bins[0]
+    plt.bar(new_bins[:-1], new_hist/float(len(filtered_new)), width=new_bin_width)
+    if val_range is not None:
+        plt.xlim(val_range)
     plt.xlabel('Change in %s' % param_name)
     plt.ylabel('Proportion of Subjects')
     plt.title(cond_name)
