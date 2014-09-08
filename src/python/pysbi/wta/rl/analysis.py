@@ -2326,10 +2326,10 @@ def plot_params(cond_name, param_name, orig_vals, new_vals, val_range=None):
     ax=fig.add_subplot(2,1,1)
     filtered_orig=reject_outliers(np.array(orig_vals))
     filtered_new=reject_outliers(np.array(new_vals))
-    bar=ax.bar(pos,[np.mean(filtered_orig),np.mean(filtered_new)], width=.5,
-        yerr=[np.std(filtered_orig),np.std(filtered_new)],align='center',ecolor='k')
+    bar=ax.bar(pos,np.mean(filtered_orig), width=.5, yerr=np.std(filtered_orig), align='center',ecolor='k')
     bar[0].set_color('b')
-    bar[1].set_color('r')
+    bar=ax.bar(pos,np.mean(filtered_new), width=.5, yerr=np.std(filtered_new),align='center',ecolor='k')
+    bar[0].set_color('r')
     ax.set_xticks(pos)
     ax.set_xticklabels(['Control',cond_name])
     ax.set_xlabel('Condition')
