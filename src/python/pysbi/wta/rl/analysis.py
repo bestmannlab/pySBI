@@ -2054,7 +2054,7 @@ class RLReport:
                     fig=plot_param_diff(stim_condition,'alpha',
                         self.stim_condition_reports['control'].condition_alphas,
                         self.stim_condition_reports[stim_condition].condition_alphas,
-                        (-1.0,1.0))
+                        diff_range=(-1.0,1.0), y_range=(0,.8))
                     save_to_png(fig, '%s.png' % fname)
                     save_to_eps(fig, '%s.eps' % fname)
                     plt.close(fig)
@@ -2073,7 +2073,7 @@ class RLReport:
                 self.stim_beta_change_urls[stim_condition] = '%s.png' % furl
                 if regenerate_plots:
                     fig=plot_param_diff(stim_condition,'beta',self.stim_condition_reports['control'].condition_betas,
-                        self.stim_condition_reports[stim_condition].condition_betas, (-10.0, 10.0))
+                        self.stim_condition_reports[stim_condition].condition_betas, diff_range=(-10.0, 10.0),y_range=(0,.8))
                     save_to_png(fig, '%s.png' % fname)
                     plt.close(fig)
                     save_to_eps(fig, '%s.eps' % fname)
@@ -2197,7 +2197,7 @@ class RLReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None):
+def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None, y_range=None):
     diff_vals=new_vals-orig_vals
     fig=plt.figure()
     filtered_diffs=reject_outliers(np.array(diff_vals))
@@ -2206,6 +2206,8 @@ def plot_param_diff(cond_name, param_name, orig_vals, new_vals, diff_range=None)
     plt.bar(bins[:-1], hist/float(len(filtered_diffs)), width=bin_width)
     if diff_range is not None:
         plt.xlim(diff_range)
+    if y_range is not None:
+        plt.ylim(y_range)
     plt.xlabel('Change in %s' % param_name)
     plt.ylabel('Proportion of Subjects')
     plt.title(cond_name)
