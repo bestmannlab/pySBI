@@ -1898,6 +1898,34 @@ class RLReport:
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
+
+        # Create alpha - % correct plot
+        furl='img/alpha_main_perc_correct_anode_only'
+        fname = os.path.join(self.reports_dir, furl)
+        self.alpha_main_perc_correct_anode_only_url = '%s.png' % furl
+        if regenerate_plots:
+            #fig=Figure(figsize=(16,12))
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
+                        self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
+                    min_x=np.min(self.stim_condition_reports[stim_condition].condition_alphas)-0.1
+                    max_x=np.max(self.stim_condition_reports[stim_condition].condition_alphas)+0.1
+                    ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].alpha_perc_correct_a * min_x +
+                                             self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
+                                             self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
+                                             self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
+                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
+                        color=baseline.get_color())
+
+            ax.legend(loc=0)
+            ax.set_xlabel('Alpha')
+            ax.set_ylabel('Prop Correct')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
         
         furl='img/all_alpha_perc_corect'
         fname = os.path.join(self.reports_dir, furl)
@@ -1968,6 +1996,37 @@ class RLReport:
             ax=fig.add_subplot(1,1,1)
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
+                    d = np.abs(self.stim_condition_reports[stim_condition].condition_betas - np.median(self.stim_condition_reports[stim_condition].condition_betas))
+                    mdev = np.median(d)
+                    s = d/mdev if mdev else 0
+                    filtered_betas=self.stim_condition_reports[stim_condition].condition_betas[s<2]
+                    filtered_perc_correct=self.stim_condition_reports[stim_condition].condition_perc_correct[s<2]/100.0
+                    baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o')
+                    min_x=np.min(filtered_betas)-1.0
+                    max_x=np.max(filtered_betas)+1.0
+                    ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
+                                             self.stim_condition_reports[stim_condition].beta_perc_correct_b,
+                                             self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
+                                             self.stim_condition_reports[stim_condition].beta_perc_correct_b],
+                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
+                        color=baseline.get_color())
+            ax.legend(loc=0)
+            ax.set_xlabel('Beta')
+            ax.set_ylabel('Prop Correct')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create beta - % correct plot
+        furl='img/beta_main_perc_correct_anode_only'
+        fname = os.path.join(self.reports_dir, furl)
+        self.beta_main_perc_correct_anode_only_url = '%s.png' % furl
+        if regenerate_plots:
+            #fig=Figure(figsize=(16,12))
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
                     d = np.abs(self.stim_condition_reports[stim_condition].condition_betas - np.median(self.stim_condition_reports[stim_condition].condition_betas))
                     mdev = np.median(d)
                     s = d/mdev if mdev else 0
