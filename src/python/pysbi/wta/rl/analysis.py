@@ -1936,6 +1936,8 @@ class RLReport:
                         color=baseline.get_color())
 
             ax.legend(loc=0)
+            ax.set_xlim([0.0,1.0])
+            ax.set_ylim([0.5,1.0])
             ax.set_xlabel('Alpha')
             ax.set_ylabel('Prop Correct')
             save_to_png(fig, '%s.png' % fname)
@@ -2057,6 +2059,8 @@ class RLReport:
                         label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
                         color=baseline.get_color())
             ax.legend(loc=0)
+            ax.set_xlim([0,15])
+            ax.set_ylim([0.5,1.0])
             ax.set_xlabel('Beta')
             ax.set_ylabel('Prop Correct')
             save_to_png(fig, '%s.png' % fname)
