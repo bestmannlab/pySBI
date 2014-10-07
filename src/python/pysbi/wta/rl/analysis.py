@@ -2216,8 +2216,10 @@ class RLReport:
                             subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
                             subject_betas.append(data.est_beta)
             
-            subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
-            subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
+            #subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
+            subject_betas_vec=np.array(subject_betas)
+            #subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
+            subject_pyr_rate_diff_vec=np.array(subject_pyr_rate_diff)
             #clf = LinearRegression()
             #clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
             #self.beta_pyr_rate_diff_a = clf.coef_[0][0]
