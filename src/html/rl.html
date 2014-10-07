@@ -465,8 +465,10 @@ beta: chi_sq={{ rinfo.beta_friedman[0]|round(3) }}
     <thead>
         <tr>
             <th>Condition</th>
-            <th>T (compared to anode)</th>
-            <th>p (compared to anode)</th>
+            <th>alpha T (compared to anode)</th>
+            <th>alpha p (compared to anode)</th>
+            <th>beta T (compared to anode)</th>
+            <th>beta p (compared to anode)</th>
         </tr>
     </thead>
     <tbody>
@@ -475,6 +477,8 @@ beta: chi_sq={{ rinfo.beta_friedman[0]|round(3) }}
                 <tr>
                     <td>{{ stim_condition }}</td>
                     <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][0]|round(2) }}</td>
+                    <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][1]|round(4) }}</td>
+                    <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][0]|round(2) }}</td>
                     <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][1]|round(4) }}</td>
                 </tr>
             {% endif %}
@@ -496,6 +500,8 @@ beta: chi_sq={{ rinfo.beta_friedman[0]|round(3) }}
     <tr>
         <td>{{ stim_condition }}</td>
         <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][0]|round(2) }}</td>
+        <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][1]|round(4) }}</td>
+        <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][0]|round(2) }}</td>
         <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][1]|round(4) }}</td>
     </tr>
     {% endif %}
