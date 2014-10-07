@@ -97,6 +97,9 @@ def rt_function(x, a, k, tr):
     return a/(k*x)*np.tanh(a*k*x)+tr
 
 
+def exp_decay(x, n, lam):
+    return n*np.exp(-lam*x)
+
 def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None, dt=.1*ms):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]

@@ -1,3 +1,4 @@
+from scipy.optimize import curve_fit
 import matplotlib
 matplotlib.use('Agg')
 from scipy import stats
@@ -14,7 +15,7 @@ import numpy as np
 from scikits.learn.linear_model import LinearRegression
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps, get_response_time, reject_outliers
+from pysbi.util.utils import save_to_png, save_to_eps, get_response_time, reject_outliers, exp_decay
 from pysbi.wta.network import default_params
 from pysbi.wta.rl.fit import rescorla_td_prediction
 
@@ -2217,19 +2218,29 @@ class RLReport:
             
             subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
             subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
-            clf = LinearRegression()
-            clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
-            self.beta_pyr_rate_diff_a = clf.coef_[0][0]
-            self.beta_pyr_rate_diff_b = clf.intercept_[0]
-            self.beta_pyr_rate_diff_r_sqr=clf.score(subject_betas_vec, subject_pyr_rate_diff_vec)
+            #clf = LinearRegression()
+            #clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
+            #self.beta_pyr_rate_diff_a = clf.coef_[0][0]
+            #self.beta_pyr_rate_diff_b = clf.intercept_[0]
+            #self.beta_pyr_rate_diff_r_sqr=clf.score(subject_betas_vec, subject_pyr_rate_diff_vec)
+            popt,pcov=curve_fit(exp_decay, subject_betas_vec, subject_pyr_rate_diff_vec)
+            self.beta_pyr_rate_diff_n=popt[0]
+            self.beta_pyr_rate_diff_lam=popt[1]
+            y_hat=exp_decay(subject_betas_vec,*popt)
+            ybar=np.sum(subject_pyr_rate_diff_vec)/len(subject_pyr_rate_diff_vec)
+            ssres=np.sum((subject_pyr_rate_diff_vec-y_hat)**2.0)
+            sstot=np.sum((subject_pyr_rate_diff_vec-ybar)**2.0)
+            self.beta_pyr_rate_diff_r_sqr=1.0-ssres/sstot
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.plot(subject_betas_vec, subject_pyr_rate_diff_vec,'o')
             min_x=np.min(subject_betas_vec)-1
             max_x=np.max(subject_betas_vec)+1
-            ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
-                                     self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
-                label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
+            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
+            #ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
+            #                         self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
+            #    label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
             ax.set_ylabel('Pyr Rate Diff')
@@ -2269,8 +2280,8 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.plot(subject_alphas_vec, subject_pyr_rate_diff_vec,'o')
-            min_x=np.min(subject_alphas_vec)-1
-            max_x=np.max(subject_alphas_vec)+1
+            min_x=np.min(subject_alphas_vec)-.1
+            max_x=np.max(subject_alphas_vec)+.1
             ax.plot([min_x, max_x], [self.alpha_pyr_rate_diff_a * min_x + self.alpha_pyr_rate_diff_b,
                                      self.alpha_pyr_rate_diff_a * max_x + self.alpha_pyr_rate_diff_b],
                 label='r^2=%.3f' % self.alpha_pyr_rate_diff_r_sqr)
