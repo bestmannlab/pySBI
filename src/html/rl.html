@@ -374,9 +374,9 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 <h4>Beta - Pyr Rate Diff (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.beta_pyr_rate_diff_url }}"/>
 <br>
-a={{ rinfo.beta_pyr_rate_diff_n }}
+n={{ rinfo.beta_pyr_rate_diff_n }}
 <br>
-b={{ rinfo.beta_pyr_rate_diff_lam }}
+lambda={{ rinfo.beta_pyr_rate_diff_lam }}
 
 <h4>Alpha - Pyr Rate Diff (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.alpha_pyr_rate_diff_url }}"/>
@@ -490,8 +490,10 @@ beta: chi_sq={{ rinfo.beta_friedman[0]|round(3) }}
     <thead>
     <tr>
         <th>Condition</th>
-        <th>T (compared to cathode)</th>
-        <th>p (compared to cathode)</th>
+        <th>alpha T (compared to cathode)</th>
+        <th>alpha p (compared to cathode)</th>
+        <th>beta T (compared to cathode)</th>
+        <th>beta p (compared to cathode)</th>
     </tr>
     </thead>
     <tbody>
