@@ -2216,33 +2216,33 @@ class RLReport:
                             subject_pyr_rate_diff.append(np.mean(subj_diff_rates))
                             subject_betas.append(data.est_beta)
             
-            #subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
-            subject_betas_vec=np.array(subject_betas)
-            #subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
-            subject_pyr_rate_diff_vec=np.array(subject_pyr_rate_diff)
-            #clf = LinearRegression()
-            #clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
-            #self.beta_pyr_rate_diff_a = clf.coef_[0][0]
-            #self.beta_pyr_rate_diff_b = clf.intercept_[0]
-            #self.beta_pyr_rate_diff_r_sqr=clf.score(subject_betas_vec, subject_pyr_rate_diff_vec)
-            popt,pcov=curve_fit(exp_decay, subject_betas_vec, subject_pyr_rate_diff_vec)
+            subject_betas_vec=np.reshape(np.array(subject_betas),(len(subject_betas),1))
+            subject_pyr_rate_diff_vec=np.reshape(np.array(subject_pyr_rate_diff),(len(subject_pyr_rate_diff),1))
+            clf = LinearRegression()
+            clf.fit(subject_betas_vec, subject_pyr_rate_diff_vec)
+            self.beta_pyr_rate_diff_a = clf.coef_[0][0]
+            self.beta_pyr_rate_diff_b = clf.intercept_[0]
+            self.beta_pyr_rate_diff_lin_r_sqr=clf.score(subject_betas_vec, subject_pyr_rate_diff_vec)
+
+            popt,pcov=curve_fit(exp_decay, np.array(subject_betas), np.array(subject_pyr_rate_diff))
             self.beta_pyr_rate_diff_n=popt[0]
             self.beta_pyr_rate_diff_lam=popt[1]
-            y_hat=exp_decay(subject_betas_vec,*popt)
-            ybar=np.sum(subject_pyr_rate_diff_vec)/len(subject_pyr_rate_diff_vec)
-            ssres=np.sum((subject_pyr_rate_diff_vec-y_hat)**2.0)
-            sstot=np.sum((subject_pyr_rate_diff_vec-ybar)**2.0)
-            self.beta_pyr_rate_diff_r_sqr=1.0-ssres/sstot
+            y_hat=exp_decay(np.array(subject_betas),*popt)
+            ybar=np.sum(np.array(subject_pyr_rate_diff))/len(np.array(subject_pyr_rate_diff))
+            ssres=np.sum((np.array(subject_pyr_rate_diff)-y_hat)**2.0)
+            sstot=np.sum((np.array(subject_pyr_rate_diff)-ybar)**2.0)
+            self.beta_pyr_rate_diff_exp_r_sqr=1.0-ssres/sstot
+
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.plot(subject_betas_vec, subject_pyr_rate_diff_vec,'o')
             min_x=np.min(subject_betas_vec)-1
             max_x=np.max(subject_betas_vec)+1
             x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
-            #ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
-            #                         self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
-            #    label='r^2=%.3f' % self.beta_pyr_rate_diff_r_sqr)
+            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.beta_pyr_rate_diff_exp_r_sqr)
+            ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
+                                     self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
+                label='r^2=%.3f' % self.beta_pyr_rate_diff_lin_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
             ax.set_ylabel('Pyr Rate Diff')
@@ -2278,15 +2278,27 @@ class RLReport:
             clf.fit(subject_alphas_vec, subject_pyr_rate_diff_vec)
             self.alpha_pyr_rate_diff_a = clf.coef_[0][0]
             self.alpha_pyr_rate_diff_b = clf.intercept_[0]
-            self.alpha_pyr_rate_diff_r_sqr=clf.score(subject_alphas_vec, subject_pyr_rate_diff_vec)
+            self.alpha_pyr_rate_diff_lin_r_sqr=clf.score(subject_alphas_vec, subject_pyr_rate_diff_vec)
+
+            popt,pcov=curve_fit(exp_decay, np.array(subject_alphas), np.array(subject_pyr_rate_diff))
+            self.alpha_pyr_rate_diff_n=popt[0]
+            self.alpha_pyr_rate_diff_lam=popt[1]
+            y_hat=exp_decay(np.array(subject_alphas),*popt)
+            ybar=np.sum(np.array(subject_pyr_rate_diff))/len(np.array(subject_pyr_rate_diff))
+            ssres=np.sum((np.array(subject_pyr_rate_diff)-y_hat)**2.0)
+            sstot=np.sum((np.array(subject_pyr_rate_diff)-ybar)**2.0)
+            self.alpha_pyr_rate_diff_exp_r_sqr=1.0-ssres/sstot
+
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ax.plot(subject_alphas_vec, subject_pyr_rate_diff_vec,'o')
             min_x=np.min(subject_alphas_vec)-.1
             max_x=np.max(subject_alphas_vec)+.1
+            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.alpha_pyr_rate_diff_exp_r_sqr)
             ax.plot([min_x, max_x], [self.alpha_pyr_rate_diff_a * min_x + self.alpha_pyr_rate_diff_b,
                                      self.alpha_pyr_rate_diff_a * max_x + self.alpha_pyr_rate_diff_b],
-                label='r^2=%.3f' % self.alpha_pyr_rate_diff_r_sqr)
+                label='r^2=%.3f' % self.alpha_pyr_rate_diff_lin_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Alpha')
             ax.set_ylabel('Pyr Rate Diff')
