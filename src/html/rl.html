@@ -371,6 +371,12 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 <br>{{ stim_condition }}, T={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][0]|round(4) }}, p={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][1]|round(4) }}
 {% endfor %}
 
+<h4>Prestim Bias/Input Diff - % Correct</h4>
+<img width="50%" src="{{ rinfo.rate_diff_ratio_perc_correct_url }}"/>
+a={{ rinfo.rate_diff_ratio_perc_correct_a }}
+<br>
+b={{ rinfo.rate_diff_ratio_perc_correct_b }}
+
 <h4>Beta - Pyr Rate Diff (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.beta_pyr_rate_diff_url }}"/>
 a={{ rinfo.beta_pyr_rate_diff_a }}
