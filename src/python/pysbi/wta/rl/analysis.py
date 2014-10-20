@@ -2213,7 +2213,7 @@ class RLReport:
                             data=FileInfo(session_report_file)
                             if data.est_beta<30.0:
                                 for trial in range(len(data.trial_e_rates)):
-                                    if data.choice[trial]>-1:
+                                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
                                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         rate_diff_ratios[stim_condition].append(np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial]))
@@ -2245,7 +2245,7 @@ class RLReport:
                 clf.fit(ev_plot_diffs, ev_perc_correct)
                 self.rate_diff_ratio_perc_correct_a[stim_condition] = clf.coef_[0][0]
                 self.rate_diff_ratio_perc_correct_b[stim_condition] = clf.intercept_[0]
-                self.rate_diff_ratio_perc_correct_r_sqr=clf.score(ev_plot_diffs, ev_perc_correct)
+                self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]=clf.score(ev_plot_diffs, ev_perc_correct)
                 ax.plot(ev_plot_diffs, ev_perc_correct,'o')
                 min_x=np.min(ev_perc_correct)
                 max_x=np.max(ev_perc_correct)
