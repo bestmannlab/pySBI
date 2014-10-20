@@ -2196,54 +2196,64 @@ class RLReport:
         fname = os.path.join(self.reports_dir,furl)
         self.rate_diff_ratio_perc_correct_url='%s.png' % furl
         if regenerate_plots:
-            rate_diff_ratios=[]
-            correct=[]
-            ev_diffs=[]
+            rate_diff_ratios={}
+            correct={}
+            ev_diffs={}
             for stim_condition in self.stim_conditions:
-                stim_report=self.stim_condition_reports[stim_condition]
-                for virtual_subj_id in range(stim_report.num_subjects):
-                    if not virtual_subj_id in stim_report.excluded_sessions:
-                        session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
-                        session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
-                        data=FileInfo(session_report_file)
-                        if data.est_beta<30.0:
-                            for trial in range(len(data.trial_e_rates)):
-                                if data.choice[trial]>-1:
-                                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                    rate_diff_ratios.append(np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial]))
-                                    if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
-                                        correct.append(1.0)
-                                    else:
-                                        correct.append(0.0)
-                                    ev_diffs.append(np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial]))
-            ev_diffs=np.array(np.array(ev_diffs))
-            rate_diff_ratios=np.array(rate_diff_ratios)
-            correct=np.array(correct)
-            hist,bins=np.histogram(ev_diffs, bins=10)
-            ev_plot_diffs=[]
-            ev_perc_correct=[]
-            for i in range(10):
-                trials=np.where((ev_diffs>=bin[i]) & (ev_diffs<bins[i+1]))[0]
-                ev_plot_diffs.append(np.mean(rate_diff_ratios[trials]))
-                ev_perc_correct.append(np.mean(correct[trials]))
-            ev_plot_diffs=np.reshape(np.array(ev_plot_diffs),(len(ev_plot_diffs),1))
-            ev_perc_correct=np.reshape(np.array(ev_perc_correct),(len(ev_perc_correct),1))
-            clf = LinearRegression()
-            clf.fit(ev_plot_diffs, ev_perc_correct)
-            self.rate_diff_ratio_perc_correct_a = clf.coef_[0][0]
-            self.rate_diff_ratio_perc_correct_b = clf.intercept_[0]
-            self.rate_diff_ratio_perc_correct_r_sqr=clf.score(ev_plot_diffs, ev_perc_correct)
+                if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
+                    if not stim_condition in rate_diff_ratios:
+                        rate_diff_ratios[stim_condition]=[]
+                        correct[stim_condition]=[]
+                        ev_diffs[stim_condition]=[]
+                    stim_report=self.stim_condition_reports[stim_condition]
+                    for virtual_subj_id in range(stim_report.num_subjects):
+                        if not virtual_subj_id in stim_report.excluded_sessions:
+                            session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
+                            session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                            data=FileInfo(session_report_file)
+                            if data.est_beta<30.0:
+                                for trial in range(len(data.trial_e_rates)):
+                                    if data.choice[trial]>-1:
+                                        chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                        unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                        rate_diff_ratios[stim_condition].append(np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial]))
+                                        if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                                            correct[stim_condition].append(1.0)
+                                        else:
+                                            correct[stim_condition].append(0.0)
+                                        ev_diffs[stim_condition].append(np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial]))
+
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ax.plot(ev_plot_diffs, ev_perc_correct,'o')
-            min_x=np.min(ev_perc_correct)
-            max_x=np.max(ev_perc_correct)
-            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-            ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a * min_x + self.rate_diff_ratio_perc_correct_b,
-                                     self.rate_diff_ratio_perc_correct_a * max_x + self.rate_diff_ratio_perc_correct_b],
-                label='r^2=%.3f' % self.rate_diff_ratio_perc_correct_r_sqr)
-            ax.legend(loc=0)
+            self.rate_diff_ratio_perc_correct_a={}
+            self.rate_diff_ratio_perc_correct_b={}
+            self.rate_diff_ratio_perc_correct_r_sqr={}
+            for stim_condition in rate_diff_ratios:
+                ev_diffs[stim_condition]=np.array(ev_diffs[stim_condition])
+                rate_diff_ratios[stim_condition]=np.array(rate_diff_ratios[stim_condition])
+                correct[stim_condition]=np.array(correct[stim_condition])
+                hist,bins=np.histogram(ev_diffs[stim_condition], bins=10)
+                ev_plot_diffs=[]
+                ev_perc_correct=[]
+                for i in range(10):
+                    trials=np.where((ev_diffs[stim_condition]>=bins[i]) & (ev_diffs[stim_condition]<bins[i+1]))[0]
+                    ev_plot_diffs.append(np.mean(rate_diff_ratios[stim_condition][trials]))
+                    ev_perc_correct.append(np.mean(correct[stim_condition][trials]))
+                ev_plot_diffs=np.reshape(np.array(ev_plot_diffs),(len(ev_plot_diffs),1))
+                ev_perc_correct=np.reshape(np.array(ev_perc_correct),(len(ev_perc_correct),1))
+                clf = LinearRegression()
+                clf.fit(ev_plot_diffs, ev_perc_correct)
+                self.rate_diff_ratio_perc_correct_a[stim_condition] = clf.coef_[0][0]
+                self.rate_diff_ratio_perc_correct_b[stim_condition] = clf.intercept_[0]
+                self.rate_diff_ratio_perc_correct_r_sqr=clf.score(ev_plot_diffs, ev_perc_correct)
+                ax.plot(ev_plot_diffs, ev_perc_correct,'o')
+                min_x=np.min(ev_perc_correct)
+                max_x=np.max(ev_perc_correct)
+                x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+                ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a[stim_condition] * min_x + self.rate_diff_ratio_perc_correct_b[stim_condition],
+                                         self.rate_diff_ratio_perc_correct_a[stim_condition] * max_x + self.rate_diff_ratio_perc_correct_b[stim_condition]],
+                    label='%s: r^2=%.3f' % (stim_condition,self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]))
+            ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
             save_to_png(fig, '%s.png' % fname)

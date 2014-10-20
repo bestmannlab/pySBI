@@ -373,9 +373,13 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 
 <h4>Prestim Bias/Input Diff - % Correct</h4>
 <img width="50%" src="{{ rinfo.rate_diff_ratio_perc_correct_url }}"/>
-a={{ rinfo.rate_diff_ratio_perc_correct_a }}
+{% for stim_condition in rate_diff_ratio_perc_correct_a %}
+{{ stim_condition }}
 <br>
-b={{ rinfo.rate_diff_ratio_perc_correct_b }}
+a={{ rinfo.rate_diff_ratio_perc_correct_a[stim_condition] }}
+<br>
+b={{ rinfo.rate_diff_ratio_perc_correct_b[stim_condition] }}
+{% endfor %}
 
 <h4>Beta - Pyr Rate Diff (chosen - unchosen)</h4>
 <img width="50%" src="{{ rinfo.beta_pyr_rate_diff_url }}"/>
