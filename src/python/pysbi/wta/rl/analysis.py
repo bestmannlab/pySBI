@@ -2218,7 +2218,7 @@ class RLReport:
                                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         ratio=np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
-                                        if ratio<50:
+                                        if ratio<1.9:
                                             rate_diff_ratios[stim_condition].append(ratio)
                                             if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
                                                 correct[stim_condition].append(1.0)
@@ -2228,8 +2228,8 @@ class RLReport:
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            self.rate_diff_ratio_perc_correct_n={}
-            self.rate_diff_ratio_perc_correct_lam={}
+            self.rate_diff_ratio_perc_correct_a={}
+            self.rate_diff_ratio_perc_correct_b={}
             self.rate_diff_ratio_perc_correct_r_sqr={}
             for stim_condition in rate_diff_ratios:
                 ev_diffs[stim_condition]=np.array(ev_diffs[stim_condition])
@@ -2242,24 +2242,20 @@ class RLReport:
                     trials=np.where((ev_diffs[stim_condition]>=bins[i]) & (ev_diffs[stim_condition]<bins[i+1]))[0]
                     ev_plot_diffs.append(np.mean(rate_diff_ratios[stim_condition][trials]))
                     ev_perc_correct.append(np.mean(correct[stim_condition][trials]))
-                ev_plot_diffs=np.array(ev_plot_diffs)
-                ev_perc_correct=np.array(ev_perc_correct)*100.0
-                popt,pcov=curve_fit(exp_decay, ev_plot_diffs, ev_perc_correct)
-                self.rate_diff_ratio_perc_correct_n[stim_condition]=popt[0]
-                self.rate_diff_ratio_perc_correct_lam[stim_condition]=popt[1]
-                y_hat=exp_decay(ev_plot_diffs,*popt)
-                ybar=np.sum(ev_perc_correct)/len(ev_perc_correct)
-                ssres=np.sum((ev_perc_correct-y_hat)**2.0)
-                sstot=np.sum((ev_perc_correct-ybar)**2.0)
-                self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]=1.0-ssres/sstot
+                ev_plot_diffs=np.reshape(np.array(ev_plot_diffs),(len(ev_plot_diffs),1))
+                ev_perc_correct=np.reshape(np.array(ev_perc_correct),(len(ev_perc_correct),1))*100.0
+                clf = LinearRegression()
+                clf.fit(ev_plot_diffs, ev_perc_correct)
+                self.rate_diff_ratio_perc_correct_a[stim_condition] = clf.coef_[0][0]
+                self.rate_diff_ratio_perc_correct_b[stim_condition] = clf.intercept_[0]
+                self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]=clf.score(ev_plot_diffs, ev_perc_correct)
                 ax.plot(ev_plot_diffs, ev_perc_correct,'o%s' % cond_colors[stim_condition])
                 min_x=np.min(ev_plot_diffs)
-                max_x=np.max(ev_plot_diffs)
+                max_x=np.max(ev_perc_correct)
                 x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-#                ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a[stim_condition] * min_x + self.rate_diff_ratio_perc_correct_b[stim_condition],
-#                                         self.rate_diff_ratio_perc_correct_a[stim_condition] * max_x + self.rate_diff_ratio_perc_correct_b[stim_condition]],
-#                    cond_colors[stim_condition],label='%s: r^2=%.3f' % (stim_condition,self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]))
-                ax.plot(x_range,exp_decay(x_range,*popt),cond_colors[stim_condition],label='r^2=%.3f' % self.rate_diff_ratio_perc_correct_r_sqr[stim_condition])
+                ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a[stim_condition] * min_x + self.rate_diff_ratio_perc_correct_b[stim_condition],
+                                         self.rate_diff_ratio_perc_correct_a[stim_condition] * max_x + self.rate_diff_ratio_perc_correct_b[stim_condition]],
+                    cond_colors[stim_condition],label='%s: r^2=%.3f' % (stim_condition,self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]))
             ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
