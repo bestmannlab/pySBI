@@ -2250,8 +2250,8 @@ class RLReport:
                 self.rate_diff_ratio_perc_correct_b[stim_condition] = clf.intercept_[0]
                 self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]=clf.score(ev_plot_diffs, ev_perc_correct)
                 ax.plot(ev_plot_diffs, ev_perc_correct,'o%s' % cond_colors[stim_condition])
-                min_x=np.min(ev_plot_diffs)
-                max_x=np.max(ev_perc_correct)
+                min_x=0.0
+                max_x=1.0
                 x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
                 ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a[stim_condition] * min_x + self.rate_diff_ratio_perc_correct_b[stim_condition],
                                          self.rate_diff_ratio_perc_correct_a[stim_condition] * max_x + self.rate_diff_ratio_perc_correct_b[stim_condition]],
