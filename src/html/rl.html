@@ -373,7 +373,7 @@ p={{ rinfo.stim_diff_freidman[1]|round(4) }}
 
 <h4>Prestim Bias/Input Diff - % Correct</h4>
 <img width="50%" src="{{ rinfo.rate_diff_ratio_perc_correct_url }}"/>
-{% for stim_condition in rate_diff_ratio_perc_correct_a %}
+{% for stim_condition in rinfo.rate_diff_ratio_perc_correct_a %}
 {{ stim_condition }}
 <br>
 a={{ rinfo.rate_diff_ratio_perc_correct_a[stim_condition] }}
