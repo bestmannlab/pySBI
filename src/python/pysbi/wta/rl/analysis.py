@@ -2199,6 +2199,7 @@ class RLReport:
             rate_diff_ratios={}
             correct={}
             ev_diffs={}
+            cond_colors={'control':'b','anode':'r','cathode':'g'}
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
                     if not stim_condition in rate_diff_ratios:
@@ -2216,12 +2217,14 @@ class RLReport:
                                     if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
                                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                        rate_diff_ratios[stim_condition].append(np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial]))
-                                        if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
-                                            correct[stim_condition].append(1.0)
-                                        else:
-                                            correct[stim_condition].append(0.0)
-                                        ev_diffs[stim_condition].append(np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial]))
+                                        ratio=np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
+                                        if ratio<50:
+                                            rate_diff_ratios[stim_condition].append(ratio)
+                                            if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                                                correct[stim_condition].append(1.0)
+                                            else:
+                                                correct[stim_condition].append(0.0)
+                                            ev_diffs[stim_condition].append(np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial]))
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
@@ -2246,13 +2249,13 @@ class RLReport:
                 self.rate_diff_ratio_perc_correct_a[stim_condition] = clf.coef_[0][0]
                 self.rate_diff_ratio_perc_correct_b[stim_condition] = clf.intercept_[0]
                 self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]=clf.score(ev_plot_diffs, ev_perc_correct)
-                ax.plot(ev_plot_diffs, ev_perc_correct,'o')
+                ax.plot(ev_plot_diffs, ev_perc_correct,'o%s' % cond_colors[stim_condition])
                 min_x=np.min(ev_perc_correct)
                 max_x=np.max(ev_perc_correct)
                 x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
                 ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a[stim_condition] * min_x + self.rate_diff_ratio_perc_correct_b[stim_condition],
                                          self.rate_diff_ratio_perc_correct_a[stim_condition] * max_x + self.rate_diff_ratio_perc_correct_b[stim_condition]],
-                    label='%s: r^2=%.3f' % (stim_condition,self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]))
+                    cond_colors[stim_condition],label='%s: r^2=%.3f' % (stim_condition,self.rate_diff_ratio_perc_correct_r_sqr[stim_condition]))
             ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
