@@ -2245,7 +2245,7 @@ class RLReport:
             max_x=np.max(ev_plot_diffs)
             ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a * min_x + self.rate_diff_ratio_perc_correct_b,
                                      self.rate_diff_ratio_perc_correct_a * max_x + self.rate_diff_ratio_perc_correct_b],
-                label='r^2=%.3f' % self.rate_diff_ratio_perc_correct_r_sqr[stim_condition])
+                label='r^2=%.3f' % self.rate_diff_ratio_perc_correct_r_sqr)
             ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
