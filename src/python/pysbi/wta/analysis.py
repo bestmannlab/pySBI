@@ -818,7 +818,9 @@ class TrialSeries:
                     print('file does not exist: %s' % file_name)
                 else:
                     try:
-                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name, dt=dt), dt)
+                        trial_summary=TrialSummary(contrast, trial_idx,
+                            FileInfo(file_name,upper_resp_threshold=upper_resp_threshold,
+                                lower_resp_threshold=lower_resp_threshold,  dt=dt), dt)
                     except:
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         traceback.print_exception(exc_type, exc_value, exc_traceback,
