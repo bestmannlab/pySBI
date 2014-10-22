@@ -2,6 +2,7 @@ import os
 from scipy.optimize import curve_fit
 import subprocess
 from brian import Hz, ms, nA, mA
+import traceback
 from brian.clock import defaultclock
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
@@ -13,6 +14,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 from scikits.learn.linear_model import LinearRegression
+import sys
 from pysbi import  voxel
 from pysbi.config import DATA_DIR, TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
@@ -818,7 +820,11 @@ class TrialSeries:
                     try:
                         trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name))
                     except:
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        traceback.print_exception(exc_type, exc_value, exc_traceback,
+                            limit=2, file=sys.stdout)
                         print('cannot load file %s' % file_name)
+
                 if not trial_summary is None:
                     self.trial_summaries.append(trial_summary)
 
