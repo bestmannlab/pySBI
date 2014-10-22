@@ -794,7 +794,8 @@ class TrialSeries:
     Represents a series of trials with varying input contrast levels
     """
 
-    def __init__(self, dir, prefix, num_trials, contrast_range=(0.0, 0.0625, 0.125, 0.25, 0.5, 1.0)):
+    def __init__(self, dir, prefix, num_trials, contrast_range=(0.0, 0.0625, 0.125, 0.25, 0.5, 1.0),
+                 upper_resp_threshold=30, lower_resp_threshold=None, dt=.1*ms):
         """
         Load trial data files
         dir = directory to load files from
@@ -818,7 +819,7 @@ class TrialSeries:
                     print('file does not exist: %s' % file_name)
                 else:
                     try:
-                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name))
+                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name, dt=dt))
                     except:
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         traceback.print_exception(exc_type, exc_value, exc_traceback,
