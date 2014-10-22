@@ -10,7 +10,7 @@ from pysbi.util.random_distributions import make_distribution_curve
 from pysbi.reports.summary import SummaryData
 from pysbi.reports.utils import get_tested_param_combos
 
-def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e,
+def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_e_e, p_e_i, p_i_i, p_i_e,
                  contrast,trial, muscimol_amount=0*nS, injection_site=0, p_dcs=0*amp, i_dcs=0*amp, record_lfp=True,
                  record_voxel=False, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
                  save_summary_only=True):
@@ -20,8 +20,8 @@ def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x
         e_desc+='lesioned'
     else:
         e_desc+='control'
-    file_desc='wta.groups.%d.duration.%0.3f.p_b_e.%0.3f.p_x_e.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.p_dcs.%0.4f.i_dcs.%0.4f.%s.contrast.%0.4f.trial.%d' %\
-              (num_groups, trial_duration, p_b_e, p_x_e, p_e_e, p_e_i, p_i_i, p_i_e, p_dcs/pA, i_dcs/pA, e_desc, contrast, trial)
+    file_desc='wta.groups.%d.duration.%0.3f.p_e_e.%0.3f.p_e_i.%0.3f.p_i_i.%0.3f.p_i_e.%0.3f.p_dcs.%0.4f.i_dcs.%0.4f.%s.contrast.%0.4f.trial.%d' %\
+              (num_groups, trial_duration, p_e_e, p_e_i, p_i_i, p_i_e, p_dcs/pA, i_dcs/pA, e_desc, contrast, trial)
     log_file_template='%s.log' % file_desc
     output_file='/tmp/wta-output/%s.h5' % file_desc
     cmds.append('--num_groups')
@@ -32,10 +32,6 @@ def get_wta_cmds(num_groups, inputs, background_freq, trial_duration, p_b_e, p_x
     cmds.append('%0.3f' % background_freq)
     cmds.append('--trial_duration')
     cmds.append('%0.3f' % trial_duration)
-    cmds.append('--p_b_e')
-    cmds.append('%0.3f' % p_b_e)
-    cmds.append('--p_x_e')
-    cmds.append('%0.3f' % p_x_e)
     cmds.append('--p_e_e')
     cmds.append('%0.3f' % p_e_e)
     cmds.append('--p_e_i')

@@ -344,8 +344,6 @@ if __name__=='__main__':
     ap.add_argument('--inputs', type=str, default='10,10', help='Input pattern (Hz) - comma-delimited list')
     ap.add_argument('--background', type=float, default=4.0, help='Background firing rate (Hz)')
     ap.add_argument('--trial_duration', type=float, default=4.0, help='Trial duration (seconds)')
-    ap.add_argument('--p_b_e', type=float, default=default_params.p_b_e, help='Connection prob from background to excitatory neurons')
-    ap.add_argument('--p_x_e', type=float, default=default_params.p_x_e, help='Connection prob from task inputs to excitatory neurons')
     ap.add_argument('--p_e_e', type=float, default=default_params.p_e_e, help='Connection prob from excitatory neurons to excitatory ' \
                                                                'neurons in the same group')
     ap.add_argument('--p_e_i', type=float, default=default_params.p_e_i, help='Connection prob from excitatory neurons to inhibitory ' \
@@ -378,8 +376,6 @@ if __name__=='__main__':
         input_freq[i]=float(inputs[i])
 
     wta_params=default_params()
-    wta_params.p_b_e=argvals.p_b_e
-    wta_params.p_x_e=argvals.p_x_e
     wta_params.p_e_e=argvals.p_e_e
     wta_params.p_e_i=argvals.p_e_i
     wta_params.p_i_i=argvals.p_i_i
