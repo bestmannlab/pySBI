@@ -1,3 +1,4 @@
+from brian import second
 import matplotlib
 matplotlib.use('Agg')
 import os
@@ -13,7 +14,7 @@ from pysbi.reports.utils import make_report_dirs
 from pysbi.util.utils import Struct, save_to_png, save_to_eps, rt_function, weibull
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
-def create_trial_report(trial_summary, reports_dir):
+def create_trial_report(trial_summary, reports_dir, dt=.1*ms):
     trial_report=Struct()
     trial_report.trial_idx=trial_summary.trial_idx
     trial_report.contrast=trial_summary.contrast
@@ -36,35 +37,32 @@ def create_trial_report(trial_summary, reports_dir):
         for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
             max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
 
-        #fig = plt.figure()
         fig=Figure()
 
         # Plot pyramidal neuron firing rate
-        #ax = plt.subplot(211)
         ax=fig.add_subplot(2,1,1)
         for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
-            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
         if trial_report.rt:
-            rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
-            ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
-        plt.ylim([0,10+max_pop_rate])
-        plt.legend()
-        plt.xlabel('Time (ms)')
-        plt.ylabel('Firing Rate (Hz)')
+            rt_idx=(1*second+trial_report.rt)/second
+            ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.legend(loc=0)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
 
         # Plot interneuron firing rate
-        #ax = plt.subplot(212)
         ax = fig.add_subplot(2,1,2)
         for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
-            ax.plot(np.array(range(len(pop_rate))) *.1, pop_rate / Hz, label='group %d' % i)
+            ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
             # Plot line showing RT
         if trial_report.rt:
-            rt_idx=(trial_summary.data.stim_start_time+trial_report.rt)/ms
-            ax.plot([rt_idx,rt_idx],[0,max_pop_rate])
-        plt.ylim([0,10+max_pop_rate])
-        plt.xlabel('Time (ms)')
-        plt.ylabel('Firing Rate (Hz)')
+            rt_idx=(1*second+trial_report.rt)/second
+            ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -182,7 +180,7 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc,
 
     report_info.trial_reports=[]
     for trial_summary in report_info.series.trial_summaries:
-        report_info.trial_reports.append(create_trial_report(trial_summary, reports_dir))
+        report_info.trial_reports.append(create_trial_report(trial_summary, reports_dir, dt=.5*ms))
 
     #create report
     template_file='wta_network_instance_new.html'
