@@ -234,7 +234,7 @@ class FileInfo():
             self.summary_data.bold_max=np.array(f_summary['bold_max'])
             self.summary_data.bold_exc_max=np.array(f_summary['bold_exc_max'])
         else:
-            end_idx=self.stim_end_time*(dt/second)
+            end_idx=self.stim_end_time/dt
             start_idx=end_idx-1000
             e_mean_final=[]
             e_max=[]
