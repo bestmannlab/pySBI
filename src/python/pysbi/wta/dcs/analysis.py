@@ -21,6 +21,7 @@ def create_trial_report(trial_summary, reports_dir):
     trial_report.correct=trial_summary.correct
     trial_report.rt=trial_summary.data.rt
     trial_report.max_rate=trial_summary.max_rate
+    trial_report.max_bold=trial_summary.data.summary_data.bold_max
 
     trial_report.firing_rate_url = None
     if trial_summary.data.e_firing_rates is not None and trial_summary.data.i_firing_rates is not None:
@@ -116,6 +117,8 @@ def create_trial_report(trial_summary, reports_dir):
         plt.close(fig)
         del trial_summary.data.lfp_rec
 
+    trial_report.voxel_url = None
+
     return trial_report
 
 def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc, version=None):
@@ -131,6 +134,7 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc,
     report_info.series.sort_by_correct()
 
     report_info.wta_params=report_info.series.trial_summaries[0].data.wta_params
+    report_info.voxel_params=report_info.series.trial_summaries[0].data.voxel_params
     report_info.num_groups=report_info.series.trial_summaries[0].data.num_groups
     report_info.trial_duration=report_info.series.trial_summaries[0].data.trial_duration
     report_info.background_freq=report_info.series.trial_summaries[0].data.background_freq
@@ -158,6 +162,21 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc,
     fname=os.path.join(reports_dir, furl)
     report_info.perc_correct_url='%s.png' % furl
     report_info.series.plot_perc_correct(filename=fname)
+
+#    furl='img/bold_contrast_regression'
+#    fname=os.path.join(reports_dir,furl)
+#    report_info.bold_contrast_regression_url='%s.png' % furl
+#    x_min=np.min(report_info.series.contrast_range)
+#    x_max=np.max(report_info.series.contrast_range)
+#    fig=plt.figure()
+#    report_info.series.max_bold_regression.plot(x_max, x_min,'ok','k','Fit')
+#    plt.xlabel('Input Contrast')
+#    plt.ylabel('Max BOLD')
+#    plt.legend(loc='best')
+#    plt.xscale('log')
+#    save_to_png(fig, '%s.png' % fname)
+#    save_to_eps(fig, '%s.eps' % fname)
+#    plt.close(fig)
 
     report_info.trial_reports=[]
     for trial_summary in report_info.series.trial_summaries:
@@ -221,8 +240,11 @@ class DCSComparisonReport:
                 'cathode control 2':'y'}
         report_info.rt_url=self.plot_rt(colors)
         report_info.perc_correct_url=self.plot_perc_correct(colors)
+        report_info.bold_contrast_regression_url=None
+        #report_info.bold_contrast_regression_url=self.plot_bold_contrast_regression(colors)
 
         report_info.wta_params=self.series['control'].trial_summaries[0].data.wta_params
+        report_info.voxel_params=self.series['control'].trial_summaries[0].data.voxel_params
         report_info.num_groups=self.series['control'].trial_summaries[0].data.num_groups
         report_info.trial_duration=self.series['control'].trial_summaries[0].data.trial_duration
         report_info.background_freq=self.series['control'].trial_summaries[0].data.background_freq
