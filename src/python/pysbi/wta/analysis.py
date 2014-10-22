@@ -234,7 +234,7 @@ class FileInfo():
             self.summary_data.bold_max=np.array(f_summary['bold_max'])
             self.summary_data.bold_exc_max=np.array(f_summary['bold_exc_max'])
         else:
-            end_idx=self.stim_end_time/ms*10
+            end_idx=self.stim_end_time*dt/second
             start_idx=end_idx-1000
             e_mean_final=[]
             e_max=[]
@@ -559,7 +559,7 @@ def get_lfp_signal(wta_data, plot=False):
         plt.show()
     return lfp
 
-def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix):
+def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix, dt=.1*ms):
     l = []
     p = 0
     n = 0
@@ -568,7 +568,7 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
             data_path = '%s.contrast.%0.4f.trial.%d.h5' % (prefix, contrast, trial)
             print(data_path)
             data = FileInfo(data_path)
-            stim_end_idx=data.stim_end_time/ms*10
+            stim_end_idx=(data.stim_end_time*dt)/second
             example = 0
             if data.input_freq[option_idx] > data.input_freq[1 - option_idx]:
                 example = 1
@@ -602,13 +602,13 @@ def get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefi
     l_sorted = sorted(l, key=lambda example: example[1], reverse=True)
     return l_sorted, n, p
 
-def get_auc(prefix, contrast_range, num_trials, num_extra_trials, num_groups):
+def get_auc(prefix, contrast_range, num_trials, num_extra_trials, num_groups, dt=.1*ms):
     total_auc=0
     total_p=0
     single_auc=[]
     single_p=[]
     for i in range(num_groups):
-        l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, i, prefix)
+        l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, i, prefix, dt=dt)
         single_auc.append(get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, i))
         single_p.append(p)
         total_p+=p
@@ -617,8 +617,8 @@ def get_auc(prefix, contrast_range, num_trials, num_extra_trials, num_groups):
 
     return total_auc
 
-def get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx):
-    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix)
+def get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx, dt=.1*ms):
+    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix, dt=dt)
     fp=0
     tp=0
     fp_prev=0
@@ -639,9 +639,9 @@ def get_auc_single_option(prefix, contrast_range, num_trials, num_extra_trials, 
     a=float(a)/(float(max(p,.001))*float(max(n,.001)))
     return a
 
-def get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx):
+def get_roc_single_option(prefix, contrast_range, num_trials, num_extra_trials, option_idx, dt=.1*ms):
 
-    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix)
+    l_sorted, n, p = get_roc_init(contrast_range, num_trials, num_extra_trials, option_idx, prefix, dt=dt)
 
     fp=0
     tp=0
@@ -830,11 +830,11 @@ class TrialSeries:
                 if not trial_summary is None:
                     self.trial_summaries.append(trial_summary)
 
-        self.compute_muticlass_auc()
+        self.compute_muticlass_auc(dt)
         self.compute_bold_contrast_regression()
 
 
-    def compute_muticlass_auc(self, n_options=2):
+    def compute_muticlass_auc(self, dt, n_options=2):
         """
         Compute the multi-option AUC for this series
         """
