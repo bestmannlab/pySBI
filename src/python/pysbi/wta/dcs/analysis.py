@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import os
 from scipy.optimize import curve_fit
 import subprocess

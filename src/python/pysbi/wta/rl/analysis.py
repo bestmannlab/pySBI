@@ -1,7 +1,7 @@
-from scipy.optimize import curve_fit
 import matplotlib
 matplotlib.use('Agg')
 from scipy import stats
+from scipy.optimize import curve_fit
 import copy
 import shutil
 import subprocess
