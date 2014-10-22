@@ -57,48 +57,47 @@ class FileInfo():
         if 'i_dcs' in f.attrs:
             self.i_dcs=float(f.attrs['i_dcs'])*amp
 
-        self.wta_params=network.default_params()
-        self.wta_params.C=float(f.attrs['C'])*farad
-        self.wta_params.gL=float(f.attrs['gL'])*siemens
-        self.wta_params.EL=float(f.attrs['EL'])*volt
-        self.wta_params.VT=float(f.attrs['VT'])*volt
-        self.wta_params.DeltaT=float(f.attrs['DeltaT'])*volt
-        if 'Mg' in f.attrs:
-            self.wta_params.Mg=float(f.attrs['Mg'])
-        self.wta_params.E_ampa=float(f.attrs['E_ampa'])*volt
-        self.wta_params.E_nmda=float(f.attrs['E_nmda'])*volt
-        self.wta_params.E_gaba_a=float(f.attrs['E_gaba_a'])*volt
-        if 'E_gaba_b' in f.attrs:
-            self.wta_params.E_gaba_b=float(f.attrs['E_gaba_b'])*volt
-        self.wta_params.tau_ampa=float(f.attrs['tau_ampa'])*second
-        self.wta_params.tau1_nmda=float(f.attrs['tau1_nmda'])*second
-        self.wta_params.tau2_nmda=float(f.attrs['tau2_nmda'])*second
-        self.wta_params.tau_gaba_a=float(f.attrs['tau_gaba_a'])*second
-        #self.wta_params.tau1_gaba_b=float(f.attrs['tau1_gaba_b'])*second
-        #self.wta_params.tau2_gaba_b=float(f.attrs['tau2_gaba_b'])*second
-        #self.wta_params.w_ampa_min=float(f.attrs['w_ampa_min'])*siemens
-        #self.wta_params.w_ampa_max=float(f.attrs['w_ampa_max'])*siemens
-        #self.wta_params.w_nmda_min=float(f.attrs['w_nmda_min'])*siemens
-        #self.wta_params.w_nmda_max=float(f.attrs['w_nmda_max'])*siemens
-        #self.wta_params.w_gaba_a_min=float(f.attrs['w_gaba_a_min'])*siemens
-        #self.wta_params.w_gaba_a_max=float(f.attrs['w_gaba_a_max'])*siemens
-        #self.wta_params.w_gaba_b_min=float(f.attrs['w_gaba_b_min'])*siemens
-        #self.wta_params.w_gaba_b_max=float(f.attrs['w_gaba_b_max'])*siemens
-        self.wta_params.pyr_w_ampa_ext=float(f.attrs['pyr_w_ampa_ext'])*siemens
-        self.wta_params.pyr_w_ampa_rec=float(f.attrs['pyr_w_ampa_rec'])*siemens
-        self.wta_params.int_w_ampa_ext=float(f.attrs['int_w_ampa_ext'])*siemens
-        self.wta_params.int_w_ampa_rec=float(f.attrs['int_w_ampa_rec'])*siemens
-        self.wta_params.pyr_w_nmda=float(f.attrs['pyr_w_nmda'])*siemens
-        self.wta_params.int_w_nmda=float(f.attrs['int_w_nmda'])*siemens
-        self.wta_params.pyr_w_gaba_a=float(f.attrs['pyr_w_gaba_a'])*siemens
-        self.wta_params.int_w_gaba_a=float(f.attrs['int_w_gaba_a'])*siemens
-        self.wta_params.p_b_e=float(f.attrs['p_b_e'])
-        self.wta_params.p_x_e=float(f.attrs['p_x_e'])
-        self.wta_params.p_e_e=float(f.attrs['p_e_e'])
-        self.wta_params.p_e_i=float(f.attrs['p_e_i'])
-        self.wta_params.p_i_i=float(f.attrs['p_i_i'])
-        self.wta_params.p_i_e=float(f.attrs['p_i_e'])
+        f_network_params=f['network_params']
+        self.wta_params=Struct()
+        self.wta_params.C=float(f_network_params.attrs['C'])*farad
+        self.wta_params.gL=float(f_network_params.attrs['gL'])*siemens
+        self.wta_params.EL=float(f_network_params.attrs['EL'])*volt
+        self.wta_params.VT=float(f_network_params.attrs['VT'])*volt
+        self.wta_params.DeltaT=float(f_network_params.attrs['DeltaT'])*volt
+        self.wta_params.Vr=float(f_network_params.attrs['Vr'])*volt
+        self.wta_params.Mg=float(f_network_params.attrs['Mg'])
+        self.wta_params.E_ampa=float(f_network_params.attrs['E_ampa'])*volt
+        self.wta_params.E_nmda=float(f_network_params.attrs['E_nmda'])*volt
+        self.wta_params.E_gaba_a=float(f_network_params.attrs['E_gaba_a'])*volt
+        self.wta_params.tau_ampa=float(f_network_params.attrs['tau_ampa'])*second
+        self.wta_params.tau1_nmda=float(f_network_params.attrs['tau1_nmda'])*second
+        self.wta_params.tau2_nmda=float(f_network_params.attrs['tau2_nmda'])*second
+        self.wta_params.tau_gaba_a=float(f_network_params.attrs['tau_gaba_a'])*second
+        self.wta_params.p_e_e=float(f_network_params.attrs['p_e_e'])
+        self.wta_params.p_e_i=float(f_network_params.attrs['p_e_i'])
+        self.wta_params.p_i_i=float(f_network_params.attrs['p_i_i'])
+        self.wta_params.p_i_e=float(f_network_params.attrs['p_i_e'])
 
+        f_pyr_params=f['pyr_params']
+        self.pyr_params=Struct()
+        self.pyr_params.C=float(f_pyr_params.attrs['C'])*farad
+        self.pyr_params.gL=float(f_pyr_params.attrs['gL'])*siemens
+        self.pyr_params.refractory=float(f_pyr_params['refractory'])*second
+        self.pyr_params.w_nmda=float(f.attrs['w_nmda'])*siemens
+        self.pyr_params.w_ampa_ext=float(f.attrs['w_ampa_ext'])*siemens
+        self.pyr_params.w_ampa_rec=float(f.attrs['w_ampa_rec'])*siemens
+        self.pyr_params.w_gaba=float(f.attrs['w_gaba'])*siemens
+
+        f_inh_params=f['inh_params']
+        self.inh_params=Struct()
+        self.inh_params.C=float(f_inh_params.attrs['C'])*farad
+        self.inh_params.gL=float(f_inh_params.attrs['gL'])*siemens
+        self.inh_params.refractory=float(f_inh_params['refractory'])*second
+        self.inh_params.w_nmda=float(f.attrs['w_nmda'])*siemens
+        self.inh_params.w_ampa_ext=float(f.attrs['w_ampa_ext'])*siemens
+        self.inh_params.w_ampa_rec=float(f.attrs['w_ampa_rec'])*siemens
+        self.inh_params.w_gaba=float(f.attrs['w_gaba'])*siemens
+        
         self.lfp_rec=None
         if 'lfp' in f:
             f_lfp=f['lfp']
