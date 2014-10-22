@@ -246,6 +246,8 @@ class DCSComparisonReport:
         #report_info.bold_contrast_regression_url=self.plot_bold_contrast_regression(colors)
 
         report_info.wta_params=self.series['control'].trial_summaries[0].data.wta_params
+        report_info.pyr_params=self.series['control'].trial_summaries[0].data.pyr_params
+        report_info.inh_params=self.series['control'].trial_summaries[0].data.inh_params
         report_info.voxel_params=self.series['control'].trial_summaries[0].data.voxel_params
         report_info.num_groups=self.series['control'].trial_summaries[0].data.num_groups
         report_info.trial_duration=self.series['control'].trial_summaries[0].data.trial_duration
