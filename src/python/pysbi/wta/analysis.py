@@ -3,7 +3,6 @@ from scipy.optimize import curve_fit
 import subprocess
 from brian import Hz, ms, nA, mA
 import traceback
-from brian.clock import defaultclock
 from brian.units import second, farad, siemens, volt, amp
 from scipy.signal import *
 import h5py
@@ -724,7 +723,7 @@ class TrialSummary:
     Represents summary of data from a single trial
     """
 
-    def __init__(self, contrast, trial_idx, data):
+    def __init__(self, contrast, trial_idx, data, dt):
         """
         Initialize summary data from full data object
         contrast = input contrast
@@ -735,7 +734,7 @@ class TrialSummary:
         self.contrast=contrast
         self.trial_idx=trial_idx
 
-        endIdx=int(data.stim_end_time/defaultclock.dt)
+        endIdx=int(data.stim_end_time/dt)
         startIdx=endIdx-500
         e_mean=np.mean(data.e_firing_rates[:,startIdx:endIdx],axis=1)
 
@@ -819,7 +818,7 @@ class TrialSeries:
                     print('file does not exist: %s' % file_name)
                 else:
                     try:
-                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name, dt=dt))
+                        trial_summary=TrialSummary(contrast, trial_idx, FileInfo(file_name, dt=dt), dt)
                     except:
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         traceback.print_exception(exc_type, exc_value, exc_traceback,
