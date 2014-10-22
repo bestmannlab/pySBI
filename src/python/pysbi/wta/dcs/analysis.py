@@ -134,6 +134,8 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc,
     report_info.series.sort_by_correct()
 
     report_info.wta_params=report_info.series.trial_summaries[0].data.wta_params
+    report_info.pyr_params=report_info.series.trial_summaries[0].data.pyr_params
+    report_info.inh_params=report_info.series.trial_summaries[0].data.inh_params
     report_info.voxel_params=report_info.series.trial_summaries[0].data.voxel_params
     report_info.num_groups=report_info.series.trial_summaries[0].data.num_groups
     report_info.trial_duration=report_info.series.trial_summaries[0].data.trial_duration

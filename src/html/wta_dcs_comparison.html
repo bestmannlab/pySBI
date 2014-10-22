@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
     <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
-    <title>WTA ({{ rinfo.wta_params.p_b_e }},{{ rinfo.wta_params.p_x_e }},{{ rinfo.wta_params.p_e_e }},{{ rinfo.wta_params.p_e_i }},{{ rinfo.wta_params.p_i_i }},{{ rinfo.wta_params.p_i_e }})</title>
+    <title>WTA ({{ rinfo.wta_params.p_e_e }},{{ rinfo.wta_params.p_e_i }},{{ rinfo.wta_params.p_i_i }},{{ rinfo.wta_params.p_i_e }})</title>
 </head>
 
 <body>
@@ -73,14 +73,6 @@
         <td width="100"><strong>Value</strong></td>
     </tr>
     <tr>
-        <td>p_b_e</td>
-        <td>{{ rinfo.wta_params.p_b_e }}</td>
-    </tr>
-    <tr>
-        <td>p_x_e</td>
-        <td>{{ rinfo.wta_params.p_x_e }}</td>
-    </tr>
-    <tr>
         <td>p_e_e</td>
         <td>{{ rinfo.wta_params.p_e_e }}</td>
     </tr>
@@ -119,6 +111,10 @@
     <tr>
         <td>VT</td>
         <td>{{ rinfo.wta_params.VT }}</td>
+    </tr>
+    <tr>
+        <td>Vr</td>
+        <td>{{ rinfo.wta_params.Vr }}</td>
     </tr>
     <tr>
         <td>DeltaT</td>
@@ -190,70 +186,79 @@
     </tr>
 </table>
 
-<h4>Voxel Fixed Parameters</h4>
+
+<h4>Pyramidal cell parameters</h4>
 <table border="1">
     <tr>
         <td width="200"><strong>Parameter</strong></td>
         <td width="100"><strong>Value</strong></td>
     </tr>
     <tr>
-        <td>G_base</td>
-        <td>{{ rinfo.voxel_params.G_base }}</td>
+        <td>C</td>
+        <td>{{ rinfo.pyr_params.C }}</td>
     </tr>
     <tr>
-        <td>eta</td>
-        <td>{{ rinfo.voxel_params.eta }}</td>
+        <td>gL</td>
+        <td>{{ rinfo.pyr_params.gL }}</td>
     </tr>
     <tr>
-        <td>tau_s</td>
-        <td>{{ rinfo.voxel_params.tau_s }}</td>
+        <td>refractory</td>
+        <td>{{ rinfo.pyr_params.refractory }}</td>
     </tr>
     <tr>
-        <td>tau_f</td>
-        <td>{{ rinfo.voxel_params.tau_f }}</td>
+        <td>w_nmda</td>
+        <td>{{ rinfo.pyr_params.w_nmda }}</td>
     </tr>
     <tr>
-        <td>alpha</td>
-        <td>{{ rinfo.voxel_params.alpha }}</td>
+        <td>w_ampa_ext</td>
+        <td>{{ rinfo.pyr_params.w_ampa_ext }}</td>
     </tr>
     <tr>
-        <td>tau_o</td>
-        <td>{{ rinfo.voxel_params.tau_o }}</td>
+        <td>w_ampa_rec</td>
+        <td>{{ rinfo.pyr_params.w_ampa_rec }}</td>
     </tr>
     <tr>
-        <td>e_base</td>
-        <td>{{ rinfo.voxel_params.e_base }}</td>
-    </tr>
-    <tr>
-        <td>v_base</td>
-        <td>{{ rinfo.voxel_params.v_base }}</td>
-    </tr>
-    <tr>
-        <td>T_2E</td>
-        <td>{{ rinfo.voxel_params.T_2E }}</td>
-    </tr>
-    <tr>
-        <td>T_2I</td>
-        <td>{{ rinfo.voxel_params.T_2I }}</td>
-    </tr>
-    <tr>
-        <td>s_e_0</td>
-        <td>{{ rinfo.voxel_params.s_e_0 }}</td>
-    </tr>
-    <tr>
-        <td>s_i_0</td>
-        <td>{{ rinfo.voxel_params.s_i_0 }}</td>
-    </tr>
-    <tr>
-        <td>B0</td>
-        <td>{{ rinfo.voxel_params.B0 }}</td>
-    </tr>
-    <tr>
-        <td>TE</td>
-        <td>{{ rinfo.voxel_params.TE }}</td>
+        <td>w_gaba</td>
+        <td>{{ rinfo.pyr_params.w_gaba }}</td>
     </tr>
 </table>
 
+<h4>Interneuron parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.inh_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.inh_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>refractory</td>
+        <td>{{ rinfo.inh_params.refractory }}</td>
+    </tr>
+    <tr>
+        <td>w_nmda</td>
+        <td>{{ rinfo.inh_params.w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_ext</td>
+        <td>{{ rinfo.inh_params.w_ampa_ext }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_rec</td>
+        <td>{{ rinfo.inh_params.w_ampa_rec }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba</td>
+        <td>{{ rinfo.inh_params.w_gaba }}</td>
+    </tr>
+</table>
+    
 <h3>Stimulus Conditions</h3>
 <ul>
     <li><a href="{{ rinfo.urls['control'] }}">control</a></li>
@@ -265,9 +270,6 @@
 </ul>
 
 <h3>Results</h3>
-<h4>BOLD as a Function of Input Contrast</h4>
-<img src="{{ rinfo.bold_contrast_regression_url }}"/>
-
 <h4>% correct</h4>
 <img src="{{ rinfo.perc_correct_url }}"/>
 
