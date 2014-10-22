@@ -147,7 +147,7 @@ def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc,
     report_info.version = version
     report_info.edesc=edesc
 
-    report_info.series=TrialSeries(data_dir, file_prefix, num_trials)
+    report_info.series=TrialSeries(data_dir, file_prefix, num_trials,contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512))
     report_info.series.sort_by_correct()
 
     report_info.wta_params=report_info.series.trial_summaries[0].data.wta_params
