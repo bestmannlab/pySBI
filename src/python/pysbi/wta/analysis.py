@@ -84,7 +84,7 @@ class FileInfo():
         self.pyr_params=Struct()
         self.pyr_params.C=float(f_pyr_params.attrs['C'])*farad
         self.pyr_params.gL=float(f_pyr_params.attrs['gL'])*siemens
-        self.pyr_params.refractory=float(f_pyr_params['refractory'])*second
+        self.pyr_params.refractory=float(f_pyr_params.attrs['refractory'])*second
         self.pyr_params.w_nmda=float(f.attrs['w_nmda'])*siemens
         self.pyr_params.w_ampa_ext=float(f.attrs['w_ampa_ext'])*siemens
         self.pyr_params.w_ampa_rec=float(f.attrs['w_ampa_rec'])*siemens
@@ -94,7 +94,7 @@ class FileInfo():
         self.inh_params=Struct()
         self.inh_params.C=float(f_inh_params.attrs['C'])*farad
         self.inh_params.gL=float(f_inh_params.attrs['gL'])*siemens
-        self.inh_params.refractory=float(f_inh_params['refractory'])*second
+        self.inh_params.refractory=float(f_inh_params.attrs['refractory'])*second
         self.inh_params.w_nmda=float(f.attrs['w_nmda'])*siemens
         self.inh_params.w_ampa_ext=float(f.attrs['w_ampa_ext'])*siemens
         self.inh_params.w_ampa_rec=float(f.attrs['w_ampa_rec'])*siemens
