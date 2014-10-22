@@ -2,8 +2,8 @@ import h5py
 import numpy as np
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
-
 # Collection of monitors for WTA network
+
 class WTAMonitor():
 
     ## Constructor
@@ -310,7 +310,7 @@ class WTAMonitor():
 def write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
                  record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
                  stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params,
-                 muscimol_amount, injection_site, p_dcs, i_dcs):
+                 pyr_params, inh_params, muscimol_amount, injection_site, p_dcs, i_dcs):
 
     f = h5py.File(output_file, 'w')
 
@@ -324,46 +324,19 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
     f.attrs['network_group_size'] = network_group_size
     f.attrs['background_input_size'] = background_input_size
     f.attrs['task_input_size'] = task_input_size
-    f.attrs['C'] = wta_params.C
-    f.attrs['gL'] = wta_params.gL
-    f.attrs['EL'] = wta_params.EL
-    f.attrs['VT'] = wta_params.VT
-    f.attrs['Mg'] = wta_params.Mg
-    f.attrs['DeltaT'] = wta_params.DeltaT
-    f.attrs['E_ampa'] = wta_params.E_ampa
-    f.attrs['E_nmda'] = wta_params.E_nmda
-    f.attrs['E_gaba_a'] = wta_params.E_gaba_a
-    #f.attrs['E_gaba_b'] = wta_params.E_gaba_b
-    f.attrs['tau_ampa'] = wta_params.tau_ampa
-    f.attrs['tau1_nmda'] = wta_params.tau1_nmda
-    f.attrs['tau2_nmda'] = wta_params.tau2_nmda
-    f.attrs['tau_gaba_a'] = wta_params.tau_gaba_a
-    #f.attrs['tau1_gaba_b'] = wta_params.tau1_gaba_b
-    #f.attrs['tau2_gaba_b'] = wta_params.tau2_gaba_b
-#    f.attrs['w_ampa_min'] = wta_params.w_ampa_min
-#    f.attrs['w_ampa_max'] = wta_params.w_ampa_max
-#    f.attrs['w_nmda_min'] = wta_params.w_nmda_min
-#    f.attrs['w_nmda_max'] = wta_params.w_nmda_max
-#    f.attrs['w_gaba_a_min'] = wta_params.w_gaba_a_min
-#    f.attrs['w_gaba_a_max'] = wta_params.w_gaba_a_max
-#    f.attrs['w_gaba_b_min'] = wta_params.w_gaba_b_min
-#    f.attrs['w_gaba_b_max'] = wta_params.w_gaba_b_max
-    f.attrs['pyr_w_ampa_ext']=wta_params.pyr_w_ampa_ext
-    f.attrs['pyr_w_ampa_bak']=wta_params.pyr_w_ampa_bak
-    f.attrs['pyr_w_ampa_rec']=wta_params.pyr_w_ampa_rec
-    f.attrs['int_w_ampa_ext']=wta_params.int_w_ampa_ext
-    f.attrs['int_w_ampa_bak']=wta_params.int_w_ampa_bak
-    f.attrs['int_w_ampa_rec']=wta_params.int_w_ampa_rec
-    f.attrs['pyr_w_nmda']=wta_params.pyr_w_nmda
-    f.attrs['int_w_nmda']=wta_params.int_w_nmda
-    f.attrs['pyr_w_gaba_a']=wta_params.pyr_w_gaba_a
-    f.attrs['int_w_gaba_a']=wta_params.int_w_gaba_a
-    f.attrs['p_b_e'] = wta_params.p_b_e
-    f.attrs['p_x_e'] = wta_params.p_x_e
-    f.attrs['p_e_e'] = wta_params.p_e_e
-    f.attrs['p_e_i'] = wta_params.p_e_i
-    f.attrs['p_i_i'] = wta_params.p_i_i
-    f.attrs['p_i_e'] = wta_params.p_i_e
+
+    f_network_params=f.create_group('network_params')
+    for attr, value in wta_params.iteritems():
+        f_network_params.attrs[attr] = value
+
+    f_pyr_params=f.create_group('pyr_params')
+    for attr, value in pyr_params.iteritems():
+        f_pyr_params.attrs[attr] = value
+
+    f_inh_params=f.create_group('inh_params')
+    for attr, value in inh_params.iteritems():
+        f_inh_params.attrs[attr] = value
+
     f.attrs['muscimol_amount'] = muscimol_amount
     f.attrs['injection_site'] = injection_site
     f.attrs['p_dcs']=p_dcs
@@ -469,7 +442,7 @@ def write_output(background_input_size, background_freq, input_freq, network_gro
 
     else:
         f_summary=f.create_group('summary')
-        endIdx=int(stim_end_time/self.clock.dt)
+        endIdx=int(stim_end_time/wta_monitor.clock.dt)
         startIdx=endIdx-500
         e_mean_final=[]
         e_max=[]
