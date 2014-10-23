@@ -12,7 +12,9 @@ def post_wta_dcs_jobs(nodes, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials
                       p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    input_sum=40.0
+    mu_0=40.0
+    p_a=mu_0/100.0
+    p_b=p_a
     launcher=Launcher(nodes)
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
@@ -21,8 +23,10 @@ def post_wta_dcs_jobs(nodes, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials
     contrast_range=[0.0, .016, .032, .064, .096, .128, .256, .512]
     for i,contrast in enumerate(contrast_range):
         inputs=np.zeros(2)
-        inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
-        inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
+        inputs[0]=mu_0+p_a*contrast*100.0
+        inputs[1]=mu_0-p_b*contrast*100.0
+        #inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
+        #inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
         for t in trials:
             np.random.shuffle(inputs)
             cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, background_freq, trial_duration,
@@ -112,13 +116,17 @@ def get_dcs_cmds(num_groups, inputs, background_freq, trial_duration, p_e_e, p_e
 def run_wta_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    input_sum=40.0
+    mu_0=40.0
+    p_a=mu_0/100.0
+    p_b=p_a
 
     contrast_range=[0.0, .016, .032, .064, .096, .128, .256, .512]
     for i,contrast in enumerate(contrast_range):
         inputs=np.zeros(2)
-        inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
-        inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
+        #inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
+        #inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
+        inputs[0]=mu_0+p_a*contrast*100.0
+        inputs[1]=mu_0-p_b*contrast*100.0
         for t in trials:
             np.random.shuffle(inputs)
             cmds,log_file,out_file=get_dcs_cmds(num_groups, inputs, background_freq, trial_duration, p_e_e, p_e_i,
@@ -130,13 +138,17 @@ def run_wta_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=
 def run_broken_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    input_sum=40.0
+    mu_0=40.0
+    p_a=mu_0/100.0
+    p_b=p_a
 
     contrast_range=[0.0, .016, .032, .064, .096, .128, .256, .512]
     for i,contrast in enumerate(contrast_range):
         inputs=np.zeros(2)
-        inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
-        inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
+        #inputs[0]=40.0+(input_sum*(contrast+1.0)/2.0)
+        #inputs[1]=40.0+input_sum-(input_sum*(contrast+1.0)/2.0)
+        inputs[0]=mu_0+p_a*contrast*100.0
+        inputs[1]=mu_0-p_b*contrast*100.0
         for t in trials:
             np.random.shuffle(inputs)
             cmds,log_file_name,out_file=get_dcs_cmds(num_groups, inputs, background_freq, trial_duration, p_e_e, p_e_i,
