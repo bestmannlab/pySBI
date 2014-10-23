@@ -12,7 +12,7 @@ def post_wta_dcs_jobs(nodes, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials
                       p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    mu_0=40.0
+    mu_0=50.0
     p_a=mu_0/100.0
     p_b=p_a
     launcher=Launcher(nodes)
@@ -116,7 +116,7 @@ def get_dcs_cmds(num_groups, inputs, background_freq, trial_duration, p_e_e, p_e
 def run_wta_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    mu_0=40.0
+    mu_0=50.0
     p_a=mu_0/100.0
     p_b=p_a
 
@@ -138,7 +138,7 @@ def run_wta_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=
 def run_broken_dcs_jobs(p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, p_dcs=0*pA, i_dcs=0*pA):
     num_groups=2
     trial_duration=4*second
-    mu_0=40.0
+    mu_0=50.0
     p_a=mu_0/100.0
     p_b=p_a
 
