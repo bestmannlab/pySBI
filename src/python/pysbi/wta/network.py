@@ -236,7 +236,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
 
     start_time = time()
     simulation_clock=Clock(dt=.5*ms)
-    input_update_clock=Clock(dt=50*ms)
+    refresh_rate=60.0
+    input_update_clock=Clock(dt=(1.0/refresh_rate)*second)
 
     # Init simulation parameters
     stim_start_time=1*second
