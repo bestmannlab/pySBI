@@ -1,4 +1,6 @@
 import matplotlib
+import pylab
+
 matplotlib.use('Agg')
 from brian import second
 import os
@@ -11,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps, rt_function, weibull
+from pysbi.util.utils import Struct, save_to_png, save_to_eps, rt_function, weibull, FitRT, FitWeibull
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
 def create_trial_report(trial_summary, reports_dir, dt=.1*ms):
@@ -275,23 +277,21 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
         fig=plt.figure()
         contrast, mean_rt, std_rt = self.series['control'].get_contrast_rt_stats()
-        #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='ko-',label='control')
-        plt.plot(np.array(contrast)+.001,mean_rt,'ko',label='control')
-        try:
-            popt,pcov=curve_fit(rt_function, np.array(contrast)+.001, mean_rt)
-            plt.plot(np.array(range(1001))*.001,rt_function(np.array(range(1001))*.001,*popt),'k')
-        except:
-            print('error fitting RT data')
+        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+        smoothResp = rt_fit.eval(smoothInt)
+        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
+        plt.plot(smoothInt, smoothResp, 'k', label='control')
+
         for stim_level, stim_series in self.series.iteritems():
             if not stim_level=='control':
                 contrast, mean_rt, std_rt = stim_series.get_contrast_rt_stats()
-                #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-'+colors[color_idx],label=stim_level)
-                plt.plot(np.array(contrast)+.001,mean_rt,'o'+colors[stim_level],label=stim_level)
-                try:
-                    popt,pcov=curve_fit(rt_function, np.array(contrast)+.001, mean_rt)
-                    plt.plot(np.array(range(1001))*.001,rt_function(np.array(range(1001))*.001,*popt),colors[stim_level])
-                except:
-                    print('error fitting RT data')
+                rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+                smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+                smoothResp = rt_fit.eval(smoothInt)
+                plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
+                plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
+
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
         plt.xscale('log')
@@ -307,21 +307,24 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
         fig=plt.figure()
         contrast, perc_correct = self.series['control'].get_contrast_perc_correct_stats()
-        plt.plot(np.array(contrast)+.001,perc_correct,'ok',label='control')
-        try:
-            popt, pcov = curve_fit(weibull, contrast, perc_correct)
-            plt.plot(np.array(range(1001))*.001,weibull(np.array(range(1001))*.001,*popt),'k')
-        except:
-            print('error fitting performance data')
+        acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+        thresh = np.max([0,acc_fit.inverse(0.8)])
+        smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+        smoothResp = acc_fit.eval(smoothInt)
+        plt.plot(smoothInt, smoothResp, 'k', label='control')
+        plt.plot(contrast, perc_correct, 'ok')
+        plt.plot([thresh,thresh],[0.4,1.0],'k')
         for stim_level, stim_series in self.series.iteritems():
             if not stim_level=='control':
                 contrast, perc_correct = stim_series.get_contrast_perc_correct_stats()
-                plt.plot(np.array(contrast)+.001,perc_correct,'o'+colors[stim_level],label=stim_level)
-                try:
-                    popt, pcov = curve_fit(weibull, contrast, perc_correct, maxfev=3000)
-                    plt.plot(np.array(range(1001))*.001,weibull(np.array(range(1001))*.001,*popt),colors[stim_level])
-                except:
-                    print('error fitting performance data')
+                acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+                thresh = np.max([0,acc_fit.inverse(0.8)])
+                smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+                smoothResp = acc_fit.eval(smoothInt)
+                plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
+                plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
+                plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         plt.legend(loc='best')
