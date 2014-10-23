@@ -956,10 +956,10 @@ class TrialSeries:
         plt.plot(smoothInt, smoothResp, label='control')
         plt.plot(contrast, perc_correct, 'o')
         plt.plot([thresh,thresh],[0.4,1.0])
+        plt.ylim([0.4,1])
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         plt.xscale('log')
-        plt.xlim([.001,1])
         if filename is None:
             plt.show()
         else:
@@ -981,7 +981,7 @@ class TrialSeries:
             rts = contrast_rt[c]
             contrast.append(c)
             mean_rt.append(np.mean(rts))
-            std_rt.append(np.std(rts))
+            std_rt.append(np.std(rts)/len(rts))
         return contrast, mean_rt, std_rt
 
     def plot_rt(self, filename=None):
@@ -996,7 +996,6 @@ class TrialSeries:
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
         plt.xscale('log')
-        plt.xlim([.001,1])
         if filename is None:
             plt.show()
         else:
