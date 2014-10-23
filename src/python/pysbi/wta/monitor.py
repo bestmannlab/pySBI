@@ -107,14 +107,15 @@ class WTAMonitor():
         # Input firing rate plots
         if 'background_rate' in self.monitors:
             figure()
-            max_rates=[np.max(self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)]
+            #max_rates=[np.max(self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)]
+            max_rates=[]
             for i in range(self.num_groups):
                 max_rates.append(np.max(self.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,
                     filter='gaussian')/hertz))
             max_rate=np.max(max_rates)
             ax=subplot(111)
-            ax.plot(self.monitors['background_rate'].times/ms, 
-                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
+#            ax.plot(self.monitors['background_rate'].times/ms,
+#                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             ylim(0,max_rate)
             for i in range(self.num_groups):
                 task_monitor=self.monitors['task_rate_%d' % i]
