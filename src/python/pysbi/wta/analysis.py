@@ -12,12 +12,13 @@ from matplotlib import cm
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
+import pylab
 from scikits.learn.linear_model import LinearRegression
 import sys
 from pysbi import  voxel
 from pysbi.config import DATA_DIR, TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps, weibull, rt_function, get_response_time
+from pysbi.util.utils import Struct, save_to_png, save_to_eps, weibull, rt_function, get_response_time, FitWeibull, FitRT
 from pysbi.wta import network
 from pysbi.wta.network import run_wta
 
@@ -948,12 +949,13 @@ class TrialSeries:
         contrast, perc_correct = self.get_contrast_perc_correct_stats()
 
         fig=plt.figure()
-        plt.plot(np.array(contrast)+.001,perc_correct,'o')
-        try:
-            popt, pcov = curve_fit(weibull, np.array(contrast)+.001, perc_correct)
-            plt.plot(np.array(range(1001))*.001,weibull(np.array(range(1001))*.001,*popt))
-        except:
-            print('error fitting performance data')
+        acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+        thresh = np.max([0,acc_fit.inverse(0.8)])
+        smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+        smoothResp = acc_fit.eval(smoothInt)
+        plt.plot(smoothInt, smoothResp, label='control')
+        plt.plot(contrast, perc_correct, 'o')
+        plt.plot([thresh,thresh],[0.4,1.0])
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         plt.xscale('log')
@@ -986,14 +988,11 @@ class TrialSeries:
         contrast, mean_rt, std_rt = self.get_contrast_rt_stats()
 
         fig=plt.figure()
-        #plt.errorbar(contrast,mean_rt,yerr=std_rt,fmt='o-')
-        plt.plot(np.array(contrast)+.001,mean_rt,'o')
-        try:
-            popt,pcov=curve_fit(rt_function, np.array(contrast)+.001, mean_rt)
-            plt.plot(np.array(range(1001))*.001,rt_function(np.array(range(1001))*.001,*popt))
-        except Exception as e:
-            print(e.message)
-            print('error fitting RT data')
+        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+        smoothResp = rt_fit.eval(smoothInt)
+        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
+        plt.plot(smoothInt, smoothResp, 'k', label='control')
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
         plt.xscale('log')
