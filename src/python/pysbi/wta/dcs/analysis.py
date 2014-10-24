@@ -327,7 +327,7 @@ class DCSComparisonReport:
         plt.ylabel('% correct')
         plt.legend(loc='best')
         plt.xscale('log')
-        plt.ylim([0.4,1])
+        #plt.ylim([0.4,1])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)

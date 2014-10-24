@@ -956,7 +956,7 @@ class TrialSeries:
         plt.plot(smoothInt, smoothResp, label='control')
         plt.plot(contrast, perc_correct, 'o')
         plt.plot([thresh,thresh],[0.4,1.0])
-        plt.ylim([0.4,1])
+        #plt.ylim([0.4,1])
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         plt.xscale('log')
