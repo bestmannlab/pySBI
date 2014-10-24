@@ -988,11 +988,12 @@ class TrialSeries:
         contrast, mean_rt, std_rt = self.get_contrast_rt_stats()
 
         fig=plt.figure()
-        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
-        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
-        smoothResp = rt_fit.eval(smoothInt)
-        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
-        plt.plot(smoothInt, smoothResp, 'k', label='control')
+        if len(mean_rt):
+            rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+            smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+            smoothResp = rt_fit.eval(smoothInt)
+            plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
+            plt.plot(smoothInt, smoothResp, 'k', label='control')
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
         plt.xscale('log')
