@@ -283,13 +283,13 @@ Overall AUC={{ rinfo.series.total_auc|round(3) }}
         <td colspan="2">
             <strong><a name="contrast.{{ trial_report.contrast }}.trial.{{ trial_report.trial_idx }}">Contrast={{ trial_report.contrast }}, Trial {{ trial_report.trial_idx }}</a></strong>
             <br>
-            Inputs=[{% for input in trial_report.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
+            Inputs=[{% for input in trial_report.trial_summary.data.input_freq %} {{ input|round(2) }}Hz {% endfor %}]
             <br>
-            Decision Time={{ trial_report.rt }}
+            Decision Time={{ trial_report.trial_summary.rt }}
             <br>
-            Max Firing Rate={{ trial_report.max_rate|round(2) }}Hz
+            Max Firing Rate={{ trial_report.trial_summary.max_rate|round(2) }}Hz
             <br>
-            Correct={{ trial_report.correct }}
+            Correct={{ trial_report.trial_summary.correct }}
         </td>
     </tr>
     <tr>
