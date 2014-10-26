@@ -15,191 +15,340 @@ from pysbi.reports.utils import make_report_dirs
 from pysbi.util.utils import Struct, save_to_png, save_to_eps, rt_function, weibull, FitRT, FitWeibull
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
-def create_trial_report(trial_summary, reports_dir, dt=.1*ms):
-    trial_report=Struct()
-    trial_report.trial_idx=trial_summary.trial_idx
-    trial_report.contrast=trial_summary.contrast
-    trial_report.input_freq=trial_summary.data.input_freq
-    trial_report.correct=trial_summary.correct
-    trial_report.rt=trial_summary.data.rt
-    trial_report.max_rate=trial_summary.max_rate
-    trial_report.max_bold=trial_summary.data.summary_data.bold_max
+class TrialReport:
+    def __init__(self, trial_idx, trial_summary, report_dir, edesc, dt=.1*ms, version=None):
+        self.trial_idx=trial_idx
+        self.trial_summary=trial_summary
+        self.report_dir=report_dir
+        self.edesc=edesc
+        self.dt=dt
+        self.version=version
+        if self.version is None:
+            self.version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
 
-    trial_report.firing_rate_url = None
-    if trial_summary.data.e_firing_rates is not None and trial_summary.data.i_firing_rates is not None:
-        furl = 'img/firing_rate.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
-        fname = os.path.join(reports_dir, furl)
-        trial_report.firing_rate_url = '%s.png' % furl
+        self.wta_params=self.trial_summary.data.wta_params
+        self.pyr_params=self.trial_summary.data.pyr_params
+        self.inh_params=self.trial_summary.data.inh_params
+        self.voxel_params=self.trial_summary.data.voxel_params
+        self.num_groups=self.trial_summary.data.num_groups
+        self.trial_duration=self.trial_summary.data.trial_duration
+        self.background_freq=self.trial_summary.data.background_freq
+        self.stim_start_time=self.trial_summary.data.stim_start_time
+        self.stim_end_time=self.trial_summary.data.stim_end_time
+        self.network_group_size=self.trial_summary.data.network_group_size
+        self.background_input_size=self.trial_summary.data.background_input_size
+        self.task_input_size=self.trial_summary.data.task_input_size
+        self.muscimol_amount=self.trial_summary.data.muscimol_amount
+        self.injection_site=self.trial_summary.data.injection_site
+        self.p_dcs=self.trial_summary.data.p_dcs
+        self.i_dcs=self.trial_summary.data.i_dcs
+            
+    def create_report(self, regenerate_plots=True):
+    
+        self.firing_rate_url = None
+        if self.trial_summary.data.e_firing_rates is not None and self.trial_summary.data.i_firing_rates is not None:
+            furl = 'img/firing_rate.contrast.%0.4f.trial.%d' % (self.trial_summary.contrast,
+                                                                self.trial_summary.trial_idx)
+            fname = os.path.join(self.report_dir, furl)
+            self.firing_rate_url = '%s.png' % furl
 
-        # figure out max firing rate of all neurons (pyramidal and interneuron)
-        max_pop_rate=0
-        for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
-            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
-        for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
-            max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+            if regenerate_plots:
+                # figure out max firing rate of all neurons (pyramidal and interneuron)
+                max_pop_rate=0
+                for i, pop_rate in enumerate(self.trial_summary.data.e_firing_rates):
+                    max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
+                for i, pop_rate in enumerate(self.trial_summary.data.i_firing_rates):
+                    max_pop_rate=np.max([max_pop_rate,np.max(pop_rate)])
 
-        fig=Figure()
+                fig=Figure()
 
-        # Plot pyramidal neuron firing rate
-        ax=fig.add_subplot(2,1,1)
-        for i, pop_rate in enumerate(trial_summary.data.e_firing_rates):
-            ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
-            # Plot line showing RT
-        if trial_report.rt:
-            rt_idx=(1*second+trial_report.rt)/second
-            ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
-        ax.set_ylim([0,10+max_pop_rate])
-        ax.legend(loc=0)
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Firing Rate (Hz)')
+                # Plot pyramidal neuron firing rate
+                ax=fig.add_subplot(2,1,1)
+                for i, pop_rate in enumerate(self.trial_summary.data.e_firing_rates):
+                    ax.plot(np.array(range(len(pop_rate)))*self.dt, pop_rate / Hz, label='group %d' % i)
+                    # Plot line showing RT
+                if self.trial_summary.data.rt:
+                    rt_idx=(1*second+self.trial_summary.data.rt)/second
+                    ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
+                ax.set_ylim([0,10+max_pop_rate])
+                ax.legend(loc=0)
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Firing Rate (Hz)')
 
-        # Plot interneuron firing rate
-        ax = fig.add_subplot(2,1,2)
-        for i, pop_rate in enumerate(trial_summary.data.i_firing_rates):
-            ax.plot(np.array(range(len(pop_rate))) *dt, pop_rate / Hz, label='group %d' % i)
-            # Plot line showing RT
-        if trial_report.rt:
-            rt_idx=(1*second+trial_report.rt)/second
-            ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
-        ax.set_ylim([0,10+max_pop_rate])
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Firing Rate (Hz)')
+                # Plot interneuron firing rate
+                ax = fig.add_subplot(2,1,2)
+                for i, pop_rate in enumerate(self.trial_summary.data.i_firing_rates):
+                    ax.plot(np.array(range(len(pop_rate)))*self.dt, pop_rate / Hz, label='group %d' % i)
+                    # Plot line showing RT
+                if self.trial_summary.data.rt:
+                    rt_idx=(1*second+self.trial_summary.data.rt)/second
+                    ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
+                ax.set_ylim([0,10+max_pop_rate])
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Firing Rate (Hz)')
+                save_to_png(fig, '%s.png' % fname)
+                save_to_eps(fig, '%s.eps' % fname)
+                plt.close(fig)
+    
+            del self.trial_summary.data.e_firing_rates
+            del self.trial_summary.data.i_firing_rates
+    
+        self.neural_state_url=None
+        if self.trial_summary.data.neural_state_rec is not None:
+            furl = 'img/neural_state.contrast.%0.4f.trial.%d' % (self.trial_summary.contrast,
+                                                                 self.trial_summary.trial_idx)
+            fname = os.path.join(self.report_dir, furl)
+            self.neural_state_url = '%s.png' % furl
+
+            if regenerate_plots:
+                fig = plt.figure()
+                for i in range(self.trial_summary.data.num_groups):
+                    times=np.array(range(len(self.trial_summary.data.neural_state_rec['g_ampa_r'][i*2])))*.1
+                    ax = plt.subplot(self.trial_summary.data.num_groups * 100 + 20 + (i * 2 + 1))
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_r'][i * 2] / nA, label='AMPA-recurrent')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_x'][i * 2] / nA, label='AMPA-task')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_b'][i * 2] / nA, label='AMPA-backgrnd')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_nmda'][i * 2] / nA, label='NMDA')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_gaba_a'][i * 2] / nA, label='GABA_A')
+                    plt.xlabel('Time (ms)')
+                    plt.ylabel('Conductance (nA)')
+                    ax = plt.subplot(self.trial_summary.data.num_groups * 100 + 20 + (i * 2 + 2))
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_r'][i * 2 + 1] / nA,
+                        label='AMPA-recurrent')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_x'][i * 2 + 1] / nA, label='AMPA-task')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_ampa_b'][i * 2 + 1] / nA,
+                        label='AMPA-backgrnd')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_nmda'][i * 2 + 1] / nA, label='NMDA')
+                    ax.plot(times, self.trial_summary.data.neural_state_rec['g_gaba_a'][i * 2 + 1] / nA, label='GABA_A')
+                    plt.xlabel('Time (ms)')
+                    plt.ylabel('Conductance (nA)')
+                save_to_png(fig, '%s.png' % fname)
+                save_to_eps(fig, '%s.eps' % fname)
+                plt.close(fig)
+            del self.trial_summary.data.neural_state_rec
+    
+        self.lfp_url = None
+        if self.trial_summary.data.lfp_rec is not None:
+            furl = 'img/lfp.contrast.%0.4f.trial.%d' % (self.trial_summary.contrast, self.trial_summary.trial_idx)
+            fname = os.path.join(self.report_dir, furl)
+            self.lfp_url = '%s.png' % furl
+            if regenerate_plots:
+                fig = plt.figure()
+                ax = plt.subplot(111)
+                lfp=get_lfp_signal(self.trial_summary.data)
+                ax.plot(np.array(range(len(lfp))), lfp / mA)
+                plt.xlabel('Time (ms)')
+                plt.ylabel('LFP (mA)')
+                save_to_png(fig, '%s.png' % fname)
+                save_to_eps(fig, '%s.eps' % fname)
+                plt.close(fig)
+            del self.trial_summary.data.lfp_rec
+
+
+class SessionReport:
+    def __init__(self, subj_id, stim_condition, data_dir, file_prefix, num_trials, report_dir, edesc, version=None):
+        self.subj_id=subj_id
+        self.stim_condition=stim_condition
+        self.data_dir=data_dir
+        self.file_prefix=file_prefix
+        self.num_trials=num_trials
+        self.report_dir=report_dir
+        self.edesc=edesc
+        self.version=version
+        if self.version is None:
+            self.version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.trial_reports=[]
+
+    def create_report(self, regenerate_plots=True, regenerate_trial_plots=True):
+        
+        make_report_dirs(self.report_dir)
+    
+        self.series=TrialSeries(self.data_dir, self.file_prefix, self.num_trials,
+            contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512), upper_resp_threshold=25,
+            lower_resp_threshold=None, dt=.5*ms)
+        self.series.sort_by_correct()
+
+        for trial_summary in self.series.trial_summaries:
+            trial_report=TrialReport(trial_summary, self.report_dir, self.edesc, dt=.5*ms, version=vars())
+            trial_report.create_report(regenerate_plots=regenerate_trial_plots)
+            self.trial_reports.append(trial_report)
+
+        self.wta_params=self.trial_reports[0].wta_params
+        self.pyr_params=self.trial_reports[0].pyr_params
+        self.inh_params=self.trial_reports[0].inh_params
+        self.voxel_params=self.trial_reports[0].voxel_params
+        self.num_groups=self.trial_reports[0].num_groups
+        self.trial_duration=self.trial_reports[0].trial_duration
+        self.background_freq=self.trial_reports[0].background_freq
+        self.stim_start_time=self.trial_reports[0].stim_start_time
+        self.stim_end_time=self.trial_reports[0].stim_end_time
+        self.network_group_size=self.trial_reports[0].network_group_size
+        self.background_input_size=self.trial_reports[0].background_input_size
+        self.task_input_size=self.trial_reports[0].task_input_size
+        self.muscimol_amount=self.trial_reports[0].muscimol_amount
+        self.injection_site=self.trial_reports[0].injection_site
+        self.p_dcs=self.trial_reports[0].p_dcs
+        self.i_dcs=self.trial_reports[0].i_dcs
+
+        furl='img/roc'
+        fname=os.path.join(self.report_dir, furl)
+        self.roc_url='%s.png' % furl
+        if regenerate_plots:
+            self.series.plot_multiclass_roc(filename=fname)
+    
+        furl='img/rt'
+        fname=os.path.join(self.report_dir, furl)
+        self.rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.series.plot_rt(filename=fname)
+    
+        furl='img/perc_correct'
+        fname=os.path.join(self.report_dir, furl)
+        self.perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.series.plot_perc_correct(filename=fname)
+    
+        #create report
+        template_file='dcs_session.html'
+        env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+        template=env.get_template(template_file)
+    
+        output_file='dcs_session.%s.html' % self.stim_condition
+        fname=os.path.join(self.report_dir,output_file)
+        stream=template.stream(rinfo=self)
+        stream.dump(fname)
+    
+
+
+class SubjectReport:
+    def __init__(self, data_dir, file_prefix, subj_id, stim_levels, num_trials, report_dir, edesc, version=None):
+        self.data_dir=data_dir
+        self.file_prefix=file_prefix
+        self.subj_id=subj_id
+        self.stim_levels=stim_levels
+        self.num_trials=num_trials
+        self.report_dir=report_dir
+        self.edesc=edesc
+        self.version=version
+        if self.version is None:
+            self.version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.sessions={}
+
+    def create_report(self, regenerate_plots=True, regenerate_session_plots=True, regenerate_trial_plots=True):
+        make_report_dirs(self.report_dir)
+
+        for stim_level in self.stim_levels:
+            print('creating %s report' % stim_level)
+            p_dcs=self.stim_levels[stim_level][0]
+            i_dcs=self.stim_levels[stim_level][1]
+            stim_report_dir=os.path.join(self.report_dir,stim_level)
+            prefix='%s.p_dcs.%.4f.i_dcs.%.4f.virtual_subject.%d.%s' % (self.file_prefix,p_dcs,i_dcs,self.subj_id,
+                                                                       stim_level)
+            self.sessions[stim_level]=SessionReport(self.subj_id, stim_level, self.data_dir,prefix, self.num_trials,
+                stim_report_dir, self.edesc, version=self.version)
+            self.sessions[stim_level].create_report(regenerate_plots=regenerate_session_plots,
+                regenerate_trial_plots=regenerate_trial_plots)
+
+        self.wta_params=self.sessions['control'].wta_params
+        self.pyr_params=self.sessions['control'].pyr_params
+        self.inh_params=self.sessions['control'].inh_params
+        self.voxel_params=self.sessions['control'].voxel_params
+        self.num_groups=self.sessions['control'].num_groups
+        self.trial_duration=self.sessions['control'].trial_duration
+        self.background_freq=self.sessions['control'].background_freq
+        self.stim_start_time=self.sessions['control'].stim_start_time
+        self.stim_end_time=self.sessions['control'].stim_end_time
+        self.network_group_size=self.sessions['control'].network_group_size
+        self.background_input_size=self.sessions['control'].background_input_size
+        self.task_input_size=self.sessions['control'].task_input_size
+        
+        colors={'anode':'g',
+                'cathode':'b',
+                }
+        furl='img/rt'
+        self.rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt(colors)
+
+        furl='img/perc_correct'
+        self.perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_perc_correct(colors)
+
+        #create report
+        template_file='dcs_subject.html'
+        env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+        template=env.get_template(template_file)
+
+        output_file='dcs_subject.%s.html' % self.subj_id
+        fname=os.path.join(self.report_dir,output_file)
+        stream=template.stream(rinfo=self)
+        stream.dump(fname)
+
+    def plot_rt(self, furl, colors):
+        fname=os.path.join(self.reports_dir, furl)
+
+        fig=plt.figure()
+        contrast, mean_rt, std_rt = self.sessions['control'].series.get_contrast_rt_stats()
+        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+        smoothResp = rt_fit.eval(smoothInt)
+        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
+        plt.plot(smoothInt, smoothResp, 'k', label='control')
+
+        for stim_level, session_report in self.sessions.iteritems():
+            if not stim_level=='control':
+                contrast, mean_rt, std_rt = session_report.series.get_contrast_rt_stats()
+                rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+                smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+                smoothResp = rt_fit.eval(smoothInt)
+                plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
+                plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
+
+        plt.xlabel('Contrast')
+        plt.ylabel('Decision time (s)')
+        plt.xscale('log')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-        del trial_summary.data.e_firing_rates
-        del trial_summary.data.i_firing_rates
 
-    trial_report.neural_state_url=None
-    if trial_summary.data.neural_state_rec is not None:
-        furl = 'img/neural_state.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
-        fname = os.path.join(reports_dir, furl)
-        trial_report.neural_state_url = '%s.png' % furl
-        fig = plt.figure()
-        for i in range(trial_summary.data.num_groups):
-            times=np.array(range(len(trial_summary.data.neural_state_rec['g_ampa_r'][i*2])))*.1
-            ax = plt.subplot(trial_summary.data.num_groups * 100 + 20 + (i * 2 + 1))
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_r'][i * 2] / nA, label='AMPA-recurrent')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_x'][i * 2] / nA, label='AMPA-task')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_b'][i * 2] / nA, label='AMPA-backgrnd')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_nmda'][i * 2] / nA, label='NMDA')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_gaba_a'][i * 2] / nA, label='GABA_A')
-            plt.xlabel('Time (ms)')
-            plt.ylabel('Conductance (nA)')
-            ax = plt.subplot(trial_summary.data.num_groups * 100 + 20 + (i * 2 + 2))
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_r'][i * 2 + 1] / nA, label='AMPA-recurrent')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_x'][i * 2 + 1] / nA, label='AMPA-task')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_ampa_b'][i * 2 + 1] / nA, label='AMPA-backgrnd')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_nmda'][i * 2 + 1] / nA, label='NMDA')
-            ax.plot(times, trial_summary.data.neural_state_rec['g_gaba_a'][i * 2 + 1] / nA, label='GABA_A')
-            plt.xlabel('Time (ms)')
-            plt.ylabel('Conductance (nA)')
+    def plot_perc_correct(self, furl, colors):
+        fname=os.path.join(self.reports_dir, furl)
+
+        fig=plt.figure()
+        contrast, perc_correct = self.sessions['control'].series.get_contrast_perc_correct_stats()
+        acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+        thresh = np.max([0,acc_fit.inverse(0.8)])
+        smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+        smoothResp = acc_fit.eval(smoothInt)
+        plt.plot(smoothInt, smoothResp, 'k', label='control')
+        plt.plot(contrast, perc_correct, 'ok')
+        plt.plot([thresh,thresh],[0.4,1.0],'k')
+        for stim_level, session_report in self.sessions.iteritems():
+            if not stim_level=='control':
+                contrast, perc_correct = session_report.series.get_contrast_perc_correct_stats()
+                acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+                thresh = np.max([0,acc_fit.inverse(0.8)])
+                smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+                smoothResp = acc_fit.eval(smoothInt)
+                plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
+                plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
+                plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+
+        plt.xlabel('Contrast')
+        plt.ylabel('% correct')
+        plt.legend(loc='best')
+        plt.xscale('log')
+        #plt.ylim([0.4,1])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        del trial_summary.data.neural_state_rec
-
-    trial_report.lfp_url = None
-    if trial_summary.data.lfp_rec is not None:
-        furl = 'img/lfp.contrast.%0.4f.trial.%d' % (trial_summary.contrast, trial_summary.trial_idx)
-        fname = os.path.join(reports_dir, furl)
-        trial_report.lfp_url = '%s.png' % furl
-        fig = plt.figure()
-        ax = plt.subplot(111)
-        lfp=get_lfp_signal(trial_summary.data)
-        ax.plot(np.array(range(len(lfp))), lfp / mA)
-        plt.xlabel('Time (ms)')
-        plt.ylabel('LFP (mA)')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-        del trial_summary.data.lfp_rec
-
-    trial_report.voxel_url = None
-
-    return trial_report
-
-def create_network_report(data_dir, file_prefix, num_trials, reports_dir, edesc, version=None):
-    make_report_dirs(reports_dir)
-
-    report_info=Struct()
-    if version is None:
-        version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
-    report_info.version = version
-    report_info.edesc=edesc
-
-    report_info.series=TrialSeries(data_dir, file_prefix, num_trials,
-        contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512), upper_resp_threshold=25,
-        lower_resp_threshold=None, dt=.5*ms)
-    report_info.series.sort_by_correct()
-
-    report_info.wta_params=report_info.series.trial_summaries[0].data.wta_params
-    report_info.pyr_params=report_info.series.trial_summaries[0].data.pyr_params
-    report_info.inh_params=report_info.series.trial_summaries[0].data.inh_params
-    report_info.voxel_params=report_info.series.trial_summaries[0].data.voxel_params
-    report_info.num_groups=report_info.series.trial_summaries[0].data.num_groups
-    report_info.trial_duration=report_info.series.trial_summaries[0].data.trial_duration
-    report_info.background_freq=report_info.series.trial_summaries[0].data.background_freq
-    report_info.stim_start_time=report_info.series.trial_summaries[0].data.stim_start_time
-    report_info.stim_end_time=report_info.series.trial_summaries[0].data.stim_end_time
-    report_info.network_group_size=report_info.series.trial_summaries[0].data.network_group_size
-    report_info.background_input_size=report_info.series.trial_summaries[0].data.background_input_size
-    report_info.task_input_size=report_info.series.trial_summaries[0].data.task_input_size
-    report_info.muscimol_amount=report_info.series.trial_summaries[0].data.muscimol_amount
-    report_info.injection_site=report_info.series.trial_summaries[0].data.injection_site
-    report_info.p_dcs=report_info.series.trial_summaries[0].data.p_dcs
-    report_info.i_dcs=report_info.series.trial_summaries[0].data.i_dcs
-
-    furl='img/roc'
-    fname=os.path.join(reports_dir, furl)
-    report_info.roc_url='%s.png' % furl
-    report_info.series.plot_multiclass_roc(filename=fname)
-
-    furl='img/rt'
-    fname=os.path.join(reports_dir, furl)
-    report_info.rt_url='%s.png' % furl
-    report_info.series.plot_rt(filename=fname)
-
-    furl='img/perc_correct'
-    fname=os.path.join(reports_dir, furl)
-    report_info.perc_correct_url='%s.png' % furl
-    report_info.series.plot_perc_correct(filename=fname)
-
-#    furl='img/bold_contrast_regression'
-#    fname=os.path.join(reports_dir,furl)
-#    report_info.bold_contrast_regression_url='%s.png' % furl
-#    x_min=np.min(report_info.series.contrast_range)
-#    x_max=np.max(report_info.series.contrast_range)
-#    fig=plt.figure()
-#    report_info.series.max_bold_regression.plot(x_max, x_min,'ok','k','Fit')
-#    plt.xlabel('Input Contrast')
-#    plt.ylabel('Max BOLD')
-#    plt.legend(loc='best')
-#    plt.xscale('log')
-#    save_to_png(fig, '%s.png' % fname)
-#    save_to_eps(fig, '%s.eps' % fname)
-#    plt.close(fig)
-
-    report_info.trial_reports=[]
-    for trial_summary in report_info.series.trial_summaries:
-        report_info.trial_reports.append(create_trial_report(trial_summary, reports_dir, dt=.5*ms))
-
-    #create report
-    template_file='wta_network_instance_new.html'
-    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
-    template=env.get_template(template_file)
-
-    output_file='wta_network.%s.html' % file_prefix
-    fname=os.path.join(reports_dir,output_file)
-    stream=template.stream(rinfo=report_info)
-    stream.dump(fname)
-
-    return report_info.series
 
 
 class DCSComparisonReport:
-    def __init__(self, data_dir, file_prefix, stim_levels, num_trials, reports_dir, edesc):
+    def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc):
         """
         Create report for DCS simulations
         data_dir=directory where datafiles are stored
@@ -212,55 +361,53 @@ class DCSComparisonReport:
         """
         self.data_dir=data_dir
         self.file_prefix=file_prefix
+        self.virtual_subj_ids=virtual_subj_ids
         self.stim_levels=stim_levels
         self.num_trials=num_trials
         self.reports_dir=reports_dir
         self.edesc=edesc
 
-        self.series={}
+        self.subjects={}
 
-    def create_report(self):
+    def create_report(self, regenerate_plots=True, regenerate_subject_plots=True, regenerate_session_plots=True,
+                      regenerate_trial_plots=True):
         make_report_dirs(self.reports_dir)
 
-        report_info=Struct()
-        report_info.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
-        report_info.edesc=self.edesc
+        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
 
-        report_info.urls={}
-        for stim_level in self.stim_levels:
-            print('creating %s report' % stim_level)
-            p_dcs=self.stim_levels[stim_level][0]
-            i_dcs=self.stim_levels[stim_level][1]
-            stim_report_dir=os.path.join(self.reports_dir,stim_level)
-            prefix='%s.p_dcs.%.4f.i_dcs.%.4f.control' % (self.file_prefix,p_dcs,i_dcs)
-            self.series[stim_level]=create_network_report(self.data_dir,prefix,self.num_trials,stim_report_dir,'', version=report_info.version)
-            report_info.urls[stim_level]=os.path.join(stim_level,'wta_network.%s.html' % prefix)
+        for virtual_subj_id in self.virtual_subj_ids:
+            subj_report_dir=os.path.join(self.reports_dir,'virtual_subject.%d' % virtual_subj_id)
+            self.subjects[virtual_subj_id]=SubjectReport(self.data_dir, self.file_prefix, virtual_subj_id,
+                self.stim_levels, self.num_trials, subj_report_dir, self.edesc, version=self.version)
+            self.subjects[virtual_subj_id].create_report(regenerate_plots=regenerate_subject_plots,
+                regenerate_session_plots=regenerate_session_plots, regenerate_trial_plots=regenerate_trial_plots)
+
         colors={'anode':'g',
-                'anode control 1':'r',
-                'anode control 2':'m',
                 'cathode':'b',
-                'cathode control 1':'c',
-                'cathode control 2':'y'}
-        report_info.rt_url=self.plot_rt(colors)
-        report_info.perc_correct_url=self.plot_perc_correct(colors)
-        report_info.bold_contrast_regression_url=None
-        #report_info.bold_contrast_regression_url=self.plot_bold_contrast_regression(colors)
+                }
+        furl='img/rt'
+        self.rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt(colors)
 
-        report_info.wta_params=self.series['control'].trial_summaries[0].data.wta_params
-        report_info.pyr_params=self.series['control'].trial_summaries[0].data.pyr_params
-        report_info.inh_params=self.series['control'].trial_summaries[0].data.inh_params
-        report_info.voxel_params=self.series['control'].trial_summaries[0].data.voxel_params
-        report_info.num_groups=self.series['control'].trial_summaries[0].data.num_groups
-        report_info.trial_duration=self.series['control'].trial_summaries[0].data.trial_duration
-        report_info.background_freq=self.series['control'].trial_summaries[0].data.background_freq
-        report_info.stim_start_time=self.series['control'].trial_summaries[0].data.stim_start_time
-        report_info.stim_end_time=self.series['control'].trial_summaries[0].data.stim_end_time
-        report_info.network_group_size=self.series['control'].trial_summaries[0].data.network_group_size
-        report_info.background_input_size=self.series['control'].trial_summaries[0].data.background_input_size
-        report_info.task_input_size=self.series['control'].trial_summaries[0].data.task_input_size
-        report_info.muscimol_amount=self.series['control'].trial_summaries[0].data.muscimol_amount
-        report_info.injection_site=self.series['control'].trial_summaries[0].data.injection_site
+        furl='img/perc_correct'
+        self.perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_perc_correct(colors)
 
+        self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
+        self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
+        self.inh_params=self.subjects[self.subjects.keys()[0]].inh_params
+        self.voxel_params=self.subjects[self.subjects.keys()[0]].voxel_params
+        self.num_groups=self.subjects[self.subjects.keys()[0]].num_groups
+        self.trial_duration=self.subjects[self.subjects.keys()[0]].trial_duration
+        self.background_freq=self.subjects[self.subjects.keys()[0]].background_freq
+        self.stim_start_time=self.subjects[self.subjects.keys()[0]].stim_start_time
+        self.stim_end_time=self.subjects[self.subjects.keys()[0]].stim_end_time
+        self.network_group_size=self.subjects[self.subjects.keys()[0]].network_group_size
+        self.background_input_size=self.subjects[self.subjects.keys()[0]].background_input_size
+        self.task_input_size=self.subjects[self.subjects.keys()[0]].task_input_size
+        
         #create report
         template_file='wta_dcs_comparison.html'
         env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -268,14 +415,14 @@ class DCSComparisonReport:
 
         output_file='dcs_comparison.%s.html' % self.file_prefix
         fname=os.path.join(self.reports_dir,output_file)
-        stream=template.stream(rinfo=report_info)
+        stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-    def plot_rt(self, colors):
-        furl='img/rt'
+    def plot_rt(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
+
         fig=plt.figure()
-        contrast, mean_rt, std_rt = self.series['control'].get_contrast_rt_stats()
+        contrast, mean_rt, std_rt = self.subjects[self.subjects.keys()[0]].get_contrast_rt_stats()
         rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
         smoothInt = pylab.arange(0.01, max(contrast), 0.001)
         smoothResp = rt_fit.eval(smoothInt)
@@ -298,13 +445,13 @@ class DCSComparisonReport:
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        return '%s.png' % furl
 
-    def plot_perc_correct(self, colors):
-        furl='img/perc_correct'
+
+    def plot_perc_correct(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
+
         fig=plt.figure()
-        contrast, perc_correct = self.series['control'].get_contrast_perc_correct_stats()
+        contrast, perc_correct = self.subjects[self.subjects.keys()[0]].get_contrast_perc_correct_stats()
         acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
         thresh = np.max([0,acc_fit.inverse(0.8)])
         smoothInt = pylab.arange(0.0, max(contrast), 0.001)
@@ -331,15 +478,15 @@ class DCSComparisonReport:
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        return '%s.png' % furl
+
 
     def plot_bold_contrast_regression(self,colors):
         furl='img/bold_contrast_regression'
         fname=os.path.join(self.reports_dir,furl)
-        x_min=np.min(self.series['control'].contrast_range)
-        x_max=np.max(self.series['control'].contrast_range)
+        x_min=np.min(self.subjects[self.subjects.keys()[0]].contrast_range)
+        x_max=np.max(self.subjects[self.subjects.keys()[0]].contrast_range)
         fig=plt.figure()
-        self.series['control'].max_bold_regression.plot(x_max, x_min,'ok','k','control')
+        self.subjects[self.subjects.keys()[0]].max_bold_regression.plot(x_max, x_min,'ok','k','control')
         for stim_level, stim_series in self.series.iteritems():
             if not stim_level=='control':
                 stim_series.max_bold_regression.plot(x_max, x_min,'o'+colors[stim_level],colors[stim_level],stim_level)
