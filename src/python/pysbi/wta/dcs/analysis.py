@@ -268,12 +268,12 @@ class SubjectReport:
         furl='img/rt'
         self.rt_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_rt(colors)
+            self.plot_rt(furl, colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_perc_correct(colors)
+            self.plot_perc_correct(furl, colors)
 
         #create report
         template_file='dcs_subject.html'
