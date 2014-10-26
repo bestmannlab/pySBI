@@ -286,7 +286,7 @@ class SubjectReport:
         stream.dump(fname)
 
     def plot_rt(self, furl, colors):
-        fname=os.path.join(self.reports_dir, furl)
+        fname=os.path.join(self.report_dir, furl)
 
         fig=plt.figure()
         contrast, mean_rt, std_rt = self.sessions['control'].series.get_contrast_rt_stats()
@@ -315,7 +315,7 @@ class SubjectReport:
 
 
     def plot_perc_correct(self, furl, colors):
-        fname=os.path.join(self.reports_dir, furl)
+        fname=os.path.join(self.report_dir, furl)
 
         fig=plt.figure()
         contrast, perc_correct = self.sessions['control'].series.get_contrast_perc_correct_stats()
