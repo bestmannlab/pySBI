@@ -63,7 +63,7 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
     alpha_vals=np.array(control_group['alpha'])
     beta_vals=np.array(control_group['beta'])
 
-    jobs=[]
+    #jobs=[]
     # For each virtual subject
     for virtual_subj_id in virtual_subj_ids:
 
@@ -87,7 +87,8 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
                         p_dcs=stim_values[0], i_dcs=stim_values[1], record_lfp=True, record_voxel=True,
                         record_neuron_state=False, record_firing_rate=True, record_spikes=True, save_summary_only=False,
                         e_desc='virtual_subject.%d.%s' % (virtual_subj_id,stim_condition))
-                    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+                    #launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+                    launcher.add_batch_job(cmds, log_file_template=log_file_template, output_file=out_file)
             reversed_inputs=np.zeros(2)
             reversed_inputs[0]=inputs[1]
             reversed_inputs[1]=inputs[0]
@@ -99,10 +100,12 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
                         contrast, t+trials, p_dcs=stim_values[0], i_dcs=stim_values[1], record_lfp=True,
                         record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True,
                         save_summary_only=False, e_desc='virtual_subject.%d.%s' % (virtual_subj_id,stim_condition))
-                    jobs.append((cmds,log_file_template,out_file))
+                    #jobs.append((cmds,log_file_template,out_file))
+                    launcher.add_batch_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-    for cmds,log_file_template,out_file in jobs:
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+    #for cmds,log_file_template,out_file in jobs:
+    #    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
+    launcher.post_jobs()
 
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
