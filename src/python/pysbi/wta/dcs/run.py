@@ -89,7 +89,7 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
                     launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
             reversed_inputs=np.zeros(2)
             reversed_inputs[0]=inputs[1]
-            reversed_inputs[1]=inputs[2]
+            reversed_inputs[1]=inputs[0]
             for t in range(trials):
                 for stim_condition,stim_values in stim_conditions.iteritems():
                     wta_params=default_params
