@@ -168,8 +168,8 @@ class SessionReport:
             lower_resp_threshold=None, dt=.5*ms)
         self.series.sort_by_correct()
 
-        for trial_summary in self.series.trial_summaries:
-            trial_report=TrialReport(trial_summary, self.report_dir, self.edesc, dt=.5*ms, version=vars())
+        for idx,trial_summary in enumerate(self.series.trial_summaries):
+            trial_report=TrialReport(idx+1,trial_summary, self.report_dir, self.edesc, dt=.5*ms, version=self.version)
             trial_report.create_report(regenerate_plots=regenerate_trial_plots)
             self.trial_reports.append(trial_report)
 
