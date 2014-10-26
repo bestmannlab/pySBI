@@ -79,7 +79,7 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
             inputs[0]=mu_0+p_a*contrast*100.0
             inputs[1]=mu_0-p_b*contrast*100.0
             for t in range(trials):
-                for stim_condition,stim_values in stim_conditions:
+                for stim_condition,stim_values in stim_conditions.iter_values():
                     wta_params=default_params
                     cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, background_freq, trial_duration,
                         wta_params.p_e_e, wta_params.p_e_i, wta_params.p_i_i, wta_params.p_i_e, contrast, t,
@@ -91,7 +91,7 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
             reversed_inputs[0]=inputs[1]
             reversed_inputs[1]=inputs[2]
             for t in range(trials):
-                for stim_condition,stim_values in stim_conditions:
+                for stim_condition,stim_values in stim_conditions.iter_values():
                     wta_params=default_params
                     cmds,log_file_template,out_file=get_wta_cmds(num_groups, reversed_inputs, background_freq,
                         trial_duration, wta_params.p_e_e, wta_params.p_e_i, wta_params.p_i_i, wta_params.p_i_e,
