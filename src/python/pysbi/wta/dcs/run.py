@@ -63,7 +63,6 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
     alpha_vals=np.array(control_group['alpha'])
     beta_vals=np.array(control_group['beta'])
 
-    #jobs=[]
     # For each virtual subject
     for virtual_subj_id in virtual_subj_ids:
 
@@ -80,6 +79,7 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
             inputs[0]=mu_0+p_a*contrast*100.0
             inputs[1]=mu_0-p_b*contrast*100.0
             for t in range(trials):
+                np.random.shuffle(inputs)
                 for stim_condition,stim_values in stim_conditions.iteritems():
                     wta_params=default_params
                     cmds,log_file_template,out_file=get_wta_cmds(num_groups, inputs, background_freq, trial_duration,
@@ -87,24 +87,8 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
                         p_dcs=stim_values[0], i_dcs=stim_values[1], record_lfp=True, record_voxel=True,
                         record_neuron_state=False, record_firing_rate=True, record_spikes=True, save_summary_only=False,
                         e_desc='virtual_subject.%d.%s' % (virtual_subj_id,stim_condition))
-                    #launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-                    launcher.add_batch_job(cmds, log_file_template=log_file_template, output_file=out_file)
-            reversed_inputs=np.zeros(2)
-            reversed_inputs[0]=inputs[1]
-            reversed_inputs[1]=inputs[0]
-            for t in range(trials):
-                for stim_condition,stim_values in stim_conditions.iteritems():
-                    wta_params=default_params
-                    cmds,log_file_template,out_file=get_wta_cmds(num_groups, reversed_inputs, background_freq,
-                        trial_duration, wta_params.p_e_e, wta_params.p_e_i, wta_params.p_i_i, wta_params.p_i_e,
-                        contrast, t+trials, p_dcs=stim_values[0], i_dcs=stim_values[1], record_lfp=True,
-                        record_voxel=True, record_neuron_state=False, record_firing_rate=True, record_spikes=True,
-                        save_summary_only=False, e_desc='virtual_subject.%d.%s' % (virtual_subj_id,stim_condition))
-                    #jobs.append((cmds,log_file_template,out_file))
                     launcher.add_batch_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
-    #for cmds,log_file_template,out_file in jobs:
-    #    launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
     launcher.post_jobs()
 
     if start_nodes:
