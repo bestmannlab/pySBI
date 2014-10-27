@@ -500,15 +500,8 @@ class DCSComparisonReport:
         return '%s.png' % furl
 
 if __name__=='__main__':
-    dcs_report=DCSComparisonReport('/data/projects/pySBI/rdmd/data',
-        'wta.groups.2.duration.4.000.p_b_e.0.030.p_x_e.0.010.p_e_e.0.030.p_e_i.0.080.p_i_i.0.200.p_i_e.0.080',
-        {
-            'control':(0,0),
-            'anode':(4,-2),
-            'anode control 1':(4,0),
-            'anode control 2':(4,2),
-            'cathode':(-4,2),
-            'cathode control 1':(-4,0),
-            'cathode control 2':(-4,-2)
-        },50,'/data/projects/pySBI/rdmd/report','')
+    dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects/mu_40',
+        'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(15),
+        {'control':(0,0),'anode':(2,-1),'cathode':(-2,1)},25,
+        '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_mu_40','')
     dcs_report.create_report()
