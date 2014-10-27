@@ -3,7 +3,6 @@ matplotlib.use('Agg')
 import pylab
 from brian import second
 import os
-from scipy.optimize import curve_fit
 import subprocess
 from brian.stdunits import Hz, ms, nA, mA
 from jinja2 import Environment, FileSystemLoader
@@ -12,8 +11,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import Struct, save_to_png, save_to_eps, rt_function, weibull, FitRT, FitWeibull
+from pysbi.util.utils import save_to_png, save_to_eps, FitRT, FitWeibull
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
+
+condition_colors={
+    'control': 'b',
+    'anode':'r',
+    'cathode':'g',
+    }
+
 
 class TrialReport:
     def __init__(self, trial_idx, trial_summary, report_dir, edesc, dt=.1*ms, version=None):
@@ -262,18 +268,15 @@ class SubjectReport:
         self.background_input_size=self.sessions['control'].background_input_size
         self.task_input_size=self.sessions['control'].task_input_size
         
-        colors={'anode':'g',
-                'cathode':'b',
-                }
         furl='img/rt'
         self.rt_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_rt(furl, colors)
+            self.plot_rt(furl, condition_colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_perc_correct(furl, colors)
+            self.plot_perc_correct(furl, condition_colors)
 
         #create report
         template_file='dcs_subject.html'
@@ -289,21 +292,13 @@ class SubjectReport:
         fname=os.path.join(self.report_dir, furl)
 
         fig=plt.figure()
-        contrast, mean_rt, std_rt = self.sessions['control'].series.get_contrast_rt_stats()
-        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
-        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
-        smoothResp = rt_fit.eval(smoothInt)
-        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
-        plt.plot(smoothInt, smoothResp, 'k', label='control')
-
         for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level=='control':
-                contrast, mean_rt, std_rt = session_report.series.get_contrast_rt_stats()
-                rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
-                smoothInt = pylab.arange(0.01, max(contrast), 0.001)
-                smoothResp = rt_fit.eval(smoothInt)
-                plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
-                plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
+            contrast, mean_rt, std_rt = session_report.series.get_contrast_rt_stats()
+            rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+            smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+            smoothResp = rt_fit.eval(smoothInt)
+            plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
+            plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
 
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
@@ -318,24 +313,15 @@ class SubjectReport:
         fname=os.path.join(self.report_dir, furl)
 
         fig=plt.figure()
-        contrast, perc_correct = self.sessions['control'].series.get_contrast_perc_correct_stats()
-        acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
-        thresh = np.max([0,acc_fit.inverse(0.8)])
-        smoothInt = pylab.arange(0.0, max(contrast), 0.001)
-        smoothResp = acc_fit.eval(smoothInt)
-        plt.plot(smoothInt, smoothResp, 'k', label='control')
-        plt.plot(contrast, perc_correct, 'ok')
-        plt.plot([thresh,thresh],[0.4,1.0],'k')
         for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level=='control':
-                contrast, perc_correct = session_report.series.get_contrast_perc_correct_stats()
-                acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
-                thresh = np.max([0,acc_fit.inverse(0.8)])
-                smoothInt = pylab.arange(0.0, max(contrast), 0.001)
-                smoothResp = acc_fit.eval(smoothInt)
-                plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
-                plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
-                plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+            contrast, perc_correct = session_report.series.get_contrast_perc_correct_stats()
+            acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
+            thresh = np.max([0,acc_fit.inverse(0.8)])
+            smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+            smoothResp = acc_fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
+            plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
+            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
 
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
@@ -383,18 +369,15 @@ class DCSComparisonReport:
             self.subjects[virtual_subj_id].create_report(regenerate_plots=regenerate_subject_plots,
                 regenerate_session_plots=regenerate_session_plots, regenerate_trial_plots=regenerate_trial_plots)
 
-        colors={'anode':'g',
-                'cathode':'b',
-                }
         furl='img/rt'
         self.rt_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_rt(furl, colors)
+            self.plot_rt(furl, condition_colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_perc_correct(furl, colors)
+            self.plot_perc_correct(furl, condition_colors)
 
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
@@ -423,21 +406,25 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
 
         fig=plt.figure()
-        contrast, mean_rt, std_rt = self.subjects[self.subjects.keys()[0]].get_contrast_rt_stats()
-        rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
-        smoothInt = pylab.arange(0.01, max(contrast), 0.001)
-        smoothResp = rt_fit.eval(smoothInt)
-        plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
-        plt.plot(smoothInt, smoothResp, 'k', label='control')
+        condition_contrast={}
+        condition_rt={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                contrast, mean_rt, std_rt = session_report.series.get_contrast_rt_stats()
+                if not stim_level in condition_contrast:
+                    condition_contrast[stim_level]=contrast
+                if not stim_level in condition_rt:
+                    condition_rt[stim_level]=[]
+                condition_rt[stim_level].append(mean_rt)
 
-        for stim_level, stim_series in self.series.iteritems():
-            if not stim_level=='control':
-                contrast, mean_rt, std_rt = stim_series.get_contrast_rt_stats()
-                rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
-                smoothInt = pylab.arange(0.01, max(contrast), 0.001)
-                smoothResp = rt_fit.eval(smoothInt)
-                plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
-                plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
+        for condition, contrast in condition_contrast.iteritems():
+            mean_rt=np.mean(np.array(condition_rt[condition]),axis=1)
+            std_rt=np.std(np.array(condition_rt[condition]),axis=1)
+            rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+            smoothInt = pylab.arange(0.01, max(contrast), 0.001)
+            smoothResp = rt_fit.eval(smoothInt)
+            plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
+            plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
 
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
@@ -452,24 +439,27 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
 
         fig=plt.figure()
-        contrast, perc_correct = self.subjects[self.subjects.keys()[0]].get_contrast_perc_correct_stats()
-        acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
-        thresh = np.max([0,acc_fit.inverse(0.8)])
-        smoothInt = pylab.arange(0.0, max(contrast), 0.001)
-        smoothResp = acc_fit.eval(smoothInt)
-        plt.plot(smoothInt, smoothResp, 'k', label='control')
-        plt.plot(contrast, perc_correct, 'ok')
-        plt.plot([thresh,thresh],[0.4,1.0],'k')
-        for stim_level, stim_series in self.series.iteritems():
-            if not stim_level=='control':
-                contrast, perc_correct = stim_series.get_contrast_perc_correct_stats()
-                acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
-                thresh = np.max([0,acc_fit.inverse(0.8)])
-                smoothInt = pylab.arange(0.0, max(contrast), 0.001)
-                smoothResp = acc_fit.eval(smoothInt)
-                plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
-                plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
-                plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+        condition_contrast={}
+        condition_perc_correct={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                contrast, perc_correct = session_report.series.get_contrast_perc_correct_stats()
+                if not stim_level in condition_contrast:
+                    condition_contrast[stim_level]=contrast
+                if not stim_level in condition_perc_correct:
+                    condition_perc_correct[stim_level]=[]
+                condition_perc_correct[stim_level].append(perc_correct)
+
+        for condition, contrast in condition_contrast.iteritems():
+            mean_perc_correct=np.mean(np.array(condition_perc_correct[condition]),axis=1)
+            std_perc_correct=np.std(np.array(condition_perc_correct[condition]),axis=1)
+            acc_fit=FitWeibull(contrast, mean_perc_correct, guess=[0.2, 0.5])
+            thresh = np.max([0,acc_fit.inverse(0.8)])
+            smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+            smoothResp = acc_fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
+            plt.errorbar(contrast, mean_perc_correct,yerr=std_perc_correct,fmt='o%s' % colors[stim_level])
+            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
 
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
@@ -480,25 +470,6 @@ class DCSComparisonReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-
-    def plot_bold_contrast_regression(self,colors):
-        furl='img/bold_contrast_regression'
-        fname=os.path.join(self.reports_dir,furl)
-        x_min=np.min(self.subjects[self.subjects.keys()[0]].contrast_range)
-        x_max=np.max(self.subjects[self.subjects.keys()[0]].contrast_range)
-        fig=plt.figure()
-        self.subjects[self.subjects.keys()[0]].max_bold_regression.plot(x_max, x_min,'ok','k','control')
-        for stim_level, stim_series in self.series.iteritems():
-            if not stim_level=='control':
-                stim_series.max_bold_regression.plot(x_max, x_min,'o'+colors[stim_level],colors[stim_level],stim_level)
-        plt.xlabel('Input Contrast')
-        plt.ylabel('Max BOLD')
-        plt.legend(loc='best')
-        plt.xscale('log')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-        return '%s.png' % furl
 
 if __name__=='__main__':
     dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects/mu_40',
