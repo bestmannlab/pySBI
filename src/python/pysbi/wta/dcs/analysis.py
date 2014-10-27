@@ -376,6 +376,7 @@ class DCSComparisonReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
 
         for virtual_subj_id in self.virtual_subj_ids:
+            print('Creating report for subject %d' % virtual_subj_id)
             subj_report_dir=os.path.join(self.reports_dir,'virtual_subject.%d' % virtual_subj_id)
             self.subjects[virtual_subj_id]=SubjectReport(self.data_dir, self.file_prefix, virtual_subj_id,
                 self.stim_levels, self.num_trials, subj_report_dir, self.edesc, version=self.version)
@@ -409,11 +410,11 @@ class DCSComparisonReport:
         self.task_input_size=self.subjects[self.subjects.keys()[0]].task_input_size
         
         #create report
-        template_file='wta_dcs_comparison.html'
+        template_file='dcs.html'
         env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
         template=env.get_template(template_file)
 
-        output_file='dcs_comparison.%s.html' % self.file_prefix
+        output_file='dcs.html'
         fname=os.path.join(self.reports_dir,output_file)
         stream=template.stream(rinfo=self)
         stream.dump(fname)
