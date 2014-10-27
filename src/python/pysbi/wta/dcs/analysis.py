@@ -74,7 +74,7 @@ class TrialReport:
                     ax.plot(np.array(range(len(pop_rate)))*self.dt, pop_rate / Hz, label='group %d' % i)
                     # Plot line showing RT
                 if self.trial_summary.data.rt:
-                    rt_idx=(1*second+self.trial_summary.data.rt)/second
+                    rt_idx=(1*second+self.trial_summary.data.rt*ms)/second
                     ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
                 ax.set_ylim([0,10+max_pop_rate])
                 ax.legend(loc=0)
@@ -87,7 +87,7 @@ class TrialReport:
                     ax.plot(np.array(range(len(pop_rate)))*self.dt, pop_rate / Hz, label='group %d' % i)
                     # Plot line showing RT
                 if self.trial_summary.data.rt:
-                    rt_idx=(1*second+self.trial_summary.data.rt)/second
+                    rt_idx=(1*second+self.trial_summary.data.rt*ms)/second
                     ax.plot([rt_idx,rt_idx],[0,max_pop_rate],'r')
                 ax.set_ylim([0,10+max_pop_rate])
                 ax.set_xlabel('Time (s)')
