@@ -58,14 +58,6 @@
         <td>Task input size</td>
         <td>{{ rinfo.task_input_size }}</td>
     </tr>
-    <tr>
-        <td>Muscimol amount</td>
-        <td>{{ rinfo.muscimol_amount }}</td>
-    </tr>
-    <tr>
-        <td>Muscimol injection site</td>
-        <td>{{ rinfo.injection_site }}</td>
-    </tr>
 </table>
 
 <h4>Network connectivity parameters</h4>
@@ -232,7 +224,7 @@
 <h3>Stimulus Conditions</h3>
 <ul>
     <li><a href="control/dcs_session.control.html">control</a></li>
-    {% for stimulus_level in rinfo.urls %}
+    {% for stimulus_level in rinfo.sessions %}
     {% if not stimulus_level=='control' %}
     <li><a href="{{ stimulus_level }}/dcs_session.{{ stimulus_level }}">.html{{ stimulus_level }}</a></li>
     {% endif %}
