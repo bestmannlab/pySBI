@@ -995,7 +995,7 @@ class TrialSeries:
             plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='ok')
             plt.plot(smoothInt, smoothResp, 'k')
         plt.xlabel('Contrast')
-        plt.ylabel('Decision time (s)')
+        plt.ylabel('Decision time (ms)')
         plt.xscale('log')
         if filename is None:
             plt.show()
@@ -1562,7 +1562,7 @@ def create_dcs_comparison_report(data_dir, file_prefix, stim_levels, num_trials,
             except:
                 print('error fitting RT data')
     plt.xlabel('Contrast')
-    plt.ylabel('Decision time (s)')
+    plt.ylabel('Decision time (ms)')
     plt.xscale('log')
     plt.legend()
     save_to_png(fig, '%s.png' % fname)

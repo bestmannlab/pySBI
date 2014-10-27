@@ -301,7 +301,7 @@ class SubjectReport:
             plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
 
         plt.xlabel('Contrast')
-        plt.ylabel('Decision time (s)')
+        plt.ylabel('Decision time (ms)')
         plt.xscale('log')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
@@ -427,7 +427,7 @@ class DCSComparisonReport:
             plt.plot(smoothInt, smoothResp, colors[condition], label=condition)
 
         plt.xlabel('Contrast')
-        plt.ylabel('Decision time (s)')
+        plt.ylabel('Decision time (ms)')
         plt.xscale('log')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)

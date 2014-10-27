@@ -112,11 +112,11 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
             if rt is None:
                 if rate_1[idx]>=upper_threshold and (lower_threshold is None or rate_2[idx]<=lower_threshold):
                     decision_idx=0
-                    rt=time-stim_start_time
+                    rt=(time-stim_start_time)/ms
                     break
                 elif rate_2[idx]>=upper_threshold and (lower_threshold is None or rate_1[idx]<=lower_threshold):
                     decision_idx=1
-                    rt=time-stim_start_time
+                    rt=(time-stim_start_time)/ms
                     break
     return rt,decision_idx
 
