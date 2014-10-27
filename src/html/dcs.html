@@ -57,14 +57,6 @@
         <td>Task input size</td>
         <td>{{ rinfo.task_input_size }}</td>
     </tr>
-    <tr>
-        <td>Muscimol amount</td>
-        <td>{{ rinfo.muscimol_amount }}</td>
-    </tr>
-    <tr>
-        <td>Muscimol injection site</td>
-        <td>{{ rinfo.injection_site }}</td>
-    </tr>
 </table>
 
 <h4>Network connectivity parameters</h4>
@@ -241,12 +233,18 @@
     <thead>
     <tr>
         <th>Subject ID</th>
+        <th>Background Freq</th>
+        <th>% Correct</th>
+        <th>RT</th>
     </tr>
     </thead>
     <tbody>
     {% for subj_id in rinfo.subjects %}
     <tr>
         <td><a href="virtual_subject.{{ subj_id }}/dcs_subject.{{ subj_id }}.html">{{ subj_id }}</td>
+        <td>{{ rinfo.subjects[subj_id].background_freq }}</td>
+        <td><img src="virtual_subject.{{ subj_id }}/img/perc_correct.png"/></td>
+        <td><img src="virtual_subject.{{ subj_id }}/img/rt.png"/></td>
     </tr>
     {% endfor %}
     </tbody>
