@@ -388,12 +388,12 @@ class DCSComparisonReport:
         furl='img/rt'
         self.rt_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_rt(colors)
+            self.plot_rt(furl, colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
-            self.plot_perc_correct(colors)
+            self.plot_perc_correct(furl, colors)
 
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
