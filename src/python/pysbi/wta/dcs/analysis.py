@@ -419,12 +419,12 @@ class DCSComparisonReport:
 
         for condition, contrast in condition_contrast.iteritems():
             mean_rt=np.mean(np.array(condition_rt[condition]),axis=0)
-            std_rt=np.std(np.array(condition_rt[condition]),axis=0)
+            std_rt=np.std(np.array(condition_rt[condition]),axis=0)/len(self.subjects)
             rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
             smoothInt = pylab.arange(0.01, max(contrast), 0.001)
             smoothResp = rt_fit.eval(smoothInt)
-            plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[stim_level])
-            plt.plot(smoothInt, smoothResp, colors[stim_level], label=stim_level)
+            plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[condition])
+            plt.plot(smoothInt, smoothResp, colors[condition], label=condition)
 
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (s)')
@@ -452,14 +452,14 @@ class DCSComparisonReport:
 
         for condition, contrast in condition_contrast.iteritems():
             mean_perc_correct=np.mean(np.array(condition_perc_correct[condition]),axis=0)
-            std_perc_correct=np.std(np.array(condition_perc_correct[condition]),axis=0)
+            std_perc_correct=np.std(np.array(condition_perc_correct[condition]),axis=0)/len(self.subjects)
             acc_fit=FitWeibull(contrast, mean_perc_correct, guess=[0.2, 0.5])
             thresh = np.max([0,acc_fit.inverse(0.8)])
             smoothInt = pylab.arange(0.0, max(contrast), 0.001)
             smoothResp = acc_fit.eval(smoothInt)
-            plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
-            plt.errorbar(contrast, mean_perc_correct,yerr=std_perc_correct,fmt='o%s' % colors[stim_level])
-            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+            plt.plot(smoothInt, smoothResp, '%s' % colors[condition], label=condition)
+            plt.errorbar(contrast, mean_perc_correct,yerr=std_perc_correct,fmt='o%s' % colors[condition])
+            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[condition])
 
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
