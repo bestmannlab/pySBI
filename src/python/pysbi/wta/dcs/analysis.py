@@ -473,7 +473,7 @@ class DCSComparisonReport:
 
 if __name__=='__main__':
     dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects/mu_40',
-        'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(15),
+        'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(20),
         {'control':(0,0),'anode':(2,-1),'cathode':(-2,1)},25,
         '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_mu_40','')
     dcs_report.create_report()
