@@ -464,7 +464,7 @@ class DCSComparisonReport:
             self.params[condition]['alpha']=acc_fit.params[0]
             self.params[condition]['beta']=acc_fit.params[1]
             thresh = np.max([0,acc_fit.inverse(0.8)])
-            smoothInt = pylab.arange(0.0, max(contrast), 0.001)
+            smoothInt = pylab.arange(0.01, max(contrast), 0.001)
             smoothResp = acc_fit.eval(smoothInt)
             plt.plot(smoothInt, smoothResp, '%s' % colors[condition], label=condition)
             plt.errorbar(contrast, mean_perc_correct,yerr=std_perc_correct,fmt='o%s' % colors[condition])
