@@ -420,7 +420,7 @@ class DCSComparisonReport:
         for condition, contrast in condition_contrast.iteritems():
             mean_rt=np.mean(np.array(condition_rt[condition]),axis=0)
             std_rt=np.std(np.array(condition_rt[condition]),axis=0)/len(self.subjects)
-            rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+            rt_fit = FitRT(np.array(contrast), mean_rt, guess=[-550,3,600])
             if not condition in self.params:
                 self.params[condition]={}
             self.params[condition]['a']=rt_fit.params[0]
@@ -458,7 +458,7 @@ class DCSComparisonReport:
         for condition, contrast in condition_contrast.iteritems():
             mean_perc_correct=np.mean(np.array(condition_perc_correct[condition]),axis=0)
             std_perc_correct=np.std(np.array(condition_perc_correct[condition]),axis=0)/len(self.subjects)
-            acc_fit=FitWeibull(contrast, mean_perc_correct, guess=[0.2, 0.5])
+            acc_fit=FitWeibull(contrast, mean_perc_correct, guess=[0.08, 1.3])
             if not condition in self.params:
                 self.params[condition]={}
             self.params[condition]['alpha']=acc_fit.params[0]
