@@ -352,6 +352,7 @@ class DCSComparisonReport:
         self.num_trials=num_trials
         self.reports_dir=reports_dir
         self.edesc=edesc
+        self.params={}
 
         self.subjects={}
 
@@ -385,7 +386,6 @@ class DCSComparisonReport:
         self.voxel_params=self.subjects[self.subjects.keys()[0]].voxel_params
         self.num_groups=self.subjects[self.subjects.keys()[0]].num_groups
         self.trial_duration=self.subjects[self.subjects.keys()[0]].trial_duration
-        self.background_freq=self.subjects[self.subjects.keys()[0]].background_freq
         self.stim_start_time=self.subjects[self.subjects.keys()[0]].stim_start_time
         self.stim_end_time=self.subjects[self.subjects.keys()[0]].stim_end_time
         self.network_group_size=self.subjects[self.subjects.keys()[0]].network_group_size
@@ -421,6 +421,11 @@ class DCSComparisonReport:
             mean_rt=np.mean(np.array(condition_rt[condition]),axis=0)
             std_rt=np.std(np.array(condition_rt[condition]),axis=0)/len(self.subjects)
             rt_fit = FitRT(np.array(contrast), mean_rt, guess=[1,1,1])
+            if not condition in self.params:
+                self.params[condition]={}
+            self.params[condition]['a']=rt_fit.params[0]
+            self.params[condition]['k']=rt_fit.params[1]
+            self.params[condition]['tr']=rt_fit.params[2]
             smoothInt = pylab.arange(0.01, max(contrast), 0.001)
             smoothResp = rt_fit.eval(smoothInt)
             plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[condition])
@@ -454,6 +459,10 @@ class DCSComparisonReport:
             mean_perc_correct=np.mean(np.array(condition_perc_correct[condition]),axis=0)
             std_perc_correct=np.std(np.array(condition_perc_correct[condition]),axis=0)/len(self.subjects)
             acc_fit=FitWeibull(contrast, mean_perc_correct, guess=[0.2, 0.5])
+            if not condition in self.params:
+                self.params[condition]={}
+            self.params[condition]['alpha']=acc_fit.params[0]
+            self.params[condition]['beta']=acc_fit.params[1]
             thresh = np.max([0,acc_fit.inverse(0.8)])
             smoothInt = pylab.arange(0.0, max(contrast), 0.001)
             smoothResp = acc_fit.eval(smoothInt)

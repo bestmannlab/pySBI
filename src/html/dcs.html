@@ -34,10 +34,6 @@
         <td>{{ rinfo.trial_duration }}</td>
     </tr>
     <tr>
-        <td>Background frequency</td>
-        <td>{{ rinfo.background_freq }} Hz</td>
-    </tr>
-    <tr>
         <td>Stimulation start time</td>
         <td>{{ rinfo.stim_start_time }}</td>
     </tr>
@@ -223,10 +219,55 @@
 <h3>Results</h3>
 <h4>% correct</h4>
 <img src="{{ rinfo.perc_correct_url }}"/>
+<table>
+    <tr>
+        <td>Parameter</td>
+        <td>Control</td>
+        <td>Anode</td>
+        <td>Cathode</td>
+    </tr>
+    <tr>
+        <td>alpha</td>
+        <td>{{ rinfo.params['control']['alpha'] }}</td>
+        <td>{{ rinfo.params['anode']['alpha'] }}</td>
+        <td>{{ rinfo.params['cathode']['alpha'] }}</td>
+    </tr>
+    <tr>
+        <td>beta</td>
+        <td>{{ rinfo.params['control']['beta'] }}</td>
+        <td>{{ rinfo.params['anode']['beta'] }}</td>
+        <td>{{ rinfo.params['cathode']['beta'] }}</td>
+    </tr>
+</table>
 
 <h4>Decision time</h4>
 <img src="{{ rinfo.rt_url }}"/>
-
+<table>
+    <tr>
+        <td>Parameter</td>
+        <td>Control</td>
+        <td>Anode</td>
+        <td>Cathode</td>
+    </tr>
+    <tr>
+        <td>a</td>
+        <td>{{ rinfo.params['control']['a'] }}</td>
+        <td>{{ rinfo.params['anode']['a'] }}</td>
+        <td>{{ rinfo.params['cathode']['a'] }}</td>
+    </tr>
+    <tr>
+        <td>k</td>
+        <td>{{ rinfo.params['control']['k'] }}</td>
+        <td>{{ rinfo.params['anode']['k'] }}</td>
+        <td>{{ rinfo.params['cathode']['k'] }}</td>
+    </tr>
+    <tr>
+        <td>tr</td>
+        <td>{{ rinfo.params['control']['tr'] }}</td>
+        <td>{{ rinfo.params['anode']['tr'] }}</td>
+        <td>{{ rinfo.params['cathode']['tr'] }}</td>
+    </tr>
+</table>
 
 <h3>Subjects</h3>
 <table id="subjects_table" class="tablesorter">
