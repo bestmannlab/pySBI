@@ -381,7 +381,12 @@ class DCSComparisonReport:
         if regenerate_plots:
             self.plot_rt(furl, condition_colors)
 
-        furl='img/rt_diff'
+        furl='img/rt_diff_bar'
+        self.rt_diff_bar_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt_diff_bar(furl, condition_colors)
+
+        furl='img/rt_bar'
         self.rt_diff_url='%s.png' % furl
         if regenerate_plots:
             self.plot_rt_diff(furl, condition_colors)
@@ -413,7 +418,7 @@ class DCSComparisonReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-    def plot_rt_diff(self, furl, colors):
+    def plot_rt_diff_bar(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
         fig=plt.figure()
         mean_anode_rt_diffs=[]
@@ -446,6 +451,43 @@ class DCSComparisonReport:
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
+
+    def plot_rt_diff(self, furl, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        fig=plt.figure()
+        anode_coherence_rt_diff={}
+        cathode_coherence_rt_diff={}
+        for subj_report in self.subjects.itervalues():
+            control_contrast,control_mean_rt,control_std_rt=subj_report.sessions['control'].series.get_contrast_rt_stats()
+            anode_contrast,anode_mean_rt,anode_std_rt=subj_report.sessions['anode'].series.get_contrast_rt_stats()
+            cathode_contrast,cathode_mean_rt,cathode_std_rt=subj_report.sessions['cathode'].series.get_contrast_rt_stats()
+            anode_rt_diffs=[]
+            cathode_rt_diffs=[]
+            for idx in range(len(control_contrast)):
+                if not control_contrast[idx] in anode_coherence_rt_diff:
+                    anode_coherence_rt_diff[control_contrast[idx]]=[]
+                    cathode_coherence_rt_diff[control_contrast[idx]]=[]
+                anode_coherence_rt_diff[control_contrast[idx]].append(anode_mean_rt[idx]-control_mean_rt[idx])
+                cathode_coherence_rt_diff[control_contrast[idx]].append(cathode_mean_rt[idx]-control_mean_rt[idx])
+        anode_rt_diff_mean=[]
+        cathode_rt_diff_mean=[]
+        anode_rt_diff_std=[]
+        cathode_rt_diff_std=[]
+        for idx in range(len(control_contrast)):
+            anode_rt_diff_mean.append(np.mean(anode_coherence_rt_diff[control_contrast[idx]]))
+            anode_rt_diff_std.append(np.std(anode_coherence_rt_diff[control_contrast[idx]]))
+            cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[control_contrast[idx]]))
+            cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]]))
+        plt.errorbar(control_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
+        plt.errorbar(control_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
+        plt.legend(loc='best')
+        plt.xscale('log')
+        plt.xlabel('Coherence')
+        plt.ylabel('RT Diff')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
             
     def plot_rt(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
