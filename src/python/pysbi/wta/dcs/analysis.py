@@ -440,12 +440,7 @@ class DCSComparisonReport:
         for bar in bars:
             bar.set_color('g')
         plt.legend(loc='best')
-        lower_lim=np.min([anode_rt_bins[0],cathode_rt_bins[0]])
-        upper_lim=np.max([anode_rt_bins[-1],cathode_rt_bins[-1]])
-        lims=[lower_lim,-lower_lim]
-        if np.abs(upper_lim)>np.abs(lower_lim):
-            lims=[-upper_lim,upper_lim]
-        plt.xlim(lims)
+        plt.xlim([-175,175])
         plt.xlabel('Mean RT Diff')
         plt.ylabel('Proportion of subjects')
         save_to_png(fig, '%s.png' % fname)
