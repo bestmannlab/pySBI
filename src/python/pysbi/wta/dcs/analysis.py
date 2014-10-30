@@ -429,18 +429,23 @@ class DCSComparisonReport:
                 cathode_rt_diffs.append(cathode_mean_rt[idx]-control_mean_rt[idx])
             mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
             mean_cathode_rt_diffs.append(np.mean(cathode_rt_diffs))
-        rt_hist,rt_bins=np.histogram(np.array(mean_anode_rt_diffs), bins=5)
-        bin_width=rt_bins[1]-rt_bins[0]
-        bars=plt.bar(rt_bins[:-1],rt_hist/float(len(mean_anode_rt_diffs)),width=bin_width, label='anode')
+        anode_rt_hist,anode_rt_bins=np.histogram(np.array(mean_anode_rt_diffs), bins=5)
+        bin_width=anode_rt_bins[1]-anode_rt_bins[0]
+        bars=plt.bar(anode_rt_bins[:-1],anode_rt_hist/float(len(mean_anode_rt_diffs)),width=bin_width, label='anode')
         for bar in bars:
             bar.set_color('r')
-        rt_hist,rt_bins=np.histogram(np.array(mean_cathode_rt_diffs), bins=5)
-        bin_width=rt_bins[1]-rt_bins[0]
-        bars=plt.bar(rt_bins[:-1],rt_hist/float(len(mean_cathode_rt_diffs)),width=bin_width, label='cathode')
+        cathode_rt_hist,cathode_rt_bins=np.histogram(np.array(mean_cathode_rt_diffs), bins=5)
+        bin_width=cathode_rt_bins[1]-cathode_rt_bins[0]
+        bars=plt.bar(cathode_rt_bins[:-1],cathode_rt_hist/float(len(mean_cathode_rt_diffs)),width=bin_width, label='cathode')
         for bar in bars:
             bar.set_color('g')
         plt.legend(loc='best')
-        plt.xlim([-40,40])
+        lower_lim=np.min([anode_rt_bins[0],cathode_rt_bins[0]])
+        upper_lim=np.max([anode_rt_bins[-1],cathode_rt_bins[-1]])
+        lims=[lower_lim,-lower_lim]
+        if np.abs(upper_lim)>np.abs(lower_lim):
+            lims=[-upper_lim,upper_lim]
+        plt.xlim(lims)
         plt.xlabel('Mean RT Diff')
         plt.ylabel('Proportion of subjects')
         save_to_png(fig, '%s.png' % fname)
