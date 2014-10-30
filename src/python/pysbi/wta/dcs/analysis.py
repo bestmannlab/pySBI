@@ -461,8 +461,6 @@ class DCSComparisonReport:
             control_contrast,control_mean_rt,control_std_rt=subj_report.sessions['control'].series.get_contrast_rt_stats()
             anode_contrast,anode_mean_rt,anode_std_rt=subj_report.sessions['anode'].series.get_contrast_rt_stats()
             cathode_contrast,cathode_mean_rt,cathode_std_rt=subj_report.sessions['cathode'].series.get_contrast_rt_stats()
-            anode_rt_diffs=[]
-            cathode_rt_diffs=[]
             for idx in range(len(control_contrast)):
                 if not control_contrast[idx] in anode_coherence_rt_diff:
                     anode_coherence_rt_diff[control_contrast[idx]]=[]
@@ -475,9 +473,9 @@ class DCSComparisonReport:
         cathode_rt_diff_std=[]
         for idx in range(len(control_contrast)):
             anode_rt_diff_mean.append(np.mean(anode_coherence_rt_diff[control_contrast[idx]]))
-            anode_rt_diff_std.append(np.std(anode_coherence_rt_diff[control_contrast[idx]]))
+            anode_rt_diff_std.append(np.std(anode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(anode_coherence_rt_diff[control_contrast[idx]])))
             cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[control_contrast[idx]]))
-            cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]]))
+            cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(cathode_coherence_rt_diff[control_contrast[idx]])))
         plt.errorbar(control_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
         plt.errorbar(control_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
         plt.legend(loc='best')
