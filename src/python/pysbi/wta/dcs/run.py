@@ -5,10 +5,25 @@ import subprocess
 from brian.units import second, siemens, amp
 from ezrcluster.launcher import Launcher
 import h5py
+from matplotlib.figure import Figure
+import pylab
 from pysbi.config import SRC_DIR
 from pysbi.wta.network import default_params
 from pysbi.wta.run import get_wta_cmds
 from pysbi.wta.analysis import FileInfo
+import matplotlib.pyplot as plt
+
+def plot_coherence_stim():
+    mu_0=40.0
+    p_a=mu_0/100.0
+    p_b=p_a
+    plt.figure()
+    plt.plot([0.0, 100.0], [mu_0 + p_a*0, mu_0+p_a*100.0], 'r', label='mu_a')
+    plt.plot([0.0, 100.0], [mu_0 - p_b*0, mu_0-p_b*100.0], 'b', label='mu_b')
+    plt.legend(loc=0)
+    plt.xlabel('Coherence')
+    plt.ylabel('Mean stimulus')
+
 
 def post_wta_dcs_jobs(nodes, p_e_e, p_e_i, p_i_i, p_i_e, background_freq, trials, start_nodes=True,
                       p_dcs=0*pA, i_dcs=0*pA):
