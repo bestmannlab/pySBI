@@ -386,7 +386,7 @@ class DCSComparisonReport:
         if regenerate_plots:
             self.plot_rt_diff_bar(furl, condition_colors)
 
-        furl='img/rt_bar'
+        furl='img/rt_diff'
         self.rt_diff_url='%s.png' % furl
         if regenerate_plots:
             self.plot_rt_diff(furl, condition_colors)
