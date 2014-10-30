@@ -152,12 +152,14 @@ class TrialReport:
 
 
 class SessionReport:
-    def __init__(self, subj_id, stim_condition, data_dir, file_prefix, num_trials, report_dir, edesc, version=None):
+    def __init__(self, subj_id, stim_condition, data_dir, file_prefix, num_trials, contrast_range, report_dir, edesc, 
+                 version=None):
         self.subj_id=subj_id
         self.stim_condition=stim_condition
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.num_trials=num_trials
+        self.contrast_range=contrast_range
         self.report_dir=report_dir
         self.edesc=edesc
         self.version=version
@@ -170,7 +172,7 @@ class SessionReport:
         make_report_dirs(self.report_dir)
     
         self.series=TrialSeries(self.data_dir, self.file_prefix, self.num_trials,
-            contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512), upper_resp_threshold=25,
+            contrast_range=self.contrast_range, upper_resp_threshold=25,
             lower_resp_threshold=None, dt=.5*ms)
         self.series.sort_by_correct()
 
@@ -227,12 +229,14 @@ class SessionReport:
 
 
 class SubjectReport:
-    def __init__(self, data_dir, file_prefix, subj_id, stim_levels, num_trials, report_dir, edesc, version=None):
+    def __init__(self, data_dir, file_prefix, subj_id, stim_levels, num_trials, contrast_range, report_dir, edesc, 
+                 version=None):
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.subj_id=subj_id
         self.stim_levels=stim_levels
         self.num_trials=num_trials
+        self.contrast_range=contrast_range
         self.report_dir=report_dir
         self.edesc=edesc
         self.version=version
@@ -251,7 +255,7 @@ class SubjectReport:
             prefix='%s.p_dcs.%.4f.i_dcs.%.4f.virtual_subject.%d.%s' % (self.file_prefix,p_dcs,i_dcs,self.subj_id,
                                                                        stim_level)
             self.sessions[stim_level]=SessionReport(self.subj_id, stim_level, self.data_dir,prefix, self.num_trials,
-                stim_report_dir, self.edesc, version=self.version)
+                self.contrast_range, stim_report_dir, self.edesc, version=self.version)
             self.sessions[stim_level].create_report(regenerate_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
 
@@ -350,6 +354,7 @@ class DCSComparisonReport:
         self.virtual_subj_ids=virtual_subj_ids
         self.stim_levels=stim_levels
         self.num_trials=num_trials
+        self.contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512)
         self.reports_dir=reports_dir
         self.edesc=edesc
         self.params={}
@@ -366,7 +371,8 @@ class DCSComparisonReport:
             print('Creating report for subject %d' % virtual_subj_id)
             subj_report_dir=os.path.join(self.reports_dir,'virtual_subject.%d' % virtual_subj_id)
             self.subjects[virtual_subj_id]=SubjectReport(self.data_dir, self.file_prefix, virtual_subj_id,
-                self.stim_levels, self.num_trials, subj_report_dir, self.edesc, version=self.version)
+                self.stim_levels, self.num_trials, self.contrast_range, subj_report_dir, self.edesc, 
+                version=self.version)
             self.subjects[virtual_subj_id].create_report(regenerate_plots=regenerate_subject_plots,
                 regenerate_session_plots=regenerate_session_plots, regenerate_trial_plots=regenerate_trial_plots)
 
@@ -374,6 +380,11 @@ class DCSComparisonReport:
         self.rt_url='%s.png' % furl
         if regenerate_plots:
             self.plot_rt(furl, condition_colors)
+
+        furl='img/rt_diff'
+        self.rt_diff_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt_diff(furl, condition_colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
@@ -402,6 +413,40 @@ class DCSComparisonReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
+    def plot_rt_diff(self, furl, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        fig=plt.figure()
+        mean_anode_rt_diffs=[]
+        mean_cathode_rt_diffs=[]
+        for subj_report in self.subjects.itervalues():
+            control_contrast,control_mean_rt,control_std_rt=subj_report.sessions['control'].series.get_contrast_rt_stats()
+            anode_contrast,anode_mean_rt,anode_std_rt=subj_report.sessions['anode'].series.get_contrast_rt_stats()
+            cathode_contrast,cathode_mean_rt,cathode_std_rt=subj_report.sessions['cathode'].series.get_contrast_rt_stats()
+            anode_rt_diffs=[]
+            cathode_rt_diffs=[]
+            for idx in range(len(control_contrast)):
+                anode_rt_diffs.append(anode_mean_rt[idx]-control_mean_rt[idx])
+                cathode_rt_diffs.append(cathode_mean_rt[idx]-control_mean_rt[idx])
+            mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
+            mean_cathode_rt_diffs.append(np.mean(cathode_rt_diffs))
+        rt_hist,rt_bins=np.histogram(np.array(mean_anode_rt_diffs), bins=5)
+        bin_width=rt_bins[1]-rt_bins[0]
+        bars=plt.bar(rt_bins[:-1],rt_hist/float(len(mean_anode_rt_diffs)),width=bin_width, label='anode')
+        for bar in bars:
+            bar.set_color('r')
+        rt_hist,rt_bins=np.histogram(np.array(mean_cathode_rt_diffs), bins=5)
+        bin_width=rt_bins[1]-rt_bins[0]
+        bars=plt.bar(rt_bins[:-1],rt_hist/float(len(mean_cathode_rt_diffs)),width=bin_width, label='cathode')
+        for bar in bars:
+            bar.set_color('g')
+        plt.legend(loc='best')
+        plt.xlim([-40,40])
+        plt.xlabel('Mean RT Diff')
+        plt.ylabel('Proportion of subjects')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+            
     def plot_rt(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
 
