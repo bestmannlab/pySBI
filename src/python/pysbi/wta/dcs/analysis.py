@@ -479,7 +479,7 @@ class DCSComparisonReport:
             cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[control_contrast[idx]]))
             cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(cathode_coherence_rt_diff[control_contrast[idx]])))
 
-        min_x=control_contrast[1:]
+        min_x=control_contrast[1]
         max_x=control_contrast[-1]
 
         clf = LinearRegression()
