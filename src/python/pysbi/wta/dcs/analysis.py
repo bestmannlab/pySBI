@@ -479,27 +479,26 @@ class DCSComparisonReport:
             cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[control_contrast[idx]]))
             cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(cathode_coherence_rt_diff[control_contrast[idx]])))
 
+        min_x=control_contrast[1:]
+        max_x=control_contrast[-1]
+
         clf = LinearRegression()
-        clf.fit(np.reshape(np.array(control_contrast), (len(control_contrast),1)),
-            np.reshape(np.array(anode_rt_diff_mean), (len(anode_rt_diff_mean),1)))
+        clf.fit(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+            np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
         anode_a = clf.coef_[0][0]
         anode_b = clf.intercept_[0]
-        anode_r_sqr=clf.score(np.reshape(np.array(control_contrast), (len(control_contrast),1)),
-            np.reshape(np.array(anode_rt_diff_mean), (len(anode_rt_diff_mean),1)))
-        min_x=np.min(control_contrast)
-        max_x=np.max(control_contrast)
+        anode_r_sqr=clf.score(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+            np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
         plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--r',
             label='r^2=%.3f' % anode_r_sqr)
         clf = LinearRegression()
-        clf.fit(np.reshape(np.array(control_contrast),(len(control_contrast),1)),
-            np.reshape(np.array(cathode_rt_diff_mean),(len(cathode_rt_diff_mean),1)))
+        clf.fit(np.reshape(np.array(control_contrast[1:]),(len(control_contrast[1:]),1)),
+            np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
         cathode_a = clf.coef_[0][0]
         cathode_b = clf.intercept_[0]
-        cathode_r_sqr=clf.score(np.reshape(np.array(control_contrast), (len(control_contrast),1)),
-            np.reshape(np.array(cathode_rt_diff_mean), (len(cathode_rt_diff_mean),1)))
-        min_x=np.min(control_contrast)
-        max_x=np.max(control_contrast)
-        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--r',
+        cathode_r_sqr=clf.score(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+            np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
+        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
             label='r^2=%.3f' % cathode_r_sqr)
 
         plt.errorbar(control_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
