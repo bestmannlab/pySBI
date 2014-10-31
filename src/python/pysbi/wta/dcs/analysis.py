@@ -482,6 +482,7 @@ class DCSComparisonReport:
         plt.xscale('log')
         plt.xlabel('Coherence')
         plt.ylabel('RT Diff')
+        plt.ylim([-200,200])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
