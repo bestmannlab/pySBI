@@ -155,13 +155,14 @@ class TrialReport:
 
 class SessionReport:
     def __init__(self, subj_id, stim_condition, data_dir, file_prefix, num_trials, contrast_range, report_dir, edesc, 
-                 version=None):
+                 version=None, dt=.5*ms):
         self.subj_id=subj_id
         self.stim_condition=stim_condition
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.num_trials=num_trials
         self.contrast_range=contrast_range
+        self.dt=dt
         self.report_dir=report_dir
         self.edesc=edesc
         self.version=version
@@ -173,13 +174,12 @@ class SessionReport:
         
         make_report_dirs(self.report_dir)
     
-        self.series=TrialSeries(self.data_dir, self.file_prefix, self.num_trials,
-            contrast_range=self.contrast_range, upper_resp_threshold=25,
-            lower_resp_threshold=None, dt=.5*ms)
+        self.series=TrialSeries(self.data_dir, self.file_prefix, self.num_trials, contrast_range=self.contrast_range,
+            upper_resp_threshold=25, lower_resp_threshold=None, dt=self.dt)
         self.series.sort_by_correct()
 
         for idx,trial_summary in enumerate(self.series.trial_summaries):
-            trial_report=TrialReport(idx+1,trial_summary, self.report_dir, self.edesc, dt=.5*ms, version=self.version)
+            trial_report=TrialReport(idx+1,trial_summary, self.report_dir, self.edesc, dt=self.dt, version=self.version)
             trial_report.create_report(regenerate_plots=regenerate_trial_plots)
             self.trial_reports.append(trial_report)
 
@@ -217,7 +217,14 @@ class SessionReport:
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
             self.series.plot_perc_correct(filename=fname)
-    
+
+        self.mean_rate_urls={}
+        for contrast in self.contrast_range:
+            furl='img/mean_firing_rate_%.4f' % contrast
+            self.mean_rate_urls[contrast]='%s.png' % furl
+            if regenerate_plots:
+                self.plot_mean_firing_rate(furl, contrast, self.dt)
+
         #create report
         template_file='dcs_session.html'
         env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -228,6 +235,64 @@ class SessionReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
     
+    def plot_mean_firing_rate(self, furl, coherence, dt):
+        fname=os.path.join(self.report_dir, furl)
+
+        #chosen_rate_sum=np.zeros(self.series.trial_summaries[0].data.e_firing_rates[0].shape)
+        chosen_rates=[]
+        #unchosen_rate_sum=np.zeros(chosen_rate_sum.shape)
+        unchosen_rates=[]
+        inh_rates=[]
+
+        for idx,trial_summary in enumerate(self.series.trial_summaries):
+            if trial_summary.contrast==coherence and trial_summary.decision_idx>-1:
+                chosen_rates.append(trial_summary.data.e_firing_rates[trial_summary.decision_idx])
+                unchosen_rates.append(trial_summary.data.e_firing_rates[1-trial_summary.decision_idx])
+                inh_rates.append(trial_summary.data.i_firing_rates[0])
+
+        chosen_rates=np.array(chosen_rates)
+        unchosen_rates=np.array(unchosen_rates)
+        inh_rates=np.array(inh_rates)
+
+        mean_chosen_rate=np.mean(chosen_rates,axis=0)
+        std_chosen_rate=np.std(chosen_rates,axis=0)/np.sqrt(chosen_rates.shape[0])
+        mean_unchosen_rate=np.mean(unchosen_rates,axis=0)
+        std_unchosen_rate=np.std(unchosen_rates,axis=0)/np.sqrt(unchosen_rates.shape[0])
+        mean_inh_rate=np.mean(inh_rates,axis=0)
+        std_inh_rate=np.std(inh_rates,axis=0)/np.sqrt(inh_rates.shape[0])
+
+        max_pop_rate=np.max([np.max(mean_chosen_rate), np.max(mean_unchosen_rate), np.max(mean_inh_rate)])
+
+        # Plot pyramidal neuron firing rate
+        fig=Figure()
+        ax=fig.add_subplot(2,1,1)
+        time_ticks=np.array(range(len(mean_chosen_rate)))*dt
+
+        baseline,=ax.plot(time_ticks, mean_chosen_rate, color='b', linestyle='-', label='chosen')
+        ax.fill_between(time_ticks, mean_chosen_rate-std_chosen_rate, mean_chosen_rate+std_chosen_rate, alpha=0.5,
+            facecolor=baseline.get_color())
+
+        baseline,=ax.plot(time_ticks, mean_unchosen_rate, color='r', linestyle='-', label='unchosen')
+        ax.fill_between(time_ticks, mean_unchosen_rate-std_unchosen_rate, mean_unchosen_rate+std_unchosen_rate, alpha=0.5,
+            facecolor=baseline.get_color())
+
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.legend(loc=0)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+
+        # Plot interneuron firing rate
+        ax = fig.add_subplot(2,1,2)
+        baseline,=ax.plot(time_ticks, mean_inh_rate, color='b', linestyle='-')
+        ax.fill_between(time_ticks, mean_inh_rate-std_inh_rate, mean_inh_rate+std_inh_rate, alpha=0.5,
+            facecolor=baseline.get_color())
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.set_title('Coherence=%.4f' % coherence)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
 
 class SubjectReport:
