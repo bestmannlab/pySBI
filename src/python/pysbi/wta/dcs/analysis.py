@@ -1,3 +1,4 @@
+from scipy.optimize import curve_fit
 import matplotlib
 from sklearn.linear_model import LinearRegression
 
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps, FitRT, FitWeibull
+from pysbi.util.utils import save_to_png, save_to_eps, FitRT, FitWeibull, exp_decay
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
 condition_colors={
@@ -98,9 +99,9 @@ class TrialReport:
                 save_to_eps(fig, '%s.eps' % fname)
                 plt.close(fig)
     
-            del self.trial_summary.data.e_firing_rates
-            del self.trial_summary.data.i_firing_rates
-    
+            #del self.trial_summary.data.e_firing_rates
+            #del self.trial_summary.data.i_firing_rates
+
         self.neural_state_url=None
         if self.trial_summary.data.neural_state_rec is not None:
             furl = 'img/neural_state.contrast.%0.4f.trial.%d' % (self.trial_summary.contrast,
@@ -234,13 +235,9 @@ class SessionReport:
         fname=os.path.join(self.report_dir,output_file)
         stream=template.stream(rinfo=self)
         stream.dump(fname)
-    
-    def plot_mean_firing_rate(self, furl, coherence, dt):
-        fname=os.path.join(self.report_dir, furl)
 
-        #chosen_rate_sum=np.zeros(self.series.trial_summaries[0].data.e_firing_rates[0].shape)
+    def get_trial_firing_rates(self, coherence):
         chosen_rates=[]
-        #unchosen_rate_sum=np.zeros(chosen_rate_sum.shape)
         unchosen_rates=[]
         inh_rates=[]
 
@@ -253,6 +250,13 @@ class SessionReport:
         chosen_rates=np.array(chosen_rates)
         unchosen_rates=np.array(unchosen_rates)
         inh_rates=np.array(inh_rates)
+
+        return chosen_rates, unchosen_rates, inh_rates
+
+    def plot_mean_firing_rate(self, furl, coherence, dt):
+        fname=os.path.join(self.report_dir, furl)
+
+        chosen_rates,unchosen_rates,inh_rates=self.get_trial_firing_rates(coherence)
 
         mean_chosen_rate=np.mean(chosen_rates,axis=0)
         std_chosen_rate=np.std(chosen_rates,axis=0)/np.sqrt(chosen_rates.shape[0])
@@ -278,6 +282,7 @@ class SessionReport:
 
         ax.set_ylim([0,10+max_pop_rate])
         ax.legend(loc=0)
+        ax.set_title('Coherence=%.4f' % coherence)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Firing Rate (Hz)')
 
@@ -289,7 +294,6 @@ class SessionReport:
         ax.set_ylim([0,10+max_pop_rate])
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Firing Rate (Hz)')
-        ax.set_title('Coherence=%.4f' % coherence)
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -297,13 +301,14 @@ class SessionReport:
 
 class SubjectReport:
     def __init__(self, data_dir, file_prefix, subj_id, stim_levels, num_trials, contrast_range, report_dir, edesc, 
-                 version=None):
+                 version=None, dt=.5*ms):
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.subj_id=subj_id
         self.stim_levels=stim_levels
         self.num_trials=num_trials
         self.contrast_range=contrast_range
+        self.dt=dt
         self.report_dir=report_dir
         self.edesc=edesc
         self.version=version
@@ -322,7 +327,7 @@ class SubjectReport:
             prefix='%s.p_dcs.%.4f.i_dcs.%.4f.virtual_subject.%d.%s' % (self.file_prefix,p_dcs,i_dcs,self.subj_id,
                                                                        stim_level)
             self.sessions[stim_level]=SessionReport(self.subj_id, stim_level, self.data_dir,prefix, self.num_trials,
-                self.contrast_range, stim_report_dir, self.edesc, version=self.version)
+                self.contrast_range, stim_report_dir, self.edesc, version=self.version, dt=self.dt)
             self.sessions[stim_level].create_report(regenerate_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
 
@@ -348,6 +353,43 @@ class SubjectReport:
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
             self.plot_perc_correct(furl, condition_colors)
+
+        self.mean_rate_urls={}
+        for contrast in self.contrast_range:
+            furl='img/mean_firing_rate_%.4f' % contrast
+            self.mean_rate_urls[contrast]='%s.png' % furl
+            if regenerate_plots:
+                self.plot_mean_firing_rate(furl, contrast, self.dt, condition_colors)
+
+        furl='img/coherence_prestim_bias'
+        self.coherence_prestim_bias_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_coherence_prestim_bias(furl, self.dt, condition_colors)
+
+        furl='img/bias_input_ratio_rt'
+        self.bias_input_ratio_rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_input_diff_rt(furl, self.dt, condition_colors)
+
+        furl='img/bias_input_ratio_perc_correct'
+        self.bias_input_ratio_perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_input_diff_perc_correct(furl, self.dt, condition_colors)
+
+        furl='img/bias_rt'
+        self.bias_rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_rt(furl, self.dt, condition_colors)
+
+        furl='img/bias_perc_correct'
+        self.bias_perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_perc_correct(furl, self.dt, condition_colors)
+
+        furl='img/bias_perc_left'
+        self.bias_perc_left_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_perc_left(furl, self.dt, condition_colors)
 
         #create report
         template_file='dcs_subject.html'
@@ -404,8 +446,308 @@ class SubjectReport:
         plt.close(fig)
 
 
+    def get_mean_firing_rates(self, stim_level, coherence):
+        chosen_rates,unchosen_rates,inh_rates=self.sessions[stim_level].get_trial_firing_rates(coherence)
+        mean_chosen_rate=np.mean(chosen_rates,axis=0)
+        mean_unchosen_rate=np.mean(unchosen_rates,axis=0)
+        mean_inh_rate=np.mean(inh_rates,axis=0)
+        return mean_chosen_rate,mean_unchosen_rate,mean_inh_rate
+
+    def get_mean_prestim_bias(self, stim_level, coherence, dt):
+        chosen_rates,unchosen_rates,inh_rates=self.sessions[stim_level].get_trial_firing_rates(coherence)
+        biases=[]
+        for trial in range(chosen_rates.shape[0]):
+            biases.append(np.mean(chosen_rates[trial,int(500*ms/dt):int(950*ms/dt)])-np.mean(unchosen_rates[trial,int(500*ms/dt):int(950*ms/dt)]))
+        return np.mean(biases)
+
+    def plot_coherence_prestim_bias(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        mean_prestim_bias={}
+        std_prestim_bias={}
+        for stim_level, session_report in self.sessions.iteritems():
+            mean_prestim_bias[stim_level]=[]
+            std_prestim_bias[stim_level]=[]
+            for coherence in self.contrast_range:
+                chosen_rates,unchosen_rates,inh_rates=self.sessions[stim_level].get_trial_firing_rates(coherence)
+                biases=[]
+                for trial in range(chosen_rates.shape[0]):
+                    biases.append(np.mean(chosen_rates[trial,int(500*ms/dt):int(950*ms/dt)])-np.mean(unchosen_rates[trial,int(500*ms/dt):int(950*ms/dt)]))
+                mean_prestim_bias[stim_level].append(np.mean(biases))
+                std_prestim_bias[stim_level].append(np.std(biases)/np.sqrt(len(biases)))
+        fig=plt.figure()
+        for stim_level in self.sessions:
+            plt.errorbar(self.contrast_range, mean_prestim_bias[stim_level], yerr=std_prestim_bias[stim_level], fmt='o%s' % colors[stim_level])
+            popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
+            y_hat=exp_decay(np.array(self.contrast_range),*popt)
+            ybar=np.sum(np.array(mean_prestim_bias[stim_level]))/len(np.array(mean_prestim_bias[stim_level]))
+            ssres=np.sum((np.array(mean_prestim_bias[stim_level])-y_hat)**2.0)
+            sstot=np.sum((np.array(mean_prestim_bias[stim_level])-ybar)**2.0)
+            r_sqr=1.0-ssres/sstot
+            min_x=np.min(self.contrast_range)-.01
+            max_x=np.max(self.contrast_range)+.01
+            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+            plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+        plt.legend(loc='best')
+        plt.xlabel('Coherence')
+        plt.ylabel('Pyr Rate Diff (Hz)')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_rt(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        all_biases=[]
+        biases={}
+        rts={}
+        for stim_level, session_report in self.sessions.iteritems():
+            biases[stim_level]=[]
+            rts[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                        np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                    biases[stim_level].append(prestim_bias)
+                    rts[stim_level].append(trial_summary.data.rt)
+                    all_biases.append(prestim_bias)
+
+        hist,bins=np.histogram(all_biases, bins=10)
+
+        fig=plt.figure()
+        for stim_level in self.sessions:
+            mean_biases=[]
+            mean_rts=[]
+            for i in range(10):
+                 bin_rts=[]
+                 for bias,rt in zip(biases[stim_level],rts[stim_level]):
+                     if bias>=bins[i] and bias<bins[i+1]:
+                         bin_rts.append(rt)
+                 mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                 mean_rts.append(np.mean(bin_rts))
+            plt.plot(mean_biases,mean_rts,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('RT')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_perc_correct(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        all_biases=[]
+        biases={}
+        responses={}
+        for stim_level, session_report in self.sessions.iteritems():
+            biases[stim_level]=[]
+            responses[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                        np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                    biases[stim_level].append(prestim_bias)
+                    if trial_summary.correct:
+                        responses[stim_level].append(1.0)
+                    else:
+                        responses[stim_level].append(0.0)
+                    all_biases.append(prestim_bias)
+
+        hist,bins=np.histogram(all_biases, bins=10)
+
+        fig=plt.figure()
+        for stim_level in self.sessions:
+            mean_bias=[]
+            mean_perc_correct=[]
+            for i in range(10):
+                bin_responses=[]
+                for bias,response in zip(biases[stim_level],responses[stim_level]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_responses.append(response)
+                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_perc_correct.append(np.mean(bin_responses))
+            plt.plot(mean_bias,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('% correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_perc_left(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        all_biases=[]
+        biases={}
+        responses={}
+        for stim_level, session_report in self.sessions.iteritems():
+            biases[stim_level]=[]
+            responses[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-\
+                                 np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                    biases[stim_level].append(prestim_bias)
+                    if trial_summary.decision_idx==0:
+                        responses[stim_level].append(1.0)
+                    else:
+                        responses[stim_level].append(0.0)
+                    all_biases.append(prestim_bias)
+
+        hist,bins=np.histogram(all_biases, bins=10)
+
+        fig=plt.figure()
+        for stim_level in biases:
+            mean_bias=[]
+            mean_perc_left=[]
+            for i in range(10):
+                bin_responses=[]
+                for bias,response in zip(biases[stim_level],responses[stim_level]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_responses.append(response)
+                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_perc_left.append(np.mean(bin_responses))
+            plt.plot(mean_bias,mean_perc_left,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('% left')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_input_diff_rt(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        all_ratios=[]
+        ratios={}
+        rts={}
+        for stim_level, session_report in self.sessions.iteritems():
+            ratios[stim_level]=[]
+            rts[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                        np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                    input_diff=np.abs(trial_summary.data.input_freq[1] - trial_summary.data.input_freq[0])
+                    if input_diff>0:
+                        ratios[stim_level].append(prestim_bias/input_diff)
+                        rts[stim_level].append(trial_summary.data.rt)
+                        all_ratios.append(prestim_bias/input_diff)
+
+        hist,bins=np.histogram(all_ratios, bins=10)
+
+        fig=plt.figure()
+        for stim_level in self.sessions:
+            mean_ratios=[]
+            mean_rts=[]
+            for i in range(10):
+                bin_rts=[]
+                for ratio,rt in zip(ratios[stim_level],rts[stim_level]):
+                    if ratio>=bins[i] and ratio<bins[i+1]:
+                        bin_rts.append(rt)
+                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_rts.append(np.mean(bin_rts))
+            plt.plot(mean_ratios,mean_rts,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias/Input Diff')
+        plt.ylabel('RT')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_input_diff_perc_correct(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        all_ratios=[]
+        ratios={}
+        responses={}
+        for stim_level, session_report in self.sessions.iteritems():
+            ratios[stim_level]=[]
+            responses[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                        np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                    input_diff=np.abs(trial_summary.data.input_freq[1] - trial_summary.data.input_freq[0])
+                    if input_diff>0:
+                        ratios[stim_level].append(prestim_bias/input_diff)
+                        if trial_summary.correct:
+                            responses[stim_level].append(1.0)
+                        else:
+                            responses[stim_level].append(0.0)
+                        all_ratios.append(prestim_bias/input_diff)
+
+        hist,bins=np.histogram(all_ratios, bins=10)
+
+        fig=plt.figure()
+        for stim_level in self.sessions:
+            mean_ratios=[]
+            mean_perc_correct=[]
+            for i in range(10):
+                bin_responses=[]
+                for ratio,response in zip(ratios[stim_level],responses[stim_level]):
+                    if ratio>=bins[i] and ratio<bins[i+1]:
+                        bin_responses.append(response)
+                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_perc_correct.append(np.mean(bin_responses))
+            plt.plot(mean_ratios,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias/Input Diff')
+        plt.ylabel('% correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_mean_firing_rate(self, furl, coherence, dt,  colors):
+        fname=os.path.join(self.report_dir, furl)
+        chosen_rates={}
+        unchosen_rates={}
+        inh_rates={}
+        max_pop_rate=0
+        for stim_level, session_report in self.sessions.iteritems():
+            chosen_rates[stim_level],unchosen_rates[stim_level],inh_rates[stim_level]=session_report.get_trial_firing_rates(coherence)
+            max_pop_rate=np.max([np.max(np.mean(chosen_rates[stim_level],axis=0)),
+                                 np.max(np.mean(unchosen_rates[stim_level],axis=0)),
+                                 np.max(np.mean(inh_rates[stim_level],axis=0)),max_pop_rate])
+
+
+        fig=Figure()
+        ax=fig.add_subplot(2,1,1)
+        for stim_level in self.sessions:
+            mean_chosen_rate=np.mean(chosen_rates[stim_level],axis=0)
+            std_chosen_rate=np.std(chosen_rates[stim_level],axis=0)/np.sqrt(chosen_rates[stim_level].shape[0])
+            mean_unchosen_rate=np.mean(unchosen_rates[stim_level],axis=0)
+            std_unchosen_rate=np.std(unchosen_rates[stim_level],axis=0)/np.sqrt(unchosen_rates[stim_level].shape[0])
+
+            time_ticks=np.array(range(len(mean_chosen_rate)))*dt
+
+            baseline,=ax.plot(time_ticks, mean_chosen_rate, color=colors[stim_level], linestyle='-', label='%s - chosen' % stim_level)
+            ax.fill_between(time_ticks, mean_chosen_rate-std_chosen_rate, mean_chosen_rate+std_chosen_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+
+            baseline,=ax.plot(time_ticks, mean_unchosen_rate, color=colors[stim_level], linestyle='--', label='%s - unchosen' % stim_level)
+            ax.fill_between(time_ticks, mean_unchosen_rate-std_unchosen_rate, mean_unchosen_rate+std_unchosen_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.legend(loc=0)
+        ax.set_title('Coherence=%.4f' % coherence)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+
+        ax = fig.add_subplot(2,1,2)
+        for stim_level in self.sessions:
+            mean_inh_rate=np.mean(inh_rates[stim_level],axis=0)
+            std_inh_rate=np.std(inh_rates[stim_level],axis=0)/np.sqrt(inh_rates[stim_level].shape[0])
+
+            time_ticks=np.array(range(len(mean_inh_rate)))*dt
+
+            baseline,=ax.plot(time_ticks, mean_inh_rate, color=colors[stim_level], linestyle='-', label=stim_level)
+            ax.fill_between(time_ticks, mean_inh_rate-std_inh_rate, mean_inh_rate+std_inh_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+
 class DCSComparisonReport:
-    def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc):
+    def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc, dt=.5*ms):
         """
         Create report for DCS simulations
         data_dir=directory where datafiles are stored
@@ -422,6 +764,7 @@ class DCSComparisonReport:
         self.stim_levels=stim_levels
         self.num_trials=num_trials
         self.contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512)
+        self.dt=dt
         self.reports_dir=reports_dir
         self.edesc=edesc
         self.params={}
@@ -439,7 +782,7 @@ class DCSComparisonReport:
             subj_report_dir=os.path.join(self.reports_dir,'virtual_subject.%d' % virtual_subj_id)
             self.subjects[virtual_subj_id]=SubjectReport(self.data_dir, self.file_prefix, virtual_subj_id,
                 self.stim_levels, self.num_trials, self.contrast_range, subj_report_dir, self.edesc, 
-                version=self.version)
+                version=self.version, dt=self.dt)
             self.subjects[virtual_subj_id].create_report(regenerate_plots=regenerate_subject_plots,
                 regenerate_session_plots=regenerate_session_plots, regenerate_trial_plots=regenerate_trial_plots)
 
@@ -462,6 +805,43 @@ class DCSComparisonReport:
         self.perc_correct_url='%s.png' % furl
         if regenerate_plots:
             self.plot_perc_correct(furl, condition_colors)
+
+        self.mean_rate_urls={}
+        for contrast in self.contrast_range:
+            furl='img/mean_firing_rate_%.4f' % contrast
+            self.mean_rate_urls[contrast]='%s.png' % furl
+            if regenerate_plots:
+                self.plot_mean_firing_rate(furl, contrast, self.dt, condition_colors)
+
+        furl='img/coherence_prestim_bias'
+        self.coherence_prestim_bias_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_coherence_prestim_bias(furl, self.dt, condition_colors)
+
+        furl='img/bias_input_ratio_rt'
+        self.bias_input_ratio_rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_input_diff_rt(furl, self.dt, condition_colors)
+
+        furl='img/bias_input_ratio_perc_correct'
+        self.bias_input_ratio_perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_input_diff_perc_correct(furl, self.dt, condition_colors)
+
+        furl='img/bias_rt'
+        self.bias_rt_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_rt(furl, self.dt, condition_colors)
+
+        furl='img/bias_perc_correct'
+        self.bias_perc_correct_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_perc_correct(furl, self.dt, condition_colors)
+
+        furl='img/bias_perc_left'
+        self.bias_perc_left_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_perc_left(furl, self.dt, condition_colors)
 
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
@@ -572,7 +952,7 @@ class DCSComparisonReport:
         plt.xscale('log')
         plt.xlabel('Coherence')
         plt.ylabel('RT Diff')
-        plt.ylim([-200,200])
+        plt.ylim([-75,75])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -655,6 +1035,330 @@ class DCSComparisonReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+    def plot_mean_firing_rate(self, furl, coherence, dt,  colors):
+        fname=os.path.join(self.reports_dir, furl)
+        chosen_rates={}
+        unchosen_rates={}
+        inh_rates={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in chosen_rates:
+                    chosen_rates[stim_level]=[]
+                    unchosen_rates[stim_level]=[]
+                    inh_rates[stim_level]=[]
+                chosen_mean_rate,unchosen_mean_rate,inh_mean_rate=subj_report.get_mean_firing_rates(stim_level,coherence)
+                chosen_rates[stim_level].append(chosen_mean_rate)
+                unchosen_rates[stim_level].append(unchosen_mean_rate)
+                inh_rates[stim_level].append(inh_mean_rate)
+
+        max_pop_rate=0
+        for stim_level in chosen_rates:
+            chosen_rates[stim_level]=np.array(chosen_rates[stim_level])
+            unchosen_rates[stim_level]=np.array(unchosen_rates[stim_level])
+            inh_rates[stim_level]=np.array(inh_rates[stim_level])
+            max_pop_rate=np.max([np.max(np.mean(chosen_rates[stim_level],axis=0)),
+                                 np.max(np.mean(unchosen_rates[stim_level],axis=0)),
+                                 np.max(np.mean(inh_rates[stim_level],axis=0)),max_pop_rate])
+
+        fig=Figure()
+        ax=fig.add_subplot(2,1,1)
+        for stim_level in chosen_rates:
+            mean_chosen_rate=np.mean(chosen_rates[stim_level],axis=0)
+            std_chosen_rate=np.std(chosen_rates[stim_level],axis=0)/np.sqrt(chosen_rates[stim_level].shape[0])
+            mean_unchosen_rate=np.mean(unchosen_rates[stim_level],axis=0)
+            std_unchosen_rate=np.std(unchosen_rates[stim_level],axis=0)/np.sqrt(unchosen_rates[stim_level].shape[0])
+
+            time_ticks=np.array(range(len(mean_chosen_rate)))*dt
+
+            baseline,=ax.plot(time_ticks, mean_chosen_rate, color=colors[stim_level], linestyle='-', label='%s - chosen' % stim_level)
+            ax.fill_between(time_ticks, mean_chosen_rate-std_chosen_rate, mean_chosen_rate+std_chosen_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+
+            baseline,=ax.plot(time_ticks, mean_unchosen_rate, color=colors[stim_level], linestyle='--', label='%s - unchosen' % stim_level)
+            ax.fill_between(time_ticks, mean_unchosen_rate-std_unchosen_rate, mean_unchosen_rate+std_unchosen_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.legend(loc=0)
+        ax.set_title('Coherence=%.4f' % coherence)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+
+        ax = fig.add_subplot(2,1,2)
+        for stim_level in inh_rates:
+            mean_inh_rate=np.mean(inh_rates[stim_level],axis=0)
+            std_inh_rate=np.std(inh_rates[stim_level],axis=0)/np.sqrt(inh_rates[stim_level].shape[0])
+
+            time_ticks=np.array(range(len(mean_inh_rate)))*dt
+
+            baseline,=ax.plot(time_ticks, mean_inh_rate, color=colors[stim_level], linestyle='-', label=stim_level)
+            ax.fill_between(time_ticks, mean_inh_rate-std_inh_rate, mean_inh_rate+std_inh_rate, alpha=0.5,
+                facecolor=baseline.get_color())
+        ax.set_ylim([0,10+max_pop_rate])
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_coherence_prestim_bias(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        mean_prestim_bias={}
+        std_prestim_bias={}
+        for contrast in self.contrast_range:
+            contrast_biases={}
+            for subj_report in self.subjects.itervalues():
+                for stim_level, session_report in subj_report.sessions.iteritems():
+                    if not stim_level in contrast_biases:
+                        contrast_biases[stim_level]=[]
+                    contrast_biases[stim_level].append(subj_report.get_mean_prestim_bias(stim_level, contrast, dt))
+            for stim_level in contrast_biases:
+                if not stim_level in mean_prestim_bias:
+                    mean_prestim_bias[stim_level]=[]
+                    std_prestim_bias[stim_level]=[]
+                mean_prestim_bias[stim_level].append(np.mean(contrast_biases[stim_level]))
+                std_prestim_bias[stim_level].append(np.std(contrast_biases[stim_level])/np.sqrt(len(contrast_biases[stim_level])))
+
+        fig=plt.figure()
+        for stim_level in mean_prestim_bias:
+            plt.errorbar(self.contrast_range, mean_prestim_bias[stim_level], yerr=std_prestim_bias[stim_level], fmt='o%s' % colors[stim_level])
+            popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
+            y_hat=exp_decay(np.array(self.contrast_range),*popt)
+            ybar=np.sum(np.array(mean_prestim_bias[stim_level]))/len(np.array(mean_prestim_bias[stim_level]))
+            ssres=np.sum((np.array(mean_prestim_bias[stim_level])-y_hat)**2.0)
+            sstot=np.sum((np.array(mean_prestim_bias[stim_level])-ybar)**2.0)
+            r_sqr=1.0-ssres/sstot
+            min_x=np.min(self.contrast_range)-.01
+            max_x=np.max(self.contrast_range)+.01
+            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+            plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+
+        plt.legend(loc='best')
+        plt.xlabel('Coherence')
+        plt.ylabel('Pyr Rate Diff (Hz)')
+        plt.xlim([-.01,0.6])
+        plt.ylim([-.25,1.75])
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_input_diff_rt(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        ratios={}
+        rts={}
+        all_ratios=[]
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                ratios[stim_level]=[]
+                rts[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                            np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                        input_diff=np.abs(trial_summary.data.input_freq[1] - trial_summary.data.input_freq[0])
+                        if input_diff>0:
+                            ratios[stim_level].append(prestim_bias/input_diff)
+                            rts[stim_level].append(trial_summary.data.rt)
+                            all_ratios.append(prestim_bias/input_diff)
+        fig=plt.figure()
+        hist,bins=np.histogram(all_ratios, bins=10)
+
+        fig=plt.figure()
+        for stim_level in ratios:
+            mean_ratios=[]
+            mean_rts=[]
+            for i in range(10):
+                bin_rts=[]
+                for ratio,rt in zip(ratios[stim_level],rts[stim_level]):
+                    if ratio>=bins[i] and ratio<bins[i+1]:
+                        bin_rts.append(rt)
+                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_rts.append(np.mean(bin_rts))
+            plt.plot(mean_ratios,mean_rts,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias/Input Diff')
+        plt.ylabel('RT')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_input_diff_perc_correct(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        all_ratios=[]
+        ratios={}
+        responses={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                ratios[stim_level]=[]
+                responses[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                            np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                        input_diff=np.abs(trial_summary.data.input_freq[1] - trial_summary.data.input_freq[0])
+                        if input_diff>0:
+                            ratios[stim_level].append(prestim_bias/input_diff)
+                            if trial_summary.correct:
+                                responses[stim_level].append(1.0)
+                            else:
+                                responses[stim_level].append(0.0)
+                            all_ratios.append(prestim_bias/input_diff)
+
+        hist,bins=np.histogram(all_ratios, bins=10)
+
+        fig=plt.figure()
+        for stim_level in ratios:
+            mean_ratios=[]
+            mean_perc_correct=[]
+            for i in range(10):
+                bin_responses=[]
+                for ratio,response in zip(ratios[stim_level],responses[stim_level]):
+                    if ratio>=bins[i] and ratio<bins[i+1]:
+                        bin_responses.append(response)
+                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_perc_correct.append(np.mean(bin_responses))
+            plt.plot(mean_ratios,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias/Input Diff')
+        plt.ylabel('% correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_rt(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        biases=[]
+        rts=[]
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                            np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                        biases.append(prestim_bias)
+                        rts.append(trial_summary.data.rt)
+
+        hist,bins=np.histogram(biases, bins=20)
+
+        fig=plt.figure()
+        mean_biases=[]
+        mean_rts=[]
+        for i in range(20):
+             bin_rts=[]
+             for bias,rt in zip(biases,rts):
+                 if bias>=bins[i] and bias<bins[i+1]:
+                     bin_rts.append(rt)
+             mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
+             mean_rts.append(np.mean(bin_rts))
+
+        plt.plot(mean_biases,mean_rts,'ob')
+
+        clf = LinearRegression()
+        clf.fit(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
+            np.reshape(np.array(mean_rts), (len(mean_rts),1)))
+        a = clf.coef_[0][0]
+        b = clf.intercept_[0]
+        r_sqr=clf.score(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
+            np.reshape(np.array(mean_rts), (len(mean_rts),1)))
+        min_x=mean_biases[0]-0.1
+        max_x=mean_biases[-1]+0.1
+        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--b', label='r^2=%.3f' % r_sqr)
+
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('RT')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_perc_correct(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        all_biases=[]
+        biases={}
+        responses={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                biases[stim_level]=[]
+                responses[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                            np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                        biases[stim_level].append(prestim_bias)
+                        if trial_summary.correct:
+                            responses[stim_level].append(1.0)
+                        else:
+                            responses[stim_level].append(0.0)
+                        all_biases.append(prestim_bias)
+
+        hist,bins=np.histogram(all_biases, bins=10)
+
+        fig=plt.figure()
+        for stim_level in biases:
+            mean_bias=[]
+            mean_perc_correct=[]
+            for i in range(10):
+                bin_responses=[]
+                for bias,response in zip(biases[stim_level],responses[stim_level]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_responses.append(response)
+                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
+                mean_perc_correct.append(np.mean(bin_responses))
+            plt.plot(mean_bias,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('% correct')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_perc_left(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        biases=[]
+        responses=[]
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-\
+                                     np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        biases.append(prestim_bias)
+                        if trial_summary.decision_idx==0:
+                            responses.append(1.0)
+                        else:
+                            responses.append(0.0)
+
+        hist,bins=np.histogram(biases, bins=20)
+
+        fig=plt.figure()
+        mean_biases=[]
+        mean_perc_left=[]
+        for i in range(20):
+            bin_responses=[]
+            for bias,response in zip(biases,responses):
+                if bias>=bins[i] and bias<bins[i+1]:
+                    bin_responses.append(response)
+            mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
+            mean_perc_left.append(np.mean(bin_responses))
+        plt.plot(mean_biases,mean_perc_left,'ob')
+
+        clf = LinearRegression()
+        clf.fit(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
+            np.reshape(np.array(mean_perc_left), (len(mean_perc_left),1)))
+        a = clf.coef_[0][0]
+        b = clf.intercept_[0]
+        r_sqr=clf.score(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
+            np.reshape(np.array(mean_perc_left), (len(mean_perc_left),1)))
+        min_x=mean_biases[0]-0.1
+        max_x=mean_biases[-1]+0.1
+        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--b', label='r^2=%.3f' % r_sqr)
+
+
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('% left')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
 if __name__=='__main__':
     dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_half_dcs',

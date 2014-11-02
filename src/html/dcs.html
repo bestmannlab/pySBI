@@ -270,8 +270,31 @@
 </table>
 
 <img src="{{ rinfo.rt_diff_url }}"/>
-
+<br>
 <img src="{{ rinfo.rt_diff_bar_url }}"/>
+
+<h4>Mean firing rates</h4>
+{% for contrast in rinfo.contrast_range %}
+<img src="{{ rinfo.mean_rate_urls[contrast] }}"/><br>
+{% endfor %}
+
+<h4>Coherence - Prestim Bias</h4>
+<img src="{{ rinfo.coherence_prestim_bias_url }}"/>
+
+<h4>Prestim bias / Input Diff - RT</h4>
+<img src="{{ rinfo.bias_input_ratio_rt_url }}"/>
+
+<h4>Prestim bias / Input Diff - % Correct</h4>
+<img src="{{ rinfo.bias_input_ratio_perc_correct_url }}"/>
+
+<h4>Prestim bias - RT</h4>
+<img src="{{ rinfo.bias_rt_url }}"/>
+
+<h4>Prestim bias - % Correct</h4>
+<img src="{{ rinfo.bias_perc_correct_url }}"/>
+
+<h4>Prestim bias - % Left</h4>
+<img src="{{ rinfo.bias_perc_left_url }}"/>
 
 <h3>Subjects</h3>
 <table id="subjects_table" class="tablesorter">

@@ -249,6 +249,7 @@ Overall AUC={{ rinfo.series.total_auc|round(3) }}
 <h4>Decision time</h4>
 <img src="{{ rinfo.rt_url }}"/>
 
+<h4>Mean firing rates</h4>
 {% for contrast in rinfo.contrast_range %}
 <img src="{{ rinfo.mean_rate_urls[contrast] }}"/><br>
 {% endfor %}
