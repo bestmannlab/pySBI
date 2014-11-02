@@ -843,6 +843,11 @@ class DCSComparisonReport:
         if regenerate_plots:
             self.plot_bias_perc_left(furl, self.dt, condition_colors)
 
+        furl='img/bias_bar'
+        self.bias_bar_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_bar(furl, self.dt, condition_colors)
+
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
         self.inh_params=self.subjects[self.subjects.keys()[0]].inh_params
@@ -1356,6 +1361,36 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('% left')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_bias_bar(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        biases={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                subj_stim_biases=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                            np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                        subj_stim_biases.append(prestim_bias)
+                if not stim_level in biases:
+                    biases[stim_level]=[]
+                biases[stim_level].append(np.mean(subj_stim_biases))
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        conditions=['control','anode','cathode']
+        pos = np.arange(len(conditions))+0.5    # Center bars on the Y-axis ticks
+        for idx in range(len(conditions)):
+            bar=ax.bar(pos[idx],np.mean(biases[conditions[idx]]), width=.5,
+                yerr=np.std(biases[conditions[idx]])/np.sqrt(len(biases[conditions[idx]])), align='center',ecolor='k')
+            bar[0].set_color(colors[conditions[idx]])
+        ax.set_xticks(pos)
+        ax.set_xticklabels(conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Prestimulus Bias (Hz)')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
