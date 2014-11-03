@@ -992,7 +992,7 @@ class DCSComparisonReport:
             plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[condition])
             plt.plot(smoothInt, smoothResp, colors[condition], label=condition)
 
-        plt.ylim([160,720])
+        plt.ylim([165,720])
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (ms)')
         plt.xscale('log')
