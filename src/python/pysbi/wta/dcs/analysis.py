@@ -1278,6 +1278,7 @@ class DCSComparisonReport:
         mean_rts=[]
         mean_condition_biases={}
         mean_condition_rts={}
+        std_condition_rts={}
         for i in range(20):
             bin_rts=[]
             bin_biases=[]
@@ -1292,6 +1293,7 @@ class DCSComparisonReport:
                 if not condition in mean_condition_biases:
                     mean_condition_biases[condition]=[]
                     mean_condition_rts[condition]=[]
+                    std_condition_rts[condition]=[]
                 bin_rts=[]
                 bin_biases=[]
                 for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
@@ -1301,9 +1303,11 @@ class DCSComparisonReport:
                 if len(bin_biases):
                     mean_condition_biases[condition].append(np.mean(bin_biases))
                     mean_condition_rts[condition].append(np.mean(bin_rts))
+                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
 
         for condition in mean_condition_biases:
-            plt.plot(mean_condition_biases[condition],mean_condition_rts[condition],'o%s' % colors[condition])
+            plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
+                yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
 
             clf = LinearRegression()
             clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
@@ -1398,6 +1402,7 @@ class DCSComparisonReport:
         mean_perc_left=[]
         mean_condition_biases={}
         mean_condition_perc_left={}
+        std_condition_perc_left={}
         for i in range(20):
             bin_responses=[]
             bin_biases=[]
@@ -1412,6 +1417,7 @@ class DCSComparisonReport:
                 if not condition in mean_condition_biases:
                     mean_condition_biases[condition]=[]
                     mean_condition_perc_left[condition]=[]
+                    std_condition_perc_left[condition]=[]
                 bin_responses=[]
                 bin_biases=[]
                 for bias,response in zip(condition_biases[condition],condition_responses[condition]):
@@ -1421,9 +1427,11 @@ class DCSComparisonReport:
                 if len(bin_biases):
                     mean_condition_biases[condition].append(np.mean(bin_biases))
                     mean_condition_perc_left[condition].append(np.mean(bin_responses))
+                    std_condition_perc_left[condition].append(np.std(bin_responses)/np.sqrt(len(bin_responses)))
 
         for condition in mean_condition_biases:
-            plt.plot(mean_condition_biases[condition],mean_condition_perc_left[condition],'o%s' % colors[condition])
+            plt.errorbar(mean_condition_biases[condition],mean_condition_perc_left[condition],
+                yerr=std_condition_perc_left[condition], fmt='o%s' % colors[condition])
             fit=FitSigmoid(mean_condition_biases[condition], mean_condition_perc_left[condition])
             smoothInt = pylab.arange(mean_condition_biases[condition][0]-0.1, mean_condition_biases[condition][-1]+0.1, 0.001)
             smoothResp = fit.eval(smoothInt)
