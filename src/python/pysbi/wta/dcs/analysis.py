@@ -1305,16 +1305,16 @@ class DCSComparisonReport:
         for condition in mean_condition_biases:
             plt.plot(mean_condition_biases[condition],mean_condition_rts[condition],'o%s' % colors[condition])
 
-        clf = LinearRegression()
-        clf.fit(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
-            np.reshape(np.array(mean_rts), (len(mean_rts),1)))
-        a = clf.coef_[0][0]
-        b = clf.intercept_[0]
-        r_sqr=clf.score(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
-            np.reshape(np.array(mean_rts), (len(mean_rts),1)))
-        min_x=mean_biases[0]-0.1
-        max_x=mean_biases[-1]+0.1
-        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--k', label='r^2=%.3f' % r_sqr)
+            clf = LinearRegression()
+            clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            a = clf.coef_[0][0]
+            b = clf.intercept_[0]
+            r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            min_x=mean_condition_biases[condition][0]-0.1
+            max_x=mean_condition_biases[condition][-1]+0.1
+            plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--k', label='%s - r^2=%.3f' % (condition,r_sqr))
 
         plt.legend(loc='best')
         plt.xlabel('Bias')
