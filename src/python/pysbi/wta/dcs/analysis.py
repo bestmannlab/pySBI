@@ -1432,7 +1432,7 @@ class DCSComparisonReport:
         for condition in mean_condition_biases:
             plt.errorbar(mean_condition_biases[condition],mean_condition_perc_left[condition],
                 yerr=std_condition_perc_left[condition], fmt='o%s' % colors[condition])
-            fit=FitSigmoid(mean_condition_biases[condition], mean_condition_perc_left[condition])
+            fit=FitSigmoid(mean_condition_biases[condition], mean_condition_perc_left[condition], guess=[1.0])
             smoothInt = pylab.arange(mean_condition_biases[condition][0]-0.1, mean_condition_biases[condition][-1]+0.1, 0.001)
             smoothResp = fit.eval(smoothInt)
             plt.plot(smoothInt, smoothResp, '--%s' % colors[condition], label=condition)
