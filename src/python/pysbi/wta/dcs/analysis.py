@@ -1267,8 +1267,6 @@ class DCSComparisonReport:
                         condition_biases[stim_level].append(prestim_bias)
                         condition_rts[stim_level].append(trial_summary.data.rt)
 
-
-
         fig=plt.figure()
         mean_condition_biases={}
         mean_condition_rts={}
@@ -1286,7 +1284,7 @@ class DCSComparisonReport:
                     if bias>=bins[i] and bias<bins[i+1]:
                         bin_biases.append(bias)
                         bin_rts.append(rt)
-                if len(bin_biases):
+                if len(bin_biases)>=10:
                     mean_condition_biases[condition].append(np.mean(bin_biases))
                     mean_condition_rts[condition].append(np.mean(bin_rts))
                     std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
@@ -1376,7 +1374,6 @@ class DCSComparisonReport:
                         else:
                             condition_responses[stim_level].append(0.0)
 
-
         fig=plt.figure()
         mean_condition_biases={}
         mean_condition_perc_left={}
@@ -1394,7 +1391,7 @@ class DCSComparisonReport:
                     if bias>=bins[i] and bias<bins[i+1]:
                         bin_responses.append(response)
                         bin_biases.append(bias)
-                if len(bin_biases):
+                if len(bin_biases)>=10:
                     mean_condition_biases[condition].append(np.mean(bin_biases))
                     mean_condition_perc_left[condition].append(np.mean(bin_responses))
                     std_condition_perc_left[condition].append(np.std(bin_responses)/np.sqrt(len(bin_responses)))
