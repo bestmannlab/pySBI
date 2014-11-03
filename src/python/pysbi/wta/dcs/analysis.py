@@ -517,12 +517,15 @@ class SubjectReport:
             mean_biases=[]
             mean_rts=[]
             for i in range(10):
-                 bin_rts=[]
-                 for bias,rt in zip(biases[stim_level],rts[stim_level]):
-                     if bias>=bins[i] and bias<bins[i+1]:
-                         bin_rts.append(rt)
-                 mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                 mean_rts.append(np.mean(bin_rts))
+                bin_rts=[]
+                bin_biases=[]
+                for bias,rt in zip(biases[stim_level],rts[stim_level]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_rts.append(rt)
+                        bin_biases.append(bias)
+                if len(bin_biases):
+                    mean_biases.append(np.mean(bin_biases))
+                    mean_rts.append(np.mean(bin_rts))
             plt.plot(mean_biases,mean_rts,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias')
@@ -558,11 +561,14 @@ class SubjectReport:
             mean_perc_correct=[]
             for i in range(10):
                 bin_responses=[]
+                bin_biases=[]
                 for bias,response in zip(biases[stim_level],responses[stim_level]):
                     if bias>=bins[i] and bias<bins[i+1]:
                         bin_responses.append(response)
-                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_perc_correct.append(np.mean(bin_responses))
+                        bin_biases.append(bias)
+                if len(bin_biases):
+                    mean_bias.append(np.mean(bin_biases))
+                    mean_perc_correct.append(np.mean(bin_responses))
             plt.plot(mean_bias,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias')
@@ -598,11 +604,14 @@ class SubjectReport:
             mean_perc_left=[]
             for i in range(10):
                 bin_responses=[]
+                bin_biases=[]
                 for bias,response in zip(biases[stim_level],responses[stim_level]):
                     if bias>=bins[i] and bias<bins[i+1]:
                         bin_responses.append(response)
-                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_perc_left.append(np.mean(bin_responses))
+                        bin_biases.append(bias)
+                if len(bin_biases):
+                    mean_bias.append(np.mean(bin_biases))
+                    mean_perc_left.append(np.mean(bin_responses))
             plt.plot(mean_bias,mean_perc_left,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias')
@@ -637,11 +646,14 @@ class SubjectReport:
             mean_rts=[]
             for i in range(10):
                 bin_rts=[]
+                bin_ratios=[]
                 for ratio,rt in zip(ratios[stim_level],rts[stim_level]):
                     if ratio>=bins[i] and ratio<bins[i+1]:
                         bin_rts.append(rt)
-                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_rts.append(np.mean(bin_rts))
+                        bin_ratios.append(ratio)
+                if len(bin_ratios):
+                    mean_ratios.append(np.mean(bin_ratios))
+                    mean_rts.append(np.mean(bin_rts))
             plt.plot(mean_ratios,mean_rts,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias/Input Diff')
@@ -679,11 +691,14 @@ class SubjectReport:
             mean_perc_correct=[]
             for i in range(10):
                 bin_responses=[]
+                bin_ratios=[]
                 for ratio,response in zip(ratios[stim_level],responses[stim_level]):
                     if ratio>=bins[i] and ratio<bins[i+1]:
                         bin_responses.append(response)
-                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_perc_correct.append(np.mean(bin_responses))
+                        bin_ratios.append(ratio)
+                if len(bin_ratios):
+                    mean_ratios.append(np.mean(bin_ratios))
+                    mean_perc_correct.append(np.mean(bin_responses))
             plt.plot(mean_ratios,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias/Input Diff')
@@ -1173,11 +1188,14 @@ class DCSComparisonReport:
             mean_rts=[]
             for i in range(10):
                 bin_rts=[]
+                bin_ratios=[]
                 for ratio,rt in zip(ratios[stim_level],rts[stim_level]):
                     if ratio>=bins[i] and ratio<bins[i+1]:
                         bin_rts.append(rt)
-                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_rts.append(np.mean(bin_rts))
+                        bin_ratios.append(ratio)
+                if len(bin_ratios):
+                    mean_ratios.append(np.mean(bin_ratios))
+                    mean_rts.append(np.mean(bin_rts))
             plt.plot(mean_ratios,mean_rts,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias/Input Diff')
@@ -1216,11 +1234,14 @@ class DCSComparisonReport:
             mean_perc_correct=[]
             for i in range(10):
                 bin_responses=[]
+                bin_ratios=[]
                 for ratio,response in zip(ratios[stim_level],responses[stim_level]):
                     if ratio>=bins[i] and ratio<bins[i+1]:
                         bin_responses.append(response)
-                mean_ratios.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_perc_correct.append(np.mean(bin_responses))
+                        bin_ratios.append(ratio)
+                if len(bin_ratios):
+                    mean_ratios.append(np.mean(bin_ratios))
+                    mean_perc_correct.append(np.mean(bin_responses))
             plt.plot(mean_ratios,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias/Input Diff')
@@ -1249,11 +1270,14 @@ class DCSComparisonReport:
         mean_rts=[]
         for i in range(20):
              bin_rts=[]
+             bin_biases=[]
              for bias,rt in zip(biases,rts):
                  if bias>=bins[i] and bias<bins[i+1]:
                      bin_rts.append(rt)
-             mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
-             mean_rts.append(np.mean(bin_rts))
+                     bin_biases.append(bias)
+             if len(bin_biases):
+                mean_biases.append(np.mean(bin_biases))
+                mean_rts.append(np.mean(bin_rts))
 
         plt.plot(mean_biases,mean_rts,'ob')
 
@@ -1303,11 +1327,14 @@ class DCSComparisonReport:
             mean_perc_correct=[]
             for i in range(10):
                 bin_responses=[]
+                bin_biases=[]
                 for bias,response in zip(biases[stim_level],responses[stim_level]):
                     if bias>=bins[i] and bias<bins[i+1]:
                         bin_responses.append(response)
-                mean_bias.append(bins[i]+(bins[i+1]-bins[i])*.5)
-                mean_perc_correct.append(np.mean(bin_responses))
+                        bin_biases.append(bias)
+                if len(bin_biases):
+                    mean_bias.append(np.mean(bin_biases))
+                    mean_perc_correct.append(np.mean(bin_responses))
             plt.plot(mean_bias,mean_perc_correct,'o%s' % colors[stim_level], label=stim_level)
         plt.legend(loc='best')
         plt.xlabel('Bias')
@@ -1339,11 +1366,14 @@ class DCSComparisonReport:
         mean_perc_left=[]
         for i in range(20):
             bin_responses=[]
+            bin_biases=[]
             for bias,response in zip(biases,responses):
                 if bias>=bins[i] and bias<bins[i+1]:
                     bin_responses.append(response)
-            mean_biases.append(bins[i]+(bins[i+1]-bins[i])*.5)
-            mean_perc_left.append(np.mean(bin_responses))
+                    bin_biases.append(bias)
+            if len(bin_biases):
+                mean_biases.append(np.mean(bin_biases))
+                mean_perc_left.append(np.mean(bin_responses))
         plt.plot(mean_biases,mean_perc_left,'ob')
 
         clf = LinearRegression()
@@ -1396,8 +1426,8 @@ class DCSComparisonReport:
         plt.close(fig)
 
 if __name__=='__main__':
-    dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_half_dcs',
+    dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_quarter_dcs',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(20),
-        {'control':(0,0),'anode':(1,-0.5),'cathode':(-1,0.5)},25,
-        '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_half_dcs','')
+        {'control':(0,0),'anode':(0.5,-0.25),'cathode':(-0.5,0.25)},25,
+        '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_quarter_dcs','')
     dcs_report.create_report(regenerate_subject_plots=False,regenerate_session_plots=False,regenerate_trial_plots=False)
