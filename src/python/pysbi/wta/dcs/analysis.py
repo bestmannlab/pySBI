@@ -1314,7 +1314,7 @@ class DCSComparisonReport:
                 np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
             min_x=mean_condition_biases[condition][0]-0.1
             max_x=mean_condition_biases[condition][-1]+0.1
-            plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--k', label='%s - r^2=%.3f' % (condition,r_sqr))
+            plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
 
         plt.legend(loc='best')
         plt.xlabel('Bias')
@@ -1427,7 +1427,7 @@ class DCSComparisonReport:
             fit=FitSigmoid(mean_condition_biases[condition], mean_condition_perc_left[condition])
             smoothInt = pylab.arange(mean_condition_biases[condition][0]-0.1, mean_condition_biases[condition][-1]+0.1, 0.001)
             smoothResp = fit.eval(smoothInt)
-            plt.plot(smoothInt, smoothResp, '%s' % colors[condition], label=condition)
+            plt.plot(smoothInt, smoothResp, '--%s' % colors[condition], label=condition)
 
         plt.legend(loc='best')
         plt.xlabel('Bias')
