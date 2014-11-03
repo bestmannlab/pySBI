@@ -1278,8 +1278,8 @@ class DCSComparisonReport:
                 mean_condition_biases[condition]=[]
                 mean_condition_rts[condition]=[]
                 std_condition_rts[condition]=[]
-            hist,bins=np.histogram(condition_biases[condition], bins=20)
-            for i in range(20):
+            hist,bins=np.histogram(condition_biases[condition], bins=10)
+            for i in range(10):
                 bin_rts=[]
                 bin_biases=[]
                 for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
@@ -1382,12 +1382,12 @@ class DCSComparisonReport:
         mean_condition_perc_left={}
         std_condition_perc_left={}
         for condition in condition_biases:
-            hist,bins=np.histogram(condition_biases[condition], bins=20)
+            hist,bins=np.histogram(condition_biases[condition], bins=10)
             if not condition in mean_condition_biases:
                 mean_condition_biases[condition]=[]
                 mean_condition_perc_left[condition]=[]
                 std_condition_perc_left[condition]=[]
-            for i in range(20):
+            for i in range(10):
                 bin_responses=[]
                 bin_biases=[]
                 for bias,response in zip(condition_biases[condition],condition_responses[condition]):
