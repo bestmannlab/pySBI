@@ -1253,8 +1253,6 @@ class DCSComparisonReport:
 
     def plot_bias_rt(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
-        biases=[]
-        rts=[]
         condition_biases={}
         condition_rts={}
         for subj_report in self.subjects.itervalues():
@@ -1266,34 +1264,22 @@ class DCSComparisonReport:
                     if trial_summary.data.rt is not None:
                         prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
                                             np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
-                        biases.append(prestim_bias)
-                        rts.append(trial_summary.data.rt)
                         condition_biases[stim_level].append(prestim_bias)
                         condition_rts[stim_level].append(trial_summary.data.rt)
 
-        hist,bins=np.histogram(biases, bins=20)
+
 
         fig=plt.figure()
-        mean_biases=[]
-        mean_rts=[]
         mean_condition_biases={}
         mean_condition_rts={}
         std_condition_rts={}
-        for i in range(20):
-            bin_rts=[]
-            bin_biases=[]
-            for bias,rt in zip(biases,rts):
-                if bias>=bins[i] and bias<bins[i+1]:
-                    bin_rts.append(rt)
-                    bin_biases.append(bias)
-            if len(bin_biases):
-                mean_biases.append(np.mean(bin_biases))
-                mean_rts.append(np.mean(bin_rts))
-            for condition in condition_biases:
-                if not condition in mean_condition_biases:
-                    mean_condition_biases[condition]=[]
-                    mean_condition_rts[condition]=[]
-                    std_condition_rts[condition]=[]
+        for condition in condition_biases:
+            if not condition in mean_condition_biases:
+                mean_condition_biases[condition]=[]
+                mean_condition_rts[condition]=[]
+                std_condition_rts[condition]=[]
+            hist,bins=np.histogram(condition_biases[condition], bins=20)
+            for i in range(20):
                 bin_rts=[]
                 bin_biases=[]
                 for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
@@ -1375,8 +1361,6 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
         condition_biases={}
         condition_responses={}
-        biases=[]
-        responses=[]
         for subj_report in self.subjects.itervalues():
             for stim_level, session_report in subj_report.sessions.iteritems():
                 if not stim_level in condition_biases:
@@ -1386,38 +1370,24 @@ class DCSComparisonReport:
                     if trial_summary.data.rt is not None:
                         prestim_bias=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-\
                                      np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                        biases.append(prestim_bias)
                         condition_biases[stim_level].append(prestim_bias)
                         if trial_summary.decision_idx==0:
-                            responses.append(1.0)
                             condition_responses[stim_level].append(1.0)
                         else:
-                            responses.append(0.0)
                             condition_responses[stim_level].append(0.0)
 
-        hist,bins=np.histogram(biases, bins=20)
 
         fig=plt.figure()
-        mean_biases=[]
-        mean_perc_left=[]
         mean_condition_biases={}
         mean_condition_perc_left={}
         std_condition_perc_left={}
-        for i in range(20):
-            bin_responses=[]
-            bin_biases=[]
-            for bias,response in zip(biases,responses):
-                if bias>=bins[i] and bias<bins[i+1]:
-                    bin_responses.append(response)
-                    bin_biases.append(bias)
-            if len(bin_biases):
-                mean_biases.append(np.mean(bin_biases))
-                mean_perc_left.append(np.mean(bin_responses))
-            for condition in condition_biases:
-                if not condition in mean_condition_biases:
-                    mean_condition_biases[condition]=[]
-                    mean_condition_perc_left[condition]=[]
-                    std_condition_perc_left[condition]=[]
+        for condition in condition_biases:
+            hist,bins=np.histogram(condition_biases[condition], bins=20)
+            if not condition in mean_condition_biases:
+                mean_condition_biases[condition]=[]
+                mean_condition_perc_left[condition]=[]
+                std_condition_perc_left[condition]=[]
+            for i in range(20):
                 bin_responses=[]
                 bin_biases=[]
                 for bias,response in zip(condition_biases[condition],condition_responses[condition]):
@@ -1475,8 +1445,8 @@ class DCSComparisonReport:
         plt.close(fig)
 
 if __name__=='__main__':
-    dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_quarter_dcs',
+    dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_half_dcs',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(20),
         {'control':(0,0),'anode':(0.5,-0.25),'cathode':(-0.5,0.25)},25,
-        '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_quarter_dcs','')
+        '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_half_dcs','')
     dcs_report.create_report(regenerate_subject_plots=False,regenerate_session_plots=False,regenerate_trial_plots=False)
