@@ -1346,25 +1346,35 @@ class DCSComparisonReport:
 
     def plot_bias_perc_left(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        condition_responses={}
         biases=[]
         responses=[]
         for subj_report in self.subjects.itervalues():
             for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                    condition_responses[stim_level]=[]
                 for idx,trial_summary in enumerate(session_report.series.trial_summaries):
                     if trial_summary.data.rt is not None:
                         prestim_bias=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-\
                                      np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
                         biases.append(prestim_bias)
+                        condition_biases[stim_level].append(prestim_bias)
                         if trial_summary.decision_idx==0:
                             responses.append(1.0)
+                            condition_responses[stim_level].append(1.0)
                         else:
                             responses.append(0.0)
+                            condition_responses[stim_level].append(1.0)
 
         hist,bins=np.histogram(biases, bins=20)
 
         fig=plt.figure()
         mean_biases=[]
         mean_perc_left=[]
+        mean_condition_biases={}
+        mean_condition_perc_left={}
         for i in range(20):
             bin_responses=[]
             bin_biases=[]
@@ -1375,7 +1385,22 @@ class DCSComparisonReport:
             if len(bin_biases):
                 mean_biases.append(np.mean(bin_biases))
                 mean_perc_left.append(np.mean(bin_responses))
-        plt.plot(mean_biases,mean_perc_left,'ob')
+            for condition in condition_biases:
+                if not condition in mean_condition_biases:
+                    mean_condition_biases[condition]=[]
+                    mean_condition_perc_left[condition]=[]
+                bin_responses=[]
+                bin_biases=[]
+                for bias,response in zip(condition_biases[condition],condition_responses[condition]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_responses.append(response)
+                        bin_biases.append(bias)
+                if len(bin_biases):
+                    mean_condition_biases[condition].append(np.mean(bin_biases))
+                    mean_condition_perc_left[condition].append(np.mean(bin_responses))
+
+        for condition in mean_condition_biases:
+            plt.plot(mean_condition_biases[condition],mean_condition_perc_left[condition],'o%s' % colors[condition])
 
         clf = LinearRegression()
         clf.fit(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
@@ -1386,7 +1411,7 @@ class DCSComparisonReport:
             np.reshape(np.array(mean_perc_left), (len(mean_perc_left),1)))
         min_x=mean_biases[0]-0.1
         max_x=mean_biases[-1]+0.1
-        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--b', label='r^2=%.3f' % r_sqr)
+        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--k', label='r^2=%.3f' % r_sqr)
 
 
         plt.legend(loc='best')
