@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps, FitRT, FitWeibull, exp_decay
+from pysbi.util.utils import save_to_png, save_to_eps, FitRT, FitWeibull, exp_decay, FitSigmoid
 from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
 condition_colors={
@@ -1424,18 +1424,10 @@ class DCSComparisonReport:
 
         for condition in mean_condition_biases:
             plt.plot(mean_condition_biases[condition],mean_condition_perc_left[condition],'o%s' % colors[condition])
-
-        clf = LinearRegression()
-        clf.fit(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
-            np.reshape(np.array(mean_perc_left), (len(mean_perc_left),1)))
-        a = clf.coef_[0][0]
-        b = clf.intercept_[0]
-        r_sqr=clf.score(np.reshape(np.array(mean_biases), (len(mean_biases),1)),
-            np.reshape(np.array(mean_perc_left), (len(mean_perc_left),1)))
-        min_x=mean_biases[0]-0.1
-        max_x=mean_biases[-1]+0.1
-        plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--k', label='r^2=%.3f' % r_sqr)
-
+            fit=FitSigmoid(mean_condition_biases[condition], mean_condition_perc_left[condition])
+            smoothInt = pylab.arange(mean_condition_biases[condition][0]-0.1, mean_condition_biases[condition][-1]+0.1, 0.001)
+            smoothResp = fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, '%s' % colors[condition], label=condition)
 
         plt.legend(loc='best')
         plt.xlabel('Bias')
