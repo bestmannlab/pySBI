@@ -261,5 +261,5 @@ class FitSigmoid(_baseFunctionFit):
     def inverse(self, yy, params=None):
         if params==None:  params=self.params #so the user can set params for this particular eval
         k = params[0]
-        xx = -np.ln((1/yy)-1)/k
+        xx = -np.log((1/yy)-1)/k
         return xx
