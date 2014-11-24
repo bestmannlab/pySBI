@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import h5py
 import os
 import numpy as np
-from scikits.learn.linear_model import LinearRegression
+from scikits.learn.linear_model import LinearRegression, LogisticRegression
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
 from pysbi.util.utils import save_to_png, save_to_eps, get_response_time, reject_outliers, exp_decay
@@ -2192,13 +2192,23 @@ class RLReport:
                 T,p=stats.wilcoxon(condition_betas['cathode'], condition_betas[stim_condition])
                 self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons)
 
-        furl='img/rate_diff_ratio_perc_correct'
-        fname = os.path.join(self.reports_dir,furl)
-        self.rate_diff_ratio_perc_correct_url='%s.png' % furl
+        ratio_furl='img/rate_diff_ratio_perc_correct'
+        ratio_fname = os.path.join(self.reports_dir,ratio_furl)
+        self.rate_diff_ratio_perc_correct_url='%s.png' % ratio_furl
+
+        logistic_furl='img/rate_diff_perc_correct_logistic'
+        logistic_fname = os.path.join(self.reports_dir,logistic_furl)
+        self.rate_diff_perc_correct_logistic_url='%s.png' % logistic_furl
+
         if regenerate_plots:
             rate_diff_ratios=[]
             correct=[]
             ev_diffs=[]
+
+            all_biases={}
+            all_ev_diffs={}
+            all_correct={}
+
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
                     stim_report=self.stim_condition_reports[stim_condition]
@@ -2212,14 +2222,23 @@ class RLReport:
                                     if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
                                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                        ratio=np.abs(chosen_mean-unchosen_mean)/np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
+                                        bias=np.abs(chosen_mean-unchosen_mean)
+                                        ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+                                        ratio=bias/ev_diff
+                                        choice_correct=0.0
+                                        if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                                            choice_correct=1.0
                                         if ratio<1.9:
                                             rate_diff_ratios.append(ratio)
-                                            if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
-                                                correct.append(1.0)
-                                            else:
-                                                correct.append(0.0)
-                                            ev_diffs.append(np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial]))
+                                            correct.append(choice_correct)
+                                            ev_diffs.append(ev_diff)
+                                        if not stim_condition in all_biases:
+                                            all_biases[stim_condition]=[]
+                                            all_ev_diffs[stim_condition]=[]
+                                            all_correct[stim_condition]=[]
+                                        all_biases[stim_condition].append(bias)
+                                        all_ev_diffs[stim_condition].append(ev_diff)
+                                        all_correct[stim_condition].append(choice_correct)
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
@@ -2249,8 +2268,34 @@ class RLReport:
             ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
+            save_to_png(fig, '%s.png' % ratio_fname)
+            save_to_eps(fig, '%s.eps' % ratio_fname)
+            plt.close(fig)
+
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ind=[1,2]
+            width=0.35
+            stim_conditions=['control','anode','cathode']
+            condition_colors={'control':'b','anode':'r','cathode':'g'}
+            rects=[]
+            for stim_condition in stim_conditions:
+                x=np.zeros((len(all_biases[stim_condition]),2))
+                x[:,0]=np.array(all_biases[stim_condition])
+                x[:,1]=np.array(all_ev_diffs[stim_condition])
+                y=np.array(all_correct[stim_condition])
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                model_coeffs=logit.coef_[0]
+                model_intercept=logit.intercept_[0]
+                rect=ax.bar(ind, model_coeffs, width, color=condition_colors[stim_condition])
+                rects.append(rect)
+            ax.set_ylabel('Coefficient')
+            ax.set_xticks(ind+width)
+            ax.set_xticklabels(['Bias','EV Diff'])
+            ax.legend([rect[0] for rect in rects],stim_conditions)
+            save_to_png(fig, '%s.png' % logistic_fname)
+            save_to_eps(fig, '%s.eps' % logistic_fname)
             plt.close(fig)
 
         furl='img/beta_pyr_rate_diff'
