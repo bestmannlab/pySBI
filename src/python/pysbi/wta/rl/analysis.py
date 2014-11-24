@@ -1612,6 +1612,180 @@ class RLReport:
             plt.close(fig)
 
         # Create ev diff firing rate plot
+        furl='img/small_ev_diff_pyr_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_pyr_firing_rate_small_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, 
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, 
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/med_ev_diff_pyr_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_pyr_firing_rate_med_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/large_ev_diff_pyr_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_pyr_firing_rate_large_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/small_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_small_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/med_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_med_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create ev diff firing rate plot
+        furl='img/large_ev_diff_inh_firing_rate'
+        fname = os.path.join(self.reports_dir, furl)
+        self.mean_inh_firing_rate_large_ev_diff_url = '%s.png' % furl
+        if regenerate_plots:
+            fig=Figure(figsize=(16,6))
+            ax=fig.add_subplot(1,1,1)
+            for stim_condition in self.stim_conditions:
+                if stim_condition=='control' or stim_condition=='anode':
+                    baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                        self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                        self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+                elif stim_condition=='cathode':
+                    baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
+                    plot_mean_rate(ax, self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
+                        self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
+                        'dashed', '%s, unchosen' % stim_condition, .5*ms)
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Firing Rate (Hz)')
+            ax.legend(loc=0)
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+            
+        # Create ev diff firing rate plot
         furl='img/small_ev_diff_anode_pyr_firing_rate'
         fname = os.path.join(self.reports_dir, furl)
         self.anode_mean_pyr_firing_rate_small_ev_diff_url = '%s.png' % furl
@@ -2274,7 +2448,7 @@ class RLReport:
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ind=[1,2]
+            ind=np.array([1,2])
             width=0.35
             stim_conditions=['control','anode','cathode']
             condition_colors={'control':'b','anode':'r','cathode':'g'}
