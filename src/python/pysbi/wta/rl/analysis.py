@@ -2447,7 +2447,7 @@ class RLReport:
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
                 model_intercept=logit.intercept_[0]
-                rect=ax.bar(ind+(idx-1)*width*.5, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
