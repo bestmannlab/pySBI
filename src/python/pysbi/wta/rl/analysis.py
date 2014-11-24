@@ -2452,7 +2452,7 @@ class RLReport:
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
             ax.set_xticklabels(['Bias','EV Diff'])
-            ax.legend([rect[0] for rect in rects],stim_conditions)
+            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
             save_to_png(fig, '%s.png' % logistic_fname)
             save_to_eps(fig, '%s.eps' % logistic_fname)
             plt.close(fig)
