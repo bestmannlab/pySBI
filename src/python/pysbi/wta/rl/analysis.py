@@ -1048,6 +1048,8 @@ class RLReport:
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         self.edesc=self.edesc
 
+        condition_colors={'control':'b','anode':'r','cathode':'g'}
+
         excluded=None
         ev_diffs=[]
         for stim_condition in self.stim_conditions:
@@ -1487,15 +1489,15 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
-                        self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                        .5*ms)
+                        self.anode_stim_condition_chosen_rate_std_err[stim_condition], condition_colors[stim_condition],
+                        None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
                         self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                         '%s, unchosen' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_chosen_rate_means[stim_condition],
-                        self.cathode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                        .5*ms)
+                        self.cathode_stim_condition_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.cathode_stim_condition_unchosen_rate_means[stim_condition],
                         self.cathode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                         '%s, unchosen' % stim_condition, .5*ms)
@@ -1516,12 +1518,12 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_inh_rate_means[stim_condition],
-                        self.anode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                        .5*ms)
+                        self.anode_stim_condition_inh_rate_std_err[stim_condition], condition_colors[stim_condition],
+                        None, '%s' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_inh_rate_means[stim_condition],
-                        self.cathode_stim_condition_inh_rate_std_err[stim_condition], None, None, '%s' % stim_condition,
-                        .5*ms)
+                        self.cathode_stim_condition_inh_rate_std_err[stim_condition], condition_colors[stim_condition],
+                        None, '%s' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -1539,8 +1541,8 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition.startswith('anode'):
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_chosen_rate_means[stim_condition],
-                        self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None, '%s, chosen' % stim_condition,
-                        .5*ms)
+                        self.anode_stim_condition_chosen_rate_std_err[stim_condition], None, None,
+                        '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.anode_stim_condition_unchosen_rate_means[stim_condition],
                         self.anode_stim_condition_unchosen_rate_std_err[stim_condition], baseline.get_color(), 'dashed',
                         '%s, unchosen' % stim_condition, .5*ms)
@@ -1621,15 +1623,15 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],
-                        self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, 
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
                         self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],
-                        self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition], None, None, 
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],
                         self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(), 
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
@@ -1650,15 +1652,15 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],
-                        self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
                         self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],
-                        self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition], None, None,
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],
                         self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
@@ -1679,15 +1681,15 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],
-                        self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
                         self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],
-                        self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition], None, None,
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
                     plot_mean_rate(ax, self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],
                         self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition], baseline.get_color(),
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
@@ -1708,12 +1710,12 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_small_ev_inh_rate_means[stim_condition],
-                        self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s' % stim_condition, .5*ms)
+                        self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_small_ev_inh_rate_means[stim_condition],
-                        self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s, chosen' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -1731,12 +1733,12 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_med_ev_inh_rate_means[stim_condition],
-                        self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s' % stim_condition, .5*ms)
+                        self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_med_ev_inh_rate_means[stim_condition],
-                        self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -1754,12 +1756,12 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline=plot_mean_rate(ax, self.anode_stim_condition_large_ev_inh_rate_means[stim_condition],
-                        self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s' % stim_condition, .5*ms)
+                        self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
                 elif stim_condition=='cathode':
                     baseline=plot_mean_rate(ax, self.cathode_stim_condition_large_ev_inh_rate_means[stim_condition],
-                        self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition], None, None,
-                        '%s' % stim_condition, .5*ms)
+                        self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition],
+                        condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
             ax.legend(loc=0)
@@ -2054,7 +2056,8 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
                     baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
-                        self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
+                        self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,
+                        'o%s' % condition_colors[stim_condition])
                     min_x=np.min(self.stim_condition_reports[stim_condition].condition_alphas)-0.1
                     max_x=np.max(self.stim_condition_reports[stim_condition].condition_alphas)+0.1
                     ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].alpha_perc_correct_a * min_x +
@@ -2082,7 +2085,8 @@ class RLReport:
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode':
                     baseline,=ax.plot(self.stim_condition_reports[stim_condition].condition_alphas,
-                        self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,'o')
+                        self.stim_condition_reports[stim_condition].condition_perc_correct/100.0,
+                        'o%s' % condition_colors[stim_condition])
                     min_x=np.min(self.stim_condition_reports[stim_condition].condition_alphas)-0.1
                     max_x=np.max(self.stim_condition_reports[stim_condition].condition_alphas)+0.1
                     ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].alpha_perc_correct_a * min_x +
@@ -2175,7 +2179,7 @@ class RLReport:
                     s = d/mdev if mdev else 0
                     filtered_betas=self.stim_condition_reports[stim_condition].condition_betas[s<2]
                     filtered_perc_correct=self.stim_condition_reports[stim_condition].condition_perc_correct[s<2]/100.0
-                    baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o')
+                    baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o%s' % condition_colors[stim_condition])
                     min_x=np.min(filtered_betas)-1.0
                     max_x=np.max(filtered_betas)+1.0
                     ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
@@ -2206,7 +2210,7 @@ class RLReport:
                     s = d/mdev if mdev else 0
                     filtered_betas=self.stim_condition_reports[stim_condition].condition_betas[s<2]
                     filtered_perc_correct=self.stim_condition_reports[stim_condition].condition_perc_correct[s<2]/100.0
-                    baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o')
+                    baseline,=ax.plot(filtered_betas, filtered_perc_correct,'o%s' % condition_colors[stim_condition])
                     min_x=np.min(filtered_betas)-1.0
                     max_x=np.max(filtered_betas)+1.0
                     ax.plot([min_x, max_x], [self.stim_condition_reports[stim_condition].beta_perc_correct_a * min_x +
@@ -2433,7 +2437,6 @@ class RLReport:
             ind=np.array([1,2])
             width=0.35
             stim_conditions=['control','anode','cathode']
-            condition_colors={'control':'b','anode':'r','cathode':'g'}
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 x=np.zeros((len(all_biases[stim_condition]),2))
@@ -2444,7 +2447,7 @@ class RLReport:
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
                 model_intercept=logit.intercept_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+(idx-1)*width*.5, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
