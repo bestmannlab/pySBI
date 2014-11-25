@@ -2447,6 +2447,7 @@ class RLReport:
                 x=np.zeros((len(all_biases[stim_condition]),2))
                 x[:,0]=np.array(all_biases[stim_condition])
                 x[:,1]=np.array(all_ev_diffs[stim_condition])
+                print(np.cov(np.transpose(x))[0,1])
                 y=np.array(all_correct[stim_condition])
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
