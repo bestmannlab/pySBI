@@ -2438,7 +2438,7 @@ class RLReport:
 
             width=0.3
 
-            fig=Figure()
+            fig=Figure(figsize=(16,6))
             ax=fig.add_subplot(1,1,1)
             stim_conditions=['control','anode','cathode']
             ind=np.array(range(1,7))
