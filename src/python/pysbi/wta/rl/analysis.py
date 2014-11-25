@@ -2360,25 +2360,9 @@ class RLReport:
         logistic_fname = os.path.join(self.reports_dir,logistic_furl)
         self.rate_diff_perc_correct_logistic_url='%s.png' % logistic_furl
 
-        logistic_small_ev_furl='img/rate_diff_perc_correct_small_ev_logistic'
-        logistic_small_ev_fname=os.path.join(self.reports_dir,logistic_small_ev_furl)
-        self.rate_diff_perc_correct_small_ev_logistic_url='%s.png' % logistic_small_ev_furl
-
-        logistic_large_ev_furl='img/rate_diff_perc_correct_large_ev_logistic'
-        logistic_large_ev_fname=os.path.join(self.reports_dir,logistic_large_ev_furl)
-        self.rate_diff_perc_correct_large_ev_logistic_url='%s.png' % logistic_large_ev_furl
-
         logistic_noise_only_furl='img/rate_diff_perc_correct_logistic_noise_only'
         logistic_noise_only_fname = os.path.join(self.reports_dir,logistic_noise_only_furl)
         self.rate_diff_perc_correct_logistic_noise_only_url='%s.png' % logistic_noise_only_furl
-
-        logistic_small_ev_noise_only_furl='img/rate_diff_perc_correct_small_ev_logistic_noise_only'
-        logistic_small_ev_noise_only_fname=os.path.join(self.reports_dir,logistic_small_ev_noise_only_furl)
-        self.rate_diff_perc_correct_small_ev_logistic_noise_only_url='%s.png' % logistic_small_ev_noise_only_furl
-
-        logistic_large_ev_noise_only_furl='img/rate_diff_perc_correct_large_ev_logistic_noise_only'
-        logistic_large_ev_noise_only_fname=os.path.join(self.reports_dir,logistic_large_ev_noise_only_furl)
-        self.rate_diff_perc_correct_large_ev_logistic_noise_only_url='%s.png' % logistic_large_ev_noise_only_furl
 
         if regenerate_plots:
             rate_diff_ratios=[]
@@ -2456,8 +2440,8 @@ class RLReport:
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ind=np.array([1,2])
             stim_conditions=['control','anode','cathode']
+            ind=np.array(range(1,7))
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 x=np.zeros((len(all_biases[stim_condition]),2))
@@ -2467,44 +2451,8 @@ class RLReport:
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
-            ax.set_ylim([-0.6,0.6])
-            ax.set_ylabel('Coefficient')
-            ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias','EV Diff'])
-            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_fname)
-            save_to_eps(fig, '%s.eps' % logistic_fname)
-            plt.close(fig)
-
-            fig=Figure()
-            ax=fig.add_subplot(1,1,1)
-            ind=np.array([1])
-            stim_conditions=['control','anode','cathode']
-            rects=[]
-            for idx,stim_condition in enumerate(stim_conditions):
-                x=np.zeros((len(all_biases[stim_condition]),1))
-                x[:,0]=np.array(all_biases[stim_condition])
-                y=np.array(all_correct[stim_condition])
-                logit = LogisticRegression()
-                logit = logit.fit(x, y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
-                rects.append(rect)
-            ax.set_ylabel('Coefficient')
-            ax.set_ylim([-1.6,0.2])
-            ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias'])
-            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_noise_only_fname)
-            save_to_eps(fig, '%s.eps' % logistic_noise_only_fname)
-            plt.close(fig)
-            
-            fig=Figure()
-            ax=fig.add_subplot(1,1,1)
-            ind=np.array([1,2])
-            rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
                 small_ev_diff_ev_diffs=[]
@@ -2521,21 +2469,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
-                rects.append(rect)
-            ax.set_ylabel('Coefficient')
-            ax.set_ylim([-0.6,0.6])
-            ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias','EV Diff'])
-            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_small_ev_fname)
-            save_to_eps(fig, '%s.eps' % logistic_small_ev_fname)
-            plt.close(fig)
-
-            fig=Figure()
-            ax=fig.add_subplot(1,1,1)
-            ind=np.array([1,2])
-            rects=[]
+                rect=ax.bar(np.array([3,4])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
                 large_ev_diff_ev_diffs=[]
@@ -2552,21 +2486,29 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
-                rects.append(rect)
+                rect=ax.bar(np.array([5,6])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
             ax.set_ylabel('Coefficient')
-            ax.set_ylim([-0.6,0.6])
             ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias','EV Diff'])
+            ax.set_xticklabels(['Bias (overall)','EV Diff (overall)', 'Bias (small EV diff)', 'EV Diff (large EV diff)', 'Bias (large EV diff)', 'EV Diff (large EV diff)'])
             ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_large_ev_fname)
-            save_to_eps(fig, '%s.eps' % logistic_large_ev_fname)
+            save_to_png(fig, '%s.png' % logistic_fname)
+            save_to_eps(fig, '%s.eps' % logistic_fname)
             plt.close(fig)
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
-            ind=np.array([1])
+            ind=np.array(range(1,4))
+            stim_conditions=['control','anode','cathode']
             rects=[]
+            for idx,stim_condition in enumerate(stim_conditions):
+                x=np.zeros((len(all_biases[stim_condition]),1))
+                x[:,0]=np.array(all_biases[stim_condition])
+                y=np.array(all_correct[stim_condition])
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                model_coeffs=logit.coef_[0]
+                rect=ax.bar(1+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rects.append(rect)
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
                 small_ev_diff_ev_diffs=[]
@@ -2582,21 +2524,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
-                rects.append(rect)
-            ax.set_ylabel('Coefficient')
-            ax.set_ylim([-1.6,0.2])
-            ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias'])
-            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_small_ev_noise_only_fname)
-            save_to_eps(fig, '%s.eps' % logistic_small_ev_noise_only_fname)
-            plt.close(fig)
-
-            fig=Figure()
-            ax=fig.add_subplot(1,1,1)
-            ind=np.array([1])
-            rects=[]
+                rect=ax.bar(2+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
                 large_ev_diff_ev_diffs=[]
@@ -2612,15 +2540,13 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
-                rects.append(rect)
+                rect=ax.bar(3+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
             ax.set_ylabel('Coefficient')
-            ax.set_ylim([-1.6,0.2])
             ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias'])
+            ax.set_xticklabels(['Bias (overall)', 'Bias (small EV diff)', 'Bias (large EV diff)'])
             ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-            save_to_png(fig, '%s.png' % logistic_large_ev_noise_only_fname)
-            save_to_eps(fig, '%s.eps' % logistic_large_ev_noise_only_fname)
+            save_to_png(fig, '%s.png' % logistic_noise_only_fname)
+            save_to_eps(fig, '%s.eps' % logistic_noise_only_fname)
             plt.close(fig)
 
         furl='img/beta_pyr_rate_diff'
