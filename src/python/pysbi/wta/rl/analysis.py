@@ -2359,6 +2359,14 @@ class RLReport:
         logistic_furl='img/rate_diff_perc_correct_logistic'
         logistic_fname = os.path.join(self.reports_dir,logistic_furl)
         self.rate_diff_perc_correct_logistic_url='%s.png' % logistic_furl
+        
+        logistic_small_ev_furl='img/rate_diff_perc_correct_small_ev_logistic'
+        logistic_small_ev_fname=os.path.join(self.reports_dir,logistic_small_ev_furl)
+        self.rate_diff_perc_correct_small_ev_logistic_url='%s.png' % logistic_small_ev_furl
+
+        logistic_large_ev_furl='img/rate_diff_perc_correct_large_ev_logistic'
+        logistic_large_ev_fname=os.path.join(self.reports_dir,logistic_large_ev_furl)
+        self.rate_diff_perc_correct_large_ev_logistic_url='%s.png' % logistic_large_ev_furl
 
         if regenerate_plots:
             rate_diff_ratios=[]
@@ -2368,7 +2376,7 @@ class RLReport:
             all_biases={}
             all_ev_diffs={}
             all_correct={}
-
+            
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
                     stim_report=self.stim_condition_reports[stim_condition]
@@ -2446,7 +2454,6 @@ class RLReport:
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
-                model_intercept=logit.intercept_[0]
                 rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
@@ -2455,6 +2462,68 @@ class RLReport:
             ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
             save_to_png(fig, '%s.png' % logistic_fname)
             save_to_eps(fig, '%s.eps' % logistic_fname)
+            plt.close(fig)
+            
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ind=np.array([1,2])
+            width=0.35
+            rects=[]
+            for idx,stim_condition in enumerate(stim_conditions):
+                small_ev_diff_biases=[]
+                small_ev_diff_ev_diffs=[]
+                small_ev_diff_correct=[]
+                for i in range(len(all_ev_diffs[stim_condition])):
+                    if all_ev_diffs[stim_condition][i]<=bins[3]:
+                        small_ev_diff_biases.append(all_biases[stim_condition][i])
+                        small_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
+                        small_ev_diff_correct.append(all_correct[stim_condition][i])
+                x=np.zeros((len(small_ev_diff_biases),2))
+                x[:,0]=np.array(small_ev_diff_biases)
+                x[:,1]=np.array(small_ev_diff_ev_diffs)
+                y=np.array(small_ev_diff_correct)
+                logit=LogisticRegression()
+                logit=logit.fit(x,y)
+                model_coeffs=logit.coef_[0]
+                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rects.append(rect)
+            ax.set_ylabel('Coefficient')
+            ax.set_xticks(ind+width)
+            ax.set_xticklabels(['Bias','EV Diff'])
+            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+            save_to_png(fig, '%s.png' % logistic_small_ev_fname)
+            save_to_eps(fig, '%s.eps' % logistic_small_ev_fname)
+            plt.close(fig)
+
+            fig=Figure()
+            ax=fig.add_subplot(1,1,1)
+            ind=np.array([1,2])
+            width=0.35
+            rects=[]
+            for idx,stim_condition in enumerate(stim_conditions):
+                large_ev_diff_biases=[]
+                large_ev_diff_ev_diffs=[]
+                large_ev_diff_correct=[]
+                for i in range(len(all_ev_diffs[stim_condition])):
+                    if all_ev_diffs[stim_condition][i]>=bins[6]:
+                        large_ev_diff_biases.append(all_biases[stim_condition][i])
+                        large_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
+                        large_ev_diff_correct.append(all_correct[stim_condition][i])
+                x=np.zeros((len(large_ev_diff_biases),2))
+                x[:,0]=np.array(large_ev_diff_biases)
+                x[:,1]=np.array(large_ev_diff_ev_diffs)
+                y=np.array(large_ev_diff_correct)
+                logit=LogisticRegression()
+                logit=logit.fit(x,y)
+                model_coeffs=logit.coef_[0]
+                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rects.append(rect)
+            ax.set_ylabel('Coefficient')
+            ax.set_xticks(ind+width)
+            ax.set_xticklabels(['Bias','EV Diff'])
+            ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+            save_to_png(fig, '%s.png' % logistic_large_ev_fname)
+            save_to_eps(fig, '%s.eps' % logistic_large_ev_fname)
             plt.close(fig)
 
         furl='img/beta_pyr_rate_diff'
