@@ -2458,7 +2458,7 @@ class RLReport:
                 small_ev_diff_ev_diffs=[]
                 small_ev_diff_correct=[]
                 for i in range(len(all_ev_diffs[stim_condition])):
-                    if all_ev_diffs[stim_condition][i]<=bins[3]:
+                    if all_ev_diffs[stim_condition][i]<=bins[5]:
                         small_ev_diff_biases.append(all_biases[stim_condition][i])
                         small_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         small_ev_diff_correct.append(all_correct[stim_condition][i])
@@ -2475,7 +2475,7 @@ class RLReport:
                 large_ev_diff_ev_diffs=[]
                 large_ev_diff_correct=[]
                 for i in range(len(all_ev_diffs[stim_condition])):
-                    if all_ev_diffs[stim_condition][i]>=bins[6]:
+                    if all_ev_diffs[stim_condition][i]>bins[5]:
                         large_ev_diff_biases.append(all_biases[stim_condition][i])
                         large_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         large_ev_diff_correct.append(all_correct[stim_condition][i])
@@ -2514,7 +2514,7 @@ class RLReport:
                 small_ev_diff_ev_diffs=[]
                 small_ev_diff_correct=[]
                 for i in range(len(all_ev_diffs[stim_condition])):
-                    if all_ev_diffs[stim_condition][i]<=bins[3]:
+                    if all_ev_diffs[stim_condition][i]<=bins[5]:
                         small_ev_diff_biases.append(all_biases[stim_condition][i])
                         small_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         small_ev_diff_correct.append(all_correct[stim_condition][i])
@@ -2530,7 +2530,7 @@ class RLReport:
                 large_ev_diff_ev_diffs=[]
                 large_ev_diff_correct=[]
                 for i in range(len(all_ev_diffs[stim_condition])):
-                    if all_ev_diffs[stim_condition][i]>=bins[6]:
+                    if all_ev_diffs[stim_condition][i]>bins[5]:
                         large_ev_diff_biases.append(all_biases[stim_condition][i])
                         large_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         large_ev_diff_correct.append(all_correct[stim_condition][i])
