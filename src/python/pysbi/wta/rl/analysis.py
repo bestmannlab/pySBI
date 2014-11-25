@@ -2403,7 +2403,7 @@ class RLReport:
                                         chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                                         bias=np.abs(chosen_mean-unchosen_mean)
-                                        ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+                                        ev_diff=np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
                                         ratio=bias/ev_diff
                                         choice_correct=0.0
                                         if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
