@@ -2452,10 +2452,11 @@ class RLReport:
             save_to_eps(fig, '%s.eps' % ratio_fname)
             plt.close(fig)
 
+            width=0.3
+
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1,2])
-            width=0.35
             stim_conditions=['control','anode','cathode']
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
@@ -2466,7 +2467,7 @@ class RLReport:
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
@@ -2479,7 +2480,6 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1])
-            width=0.35
             stim_conditions=['control','anode','cathode']
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
@@ -2489,7 +2489,7 @@ class RLReport:
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
@@ -2502,7 +2502,6 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1,2])
-            width=0.35
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
@@ -2520,7 +2519,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
@@ -2533,7 +2532,6 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1,2])
-            width=0.35
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
@@ -2551,7 +2549,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
@@ -2564,7 +2562,6 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1])
-            width=0.35
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
@@ -2581,7 +2578,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
@@ -2594,7 +2591,6 @@ class RLReport:
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
             ind=np.array([1])
-            width=0.35
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
@@ -2611,7 +2607,7 @@ class RLReport:
                 logit=LogisticRegression()
                 logit=logit.fit(x,y)
                 model_coeffs=logit.coef_[0]
-                rect=ax.bar(ind+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                rect=ax.bar(ind+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
                 rects.append(rect)
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
