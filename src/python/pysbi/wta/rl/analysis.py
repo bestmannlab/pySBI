@@ -1640,23 +1640,23 @@ class RLReport:
             std_err_diff_rates.append(self.std_err_diff_rates_small_ev_diff[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
-        self.stim_diff_small_ev_freidman=stats.friedmanchisquare(*stim_diffs.values())
-        self.stim_diff_small_ev_control_wilcoxon={}
-        self.stim_diff_small_ev_anode_wilcoxon={}
-        self.stim_diff_small_ev_cathode_wilcoxon={}
+        self.stim_diff_small_ev_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        self.stim_diff_small_ev_diff_control_wilcoxon={}
+        self.stim_diff_small_ev_diff_anode_wilcoxon={}
+        self.stim_diff_small_ev_diff_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
@@ -1688,23 +1688,23 @@ class RLReport:
             std_err_diff_rates.append(self.std_err_diff_rates_large_ev_diff[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
-        self.stim_diff_large_ev_freidman=stats.friedmanchisquare(*stim_diffs.values())
-        self.stim_diff_large_ev_control_wilcoxon={}
-        self.stim_diff_large_ev_anode_wilcoxon={}
-        self.stim_diff_large_ev_cathode_wilcoxon={}
+        self.stim_diff_large_ev_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        self.stim_diff_large_ev_diff_control_wilcoxon={}
+        self.stim_diff_large_ev_diff_anode_wilcoxon={}
+        self.stim_diff_large_ev_diff_cathode_wilcoxon={}
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                self.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
