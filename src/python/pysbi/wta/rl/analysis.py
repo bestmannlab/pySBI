@@ -3078,6 +3078,38 @@ def debug_trial_plot(file_name):
         plt.ylabel('Firing Rate (Hz)')
         plt.show()
 
+def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
+    stim_conditions=['control','anode','cathode']
+    stim_condition_reports={}
+    excluded=None
+    for stim_condition in stim_conditions:
+        print(stim_condition)
+        stim_condition_report_dir=os.path.join(reports_dir,stim_condition)
+        stim_condition_reports[stim_condition] = StimConditionReport(data_dir, file_prefix,
+            stim_condition, stim_condition_report_dir, num_subjects, '')
+        stim_condition_reports[stim_condition].create_report(None, excluded=excluded,
+            regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False)
+    for stim_condition in stim_conditions:
+        f=open('%s.csv' % os.path.join(reports_dir,stim_condition),'w')
+        stim_report=stim_condition_reports[stim_condition]
+        for virtual_subj_id in range(stim_report.num_subjects):
+            if not virtual_subj_id in stim_report.excluded_sessions:
+                session_prefix=file_prefix % (virtual_subj_id,stim_condition)
+                session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                if data.est_beta<30.0:
+                    for trial in range(len(data.trial_e_rates)):
+                        if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                            chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            bias=np.abs(chosen_mean-unchosen_mean)
+                            ev_diff=np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
+                            choice_correct=0.0
+                            if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                                choice_correct=1.0
+                            f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,choice_correct))
+            f.close()
+
 def rename_data_files(data_dir):
     for file_name in os.listdir(data_dir):
         if os.path.isfile(os.path.join(data_dir, file_name)):
