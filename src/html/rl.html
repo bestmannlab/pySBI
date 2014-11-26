@@ -369,7 +369,7 @@ p={{ rinfo.baseline_pyr_small_ev_diff_friedman[1] }}
 <h5>Interneuron</h5>
 {% for stim_condition in rinfo.stim_conditions %}
 <br>
-{{ stim_condition }}: {{ rinfo.baseline_inh_small_ev_diff_means[stim_condition] }} +/- {{ rinfo.baseline_inh_std_small_ev_diff_errs[stim_condition] }}
+{{ stim_condition }}: {{ rinfo.baseline_inh_small_ev_diff_means[stim_condition] }} +/- {{ rinfo.baseline_inh_small_ev_diff_std_errs[stim_condition] }}
 {% endfor %}
 <h5>Friedman Test</h5>
 chi_sq={{ rinfo.baseline_inh_small_ev_diff_friedman[0] }}
