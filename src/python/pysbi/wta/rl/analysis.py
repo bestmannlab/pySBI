@@ -1637,6 +1637,7 @@ class RLReport:
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-5,40])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -1666,6 +1667,7 @@ class RLReport:
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-5,40])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -1695,6 +1697,7 @@ class RLReport:
                         'dashed', '%s, unchosen' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-5,40])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -1718,6 +1721,7 @@ class RLReport:
                         condition_colors[stim_condition], None, '%s, chosen' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-1,8])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -1741,6 +1745,7 @@ class RLReport:
                         condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-1,8])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -1764,6 +1769,7 @@ class RLReport:
                         condition_colors[stim_condition], None, '%s' % stim_condition, .5*ms)
             ax.set_xlabel('Time')
             ax.set_ylabel('Firing Rate (Hz)')
+            ax.set_ylim([-1,8])
             ax.legend(loc=0)
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
@@ -2444,15 +2450,20 @@ class RLReport:
             ind=np.array(range(1,7))
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
-                x=np.zeros((len(all_biases[stim_condition]),2))
+                num_trials=len(all_biases[stim_condition])
+                x=np.zeros((num_trials,2))
                 x[:,0]=np.array(all_biases[stim_condition])
                 x[:,1]=np.array(all_ev_diffs[stim_condition])
                 print(np.cov(np.transpose(x))[0,1])
                 y=np.array(all_correct[stim_condition])
-                logit = LogisticRegression()
-                logit = logit.fit(x, y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros((2,100))
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit = LogisticRegression()
+                    logit = logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0), color=condition_colors[stim_condition])
                 rects.append(rect)
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
@@ -2463,14 +2474,19 @@ class RLReport:
                         small_ev_diff_biases.append(all_biases[stim_condition][i])
                         small_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         small_ev_diff_correct.append(all_correct[stim_condition][i])
-                x=np.zeros((len(small_ev_diff_biases),2))
+                num_trials=len(small_ev_diff_biases)
+                x=np.zeros((num_trials,2))
                 x[:,0]=np.array(small_ev_diff_biases)
                 x[:,1]=np.array(small_ev_diff_ev_diffs)
                 y=np.array(small_ev_diff_correct)
-                logit=LogisticRegression()
-                logit=logit.fit(x,y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(np.array([3,4])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros((2,100))
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit = LogisticRegression()
+                    logit = logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(np.array([3,4])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0),color=condition_colors[stim_condition])
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
                 large_ev_diff_ev_diffs=[]
@@ -2480,17 +2496,22 @@ class RLReport:
                         large_ev_diff_biases.append(all_biases[stim_condition][i])
                         large_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         large_ev_diff_correct.append(all_correct[stim_condition][i])
-                x=np.zeros((len(large_ev_diff_biases),2))
+                num_trials=len(large_ev_diff_biases)
+                x=np.zeros((num_trials,2))
                 x[:,0]=np.array(large_ev_diff_biases)
                 x[:,1]=np.array(large_ev_diff_ev_diffs)
                 y=np.array(large_ev_diff_correct)
-                logit=LogisticRegression()
-                logit=logit.fit(x,y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(np.array([5,6])+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros(2,100)
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit=LogisticRegression()
+                    logit=logit.fit(x[permute_trials[0:int(num_trials/2.0)],:],y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(np.array([5,6])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0),color=condition_colors[stim_condition])
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
-            ax.set_xticklabels(['Bias (overall)','EV Diff (overall)', 'Bias (small EV diff)', 'EV Diff (large EV diff)', 'Bias (large EV diff)', 'EV Diff (large EV diff)'])
+            ax.set_xticklabels(['Bias (overall)','EV Diff (overall)', 'Bias (small EV diff)', 'EV Diff (small EV diff)', 'Bias (large EV diff)', 'EV Diff (large EV diff)'])
             ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
             save_to_png(fig, '%s.png' % logistic_fname)
             save_to_eps(fig, '%s.eps' % logistic_fname)
@@ -2502,13 +2523,18 @@ class RLReport:
             stim_conditions=['control','anode','cathode']
             rects=[]
             for idx,stim_condition in enumerate(stim_conditions):
-                x=np.zeros((len(all_biases[stim_condition]),1))
+                num_trials=len(all_biases[stim_condition])
+                x=np.zeros((num_trials,1))
                 x[:,0]=np.array(all_biases[stim_condition])
                 y=np.array(all_correct[stim_condition])
-                logit = LogisticRegression()
-                logit = logit.fit(x, y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(1+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros(2,100)
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit = LogisticRegression()
+                    logit = logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(1+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0), color=condition_colors[stim_condition])
                 rects.append(rect)
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
@@ -2519,13 +2545,18 @@ class RLReport:
                         small_ev_diff_biases.append(all_biases[stim_condition][i])
                         small_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         small_ev_diff_correct.append(all_correct[stim_condition][i])
-                x=np.zeros((len(small_ev_diff_biases),1))
+                num_trials=len(small_ev_diff_biases)
+                x=np.zeros((num_trials,1))
                 x[:,0]=np.array(small_ev_diff_biases)
                 y=np.array(small_ev_diff_correct)
-                logit=LogisticRegression()
-                logit=logit.fit(x,y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(2+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros(2,100)
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit=LogisticRegression()
+                    logit=logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(2+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0), color=condition_colors[stim_condition])
             for idx,stim_condition in enumerate(stim_conditions):
                 large_ev_diff_biases=[]
                 large_ev_diff_ev_diffs=[]
@@ -2535,13 +2566,18 @@ class RLReport:
                         large_ev_diff_biases.append(all_biases[stim_condition][i])
                         large_ev_diff_ev_diffs.append(all_ev_diffs[stim_condition][i])
                         large_ev_diff_correct.append(all_correct[stim_condition][i])
-                x=np.zeros((len(large_ev_diff_biases),1))
+                num_trials=len(large_ev_diff_biases)
+                x=np.zeros((num_trials,1))
                 x[:,0]=np.array(large_ev_diff_biases)
                 y=np.array(large_ev_diff_correct)
-                logit=LogisticRegression()
-                logit=logit.fit(x,y)
-                model_coeffs=logit.coef_[0]
-                rect=ax.bar(3+width*.5+(idx-1)*width, model_coeffs, width, color=condition_colors[stim_condition])
+                coeffs=np.zeros(2,100)
+                for i in range(100):
+                    permute_trials=np.random.permutation(range(num_trials))
+                    logit=LogisticRegression()
+                    logit=logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
+                    coeffs[:,i]=logit.coef_[0]
+                rect=ax.bar(3+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+                    yerr=np.std(coeffs,axis=1)/np.sqrt(100.0), color=condition_colors[stim_condition])
             ax.set_ylabel('Coefficient')
             ax.set_xticks(ind+width)
             ax.set_xticklabels(['Bias (overall)', 'Bias (small EV diff)', 'Bias (large EV diff)'])
