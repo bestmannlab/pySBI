@@ -3100,14 +3100,11 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
                 if data.est_beta<30.0:
                     for trial in range(len(data.trial_e_rates)):
                         if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
-                            chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            bias=np.abs(chosen_mean-unchosen_mean)
-                            ev_diff=np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
-                            choice_correct=0.0
-                            if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
-                                choice_correct=1.0
-                            f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,choice_correct))
+                            left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                            bias=left_mean-right_mean
+                            ev_diff=data.inputs[0,trial]-data.inputs[1,trial]
+                            f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.choice[trial]))
         f.close()
 
 def rename_data_files(data_dir):
