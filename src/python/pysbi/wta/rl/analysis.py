@@ -2620,6 +2620,7 @@ class RLReport:
             
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
+                    f=open('%s.csv' % os.path.join(self.reports_dir,stim_condition),'w')
                     stim_report=self.stim_condition_reports[stim_condition]
                     for virtual_subj_id in range(stim_report.num_subjects):
                         if not virtual_subj_id in stim_report.excluded_sessions:
@@ -2648,6 +2649,8 @@ class RLReport:
                                         all_biases[stim_condition].append(bias)
                                         all_ev_diffs[stim_condition].append(ev_diff)
                                         all_correct[stim_condition].append(choice_correct)
+                                        f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,choice_correct))
+                    f.close()
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
