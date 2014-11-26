@@ -3108,7 +3108,7 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
                             if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
                                 choice_correct=1.0
                             f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,choice_correct))
-            f.close()
+        f.close()
 
 def rename_data_files(data_dir):
     for file_name in os.listdir(data_dir):
