@@ -569,7 +569,7 @@ class StimConditionReport:
         #return np.mean(pyr_rate_diffs),np.std(pyr_rate_diffs)/np.sqrt(trials)
         return pyr_rate_diffs,subjects
 
-    def compute_baseline_rates(self):
+    def compute_baseline_rates(self, min_ev_diff, max_ev_diff):
         pyr_rates=[]
         inh_rates=[]
         subjects=0
@@ -581,10 +581,12 @@ class StimConditionReport:
                 session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
                 for trial in range(len(data.trial_e_rates)):
-                    subjects+=1.0
-                    subj_pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
-                                      data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
-                    subj_inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
+                    ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+                    if ev_diff>=min_ev_diff and ev_diff<max_ev_diff:
+                        subjects+=1.0
+                        subj_pyr_rates.append(np.mean((data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]+
+                                          data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])/2.0))
+                        subj_inh_rates.append(np.mean(data.trial_i_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))]))
                 pyr_rates.append(np.mean(subj_pyr_rates))
                 inh_rates.append(np.mean(subj_inh_rates))
         #return np.mean(pyr_rates),np.std(pyr_rates)/np.sqrt(trials),np.mean(inh_rates),np.std(inh_rates)/np.sqrt(trials)
@@ -1329,7 +1331,7 @@ class RLReport:
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
-            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates()
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(0,100000)
             self.baseline_pyr_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
             self.baseline_pyr_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
             pyr_means.append(self.baseline_pyr_means[stim_condition])
@@ -1365,6 +1367,147 @@ class RLReport:
                 self.baseline_pyr_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
                 T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
                 self.baseline_inh_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+        if regenerate_plots:
+            fig=Figure(figsize=(20,6))
+            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+            ax=fig.add_subplot(2,1,1)
+            ax.bar(pos,pyr_means, width=.5,yerr=pyr_std_errs,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Pyramidal Rate (Hz)')
+            ax=fig.add_subplot(2,1,2)
+            ax.bar(pos,inh_means, width=.5,yerr=inh_sd_errs,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Interneuron Rate (Hz)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+
+        # Create baseline rate plot
+        furl='img/baseline_rate_small_ev_diff'
+        fname=os.path.join(self.reports_dir,furl)
+        self.baseline_rate_small_ev_diff_url='%s.png' % furl
+        pyr_means=[]
+        pyr_std_errs=[]
+        inh_means=[]
+        inh_sd_errs=[]
+        self.baseline_pyr_small_ev_means={}
+        self.baseline_pyr_small_ev_std_errs={}
+        self.baseline_inh_small_ev_means={}
+        self.baseline_inh_small_ev_std_errs={}
+        stim_pyr_rates={}
+        stim_inh_rates={}
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[0],ev_diff_bins[3])
+            self.baseline_pyr_small_ev_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
+            self.baseline_pyr_small_ev_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
+            pyr_means.append(self.baseline_pyr_small_ev_means[stim_condition])
+            pyr_std_errs.append(self.baseline_pyr_small_ev_std_errs[stim_condition])
+            self.baseline_inh_small_ev_means[stim_condition]=np.mean(stim_inh_rates[stim_condition])
+            self.baseline_inh_small_ev_std_errs[stim_condition]=np.std(stim_inh_rates[stim_condition])/np.sqrt(trials)
+            inh_means.append(self.baseline_inh_small_ev_means[stim_condition])
+            inh_sd_errs.append(self.baseline_inh_small_ev_std_errs[stim_condition])
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition]=np.array(stim_pyr_rates[stim_condition])
+            stim_inh_rates[stim_condition]=np.array(stim_inh_rates[stim_condition])
+        self.baseline_pyr_small_ev_diff_friedman=stats.friedmanchisquare(*stim_pyr_rates.values())
+        self.baseline_pyr_small_ev_diff_control_wilcoxon={}
+        self.baseline_pyr_small_ev_diff_anode_wilcoxon={}
+        self.baseline_pyr_small_ev_diff_cathode_wilcoxon={}
+        self.baseline_inh_small_ev_diff_friedman=stats.friedmanchisquare(*stim_inh_rates.values())
+        self.baseline_inh_small_ev_diff_control_wilcoxon={}
+        self.baseline_inh_small_ev_diff_anode_wilcoxon={}
+        self.baseline_inh_small_ev_diff_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
+                self.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            if stim_condition.startswith('anode_control'):
+                T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            elif stim_condition.startswith('cathode_control'):
+                T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+        if regenerate_plots:
+            fig=Figure(figsize=(20,6))
+            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+            ax=fig.add_subplot(2,1,1)
+            ax.bar(pos,pyr_means, width=.5,yerr=pyr_std_errs,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Pyramidal Rate (Hz)')
+            ax=fig.add_subplot(2,1,2)
+            ax.bar(pos,inh_means, width=.5,yerr=inh_sd_errs,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Interneuron Rate (Hz)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create baseline rate plot
+        furl='img/baseline_rate_large_ev_diff'
+        fname=os.path.join(self.reports_dir,furl)
+        self.baseline_rate_large_ev_diff_url='%s.png' % furl
+        pyr_means=[]
+        pyr_std_errs=[]
+        inh_means=[]
+        inh_sd_errs=[]
+        self.baseline_pyr_large_ev_diff_means={}
+        self.baseline_pyr_large_ev_diff_std_errs={}
+        self.baseline_inh_large_ev_diff_means={}
+        self.baseline_inh_large_ev_diff_std_errs={}
+        stim_pyr_rates={}
+        stim_inh_rates={}
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[6],ev_diff_bins[-1])
+            self.baseline_pyr_large_ev_diff_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
+            self.baseline_pyr_large_ev_diff_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
+            pyr_means.append(self.baseline_pyr_large_ev_diff_means[stim_condition])
+            pyr_std_errs.append(self.baseline_pyr_large_ev_diff_std_errs[stim_condition])
+            self.baseline_inh_large_ev_diff_means[stim_condition]=np.mean(stim_inh_rates[stim_condition])
+            self.baseline_inh_large_ev_diff_std_errs[stim_condition]=np.std(stim_inh_rates[stim_condition])/np.sqrt(trials)
+            inh_means.append(self.baseline_inh_large_ev_diff_means[stim_condition])
+            inh_sd_errs.append(self.baseline_inh_large_ev_diff_std_errs[stim_condition])
+        for stim_condition in self.stim_conditions:
+            stim_pyr_rates[stim_condition]=np.array(stim_pyr_rates[stim_condition])
+            stim_inh_rates[stim_condition]=np.array(stim_inh_rates[stim_condition])
+        self.baseline_pyr_large_ev_diff_friedman=stats.friedmanchisquare(*stim_pyr_rates.values())
+        self.baseline_pyr_large_ev_diff_control_wilcoxon={}
+        self.baseline_pyr_large_ev_diff_anode_wilcoxon={}
+        self.baseline_pyr_large_ev_diff_cathode_wilcoxon={}
+        self.baseline_inh_large_ev_diff_friedman=stats.friedmanchisquare(*stim_inh_rates.values())
+        self.baseline_inh_large_ev_diff_control_wilcoxon={}
+        self.baseline_inh_large_ev_diff_anode_wilcoxon={}
+        self.baseline_inh_large_ev_diff_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
+                self.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            if stim_condition.startswith('anode_control'):
+                T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            elif stim_condition.startswith('cathode_control'):
+                T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
+                self.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+                T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
+                self.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1442,14 +1585,13 @@ class RLReport:
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(0,100000)
             self.mean_diff_rates[stim_condition]=np.mean(stim_diffs[stim_condition])
             self.std_err_diff_rates[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
             mean_diff_rates.append(self.mean_diff_rates[stim_condition])
             std_err_diff_rates.append(self.std_err_diff_rates[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
-
         self.stim_diff_freidman=stats.friedmanchisquare(*stim_diffs.values())
         self.stim_diff_control_wilcoxon={}
         self.stim_diff_anode_wilcoxon={}
@@ -1467,6 +1609,100 @@ class RLReport:
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
                 self.stim_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+        if regenerate_plots:
+            fig=Figure(figsize=(20,6))
+            ax=fig.add_subplot(1,1,1)
+            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+            ax.bar(pos,mean_diff_rates,width=.5,yerr=std_err_diff_rates,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Firing Rate Diff (Hz)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create rate diff firing rate plot
+        furl='img/firing_rate_diff_small_ev'
+        fname = os.path.join(self.reports_dir, furl)
+        self.firing_rate_diff_small_ev_diff_url = '%s.png' % furl
+        self.mean_diff_rates_small_ev_diff={}
+        self.std_err_diff_rates_small_ev_diff={}
+        mean_diff_rates=[]
+        std_err_diff_rates=[]
+        stim_diffs={}
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            self.mean_diff_rates_small_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
+            self.std_err_diff_rates_small_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
+            mean_diff_rates.append(self.mean_diff_rates_small_ev_diff[stim_condition])
+            std_err_diff_rates.append(self.std_err_diff_rates_small_ev_diff[stim_condition])
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
+        self.stim_diff_small_ev_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        self.stim_diff_small_ev_control_wilcoxon={}
+        self.stim_diff_small_ev_anode_wilcoxon={}
+        self.stim_diff_small_ev_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_small_ev_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            if stim_condition.startswith('anode_control'):
+                T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_small_ev_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            elif stim_condition.startswith('cathode_control'):
+                T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_small_ev_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+        if regenerate_plots:
+            fig=Figure(figsize=(20,6))
+            ax=fig.add_subplot(1,1,1)
+            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+            ax.bar(pos,mean_diff_rates,width=.5,yerr=std_err_diff_rates,align='center',ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('Firing Rate Diff (Hz)')
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        # Create rate diff firing rate plot
+        furl='img/firing_rate_diff_large_ev'
+        fname = os.path.join(self.reports_dir, furl)
+        self.firing_rate_diff_large_ev_diff_url = '%s.png' % furl
+        self.mean_diff_rates_large_ev_diff={}
+        self.std_err_diff_rates_large_ev_diff={}
+        mean_diff_rates=[]
+        std_err_diff_rates=[]
+        stim_diffs={}
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[6],ev_diff_bins[-1])
+            self.mean_diff_rates_large_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
+            self.std_err_diff_rates_large_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
+            mean_diff_rates.append(self.mean_diff_rates_large_ev_diff[stim_condition])
+            std_err_diff_rates.append(self.std_err_diff_rates_large_ev_diff[stim_condition])
+        for stim_condition in self.stim_conditions:
+            stim_diffs[stim_condition]=np.array(stim_diffs[stim_condition])
+        self.stim_diff_large_ev_freidman=stats.friedmanchisquare(*stim_diffs.values())
+        self.stim_diff_large_ev_control_wilcoxon={}
+        self.stim_diff_large_ev_anode_wilcoxon={}
+        self.stim_diff_large_ev_cathode_wilcoxon={}
+        for stim_condition in self.stim_conditions:
+            if not stim_condition=='control':
+                T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_large_ev_control_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            if stim_condition.startswith('anode_control'):
+                T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_large_ev_anode_wilcoxon[stim_condition]=(T,p*num_comparisons)
+            elif stim_condition.startswith('cathode_control'):
+                T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
+                # get two sided p
+                self.stim_diff_large_ev_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons)
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
@@ -2501,7 +2737,7 @@ class RLReport:
                 x[:,0]=np.array(large_ev_diff_biases)
                 x[:,1]=np.array(large_ev_diff_ev_diffs)
                 y=np.array(large_ev_diff_correct)
-                coeffs=np.zeros(2,100)
+                coeffs=np.zeros((2,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit=LogisticRegression()
@@ -2527,7 +2763,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(all_biases[stim_condition])
                 y=np.array(all_correct[stim_condition])
-                coeffs=np.zeros(2,100)
+                coeffs=np.zeros((2,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit = LogisticRegression()
@@ -2549,7 +2785,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(small_ev_diff_biases)
                 y=np.array(small_ev_diff_correct)
-                coeffs=np.zeros(2,100)
+                coeffs=np.zeros((2,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit=LogisticRegression()
@@ -2570,7 +2806,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(large_ev_diff_biases)
                 y=np.array(large_ev_diff_correct)
-                coeffs=np.zeros(2,100)
+                coeffs=np.zeros((2,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit=LogisticRegression()
