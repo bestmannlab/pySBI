@@ -1402,7 +1402,7 @@ class RLReport:
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
-            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[0],ev_diff_bins[3])
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[0],ev_diff_bins[5])
             self.baseline_pyr_small_ev_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
             self.baseline_pyr_small_ev_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
             pyr_means.append(self.baseline_pyr_small_ev_means[stim_condition])
@@ -1472,7 +1472,7 @@ class RLReport:
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
-            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[6],ev_diff_bins[-1])
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[5],ev_diff_bins[-1])
             self.baseline_pyr_large_ev_diff_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
             self.baseline_pyr_large_ev_diff_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
             pyr_means.append(self.baseline_pyr_large_ev_diff_means[stim_condition])
@@ -1632,7 +1632,7 @@ class RLReport:
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[5])
             self.mean_diff_rates_small_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
             self.std_err_diff_rates_small_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
             mean_diff_rates.append(self.mean_diff_rates_small_ev_diff[stim_condition])
@@ -1679,7 +1679,7 @@ class RLReport:
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[6],ev_diff_bins[-1])
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[5],ev_diff_bins[-1])
             self.mean_diff_rates_large_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
             self.std_err_diff_rates_large_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
             mean_diff_rates.append(self.mean_diff_rates_large_ev_diff[stim_condition])
@@ -2763,7 +2763,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(all_biases[stim_condition])
                 y=np.array(all_correct[stim_condition])
-                coeffs=np.zeros((2,100))
+                coeffs=np.zeros((1,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit = LogisticRegression()
@@ -2785,7 +2785,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(small_ev_diff_biases)
                 y=np.array(small_ev_diff_correct)
-                coeffs=np.zeros((2,100))
+                coeffs=np.zeros((1,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit=LogisticRegression()
@@ -2806,7 +2806,7 @@ class RLReport:
                 x=np.zeros((num_trials,1))
                 x[:,0]=np.array(large_ev_diff_biases)
                 y=np.array(large_ev_diff_correct)
-                coeffs=np.zeros((2,100))
+                coeffs=np.zeros((1,100))
                 for i in range(100):
                     permute_trials=np.random.permutation(range(num_trials))
                     logit=LogisticRegression()
