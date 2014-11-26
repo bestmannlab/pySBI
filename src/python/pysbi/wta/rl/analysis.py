@@ -1395,22 +1395,22 @@ class RLReport:
         pyr_std_errs=[]
         inh_means=[]
         inh_sd_errs=[]
-        self.baseline_pyr_small_ev_means={}
-        self.baseline_pyr_small_ev_std_errs={}
-        self.baseline_inh_small_ev_means={}
-        self.baseline_inh_small_ev_std_errs={}
+        self.baseline_pyr_small_ev_diff_means={}
+        self.baseline_pyr_small_ev_diff_std_errs={}
+        self.baseline_inh_small_ev_diff_means={}
+        self.baseline_inh_small_ev_diff_std_errs={}
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
             stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[0],ev_diff_bins[5])
-            self.baseline_pyr_small_ev_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
-            self.baseline_pyr_small_ev_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
-            pyr_means.append(self.baseline_pyr_small_ev_means[stim_condition])
-            pyr_std_errs.append(self.baseline_pyr_small_ev_std_errs[stim_condition])
-            self.baseline_inh_small_ev_means[stim_condition]=np.mean(stim_inh_rates[stim_condition])
-            self.baseline_inh_small_ev_std_errs[stim_condition]=np.std(stim_inh_rates[stim_condition])/np.sqrt(trials)
-            inh_means.append(self.baseline_inh_small_ev_means[stim_condition])
-            inh_sd_errs.append(self.baseline_inh_small_ev_std_errs[stim_condition])
+            self.baseline_pyr_small_ev_diff_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
+            self.baseline_pyr_small_ev_diff_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
+            pyr_means.append(self.baseline_pyr_small_ev_diff_means[stim_condition])
+            pyr_std_errs.append(self.baseline_pyr_small_ev_diff_std_errs[stim_condition])
+            self.baseline_inh_small_ev_diff_means[stim_condition]=np.mean(stim_inh_rates[stim_condition])
+            self.baseline_inh_small_ev_diff_std_errs[stim_condition]=np.std(stim_inh_rates[stim_condition])/np.sqrt(trials)
+            inh_means.append(self.baseline_inh_small_ev_diff_means[stim_condition])
+            inh_sd_errs.append(self.baseline_inh_small_ev_diff_std_errs[stim_condition])
         for stim_condition in self.stim_conditions:
             stim_pyr_rates[stim_condition]=np.array(stim_pyr_rates[stim_condition])
             stim_inh_rates[stim_condition]=np.array(stim_inh_rates[stim_condition])
