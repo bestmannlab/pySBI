@@ -3106,7 +3106,7 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
                 ev_diffs=[]
                 correct=[]
                 for trial in range(len(data.trial_e_rates)):
-                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                    if data.choice[trial]>-1:
                         left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         bias=np.abs(left_mean-right_mean)
