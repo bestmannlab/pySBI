@@ -3090,22 +3090,21 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
         stim_condition_reports[stim_condition].create_report(None, excluded=excluded,
             regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False)
     for stim_condition in stim_conditions:
-        f=open('%s.csv' % os.path.join(reports_dir,stim_condition),'w')
         stim_report=stim_condition_reports[stim_condition]
         for virtual_subj_id in range(stim_report.num_subjects):
             if not virtual_subj_id in stim_report.excluded_sessions:
+                f=open('%s_subj_%d.csv' % (os.path.join(reports_dir,stim_condition),virtual_subj_id),'w')
                 session_prefix=file_prefix % (virtual_subj_id,stim_condition)
                 session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
                 data=FileInfo(session_report_file)
-                if data.est_beta<30.0:
-                    for trial in range(len(data.trial_e_rates)):
-                        if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
-                            left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                            bias=left_mean-right_mean
-                            ev_diff=data.inputs[0,trial]-data.inputs[1,trial]
-                            f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.choice[trial]))
-        f.close()
+                for trial in range(len(data.trial_e_rates)):
+                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                        left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        bias=left_mean-right_mean
+                        ev_diff=data.inputs[0,trial]-data.inputs[1,trial]
+                        f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.choice[trial]))
+                f.close()
 
 def rename_data_files(data_dir):
     for file_name in os.listdir(data_dir):
