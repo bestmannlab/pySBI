@@ -3095,34 +3095,36 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
 
     for idx,stim_condition in enumerate(stim_conditions):
         stim_report=stim_condition_reports[stim_condition]
-        coeffs=np.zeros((2,stim_report.num_subjects))
+        coeffs=[]
         for virtual_subj_id in range(stim_report.num_subjects):
             f=open('%s_subj_%d.csv' % (os.path.join(reports_dir,stim_condition),virtual_subj_id),'w')
             session_prefix=file_prefix % (virtual_subj_id,stim_condition)
             session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
             data=FileInfo(session_report_file)
-            biases=[]
-            ev_diffs=[]
-            correct=[]
-            for trial in range(len(data.trial_e_rates)):
-                if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
-                    left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                    bias=np.abs(left_mean-right_mean)
-                    ev_diff=np.abs(data.inputs[0,trial]-data.inputs[1,trial])
-                    biases.append(bias)
-                    ev_diffs.append(ev_diff)
-                    correct.append(data.rew[trial])
-                    f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.rew[trial]))
-            f.close()
+            if data.est_beta<30.0:
+                biases=[]
+                ev_diffs=[]
+                correct=[]
+                for trial in range(len(data.trial_e_rates)):
+                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                        left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        bias=np.abs(left_mean-right_mean)
+                        ev_diff=np.abs(data.inputs[0,trial]-data.inputs[1,trial])
+                        biases.append(bias)
+                        ev_diffs.append(ev_diff)
+                        correct.append(data.rew[trial])
+                        f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.rew[trial]))
+                f.close()
 
-            x=np.zeros((len(biases),2))
-            x[:,0]=np.array(biases)
-            x[:,1]=np.array(ev_diffs)
-            y=np.array(correct)
-            logit = LogisticRegression()
-            logit = logit.fit(x, y)
-            coeffs[:,virtual_subj_id]=logit.coef_[0]
+                x=np.zeros((len(biases),2))
+                x[:,0]=np.array(biases)
+                x[:,1]=np.array(ev_diffs)
+                y=np.array(correct)
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                coeffs.append(logit.coef_[0])
+        coeffs=np.array(coeffs)
         rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
             yerr=np.std(coeffs,axis=1)/np.sqrt(stim_report.num_subjects), color=condition_colors[stim_condition])
         rects.append(rect)
