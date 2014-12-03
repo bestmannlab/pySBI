@@ -2620,37 +2620,33 @@ class RLReport:
             
             for stim_condition in self.stim_conditions:
                 if stim_condition=='control' or stim_condition=='anode' or stim_condition=='cathode':
-                    f=open('%s.csv' % os.path.join(self.reports_dir,stim_condition),'w')
                     stim_report=self.stim_condition_reports[stim_condition]
                     for virtual_subj_id in range(stim_report.num_subjects):
                         if not virtual_subj_id in stim_report.excluded_sessions:
                             session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
                             session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
                             data=FileInfo(session_report_file)
-                            if data.est_beta<30.0:
-                                for trial in range(len(data.trial_e_rates)):
-                                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
-                                        chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                        unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                                        bias=np.abs(chosen_mean-unchosen_mean)
-                                        ev_diff=np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
-                                        ratio=bias/ev_diff
-                                        choice_correct=0.0
-                                        if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
-                                            choice_correct=1.0
-                                        if ratio<1.9:
-                                            rate_diff_ratios.append(ratio)
-                                            correct.append(choice_correct)
-                                            ev_diffs.append(ev_diff)
-                                        if not stim_condition in all_biases:
-                                            all_biases[stim_condition]=[]
-                                            all_ev_diffs[stim_condition]=[]
-                                            all_correct[stim_condition]=[]
-                                        all_biases[stim_condition].append(bias)
-                                        all_ev_diffs[stim_condition].append(ev_diff)
-                                        all_correct[stim_condition].append(choice_correct)
-                                        f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,choice_correct))
-                    f.close()
+                            for trial in range(len(data.trial_e_rates)):
+                                if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                                    chosen_mean=np.mean(data.trial_e_rates[trial][data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                    unchosen_mean=np.mean(data.trial_e_rates[trial][1-data.choice[trial],int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                                    bias=np.abs(chosen_mean-unchosen_mean)
+                                    ev_diff=np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])
+                                    ratio=bias/ev_diff
+                                    choice_correct=0.0
+                                    if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                                        choice_correct=1.0
+                                    if ratio<1.9:
+                                        rate_diff_ratios.append(ratio)
+                                        correct.append(choice_correct)
+                                        ev_diffs.append(ev_diff)
+                                    if not stim_condition in all_biases:
+                                        all_biases[stim_condition]=[]
+                                        all_ev_diffs[stim_condition]=[]
+                                        all_correct[stim_condition]=[]
+                                    all_biases[stim_condition].append(bias)
+                                    all_ev_diffs[stim_condition].append(ev_diff)
+                                    all_correct[stim_condition].append(choice_correct)
 
             fig=Figure()
             ax=fig.add_subplot(1,1,1)
@@ -3089,22 +3085,56 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
             stim_condition, stim_condition_report_dir, num_subjects, '')
         stim_condition_reports[stim_condition].create_report(None, excluded=excluded,
             regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False)
-    for stim_condition in stim_conditions:
+
+    fig=Figure(figsize=(16,6))
+    ax=fig.add_subplot(1,1,1)
+    ind=np.array([1,2])
+    width=0.3
+    rects=[]
+    condition_colors={'control':'b','anode':'r','cathode':'g'}
+
+    for idx,stim_condition in enumerate(stim_conditions):
         stim_report=stim_condition_reports[stim_condition]
+        coeffs=np.zeros((2,stim_report.num_subjects))
         for virtual_subj_id in range(stim_report.num_subjects):
-            if not virtual_subj_id in stim_report.excluded_sessions:
-                f=open('%s_subj_%d.csv' % (os.path.join(reports_dir,stim_condition),virtual_subj_id),'w')
-                session_prefix=file_prefix % (virtual_subj_id,stim_condition)
-                session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
-                data=FileInfo(session_report_file)
-                for trial in range(len(data.trial_e_rates)):
-                    if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
-                        left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                        right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
-                        bias=left_mean-right_mean
-                        ev_diff=data.inputs[0,trial]-data.inputs[1,trial]
-                        f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.choice[trial]))
-                f.close()
+            f=open('%s_subj_%d.csv' % (os.path.join(reports_dir,stim_condition),virtual_subj_id),'w')
+            session_prefix=file_prefix % (virtual_subj_id,stim_condition)
+            session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+            data=FileInfo(session_report_file)
+            biases=[]
+            ev_diffs=[]
+            correct=[]
+            for trial in range(len(data.trial_e_rates)):
+                if data.choice[trial]>-1 and np.abs(data.inputs[data.choice[trial],trial]-data.inputs[1-data.choice[trial],trial])>0:
+                    left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                    bias=np.abs(left_mean-right_mean)
+                    ev_diff=np.abs(data.inputs[0,trial]-data.inputs[1,trial])
+                    biases.append(bias)
+                    ev_diffs.append(ev_diff)
+                    correct.append(data.rew[trial])
+                    f.write('%0.4f,%0.4f,%d\n' % (bias,ev_diff,data.rew[trial]))
+            f.close()
+
+            x=np.zeros((len(biases),2))
+            x[:,0]=np.array(biases)
+            x[:,1]=np.array(ev_diffs)
+            y=np.array(correct)
+            logit = LogisticRegression()
+            logit = logit.fit(x, y)
+            coeffs[:,virtual_subj_id]=logit.coef_[0]
+        rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
+            yerr=np.std(coeffs,axis=1), color=condition_colors[stim_condition])
+        rects.append(rect)
+    ax.set_ylabel('Coefficient')
+    ax.set_xticks(ind+width)
+    ax.set_xticklabels(['Bias','EV Diff'])
+    ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+    logistic_furl='img/rate_diff_perc_correct_logistic'
+    logistic_fname = os.path.join(reports_dir,logistic_furl)
+    save_to_png(fig, '%s.png' % logistic_fname)
+    save_to_eps(fig, '%s.eps' % logistic_fname)
+    plt.close(fig)
 
 def rename_data_files(data_dir):
     for file_name in os.listdir(data_dir):
