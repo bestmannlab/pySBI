@@ -3125,8 +3125,8 @@ def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
         coeffs=np.array(coeffs)
-        rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
-            yerr=np.std(coeffs,axis=1)/np.sqrt(stim_report.num_subjects), color=condition_colors[stim_condition])
+        rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=0), width,
+            yerr=np.std(coeffs,axis=0)/np.sqrt(stim_report.num_subjects), color=condition_colors[stim_condition])
         rects.append(rect)
     ax.set_ylabel('Coefficient')
     ax.set_xticks(ind+width)
