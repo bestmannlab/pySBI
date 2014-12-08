@@ -192,15 +192,15 @@ chi_sq={{ rinfo.perc_correct_freidman[0] }}
 p={{ rinfo.perc_correct_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.perc_correct_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.perc_correct_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.perc_correct_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.perc_correct_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.perc_correct_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>% No Response</h4>
@@ -215,15 +215,15 @@ chi_sq={{ rinfo.no_response_freidman[0] }}
 p={{ rinfo.no_response_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.no_response_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.no_response_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.no_response_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.no_response_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.no_response_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.no_response_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.no_response_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.no_response_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.no_response_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.no_response_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.no_response_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.no_response_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.no_response_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Mean Pyramidal Firing Rates</h4>
@@ -311,15 +311,15 @@ chi_sq={{ rinfo.baseline_pyr_friedman[0] }}
 p={{ rinfo.baseline_pyr_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_pyr_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_pyr_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_pyr_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Interneuron</h5>
 {% for stim_condition in rinfo.stim_conditions %}
@@ -332,15 +332,15 @@ chi_sq={{ rinfo.baseline_inh_friedman[0] }}
 p={{ rinfo.baseline_inh_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_inh_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_inh_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_inh_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Mean Baseline Rates - Small EV Diff</h4>
@@ -356,15 +356,15 @@ chi_sq={{ rinfo.baseline_pyr_small_ev_diff_friedman[0] }}
 p={{ rinfo.baseline_pyr_small_ev_diff_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_pyr_small_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Interneuron</h5>
 {% for stim_condition in rinfo.stim_conditions %}
@@ -377,15 +377,15 @@ chi_sq={{ rinfo.baseline_inh_small_ev_diff_friedman[0] }}
 p={{ rinfo.baseline_inh_small_ev_diff_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_inh_small_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_inh_small_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Mean Baseline Rates - Large EV Diff</h4>
@@ -401,15 +401,15 @@ chi_sq={{ rinfo.baseline_pyr_large_ev_diff_friedman[0] }}
 p={{ rinfo.baseline_pyr_large_ev_diff_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_pyr_large_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Interneuron</h5>
 {% for stim_condition in rinfo.stim_conditions %}
@@ -422,15 +422,15 @@ chi_sq={{ rinfo.baseline_inh_large_ev_diff_friedman[0] }}
 p={{ rinfo.baseline_inh_large_ev_diff_friedman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_inh_large_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_inh_large_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Mean Baseline Rate Diffs (population differences)</h4>
@@ -445,15 +445,15 @@ chi_sq={{ rinfo.baseline_diff_freidman[0] }}
 p={{ rinfo.baseline_diff_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.baseline_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.baseline_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.baseline_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.baseline_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Firing Rate Diffs (chosen - unchosen)</h4>
@@ -468,15 +468,15 @@ chi_sq={{ rinfo.stim_diff_freidman[0] }}
 p={{ rinfo.stim_diff_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.stim_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.stim_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.stim_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Firing Rate Diffs (chosen - unchosen) - Small EV Diff</h4>
@@ -491,15 +491,15 @@ chi_sq={{ rinfo.stim_diff_small_ev_diff_freidman[0] }}
 p={{ rinfo.stim_diff_small_ev_diff_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.stim_diff_small_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_small_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_small_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.stim_diff_small_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.stim_diff_small_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Firing Rate Diffs (chosen - unchosen) - Large EV Diff</h4>
@@ -514,15 +514,15 @@ chi_sq={{ rinfo.stim_diff_large_ev_diff_freidman[0] }}
 p={{ rinfo.stim_diff_large_ev_diff_freidman[1] }}
 <h5>Compared to control</h5>
 {% for stim_condition in rinfo.stim_diff_large_ev_diff_control_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_control_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_large_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_large_ev_diff_control_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to anode</h5>
 {% for stim_condition in rinfo.stim_diff_large_ev_diff_anode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 <h5>Compared to cathode</h5>
 {% for stim_condition in rinfo.stim_diff_large_ev_diff_cathode_wilcoxon %}
-<br>{{ stim_condition }}, T={{ rinfo.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}
+<br>{{ stim_condition }}, W={{ rinfo.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
 <h4>Prestim Bias/Input Diff - % Correct</h4>
@@ -574,12 +574,14 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
         <th>Interneuron DCS</th>
         <th>Alpha change</th>
         <th>Mean alpha change</th>
-        <th>T (compared to control)</th>
+        <th>W (compared to control)</th>
         <th>p (compared to control)</th>
+        <th>Z (compared to control)</th>
         <th>Beta change</th>
         <th>Mean beta change</th>
-        <th>T (compared to control)</th>
+        <th>W (compared to control)</th>
         <th>p (compared to control)</th>
+        <th>Z (compared to control)</th>
     </tr>
     </thead>
     <tbody>
@@ -610,6 +612,11 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
         </td>
         <td>
             {% if not stim_condition=='control' %}
+            {{ rinfo.alpha_wilcoxon_test[stim_condition][2] }}
+            {% endif %}
+        </td>
+        <td>
+            {% if not stim_condition=='control' %}
                 <img width=500px src="{{ rinfo.stim_beta_change_urls[stim_condition] }}"/>
             {% endif %}
         </td>
@@ -628,6 +635,11 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
             {{ rinfo.beta_wilcoxon_test[stim_condition][1] }}
             {% endif %}
         </td>
+        <td>
+            {% if not stim_condition=='control' %}
+            {{ rinfo.beta_wilcoxon_test[stim_condition][2] }}
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
     </tbody>
@@ -639,10 +651,12 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
     <thead>
         <tr>
             <th>Condition</th>
-            <th>alpha T (compared to anode)</th>
+            <th>alpha W (compared to anode)</th>
             <th>alpha p (compared to anode)</th>
-            <th>beta T (compared to anode)</th>
+            <th>alpha Z (compared to anode)</th>
+            <th>beta W (compared to anode)</th>
             <th>beta p (compared to anode)</th>
+            <th>beta Z (compared to anode)</th>
         </tr>
     </thead>
     <tbody>
@@ -652,8 +666,10 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
                     <td>{{ stim_condition }}</td>
                     <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][0] }}</td>
                     <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][1] }}</td>
+                    <td>{{ rinfo.anode_alpha_wilcoxon_test[stim_condition][2] }}</td>
                     <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][0] }}</td>
                     <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][1] }}</td>
+                    <td>{{ rinfo.anode_beta_wilcoxon_test[stim_condition][2] }}</td>
                 </tr>
             {% endif %}
         {% endfor %}
@@ -664,10 +680,12 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
     <thead>
     <tr>
         <th>Condition</th>
-        <th>alpha T (compared to cathode)</th>
+        <th>alpha W (compared to cathode)</th>
         <th>alpha p (compared to cathode)</th>
-        <th>beta T (compared to cathode)</th>
+        <th>alpha Z (compared to cathode)</th>
+        <th>beta W (compared to cathode)</th>
         <th>beta p (compared to cathode)</th>
+        <th>beta Z (compared to cathode)</th>
     </tr>
     </thead>
     <tbody>
@@ -677,8 +695,10 @@ beta: chi_sq={{ rinfo.beta_friedman[0] }}
         <td>{{ stim_condition }}</td>
         <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][0] }}</td>
         <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][1] }}</td>
+        <td>{{ rinfo.cathode_alpha_wilcoxon_test[stim_condition][2] }}</td>
         <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][0] }}</td>
         <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][1] }}</td>
+        <td>{{ rinfo.cathode_beta_wilcoxon_test[stim_condition][2] }}</td>
     </tr>
     {% endif %}
     {% endfor %}
