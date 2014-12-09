@@ -3075,7 +3075,7 @@ def debug_trial_plot(file_name):
         plt.ylabel('Firing Rate (Hz)')
         plt.show()
 
-def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
+def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=False):
     stim_conditions=['control','anode','cathode']
     stim_condition_reports={}
     excluded=None
@@ -3142,25 +3142,40 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
                         large_ev_diff_ev_diffs.append(ev_diffs[i])
                         large_ev_diff_correct.append(correct[i])
 
+                biases=np.array(biases)
+                ev_diffs=np.array(ev_diffs)
+                small_ev_diff_biases=np.array(small_ev_diff_biases)
+                small_ev_diff_ev_diffs=np.array(small_ev_diff_ev_diffs)
+                large_ev_diff_biases=np.array(large_ev_diff_biases)
+                large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
+                
+                if use_z:
+                    biases=(biases-np.mean(biases))/np.std(biases)
+                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
+                    small_ev_diff_biases=(small_ev_diff_biases-np.mean(small_ev_diff_biases))/np.std(small_ev_diff_biases)
+                    small_ev_diff_ev_diffs=(small_ev_diff_ev_diffs-np.mean(small_ev_diff_ev_diffs))/np.std(small_ev_diff_ev_diffs)
+                    large_ev_diff_biases=(large_ev_diff_biases-np.mean(large_ev_diff_biases))/np.std(large_ev_diff_biases)
+                    large_ev_diff_ev_diffs=(large_ev_diff_ev_diffs-np.mean(large_ev_diff_ev_diffs))/np.std(large_ev_diff_ev_diffs)
+                
                 x=np.zeros((len(biases),2))
-                x[:,0]=np.array(biases)
-                x[:,1]=np.array(ev_diffs)
+                x[:,0]=biases
+                x[:,1]=ev_diffs
                 y=np.array(correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(small_ev_diff_biases),2))
-                x[:,0]=np.array(small_ev_diff_biases)
-                x[:,1]=np.array(small_ev_diff_ev_diffs)
+                x[:,0]=small_ev_diff_biases
+                x[:,1]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(large_ev_diff_biases),2))
-                x[:,0]=np.array(large_ev_diff_biases)
-                x[:,1]=np.array(large_ev_diff_ev_diffs)
+                x[:,0]=large_ev_diff_biases
+                x[:,1]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
@@ -3189,12 +3204,14 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
     ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
     ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
     logistic_furl='img/rate_diff_perc_correct_logistic'
+    if use_z:
+        logistic_furl='%s_z' % logistic_furl
     logistic_fname = os.path.join(reports_dir,logistic_furl)
     save_to_png(fig, '%s.png' % logistic_fname)
     save_to_eps(fig, '%s.eps' % logistic_fname)
     plt.close(fig)
 
-def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects):
+def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=False):
     stim_conditions=['control','anode','cathode']
     stim_condition_reports={}
     excluded=None
@@ -3258,25 +3275,40 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects):
                         large_ev_diff_ev_diffs.append(ev_diffs[i])
                         large_ev_diff_choice.append(choice[i])
 
+                biases=np.array(biases)
+                ev_diffs=np.array(ev_diffs)
+                small_ev_diff_biases=np.array(small_ev_diff_biases)
+                small_ev_diff_ev_diffs=np.array(small_ev_diff_ev_diffs)
+                large_ev_diff_biases=np.array(large_ev_diff_biases)
+                large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
+
+                if use_z:
+                    biases=(biases-np.mean(biases))/np.std(biases)
+                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
+                    small_ev_diff_biases=(small_ev_diff_biases-np.mean(small_ev_diff_biases))/np.std(small_ev_diff_biases)
+                    small_ev_diff_ev_diffs=(small_ev_diff_ev_diffs-np.mean(small_ev_diff_ev_diffs))/np.std(small_ev_diff_ev_diffs)
+                    large_ev_diff_biases=(large_ev_diff_biases-np.mean(large_ev_diff_biases))/np.std(large_ev_diff_biases)
+                    large_ev_diff_ev_diffs=(large_ev_diff_ev_diffs-np.mean(large_ev_diff_ev_diffs))/np.std(large_ev_diff_ev_diffs)
+
                 x=np.zeros((len(biases),2))
-                x[:,0]=np.array(biases)
-                x[:,1]=np.array(ev_diffs)
+                x[:,0]=biases
+                x[:,1]=ev_diffs
                 y=np.array(choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(small_ev_diff_biases),2))
-                x[:,0]=np.array(small_ev_diff_biases)
-                x[:,1]=np.array(small_ev_diff_ev_diffs)
+                x[:,0]=small_ev_diff_biases
+                x[:,1]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(large_ev_diff_biases),2))
-                x[:,0]=np.array(large_ev_diff_biases)
-                x[:,1]=np.array(large_ev_diff_ev_diffs)
+                x[:,0]=large_ev_diff_biases
+                x[:,1]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
@@ -3305,6 +3337,8 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects):
     ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
     ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
     logistic_furl='img/rate_diff_choice_logistic'
+    if use_z:
+        logistic_furl='%s_z' % logistic_furl
     logistic_fname = os.path.join(reports_dir,logistic_furl)
     save_to_png(fig, '%s.png' % logistic_fname)
     save_to_eps(fig, '%s.eps' % logistic_fname)
