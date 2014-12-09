@@ -3174,23 +3174,23 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 large_ev_diff_coeffs.append(logit.coef_[0])
-                
-                
+
+
         coeffs=np.array(coeffs)
         (t,p)=ttest_1samp(coeffs[:,0],0.0)
-        print('overall, bias, t=%.3f, p=%.5f' % (t,p))
+        print('overall, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(coeffs[:,1],0.0)
-        print('overall, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('overall, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
         small_ev_diff_coeffs=np.array(small_ev_diff_coeffs)
         (t,p)=ttest_1samp(small_ev_diff_coeffs[:,0],0.0)
-        print('small EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        print('small EV Diff, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(small_ev_diff_coeffs[:,1],0.0)
-        print('small EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('small EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
         large_ev_diff_coeffs=np.array(large_ev_diff_coeffs)
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,0],0.0)
-        print('large EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        print('large EV Diff, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
-        print('large EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('large EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
         
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
@@ -3317,19 +3317,19 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
 
         coeffs=np.array(coeffs)
         (t,p)=ttest_1samp(coeffs[:,0],0.0)
-        print('overall, bias, t=%.3f, p=%.5f' % (t,p))
+        print('overall, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(coeffs[:,1],0.0)
-        print('overall, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('overall, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
         small_ev_diff_coeffs=np.array(small_ev_diff_coeffs)
         (t,p)=ttest_1samp(small_ev_diff_coeffs[:,0],0.0)
-        print('small EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        print('small EV Diff, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(small_ev_diff_coeffs[:,1],0.0)
-        print('small EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('small EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
         large_ev_diff_coeffs=np.array(large_ev_diff_coeffs)
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,0],0.0)
-        print('large EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        print('large EV Diff, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
-        print('large EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
+        print('large EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
 
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
