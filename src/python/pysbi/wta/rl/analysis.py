@@ -1,4 +1,4 @@
-from scipy.stats import norm, ttest_1samp
+from scipy.stats import norm, ttest_1samp, f_oneway
 import matplotlib
 matplotlib.use('Agg')
 from scipy import stats
@@ -3094,6 +3094,10 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
     rects=[]
     condition_colors={'control':'b','anode':'r','cathode':'g'}
 
+    condition_coeffs={}
+    condition_small_ev_diff_coeffs={}
+    condition_large_ev_diff_coeffs={}
+
     for idx,stim_condition in enumerate(stim_conditions):
         stim_report=stim_condition_reports[stim_condition]
         coeffs=[]
@@ -3191,7 +3195,11 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
         print('large EV Diff, %s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
         print('large EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
-        
+
+        condition_coeffs[stim_condition]=coeffs
+        condition_small_ev_diff_coeffs[stim_condition]=small_ev_diff_coeffs
+        condition_large_ev_diff_coeffs[stim_condition]=large_ev_diff_coeffs
+
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
         coeff_array.extend(np.mean(small_ev_diff_coeffs,axis=0))
@@ -3217,6 +3225,21 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
     save_to_eps(fig, '%s.eps' % logistic_fname)
     plt.close(fig)
 
+    (F,p)=f_oneway(condition_coeffs['control'][:,0],condition_coeffs['anode'][:,0],condition_coeffs['cathode'][:,0])
+    print('ANOVA: bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_coeffs['control'][:,1],condition_coeffs['anode'][:,1],condition_coeffs['cathode'][:,1])
+    print('ANOVA: EV Diff, F=%.3f, p=%.5f' % (F,p))
+
+    (F,p)=f_oneway(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['anode'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
+    print('ANOVA: small EV Diff, bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['anode'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
+    print('ANOVA: small EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
+
+    (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['anode'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
+    print('ANOVA: large EV Diff, bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
+    print('ANOVA: large EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
+
 def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=False):
     stim_conditions=['control','anode','cathode']
     stim_condition_reports={}
@@ -3235,6 +3258,10 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
     width=0.3
     rects=[]
     condition_colors={'control':'b','anode':'r','cathode':'g'}
+
+    condition_coeffs={}
+    condition_small_ev_diff_coeffs={}
+    condition_large_ev_diff_coeffs={}
 
     for idx,stim_condition in enumerate(stim_conditions):
         stim_report=stim_condition_reports[stim_condition]
@@ -3331,6 +3358,10 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
         (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
         print('large EV Diff, %s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
 
+        condition_coeffs[stim_condition]=coeffs
+        condition_small_ev_diff_coeffs[stim_condition]=small_ev_diff_coeffs
+        condition_large_ev_diff_coeffs[stim_condition]=large_ev_diff_coeffs
+
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
         coeff_array.extend(np.mean(small_ev_diff_coeffs,axis=0))
@@ -3355,6 +3386,21 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
     save_to_png(fig, '%s.png' % logistic_fname)
     save_to_eps(fig, '%s.eps' % logistic_fname)
     plt.close(fig)
+
+    (F,p)=f_oneway(condition_coeffs['control'][:,0],condition_coeffs['anode'][:,0],condition_coeffs['cathode'][:,0])
+    print('ANOVA: bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_coeffs['control'][:,1],condition_coeffs['anode'][:,1],condition_coeffs['cathode'][:,1])
+    print('ANOVA: EV Diff, F=%.3f, p=%.5f' % (F,p))
+
+    (F,p)=f_oneway(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['anode'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
+    print('ANOVA: small EV Diff, bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['anode'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
+    print('ANOVA: small EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
+
+    (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['anode'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
+    print('ANOVA: large EV Diff, bias, F=%.3f, p=%.5f' % (F,p))
+    (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
+    print('ANOVA: large EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
 
 def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
     stim_conditions=['control','anode','cathode']
