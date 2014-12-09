@@ -1227,19 +1227,19 @@ class RLReport:
                 #    self.stim_condition_perc_correct[stim_condition])
                 T,p=stats.wilcoxon(self.stim_condition_perc_correct['control'],
                     self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.perc_correct_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 #self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
                 #    self.stim_condition_perc_correct[stim_condition])
                 T,p=stats.wilcoxon(self.stim_condition_perc_correct['anode'],
                     self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.perc_correct_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 #self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
                 #    self.stim_condition_perc_correct[stim_condition])
                 T,p=stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
                     self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             self.perc_correct_mean[stim_condition]=np.mean(self.stim_condition_perc_correct[stim_condition])
             self.perc_correct_std[stim_condition]=np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition]))
             perc_correct_mean.append(self.perc_correct_mean[stim_condition])
@@ -1290,15 +1290,15 @@ class RLReport:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(self.stim_condition_no_response['control'],
                     self.stim_condition_no_response[stim_condition])
-                self.no_response_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.no_response_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(self.stim_condition_no_response['anode'],
                     self.stim_condition_no_response[stim_condition])
-                self.no_response_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.no_response_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(self.stim_condition_no_response['cathode'],
                     self.stim_condition_no_response[stim_condition])
-                self.no_response_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.no_response_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             self.perc_no_response_mean[stim_condition]=np.mean(self.stim_condition_no_response[stim_condition])
             self.perc_no_response_std_err[stim_condition]=np.std(self.stim_condition_no_response[stim_condition])/np.sqrt(len(self.stim_condition_no_response[stim_condition]))
             perc_no_response_mean.append(self.perc_no_response_mean[stim_condition])
@@ -1355,19 +1355,19 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
-                self.baseline_inh_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1426,19 +1426,19 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
-                self.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1496,19 +1496,19 @@ class RLReport:
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_pyr_rates['control'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['control'], stim_inh_rates[stim_condition])
-                self.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['anode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['anode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_pyr_rates['cathode'], stim_pyr_rates[stim_condition])
-                self.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_pyr_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(stim_inh_rates['cathode'], stim_inh_rates[stim_condition])
-                self.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_inh_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1554,15 +1554,15 @@ class RLReport:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_baseline_diffs['control'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_baseline_diffs['anode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_baseline_diffs['cathode'], stim_baseline_diffs[stim_condition])
                 # get two sided p
-                self.baseline_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.baseline_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
@@ -1601,15 +1601,15 @@ class RLReport:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
@@ -1649,15 +1649,15 @@ class RLReport:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_small_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_small_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_small_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
@@ -1697,15 +1697,15 @@ class RLReport:
             if not stim_condition=='control':
                 T,p=stats.wilcoxon(stim_diffs['control'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_large_ev_diff_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(stim_diffs['anode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_large_ev_diff_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(stim_diffs['cathode'], stim_diffs[stim_condition])
                 # get two sided p
-                self.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.stim_diff_large_ev_diff_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
         if regenerate_plots:
             fig=Figure(figsize=(20,6))
             ax=fig.add_subplot(1,1,1)
@@ -2557,7 +2557,7 @@ class RLReport:
                 self.stim_alpha_mean_change[stim_condition]=np.mean(filtered_alpha_diffs)
                 self.stim_alpha_std_change[stim_condition]=np.std(filtered_alpha_diffs)
                 T,p=stats.wilcoxon(condition_alphas['control'], condition_alphas[stim_condition])
-                self.alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
 
                 # Create beta plot
                 furl='img/%s_beta' % stim_condition
@@ -2584,19 +2584,19 @@ class RLReport:
                 self.stim_beta_mean_change[stim_condition]=np.mean(filtered_beta_diffs)
                 self.stim_beta_std_change[stim_condition]=np.std(filtered_beta_diffs)
                 T,p=stats.wilcoxon(condition_betas['control'], condition_betas[stim_condition])
-                self.beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
 
         for stim_condition in self.stim_conditions:
             if stim_condition.startswith('anode_control'):
                 T,p=stats.wilcoxon(condition_alphas['anode'], condition_alphas[stim_condition])
-                self.anode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.anode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(condition_betas['anode'], condition_betas[stim_condition])
-                self.anode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.anode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
             elif stim_condition.startswith('cathode_control'):
                 T,p=stats.wilcoxon(condition_alphas['cathode'], condition_alphas[stim_condition])
-                self.cathode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.cathode_alpha_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
                 T,p=stats.wilcoxon(condition_betas['cathode'], condition_betas[stim_condition])
-                self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(p*num_comparisons/2.0))
+                self.cathode_beta_wilcoxon_test[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p])*num_comparisons/2.0))
 
         ratio_furl='img/rate_diff_ratio_perc_correct'
         ratio_fname = os.path.join(self.reports_dir,ratio_furl)
