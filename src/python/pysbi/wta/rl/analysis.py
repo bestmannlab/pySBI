@@ -3181,7 +3181,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
         coeff_std_err_array.extend(np.std(large_ev_diff_coeffs,axis=0)/np.sqrt(len(large_ev_diff_coeffs)))
 
         rect=ax.bar(np.array([1,2,3,4,5,6])+width*.5+(idx-1)*width, coeff_array, width,
-            yerr=coeff_std_err_array, color=condition_colors[stim_condition])
+            yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
         rects.append(rect)
     ax.set_ylabel('Coefficient')
     ax.set_xticks(ind+width)
@@ -3296,7 +3296,7 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects):
         coeff_std_err_array.extend(np.std(large_ev_diff_coeffs,axis=0)/np.sqrt(len(large_ev_diff_coeffs)))
 
         rect=ax.bar(np.array([1,2,3,4,5,6])+width*.5+(idx-1)*width, coeff_array, width,
-            yerr=coeff_std_err_array, color=condition_colors[stim_condition])
+            yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
         rects.append(rect)
     ax.set_ylabel('Coefficient')
     ax.set_xticks(ind+width)
