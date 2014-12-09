@@ -3129,6 +3129,11 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                         if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
                             choice_correct=1.0
                         correct.append(choice_correct)
+                biases=np.array(biases)
+                ev_diffs=np.array(ev_diffs)
+                if use_z:
+                    biases=(biases-np.mean(biases))/np.std(biases)
+                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
                 ev_lower_lim=np.percentile(np.abs(np.array(ev_diffs)), 25)
                 ev_upper_lim=np.percentile(np.abs(np.array(ev_diffs)), 75)
                 print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
@@ -3142,20 +3147,10 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                         large_ev_diff_ev_diffs.append(ev_diffs[i])
                         large_ev_diff_correct.append(correct[i])
 
-                biases=np.array(biases)
-                ev_diffs=np.array(ev_diffs)
                 small_ev_diff_biases=np.array(small_ev_diff_biases)
                 small_ev_diff_ev_diffs=np.array(small_ev_diff_ev_diffs)
                 large_ev_diff_biases=np.array(large_ev_diff_biases)
                 large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
-                
-                if use_z:
-                    biases=(biases-np.mean(biases))/np.std(biases)
-                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
-                    small_ev_diff_biases=(small_ev_diff_biases-np.mean(small_ev_diff_biases))/np.std(small_ev_diff_biases)
-                    small_ev_diff_ev_diffs=(small_ev_diff_ev_diffs-np.mean(small_ev_diff_ev_diffs))/np.std(small_ev_diff_ev_diffs)
-                    large_ev_diff_biases=(large_ev_diff_biases-np.mean(large_ev_diff_biases))/np.std(large_ev_diff_biases)
-                    large_ev_diff_ev_diffs=(large_ev_diff_ev_diffs-np.mean(large_ev_diff_ev_diffs))/np.std(large_ev_diff_ev_diffs)
                 
                 x=np.zeros((len(biases),2))
                 x[:,0]=biases
@@ -3262,6 +3257,11 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                         biases.append(bias)
                         ev_diffs.append(ev_diff)
                         choice.append(data.choice[trial])
+                biases=np.array(biases)
+                ev_diffs=np.array(ev_diffs)
+                if use_z:
+                    biases=(biases-np.mean(biases))/np.std(biases)
+                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
                 ev_lower_lim=np.percentile(ev_diffs, 25)
                 ev_upper_lim=np.percentile(ev_diffs, 75)
                 print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
@@ -3275,20 +3275,10 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                         large_ev_diff_ev_diffs.append(ev_diffs[i])
                         large_ev_diff_choice.append(choice[i])
 
-                biases=np.array(biases)
-                ev_diffs=np.array(ev_diffs)
                 small_ev_diff_biases=np.array(small_ev_diff_biases)
                 small_ev_diff_ev_diffs=np.array(small_ev_diff_ev_diffs)
                 large_ev_diff_biases=np.array(large_ev_diff_biases)
                 large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
-
-                if use_z:
-                    biases=(biases-np.mean(biases))/np.std(biases)
-                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
-                    small_ev_diff_biases=(small_ev_diff_biases-np.mean(small_ev_diff_biases))/np.std(small_ev_diff_biases)
-                    small_ev_diff_ev_diffs=(small_ev_diff_ev_diffs-np.mean(small_ev_diff_ev_diffs))/np.std(small_ev_diff_ev_diffs)
-                    large_ev_diff_biases=(large_ev_diff_biases-np.mean(large_ev_diff_biases))/np.std(large_ev_diff_biases)
-                    large_ev_diff_ev_diffs=(large_ev_diff_ev_diffs-np.mean(large_ev_diff_ev_diffs))/np.std(large_ev_diff_ev_diffs)
 
                 x=np.zeros((len(biases),2))
                 x[:,0]=biases
