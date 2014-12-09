@@ -1,4 +1,4 @@
-from scipy.stats import norm
+from scipy.stats import norm, ttest_1samp
 import matplotlib
 matplotlib.use('Agg')
 from scipy import stats
@@ -3136,7 +3136,6 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                     ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
                 ev_lower_lim=np.percentile(np.abs(np.array(ev_diffs)), 25)
                 ev_upper_lim=np.percentile(np.abs(np.array(ev_diffs)), 75)
-                print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
                 for i in range(len(biases)):
                     if np.abs(ev_diffs[i])<ev_lower_lim:
                         small_ev_diff_biases.append(biases[i])
@@ -3178,8 +3177,20 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 
                 
         coeffs=np.array(coeffs)
+        (t,p)=ttest_1samp(coeffs[:,0],0.0)
+        print('overall, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(coeffs[:,1],0.0)
+        print('overall, ev diff, t=%.3f, p=%.5f' % (t,p))
         small_ev_diff_coeffs=np.array(small_ev_diff_coeffs)
+        (t,p)=ttest_1samp(small_ev_diff_coeffs[:,0],0.0)
+        print('small EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(small_ev_diff_coeffs[:,1],0.0)
+        print('small EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
         large_ev_diff_coeffs=np.array(large_ev_diff_coeffs)
+        (t,p)=ttest_1samp(large_ev_diff_coeffs[:,0],0.0)
+        print('large EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
+        print('large EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
         
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
@@ -3264,7 +3275,6 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                     ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
                 ev_lower_lim=np.percentile(ev_diffs, 25)
                 ev_upper_lim=np.percentile(ev_diffs, 75)
-                print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
                 for i in range(len(biases)):
                     if ev_diffs[i]<ev_lower_lim:
                         small_ev_diff_biases.append(biases[i])
@@ -3306,8 +3316,20 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
 
 
         coeffs=np.array(coeffs)
+        (t,p)=ttest_1samp(coeffs[:,0],0.0)
+        print('overall, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(coeffs[:,1],0.0)
+        print('overall, ev diff, t=%.3f, p=%.5f' % (t,p))
         small_ev_diff_coeffs=np.array(small_ev_diff_coeffs)
+        (t,p)=ttest_1samp(small_ev_diff_coeffs[:,0],0.0)
+        print('small EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(small_ev_diff_coeffs[:,1],0.0)
+        print('small EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
         large_ev_diff_coeffs=np.array(large_ev_diff_coeffs)
+        (t,p)=ttest_1samp(large_ev_diff_coeffs[:,0],0.0)
+        print('large EV Diff, bias, t=%.3f, p=%.5f' % (t,p))
+        (t,p)=ttest_1samp(large_ev_diff_coeffs[:,1],0.0)
+        print('large EV Diff, ev diff, t=%.3f, p=%.5f' % (t,p))
 
         coeff_array=[]
         coeff_array.extend(np.mean(coeffs,axis=0))
