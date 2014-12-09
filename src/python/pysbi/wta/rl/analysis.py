@@ -3129,14 +3129,15 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
                         if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
                             choice_correct=1.0
                         correct.append(choice_correct)
-                ev_lower_lim=np.percentile(ev_diffs, 25)
-                ev_upper_lim=np.percentile(ev_diffs, 75)
+                ev_lower_lim=np.percentile(np.abs(np.array(ev_diffs)), 25)
+                ev_upper_lim=np.percentile(np.abs(np.array(ev_diffs)), 75)
+                print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
                 for i in range(len(biases)):
-                    if ev_diffs[i]<ev_lower_lim:
+                    if np.abs(ev_diffs[i])<ev_lower_lim:
                         small_ev_diff_biases.append(biases[i])
                         small_ev_diff_ev_diffs.append(ev_diffs[i])
                         small_ev_diff_correct.append(correct[i])
-                    elif ev_diffs[i]>ev_upper_lim:
+                    elif np.abs(ev_diffs[i])>ev_upper_lim:
                         large_ev_diff_biases.append(biases[i])
                         large_ev_diff_ev_diffs.append(ev_diffs[i])
                         large_ev_diff_correct.append(correct[i])
@@ -3246,6 +3247,7 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects):
                         choice.append(data.choice[trial])
                 ev_lower_lim=np.percentile(ev_diffs, 25)
                 ev_upper_lim=np.percentile(ev_diffs, 75)
+                print('subject %d, lower EV lim=%.3f, upper EV lim=%.3f' % (virtual_subj_id,ev_lower_lim,ev_upper_lim))
                 for i in range(len(biases)):
                     if ev_diffs[i]<ev_lower_lim:
                         small_ev_diff_biases.append(biases[i])
