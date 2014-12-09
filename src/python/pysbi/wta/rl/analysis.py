@@ -3075,6 +3075,124 @@ def debug_trial_plot(file_name):
         plt.ylabel('Firing Rate (Hz)')
         plt.show()
 
+def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects):
+    stim_conditions=['control','anode','cathode']
+    stim_condition_reports={}
+    excluded=None
+    for stim_condition in stim_conditions:
+        print(stim_condition)
+        stim_condition_report_dir=os.path.join(reports_dir,stim_condition)
+        stim_condition_reports[stim_condition] = StimConditionReport(data_dir, file_prefix,
+            stim_condition, stim_condition_report_dir, num_subjects, '')
+        stim_condition_reports[stim_condition].create_report(None, excluded=excluded,
+            regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False)
+
+    fig=Figure(figsize=(16,6))
+    ax=fig.add_subplot(1,1,1)
+    ind=np.array([1,2,3,4,5,6])
+    width=0.3
+    rects=[]
+    condition_colors={'control':'b','anode':'r','cathode':'g'}
+
+    for idx,stim_condition in enumerate(stim_conditions):
+        stim_report=stim_condition_reports[stim_condition]
+        coeffs=[]
+        small_ev_diff_coeffs=[]
+        large_ev_diff_coeffs=[]
+        for virtual_subj_id in range(stim_report.num_subjects):
+            if not virtual_subj_id in stim_report.excluded_sessions:
+                session_prefix=file_prefix % (virtual_subj_id,stim_condition)
+                session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+
+                biases=[]
+                ev_diffs=[]
+                correct=[]
+
+                small_ev_diff_biases=[]
+                small_ev_diff_ev_diffs=[]
+                small_ev_diff_correct=[]
+
+                large_ev_diff_biases=[]
+                large_ev_diff_ev_diffs=[]
+                large_ev_diff_correct=[]
+
+                for trial in range(len(data.trial_e_rates)):
+                    if data.choice[trial]>-1:
+                        left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        bias=np.abs(left_mean-right_mean)
+                        ev_diff=np.abs(data.inputs[0,trial]-data.inputs[1,trial])
+                        biases.append(bias)
+                        ev_diffs.append(ev_diff)
+                        choice_correct=0.0
+                        if (data.choice[trial]==0 and data.inputs[0,trial]>data.inputs[1,trial]) or (data.choice[trial]==1 and data.inputs[1,trial]>data.inputs[0,trial]):
+                            choice_correct=1.0
+                        correct.append(choice_correct)
+                ev_lower_lim=np.percentile(ev_diffs, 25)
+                ev_upper_lim=np.percentile(ev_diffs, 75)
+                for i in range(len(biases)):
+                    if ev_diffs[i]<ev_lower_lim:
+                        small_ev_diff_biases.append(biases[i])
+                        small_ev_diff_ev_diffs.append(ev_diffs[i])
+                        small_ev_diff_correct.append(correct[i])
+                    elif ev_diffs[i]>ev_upper_lim:
+                        large_ev_diff_biases.append(biases[i])
+                        large_ev_diff_ev_diffs.append(ev_diffs[i])
+                        large_ev_diff_correct.append(correct[i])
+
+                x=np.zeros((len(biases),2))
+                x[:,0]=np.array(biases)
+                x[:,1]=np.array(ev_diffs)
+                y=np.array(correct)
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                coeffs.append(logit.coef_[0])
+
+                x=np.zeros((len(small_ev_diff_biases),2))
+                x[:,0]=np.array(small_ev_diff_biases)
+                x[:,1]=np.array(small_ev_diff_ev_diffs)
+                y=np.array(small_ev_diff_correct)
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                small_ev_diff_coeffs.append(logit.coef_[0])
+
+                x=np.zeros((len(large_ev_diff_biases),2))
+                x[:,0]=np.array(large_ev_diff_biases)
+                x[:,1]=np.array(large_ev_diff_ev_diffs)
+                y=np.array(large_ev_diff_correct)
+                logit = LogisticRegression()
+                logit = logit.fit(x, y)
+                large_ev_diff_coeffs.append(logit.coef_[0])
+                
+                
+        coeffs=np.array(coeffs)
+        small_ev_diff_coeffs=np.array(small_ev_diff_coeffs)
+        large_ev_diff_coeffs=np.array(large_ev_diff_coeffs)
+        
+        coeff_array=[]
+        coeff_array.extend(np.mean(coeffs,axis=0))
+        coeff_array.extend(np.mean(small_ev_diff_coeffs,axis=0))
+        coeff_array.extend(np.mean(large_ev_diff_coeffs,axis=0))
+        
+        coeff_std_err_array=[]
+        coeff_std_err_array.extend(np.std(coeffs,axis=0)/np.sqrt(len(coeffs)))
+        coeff_std_err_array.extend(np.std(small_ev_diff_coeffs,axis=0)/np.sqrt(len(small_ev_diff_coeffs)))
+        coeff_std_err_array.extend(np.std(large_ev_diff_coeffs,axis=0)/np.sqrt(len(large_ev_diff_coeffs)))
+
+        rect=ax.bar(np.array([1,2,3,4,5,6])+width*.5+(idx-1)*width, coeff_array, width,
+            yerr=coeff_std_err_array, color=condition_colors[stim_condition])
+        rects.append(rect)
+    ax.set_ylabel('Coefficient')
+    ax.set_xticks(ind+width)
+    ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
+    ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+    logistic_furl='img/rate_diff_perc_correct_logistic'
+    logistic_fname = os.path.join(reports_dir,logistic_furl)
+    save_to_png(fig, '%s.png' % logistic_fname)
+    save_to_eps(fig, '%s.eps' % logistic_fname)
+    plt.close(fig)
+
 def generate_logisitic_files(reports_dir, data_dir, file_prefix, num_subjects):
     stim_conditions=['control','anode','cathode']
     stim_condition_reports={}
