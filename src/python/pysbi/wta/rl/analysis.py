@@ -3163,7 +3163,8 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                coeffs.append(logit.coef_[0])
+                #coeffs.append(logit.coef_[0])
+                coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
                 x=np.zeros((len(small_ev_diff_biases),2))
                 #x[:,0]=small_ev_diff_biases
@@ -3173,7 +3174,8 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(small_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                small_ev_diff_coeffs.append(logit.coef_[0])
+                #small_ev_diff_coeffs.append(logit.coef_[0])
+                small_ev_diff_coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
                 x=np.zeros((len(large_ev_diff_biases),2))
                 #x[:,0]=large_ev_diff_biases
@@ -3183,7 +3185,8 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(large_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                large_ev_diff_coeffs.append(logit.coef_[0])
+                #large_ev_diff_coeffs.append(logit.coef_[0])
+                large_ev_diff_coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
 
         coeffs=np.array(coeffs)
@@ -3374,7 +3377,8 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                 y=np.array(choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                coeffs.append(logit.coef_[0])
+                #coeffs.append(logit.coef_[0])
+                coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
                 x=np.zeros((len(small_ev_diff_biases),2))
                 #x[:,0]=small_ev_diff_biases
@@ -3384,7 +3388,8 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                 y=np.array(small_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                small_ev_diff_coeffs.append(logit.coef_[0])
+                #small_ev_diff_coeffs.append(logit.coef_[0])
+                small_ev_diff_coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
                 x=np.zeros((len(large_ev_diff_biases),2))
                 #x[:,0]=large_ev_diff_biases
@@ -3394,7 +3399,8 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                 y=np.array(large_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
-                large_ev_diff_coeffs.append(logit.coef_[0])
+                #large_ev_diff_coeffs.append(logit.coef_[0])
+                large_ev_diff_coeffs.append(np.array([logit.coef_[0][1],logit.coef_[0][0]]))
 
 
         coeffs=np.array(coeffs)
