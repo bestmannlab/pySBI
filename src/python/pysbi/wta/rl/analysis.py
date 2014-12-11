@@ -3156,24 +3156,30 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
                 
                 x=np.zeros((len(biases),2))
-                x[:,0]=biases
-                x[:,1]=ev_diffs
+                #x[:,0]=biases
+                #x[:,1]=ev_diffs
+                x[:,1]=biases
+                x[:,0]=ev_diffs
                 y=np.array(correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(small_ev_diff_biases),2))
-                x[:,0]=small_ev_diff_biases
-                x[:,1]=small_ev_diff_ev_diffs
+                #x[:,0]=small_ev_diff_biases
+                #x[:,1]=small_ev_diff_ev_diffs
+                x[:,1]=small_ev_diff_biases
+                x[:,0]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(large_ev_diff_biases),2))
-                x[:,0]=large_ev_diff_biases
-                x[:,1]=large_ev_diff_ev_diffs
+                #x[:,0]=large_ev_diff_biases
+                #x[:,1]=large_ev_diff_ev_diffs
+                x[:,1]=large_ev_diff_biases
+                x[:,0]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_correct)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
@@ -3217,7 +3223,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
     ax.set_xticks(ind+width)
     ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
     ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-    logistic_furl='img/rate_diff_perc_correct_logistic'
+    logistic_furl='img/rate_diff_perc_correct_logistic_reversed'
     if use_z:
         logistic_furl='%s_z' % logistic_furl
     logistic_fname = os.path.join(reports_dir,logistic_furl)
@@ -3361,24 +3367,30 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
                 large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
 
                 x=np.zeros((len(biases),2))
-                x[:,0]=biases
-                x[:,1]=ev_diffs
+                #x[:,0]=biases
+                #x[:,1]=ev_diffs
+                x[:,1]=biases
+                x[:,0]=ev_diffs
                 y=np.array(choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(small_ev_diff_biases),2))
-                x[:,0]=small_ev_diff_biases
-                x[:,1]=small_ev_diff_ev_diffs
+                #x[:,0]=small_ev_diff_biases
+                #x[:,1]=small_ev_diff_ev_diffs
+                x[:,1]=small_ev_diff_biases
+                x[:,0]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
 
                 x=np.zeros((len(large_ev_diff_biases),2))
-                x[:,0]=large_ev_diff_biases
-                x[:,1]=large_ev_diff_ev_diffs
+                #x[:,0]=large_ev_diff_biases
+                #x[:,1]=large_ev_diff_ev_diffs
+                x[:,1]=large_ev_diff_biases
+                x[:,0]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_choice)
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
@@ -3422,7 +3434,7 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
     ax.set_xticks(ind+width)
     ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
     ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-    logistic_furl='img/rate_diff_choice_logistic'
+    logistic_furl='img/rate_diff_choice_logistic_reversed'
     if use_z:
         logistic_furl='%s_z' % logistic_furl
     logistic_fname = os.path.join(reports_dir,logistic_furl)
