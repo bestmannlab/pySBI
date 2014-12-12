@@ -3291,9 +3291,9 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(choice)
                 y_pred=np.zeros(y.shape)
                 logit=LogisticRegression()
+                logit.raw_coef_=np.array([[-mean_coeffs[0],-mean_coeffs[1],-mean_intercept]])
                 logit.coef_[0]=mean_coeffs
                 logit.intercept_=mean_intercept
-                logit.raw_coef_=np.array([[-mean_coeffs[0],-mean_coeffs[1],-mean_intercept]])
                 y_mod=logit.predict(x)
                 num_trials+=len(y)
                 num_correct+=len(np.where(y-y_mod==0)[0])
@@ -3304,9 +3304,9 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(small_ev_diff_choice)
                 y_pred=np.zeros(y.shape)
                 logit=LogisticRegression()
+                logit.raw_coef_=np.array([[-mean_small_ev_diff_coeffs[0],-mean_small_ev_diff_coeffs[1],-mean_small_ev_diff_intercept]])
                 logit.coef_[0]=mean_small_ev_diff_coeffs
                 logit.intercept_=mean_small_ev_diff_intercept
-                logit.raw_coef_=np.array([[-mean_small_ev_diff_coeffs[0],-mean_small_ev_diff_coeffs[1],-mean_small_ev_diff_intercept]])
                 y_mod=logit.predict(x)
                 num_small_ev_diff_trials+=len(y)
                 num_small_ev_diff_correct+=len(np.where(y-y_mod==0)[0])
@@ -3317,9 +3317,9 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 y=np.array(large_ev_diff_choice)
                 y_pred=np.zeros(y.shape)
                 logit=LogisticRegression()
+                logit.raw_coef_=np.array([[-mean_large_ev_diff_coeffs[0],-mean_large_ev_diff_coeffs[1],-mean_large_ev_diff_intercept]])
                 logit.coef_[0]=mean_large_ev_diff_coeffs
                 logit.intercept_=mean_large_ev_diff_intercept
-                logit.raw_coef_=np.array([[-mean_large_ev_diff_coeffs[0],-mean_large_ev_diff_coeffs[1],-mean_large_ev_diff_intercept]])
                 y_mod=logit.predict(x)
                 num_large_ev_diff_trials+=len(y)
                 num_large_ev_diff_correct+=len(np.where(y-y_mod==0)[0])
