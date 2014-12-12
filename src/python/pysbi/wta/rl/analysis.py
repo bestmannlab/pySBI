@@ -3103,6 +3103,9 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
         coeffs=[]
         small_ev_diff_coeffs=[]
         large_ev_diff_coeffs=[]
+        intercepts=[]
+        small_ev_diff_intercepts=[]
+        large_ev_diff_intercepts=[]
         for virtual_subj_id in range(stim_report.num_subjects):
             if not virtual_subj_id in stim_report.excluded_sessions:
                 session_prefix=file_prefix % (virtual_subj_id,stim_condition)
@@ -3162,6 +3165,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
+                intercepts.append(logit.intercept_)
 
                 x=np.zeros((len(small_ev_diff_biases),2))
                 x[:,0]=small_ev_diff_biases
@@ -3170,6 +3174,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
+                small_ev_diff_intercepts.append(logit.intercept_)
 
                 x=np.zeros((len(large_ev_diff_biases),2))
                 x[:,0]=large_ev_diff_biases
@@ -3178,6 +3183,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 logit = LogisticRegression()
                 logit = logit.fit(x, y)
                 large_ev_diff_coeffs.append(logit.coef_[0])
+                large_ev_diff_intercepts.append(logit.intercept_)
 
         coeffs=np.array(coeffs)
         (t,p)=ttest_1samp(coeffs[:,0],0.0)
@@ -3212,6 +3218,107 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
         rect=ax.bar(np.array([1,2,3,4,5,6])+width*.5+(idx-1)*width, coeff_array, width,
             yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
         rects.append(rect)
+
+        mean_coeffs=np.mean(coeffs,axis=0)
+        mean_intercept=np.mean(intercepts)
+        logit=LogisticRegression()
+        logit.coef_[0]=mean_coeffs
+        logit.intercept_=mean_intercept
+
+        mean_small_ev_diff_coeffs=np.mean(small_ev_diff_coeffs,axis=0)
+        mean_small_ev_diff_intercept=np.mean(small_ev_diff_intercepts)
+        small_ev_diff_logit=LogisticRegression()
+        small_ev_diff_logit.coef_[0]=mean_small_ev_diff_coeffs
+        small_ev_diff_logit.intercept_=mean_small_ev_diff_intercept
+
+        mean_large_ev_diff_coeffs=np.mean(large_ev_diff_coeffs,axis=0)
+        mean_large_ev_diff_intercept=np.mean(large_ev_diff_intercepts)
+        large_ev_diff_logit=LogisticRegression()
+        large_ev_diff_logit.coef_[0]=mean_large_ev_diff_coeffs
+        large_ev_diff_logit.intercept_=mean_large_ev_diff_intercept
+
+        num_trials=0.0
+        num_correct=0.0
+        num_small_ev_diff_trials=0.0
+        num_small_ev_diff_correct=0.0
+        num_large_ev_diff_trials=0.0
+        num_large_ev_diff_correct=0.0
+        for virtual_subj_id in range(stim_report.num_subjects):
+            if not virtual_subj_id in stim_report.excluded_sessions:
+                session_prefix=file_prefix % (virtual_subj_id,stim_condition)
+                session_report_file=os.path.join(stim_report.data_dir,'%s.h5' % session_prefix)
+                data=FileInfo(session_report_file)
+                biases=[]
+                ev_diffs=[]
+                choice=[]
+
+                small_ev_diff_biases=[]
+                small_ev_diff_ev_diffs=[]
+                small_ev_diff_choice=[]
+
+                large_ev_diff_biases=[]
+                large_ev_diff_ev_diffs=[]
+                large_ev_diff_choice=[]
+
+                for trial in range(len(data.trial_e_rates)):
+                    if data.choice[trial]>-1:
+                        left_mean=np.mean(data.trial_e_rates[trial][0,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
+                        bias=left_mean-right_mean
+                        ev_diff=data.inputs[0,trial]-data.inputs[1,trial]
+                        biases.append(bias)
+                        ev_diffs.append(ev_diff)
+                        choice.append(data.choice[trial])
+                biases=np.array(biases)
+                ev_diffs=np.array(ev_diffs)
+                if use_z:
+                    biases=(biases-np.mean(biases))/np.std(biases)
+                    ev_diffs=(ev_diffs-np.mean(ev_diffs))/np.std(ev_diffs)
+                ev_lower_lim=np.percentile(ev_diffs, 25)
+                ev_upper_lim=np.percentile(ev_diffs, 75)
+                for i in range(len(biases)):
+                    if ev_diffs[i]<ev_lower_lim:
+                        small_ev_diff_biases.append(biases[i])
+                        small_ev_diff_ev_diffs.append(ev_diffs[i])
+                        small_ev_diff_choice.append(choice[i])
+                    elif ev_diffs[i]>ev_upper_lim:
+                        large_ev_diff_biases.append(biases[i])
+                        large_ev_diff_ev_diffs.append(ev_diffs[i])
+                        large_ev_diff_choice.append(choice[i])
+
+                small_ev_diff_biases=np.array(small_ev_diff_biases)
+                small_ev_diff_ev_diffs=np.array(small_ev_diff_ev_diffs)
+                large_ev_diff_biases=np.array(large_ev_diff_biases)
+                large_ev_diff_ev_diffs=np.array(large_ev_diff_ev_diffs)
+
+                x=np.zeros((len(biases),2))
+                x[:,0]=biases
+                x[:,1]=ev_diffs
+                y=np.array(choice)
+                y_pred=logit.predict(x)
+                num_trials+=len(y)
+                num_correct+=len(np.where(y-y_pred==0)[0])
+
+                x=np.zeros((len(small_ev_diff_biases),2))
+                x[:,0]=small_ev_diff_biases
+                x[:,1]=small_ev_diff_ev_diffs
+                y=np.array(small_ev_diff_choice)
+                y_pred=small_ev_diff_logit.predict(x)
+                num_small_ev_diff_trials+=len(y)
+                num_small_ev_diff_correct+=len(np.where(y-y_pred==0)[0])
+
+                x=np.zeros((len(large_ev_diff_biases),2))
+                x[:,0]=large_ev_diff_biases
+                x[:,1]=large_ev_diff_ev_diffs
+                y=np.array(large_ev_diff_choice)
+                y_pred=large_ev_diff_logit.predict(x)
+                num_large_ev_diff_trials+=len(y)
+                num_large_ev_diff_correct+=len(np.where(y-y_pred==0)[0])
+
+        print('%s, overall accuracy=%.3f' % (stim_condition,float(num_correct)/float(num_trials)))
+        print('%s, small EV diff accuracy=%.3f' % (stim_condition,float(num_small_ev_diff_correct)/float(num_small_ev_diff_trials)))
+        print('%s, large EV diff accuracy=%.3f' % (stim_condition,float(num_large_ev_diff_correct)/float(num_large_ev_diff_trials)))
+
     ax.set_ylabel('Coefficient')
     ax.set_xticks(ind+width)
     ax.set_xticklabels(['Bias','EV Diff','Bias (small EV Diff)','EV Diff (small EV Diff)','Bias (large EV Diff)', 'EV Diff (large EV Diff)'])
