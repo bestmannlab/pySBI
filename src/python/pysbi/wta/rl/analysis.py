@@ -3221,21 +3221,12 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
 
         mean_coeffs=np.mean(coeffs,axis=0)
         mean_intercept=np.mean(intercepts)
-        logit=LogisticRegression()
-        logit.coef_[0]=mean_coeffs
-        logit.intercept_=mean_intercept
 
         mean_small_ev_diff_coeffs=np.mean(small_ev_diff_coeffs,axis=0)
         mean_small_ev_diff_intercept=np.mean(small_ev_diff_intercepts)
-        small_ev_diff_logit=LogisticRegression()
-        small_ev_diff_logit.coef_[0]=mean_small_ev_diff_coeffs
-        small_ev_diff_logit.intercept_=mean_small_ev_diff_intercept
 
         mean_large_ev_diff_coeffs=np.mean(large_ev_diff_coeffs,axis=0)
         mean_large_ev_diff_intercept=np.mean(large_ev_diff_intercepts)
-        large_ev_diff_logit=LogisticRegression()
-        large_ev_diff_logit.coef_[0]=mean_large_ev_diff_coeffs
-        large_ev_diff_logit.intercept_=mean_large_ev_diff_intercept
 
         num_trials=0.0
         num_correct=0.0
@@ -3295,25 +3286,46 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 x[:,0]=biases
                 x[:,1]=ev_diffs
                 y=np.array(choice)
-                y_pred=logit.predict(x)
+                y_pred=np.zeros(y.shape)
+                y_mod=np.zeros(y.shape)
+                for i in range(len(y)):
+                    X_row = x[i, :]
+                    eta=mean_intercept + np.sum(X_row * mean_coeffs)
+                    y_pred[i]=np.exp(eta)/(1.0+np.exp(eta))
+                    if y_pred[i]>=0.5:
+                        y_mod[i]=1.0
                 num_trials+=len(y)
-                num_correct+=len(np.where(y-y_pred==0)[0])
+                num_correct+=len(np.where(y-y_mod==0)[0])
 
                 x=np.zeros((len(small_ev_diff_biases),2))
                 x[:,0]=small_ev_diff_biases
                 x[:,1]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_choice)
-                y_pred=small_ev_diff_logit.predict(x)
+                y_pred=np.zeros(y.shape)
+                y_mod=np.zeros(y.shape)
+                for i in range(len(y)):
+                    X_row = x[i, :]
+                    eta=mean_small_ev_diff_intercept + np.sum(X_row * mean_small_ev_diff_coeffs)
+                    y_pred[i]=np.exp(eta)/(1.0+np.exp(eta))
+                    if y_pred[i]>=0.5:
+                        y_mod[i]=1.0
                 num_small_ev_diff_trials+=len(y)
-                num_small_ev_diff_correct+=len(np.where(y-y_pred==0)[0])
+                num_small_ev_diff_correct+=len(np.where(y-y_mod==0)[0])
 
                 x=np.zeros((len(large_ev_diff_biases),2))
                 x[:,0]=large_ev_diff_biases
                 x[:,1]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_choice)
-                y_pred=large_ev_diff_logit.predict(x)
+                y_pred=np.zeros(y.shape)
+                y_mod=np.zeros(y.shape)
+                for i in range(len(y)):
+                    X_row = x[i, :]
+                    eta=mean_large_ev_diff_intercept + np.sum(X_row * mean_large_ev_diff_coeffs)
+                    y_pred[i]=np.exp(eta)/(1.0+np.exp(eta))
+                    if y_pred[i]>=0.5:
+                        y_mod[i]=1.0
                 num_large_ev_diff_trials+=len(y)
-                num_large_ev_diff_correct+=len(np.where(y-y_pred==0)[0])
+                num_large_ev_diff_correct+=len(np.where(y-y_mod==0)[0])
 
         print('%s, overall accuracy=%.3f' % (stim_condition,float(num_correct)/float(num_trials)))
         print('%s, small EV diff accuracy=%.3f' % (stim_condition,float(num_small_ev_diff_correct)/float(num_small_ev_diff_trials)))
