@@ -3168,6 +3168,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 intercepts.append(logit.intercept_)
                 print(logit.coef_)
                 print(logit.raw_coef_)
+                print(logit.intercept_)
 
                 x=np.zeros((len(small_ev_diff_biases),2))
                 x[:,0]=small_ev_diff_biases
