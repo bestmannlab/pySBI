@@ -3162,7 +3162,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 x[:,0]=biases
                 x[:,1]=ev_diffs
                 y=np.array(correct)
-                logit = LogisticRegression()
+                logit = LogisticRegression(C=1000.0)
                 logit = logit.fit(x, y)
                 coeffs.append(logit.coef_[0])
                 intercepts.append(logit.intercept_)
@@ -3171,7 +3171,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 x[:,0]=small_ev_diff_biases
                 x[:,1]=small_ev_diff_ev_diffs
                 y=np.array(small_ev_diff_correct)
-                logit = LogisticRegression()
+                logit = LogisticRegression(C=1000.0)
                 logit = logit.fit(x, y)
                 small_ev_diff_coeffs.append(logit.coef_[0])
                 small_ev_diff_intercepts.append(logit.intercept_)
@@ -3180,7 +3180,7 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 x[:,0]=large_ev_diff_biases
                 x[:,1]=large_ev_diff_ev_diffs
                 y=np.array(large_ev_diff_correct)
-                logit = LogisticRegression()
+                logit = LogisticRegression(C=1000.0)
                 logit = logit.fit(x, y)
                 large_ev_diff_coeffs.append(logit.coef_[0])
                 large_ev_diff_intercepts.append(logit.intercept_)
