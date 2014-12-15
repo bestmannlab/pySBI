@@ -3133,9 +3133,11 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                         right_mean=np.mean(data.trial_e_rates[trial][1,int((500*ms)/(.5*ms)):int((950*ms)/(.5*ms))])
                         #bias=np.abs(left_mean-right_mean)
                         ev_diff=np.abs(data.inputs[0,trial]-data.inputs[1,trial])
-                        bias=left_mean-right_mean
-                        if data.inputs[0,trial]<data.inputs[1,trial]:
-                            bias=right_mean-left_mean
+                        bias=np.abs(left_mean-right_mean)
+                        if data.inputs[0,trial]>data.inputs[1,trial] and left_mean<right_mean:
+                            bias=-(right_mean-left_mean)
+                        elif data.inputs[1,trial]>data.inputs[0,trial] and right_mean<left_mean:
+                            bias=-(left_mean-right_mean)
                         biases.append(bias)
                         ev_diffs.append(ev_diff)
                         choice_correct=0.0
