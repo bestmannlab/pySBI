@@ -3370,48 +3370,36 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
     (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
     print('ANOVA: large EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
 
-    num_comparisons=3.0
+    num_comparisons=2.0
     (t,p)=ttest_rel(condition_coeffs['control'][:,0],condition_coeffs['anode'][:,0])
     print('Posthoc, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_coeffs['control'][:,0],condition_coeffs['cathode'][:,0])
     print('Posthoc, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_coeffs['anode'][:,0],condition_coeffs['cathode'][:,0])
-    print('Posthoc, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_coeffs['control'][:,1],condition_coeffs['anode'][:,1])
     print('Posthoc, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_coeffs['control'][:,1],condition_coeffs['cathode'][:,1])
     print('Posthoc, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_coeffs['anode'][:,1],condition_coeffs['cathode'][:,1])
-    print('Posthoc, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['anode'][:,0])
     print('Posthoc, small EV Diff, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
     print('Posthoc, small EV Diff, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_small_ev_diff_coeffs['anode'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
-    print('Posthoc, small EV Diff, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['anode'][:,1])
     print('Posthoc, small EV Diff, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
     print('Posthoc, small EV Diff, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_small_ev_diff_coeffs['anode'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
-    print('Posthoc, small EV Diff, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['anode'][:,0])
     print('Posthoc, large EV Diff, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
     print('Posthoc, large EV Diff, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_large_ev_diff_coeffs['anode'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
-    print('Posthoc, large EV Diff, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1])
     print('Posthoc, large EV Diff, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
     print('Posthoc, large EV Diff, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
-    print('Posthoc, large EV Diff, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
 def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=False):
     stim_conditions=['control','anode','cathode']
@@ -3694,48 +3682,36 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
     (F,p)=f_oneway(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
     print('ANOVA: large EV Diff, EV Diff, F=%.3f, p=%.5f' % (F,p))
 
-    num_comparisons=3.0
+    num_comparisons=2.0
     (t,p)=ttest_rel(condition_coeffs['control'][:,0],condition_coeffs['anode'][:,0])
     print('Posthoc, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_coeffs['control'][:,0],condition_coeffs['cathode'][:,0])
     print('Posthoc, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_coeffs['anode'][:,0],condition_coeffs['cathode'][:,0])
-    print('Posthoc, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_coeffs['control'][:,1],condition_coeffs['anode'][:,1])
     print('Posthoc, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_coeffs['control'][:,1],condition_coeffs['cathode'][:,1])
     print('Posthoc, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_coeffs['anode'][:,1],condition_coeffs['cathode'][:,1])
-    print('Posthoc, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['anode'][:,0])
     print('Posthoc, small EV Diff, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
     print('Posthoc, small EV Diff, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_small_ev_diff_coeffs['anode'][:,0],condition_small_ev_diff_coeffs['cathode'][:,0])
-    print('Posthoc, small EV Diff, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['anode'][:,1])
     print('Posthoc, small EV Diff, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_small_ev_diff_coeffs['control'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
     print('Posthoc, small EV Diff, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_small_ev_diff_coeffs['anode'][:,1],condition_small_ev_diff_coeffs['cathode'][:,1])
-    print('Posthoc, small EV Diff, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['anode'][:,0])
     print('Posthoc, large EV Diff, bias, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
     print('Posthoc, large EV Diff, bias, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_large_ev_diff_coeffs['anode'][:,0],condition_large_ev_diff_coeffs['cathode'][:,0])
-    print('Posthoc, large EV Diff, bias, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['anode'][:,1])
     print('Posthoc, large EV Diff, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
     print('Posthoc, large EV Diff, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
-    (t,p)=ttest_rel(condition_large_ev_diff_coeffs['anode'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
-    print('Posthoc, large EV Diff, EV Diff, anode-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
 
 def generate_accuracy_logistic_files(reports_dir, data_dir, file_prefix, num_subjects):
     stim_conditions=['control','anode','cathode']
