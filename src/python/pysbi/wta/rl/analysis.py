@@ -497,7 +497,7 @@ class BackgroundBetaReport:
         ax.plot(background_vals,alpha_vals,'o')
         ax.plot([self.background_range[0], self.background_range[-1]], [self.alpha_a * self.background_range[0] + self.alpha_b,
                                                                         self.alpha_a * self.background_range[-1] + self.alpha_b],
-            label='r^2=%.3f' % self.alpha_r_sqr)
+            label='r^2=%.5f' % self.alpha_r_sqr)
         ax.set_xlabel('background frequency')
         ax.set_ylabel('alpha')
         ax.set_ylim([0,1])
@@ -517,7 +517,7 @@ class BackgroundBetaReport:
         ax.plot(background_vals,beta_vals,'o')
         ax.plot([self.background_range[0], self.background_range[-1]], [self.beta_a * self.background_range[0] + self.beta_b,
                                                                         self.beta_a * self.background_range[-1] + self.beta_b],
-            label='r^2=%.3f' % self.beta_r_sqr)
+            label='r^2=%.5f' % self.beta_r_sqr)
         ax.set_xlabel('background frequency')
         ax.set_ylabel('beta')
         ax.legend(loc=0)
@@ -777,7 +777,7 @@ class StimConditionReport:
             max_x=np.max(self.condition_alphas)+.1
             ax.plot([min_x, max_x], [self.alpha_perc_correct_a * min_x + self.alpha_perc_correct_b,
                                      self.alpha_perc_correct_a * max_x + self.alpha_perc_correct_b],
-                label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
+                label='r^2=%.5f' % self.alpha_perc_correct_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Alpha')
             ax.set_ylabel('Prop Correct')
@@ -802,7 +802,7 @@ class StimConditionReport:
             max_x=np.max(self.condition_betas)+1.0
             ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
                                      self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
-                label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
+                label='r^2=%.5f' % self.beta_perc_correct_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
             ax.set_ylabel('Prop Correct')
@@ -2279,7 +2279,7 @@ class RLReport:
                                          self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
                                          self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
                                          self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
-                    label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
+                    label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
                     color=baseline.get_color())
 
                 all_condition_alphas.extend(self.stim_condition_reports[stim_condition].condition_alphas)
@@ -2310,7 +2310,7 @@ class RLReport:
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
-                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
+                        label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
                         color=baseline.get_color())
 
             ax.legend(loc=0)
@@ -2339,7 +2339,7 @@ class RLReport:
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_b,
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_a * max_x +
                                              self.stim_condition_reports[stim_condition].alpha_perc_correct_b],
-                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
+                        label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].alpha_perc_correct_r_sqr),
                         color=baseline.get_color())
 
             ax.legend(loc=0)
@@ -2371,7 +2371,7 @@ class RLReport:
             max_x=np.max(all_condition_alphas_vec)+.1
             ax.plot([min_x, max_x], [self.alpha_perc_correct_a * min_x + self.alpha_perc_correct_b,
                                      self.alpha_perc_correct_a * max_x + self.alpha_perc_correct_b],
-                label='r^2=%.3f' % self.alpha_perc_correct_r_sqr)
+                label='r^2=%.5f' % self.alpha_perc_correct_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Alpha')
             ax.set_ylabel('Prop Correct')
@@ -2400,7 +2400,7 @@ class RLReport:
                                          self.stim_condition_reports[stim_condition].beta_perc_correct_b,
                                          self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
                                          self.stim_condition_reports[stim_condition].beta_perc_correct_b],
-                    label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
+                    label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
                     color=baseline.get_color())
                 all_condition_betas.extend(self.stim_condition_reports[stim_condition].condition_betas)
             ax.legend(loc=0)
@@ -2432,7 +2432,7 @@ class RLReport:
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_b,
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_b],
-                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
+                        label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
                         color=baseline.get_color())
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
@@ -2463,7 +2463,7 @@ class RLReport:
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_b,
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_a * max_x +
                                              self.stim_condition_reports[stim_condition].beta_perc_correct_b],
-                        label='%s r^2=%.3f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
+                        label='%s r^2=%.5f' % (stim_condition,self.stim_condition_reports[stim_condition].beta_perc_correct_r_sqr),
                         color=baseline.get_color())
             ax.legend(loc=0)
             ax.set_xlim([0,15])
@@ -2494,7 +2494,7 @@ class RLReport:
             max_x=np.max(all_condition_betas)+1
             ax.plot([min_x, max_x], [self.beta_perc_correct_a * min_x + self.beta_perc_correct_b,
                                      self.beta_perc_correct_a * max_x + self.beta_perc_correct_b],
-                label='r^2=%.3f' % self.beta_perc_correct_r_sqr)
+                label='r^2=%.5f' % self.beta_perc_correct_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
             ax.set_ylabel('Prop Correct')
@@ -2673,7 +2673,7 @@ class RLReport:
             max_x=np.max(ev_plot_diffs)
             ax.plot([min_x, max_x], [self.rate_diff_ratio_perc_correct_a * min_x + self.rate_diff_ratio_perc_correct_b,
                                      self.rate_diff_ratio_perc_correct_a * max_x + self.rate_diff_ratio_perc_correct_b],
-                label='r^2=%.3f' % self.rate_diff_ratio_perc_correct_r_sqr)
+                label='r^2=%.5f' % self.rate_diff_ratio_perc_correct_r_sqr)
             ax.legend(loc='best')
             ax.set_xlabel('prestim bias/input diff')
             ax.set_ylabel('% correct')
@@ -2871,10 +2871,10 @@ class RLReport:
             min_x=np.min(subject_betas_vec)-1
             max_x=np.max(subject_betas_vec)+1
             x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.beta_pyr_rate_diff_exp_r_sqr)
+            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.5f' % self.beta_pyr_rate_diff_exp_r_sqr)
             ax.plot([min_x, max_x], [self.beta_pyr_rate_diff_a * min_x + self.beta_pyr_rate_diff_b,
                                      self.beta_pyr_rate_diff_a * max_x + self.beta_pyr_rate_diff_b],
-                label='r^2=%.3f' % self.beta_pyr_rate_diff_lin_r_sqr)
+                label='r^2=%.5f' % self.beta_pyr_rate_diff_lin_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Beta')
             ax.set_ylabel('Pyr Rate Diff')
@@ -2927,10 +2927,10 @@ class RLReport:
             min_x=np.min(subject_alphas_vec)-.1
             max_x=np.max(subject_alphas_vec)+.1
             x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.3f' % self.alpha_pyr_rate_diff_exp_r_sqr)
+            ax.plot(x_range,exp_decay(x_range,*popt),label='r^2=%.5f' % self.alpha_pyr_rate_diff_exp_r_sqr)
             ax.plot([min_x, max_x], [self.alpha_pyr_rate_diff_a * min_x + self.alpha_pyr_rate_diff_b,
                                      self.alpha_pyr_rate_diff_a * max_x + self.alpha_pyr_rate_diff_b],
-                label='r^2=%.3f' % self.alpha_pyr_rate_diff_lin_r_sqr)
+                label='r^2=%.5f' % self.alpha_pyr_rate_diff_lin_r_sqr)
             ax.legend(loc=0)
             ax.set_xlabel('Alpha')
             ax.set_ylabel('Pyr Rate Diff')
