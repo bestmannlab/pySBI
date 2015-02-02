@@ -3199,6 +3199,8 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
                 large_ev_diff_coeffs.append(logit.coef_[0])
                 large_ev_diff_intercepts.append(logit.intercept_)
 
+
+
         print('%s, overall, mean accuracy=%.4f' % (stim_condition,np.mean(overall_accuracy)))
         print('%s, small EV Diff, mean accuracy=%.4f' % (stim_condition,np.mean(small_ev_diff_accuracy)))
         print('%s, large EV Diff, mean accuracy=%.4f' % (stim_condition,np.mean(large_ev_diff_accuracy)))
@@ -3666,6 +3668,48 @@ def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=
     save_to_png(fig, '%s.png' % logistic_fname)
     save_to_eps(fig, '%s.eps' % logistic_fname)
     plt.close(fig)
+
+    for stim_condition in stim_conditions:
+        f=open('%s_overall_coeffs.csv' % (os.path.join(reports_dir,stim_condition)),'w')
+        for i in range(condition_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_coeffs[stim_condition][i,0])
+        f.write('\n')
+        for i in range(condition_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_coeffs[stim_condition][i,1])
+        f.write('\n')
+    f.close()
+
+    for stim_condition in stim_conditions:
+        f=open('%s_small_ev_diff_coeffs.csv' % (os.path.join(reports_dir,stim_condition)),'w')
+        for i in range(condition_small_ev_diff_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_small_ev_diff_coeffs[stim_condition][i,0])
+        f.write('\n')
+        for i in range(condition_small_ev_diff_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_small_ev_diff_coeffs[stim_condition][i,1])
+        f.write('\n')
+    f.close()
+
+    for stim_condition in stim_conditions:
+        f=open('%s_large_ev_diff_coeffs.csv' % (os.path.join(reports_dir,stim_condition)),'w')
+        for i in range(condition_large_ev_diff_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_large_ev_diff_coeffs[stim_condition][i,0])
+        f.write('\n')
+        for i in range(condition_large_ev_diff_coeffs[stim_condition].shape[0]):
+            if i>0:
+                f.write(',')
+            f.write('%0.4f' % condition_large_ev_diff_coeffs[stim_condition][i,1])
+        f.write('\n')
+    f.close()
 
     (F,p)=f_oneway(condition_coeffs['control'][:,0],condition_coeffs['anode'][:,0],condition_coeffs['cathode'][:,0])
     print('ANOVA: bias, F=%.3f, p=%.5f' % (F,p))
