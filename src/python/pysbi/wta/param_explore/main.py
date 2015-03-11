@@ -63,7 +63,7 @@ def main():
         log_level=logging.INFO,
         log_stdout=True,
         multiproc=True,
-        ncores=2, #My laptop has 2 cores ;-)
+        ncores=10, #My laptop has 2 cores ;-)
         wrap_mode='QUEUE',
         filename=filename,
         overwrite_file=True,
