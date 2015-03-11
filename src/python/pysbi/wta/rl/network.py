@@ -1,5 +1,5 @@
 import argparse
-from brian.stdunits import ms, pA
+from brian.stdunits import ms, pA, Hz
 from brian.units import second
 import numpy as np
 import scipy.io
@@ -104,7 +104,7 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
         inputs[:,trial]=40.0+40.0*inputs[:,trial]
 
         trial_monitor=run_wta(default_params, num_groups, inputs[:,trial], trial_duration, background_freq=background_freq,
-            p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=dcs_start_time, record_lfp=False, record_voxel=False,
+            input_var=0*Hz, p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=dcs_start_time, record_lfp=False, record_voxel=False,
             record_neuron_state=False, record_spikes=False, record_firing_rate=True, record_inputs=False,
             plot_output=False)
 

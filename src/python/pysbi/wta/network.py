@@ -208,7 +208,7 @@ class WTANetworkGroup(NeuronGroup):
                     delay=.5*ms)
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, output_file=None,
+def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, input_var=4*Hz, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
             record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
             p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms, report='text'):
@@ -262,7 +262,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
         for idx in range(len(task_inputs)):
             rate=1*Hz
             if stim_start_time<=simulation_clock.t<stim_end_time:
-                rate=input_freq[idx]*Hz+np.random.randn()*4*Hz
+                rate=input_freq[idx]*Hz+np.random.randn()*input_var
                 if rate<1*Hz:
                     rate=1*Hz
             task_inputs[idx]._S[0, :]=rate
