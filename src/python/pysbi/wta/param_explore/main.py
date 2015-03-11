@@ -70,7 +70,7 @@ def main():
         filename=filename,
         overwrite_file=True,
         git_repository='/home/jbonaiuto/Projects/pySBI',
-        sumatra_project='/home/jbonaiuto/Projects/pySBI'
+        #sumatra_project='/home/jbonaiuto/Projects/pySBI'
     )
 
     traj = env.v_trajectory
