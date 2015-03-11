@@ -23,10 +23,12 @@ def add_exploration(traj):
 
     print('Adding exploration of p_e_e, p_e_i, p_i_i, and p_i_e')
 
-    explore_dict = {'wta_params.p_e_e': np.arange(0.01, 1.01, 0.01).tolist(),
-                    'wta_params.p_e_i': np.arange(0.01, 1.01, 0.01).tolist(),
-                    'wta_params.p_i_i': np.arange(0.01, 1.01, 0.01).tolist(),
-                    'wta_params.p_i_e': np.arange(0.01, 1.01, 0.01).tolist()}
+    param_vals=[0.01]
+    param_vals.extend(np.arange(0.1,1.1,0.1).tolist())
+    explore_dict = {'wta_params.p_e_e': param_vals,
+                    'wta_params.p_e_i': param_vals,
+                    'wta_params.p_i_i': param_vals,
+                    'wta_params.p_i_e': param_vals}
 
     explore_dict = cartesian_product(explore_dict, ('wta_params.p_e_e', 'wta_params.p_e_i','wta_params.p_i_i',
                                                     'wta_params.p_i_e'))
