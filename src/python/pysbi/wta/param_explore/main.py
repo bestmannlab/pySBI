@@ -59,7 +59,7 @@ def main():
     env=Environment(trajectory='wta_param_explore',
         comment='Experiment to find suitable parameters for WTA network',
         add_time=False,
-        log_folder='logs',
+        log_folder=config.LOG_DIR,
         log_level=logging.INFO,
         log_stdout=True,
         multiproc=True,
