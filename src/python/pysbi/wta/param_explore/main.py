@@ -45,7 +45,7 @@ def run_sim(traj):
     wta_params.p_e_i=traj.par.wta_params.p_e_i
     wta_params.p_i_i=traj.par.wta_params.p_i_i
     wta_params.p_i_e=traj.par.wta_params.p_i_e
-    wta_monitor=run_wta(wta_params, 2, [30 ,50], 4*second, 910*Hz, record_lfp=False, record_voxel=False,
+    wta_monitor=run_wta(wta_params, 2, [40 ,40], 4*second, 1000*Hz, record_lfp=False, record_voxel=False,
         record_neuron_state=False, record_spikes=False, plot_output=False)
     traj.f_add_result('wta.$', e0_times=wta_monitor.monitors['excitatory_rate_0'].times/ms,
         e0_rate=wta_monitor.monitors['excitatory_rate_0'].smooth_rate(width=5*ms)/hertz,
