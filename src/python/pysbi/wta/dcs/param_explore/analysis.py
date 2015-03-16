@@ -58,3 +58,5 @@ if __name__=='__main__':
     report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(10), 20,
         '/data/pySBI/reports/rdmd/virtual_subjects_param_explore')
+    report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=True,
+        regenerate_session_plots=True, regenerate_trial_plots=True)
