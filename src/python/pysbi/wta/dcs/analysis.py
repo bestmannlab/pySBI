@@ -992,7 +992,7 @@ class DCSComparisonReport:
                     condition_contrast[stim_level]=contrast
                 if not stim_level in condition_rt:
                     condition_rt[stim_level]=[]
-                condition_rt[stim_level].extend(mean_rt)
+                condition_rt[stim_level]=mean_rt
 
         for condition, contrast in condition_contrast.iteritems():
             mean_rt=np.mean(np.array(condition_rt[condition]),axis=0)
