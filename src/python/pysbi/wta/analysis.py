@@ -4,6 +4,7 @@ import subprocess
 from brian import Hz, ms, nA, mA
 import traceback
 from brian.units import second, farad, siemens, volt, amp
+import scipy
 from scipy.signal import *
 import h5py
 import math
