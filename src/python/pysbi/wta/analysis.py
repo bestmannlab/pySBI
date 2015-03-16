@@ -4,7 +4,6 @@ import subprocess
 from brian import Hz, ms, nA, mA
 import traceback
 from brian.units import second, farad, siemens, volt, amp
-import scipy
 from scipy.signal import *
 import h5py
 import math
@@ -554,7 +553,7 @@ def get_lfp_signal(wta_data, plot=False):
     [b,a]=butter(4.0,1.0/500.0,'high')
     dur=len(wta_data.lfp_rec['lfp'][0])
     resam_dur=int(dur*.1)
-    lfp_res=scipy.signal.resample(wta_data.lfp_rec['lfp'][0],resam_dur)
+    lfp_res=resample(wta_data.lfp_rec['lfp'][0],resam_dur)
     lfp=lfilter(b,a,lfp_res)
     if plot:
         plt.plot(lfp)
