@@ -1,0 +1,236 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+    <title>WTA ({{ rinfo.wta_params.p_e_e }},{{ rinfo.wta_params.p_e_i }},{{ rinfo.wta_params.p_i_i }},{{ rinfo.wta_params.p_i_e }})</title>
+</head>
+
+<body>
+
+<script type="text/javascript">
+    $(document).ready(function()
+            {
+                $("#stim_levels_table").tablesorter();
+            }
+    );
+</script>
+
+<h4>Code version: {{ rinfo.version }}</h4>
+
+<h4>Simulation Parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>Number of groups</td>
+        <td>{{ rinfo.num_groups }}</td>
+    </tr>
+    <tr>
+        <td>Trial_duration</td>
+        <td>{{ rinfo.trial_duration }}</td>
+    </tr>
+    <tr>
+        <td>Stimulation start time</td>
+        <td>{{ rinfo.stim_start_time }}</td>
+    </tr>
+    <tr>
+        <td>Stimulation end time</td>
+        <td>{{ rinfo.stim_end_time }}</td>
+    </tr>
+    <tr>
+        <td>Network group size</td>
+        <td>{{ rinfo.network_group_size }}</td>
+    </tr>
+    <tr>
+        <td>Background input size</td>
+        <td>{{ rinfo.background_input_size }}</td>
+    </tr>
+    <tr>
+        <td>Task input size</td>
+        <td>{{ rinfo.task_input_size }}</td>
+    </tr>
+</table>
+
+<h4>Network connectivity parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>p_e_e</td>
+        <td>{{ rinfo.wta_params.p_e_e }}</td>
+    </tr>
+    <tr>
+        <td>p_e_i</td>
+        <td>{{ rinfo.wta_params.p_e_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_i</td>
+        <td>{{ rinfo.wta_params.p_i_i }}</td>
+    </tr>
+    <tr>
+        <td>p_i_e</td>
+        <td>{{ rinfo.wta_params.p_i_e }}</td>
+    </tr>
+</table>
+
+<h4>Network neural parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.wta_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.wta_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>EL</td>
+        <td>{{ rinfo.wta_params.EL }}</td>
+    </tr>
+    <tr>
+        <td>VT</td>
+        <td>{{ rinfo.wta_params.VT }}</td>
+    </tr>
+    <tr>
+        <td>Vr</td>
+        <td>{{ rinfo.wta_params.Vr }}</td>
+    </tr>
+    <tr>
+        <td>DeltaT</td>
+        <td>{{ rinfo.wta_params.DeltaT }}</td>
+    </tr>
+    <tr>
+        <td>Mg</td>
+        <td>{{ rinfo.wta_params.Mg }}</td>
+    </tr>
+    <tr>
+        <td>E_ampa</td>
+        <td>{{ rinfo.wta_params.E_ampa }}</td>
+    </tr>
+    <tr>
+        <td>E_nmda</td>
+        <td>{{ rinfo.wta_params.E_nmda }}</td>
+    </tr>
+    <tr>
+        <td>E_gaba_a</td>
+        <td>{{ rinfo.wta_params.E_gaba_a }}</td>
+    </tr>
+    <tr>
+        <td>tau_ampa</td>
+        <td>{{ rinfo.wta_params.tau_ampa }}</td>
+    </tr>
+    <tr>
+        <td>tau1_nmda</td>
+        <td>{{ rinfo.wta_params.tau1_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau2_nmda</td>
+        <td>{{ rinfo.wta_params.tau2_nmda }}</td>
+    </tr>
+    <tr>
+        <td>tau_gaba_a</td>
+        <td>{{ rinfo.wta_params.tau_gaba_a }}</td>
+    </tr>
+</table>
+
+
+<h4>Pyramidal cell parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.pyr_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.pyr_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>refractory</td>
+        <td>{{ rinfo.pyr_params.refractory }}</td>
+    </tr>
+    <tr>
+        <td>w_nmda</td>
+        <td>{{ rinfo.pyr_params.w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_ext</td>
+        <td>{{ rinfo.pyr_params.w_ampa_ext }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_rec</td>
+        <td>{{ rinfo.pyr_params.w_ampa_rec }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba</td>
+        <td>{{ rinfo.pyr_params.w_gaba }}</td>
+    </tr>
+</table>
+
+<h4>Interneuron parameters</h4>
+<table border="1">
+    <tr>
+        <td width="200"><strong>Parameter</strong></td>
+        <td width="100"><strong>Value</strong></td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>{{ rinfo.inh_params.C }}</td>
+    </tr>
+    <tr>
+        <td>gL</td>
+        <td>{{ rinfo.inh_params.gL }}</td>
+    </tr>
+    <tr>
+        <td>refractory</td>
+        <td>{{ rinfo.inh_params.refractory }}</td>
+    </tr>
+    <tr>
+        <td>w_nmda</td>
+        <td>{{ rinfo.inh_params.w_nmda }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_ext</td>
+        <td>{{ rinfo.inh_params.w_ampa_ext }}</td>
+    </tr>
+    <tr>
+        <td>w_ampa_rec</td>
+        <td>{{ rinfo.inh_params.w_ampa_rec }}</td>
+    </tr>
+    <tr>
+        <td>w_gaba</td>
+        <td>{{ rinfo.inh_params.w_gaba }}</td>
+    </tr>
+</table>
+
+<h3>Stimulation Levels</h3>
+<table id="stim_levels_table" class="tablesorter">
+    <thead>
+    <tr>
+        <th>Stimulation Level</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for stim_level in rinfo.stim_level_reports %}
+    <tr>
+        <td><a href="level_{{ stim_level }}/dcs.html">{{ stim_level }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
