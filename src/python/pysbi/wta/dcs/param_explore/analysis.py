@@ -26,7 +26,7 @@ class ParamExploreReport():
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
                 self.file_prefix,self.virtual_subj_ids,
                 {'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)},
-                self.num_trials, report_dir, '')
+                self.num_trials, report_dir, '', contrast_range=(0.0, .032, .064, .128, .256, .512))
             self.stim_level_reports[stim_gain].create_report(regenerate_plots=regenerate_stim_level_plots,
                 regenerate_subject_plots=regenerate_subject_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)

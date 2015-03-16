@@ -762,7 +762,8 @@ class SubjectReport:
 
 
 class DCSComparisonReport:
-    def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc, dt=.5*ms):
+    def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc, dt=.5*ms,
+                 contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512)):
         """
         Create report for DCS simulations
         data_dir=directory where datafiles are stored
@@ -778,7 +779,7 @@ class DCSComparisonReport:
         self.virtual_subj_ids=virtual_subj_ids
         self.stim_levels=stim_levels
         self.num_trials=num_trials
-        self.contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512)
+        self.contrast_range=contrast_range
         self.dt=dt
         self.reports_dir=reports_dir
         self.edesc=edesc
