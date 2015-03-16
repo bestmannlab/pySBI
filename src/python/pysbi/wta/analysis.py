@@ -770,7 +770,7 @@ class MaxBOLDContrastRegression:
         self.trials_max_bold_contrast=np.array(trials_contrast)
         self.trials_max_bold_contrast=np.reshape(self.trials_max_bold_contrast,(-1,1))
 
-        self.bold_contrast_a=nan
+        self.bold_contrast_a=float('NaN')
         self.bold_contrast_b=0
         if len(self.trials_max_bold_contrast):
             clf = LinearRegression()
