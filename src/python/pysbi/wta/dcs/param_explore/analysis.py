@@ -12,7 +12,8 @@ class ParamExploreReport():
         self.virtual_subj_ids=virtual_subj_ids
         self.num_trials=num_trials
         self.reports_dir=reports_dir
-        self.stim_gains=[8,4,2,1,0.5,0.25]
+        #self.stim_gains=[8,4,2,1,0.5,0.25]
+        self.stim_gains=[4,2,1,0.5,0.25]
         self.stim_level_reports={}
 
     def create_report(self, regenerate_stim_level_plots=False, regenerate_subject_plots=False,
@@ -22,7 +23,7 @@ class ParamExploreReport():
 
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
         for stim_gain in self.stim_gains:
-            report_dir=os.path.join(self.reports_dir,'level_%d' % stim_gain)
+            report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
                 self.file_prefix,self.virtual_subj_ids,
                 {'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)},
@@ -58,5 +59,5 @@ if __name__=='__main__':
     report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(10), 20,
         '/data/pySBI/reports/rdmd/virtual_subjects_param_explore')
-    report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=True,
-        regenerate_session_plots=True, regenerate_trial_plots=True)
+    report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=False,
+        regenerate_session_plots=False, regenerate_trial_plots=False)
