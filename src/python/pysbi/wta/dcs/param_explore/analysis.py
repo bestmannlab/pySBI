@@ -50,8 +50,8 @@ class ParamExploreReport():
         fname=os.path.join(self.reports_dir, furl)
         self.thresh_url='%s.png' % furl
         fig=plt.figure()
-        plt.plot(self.stim_gains,self.thresh_difference['anode'],'r',label='anode',)
-        plt.plot(self.stim_gains,self.thresh_difference['cathode'],'g',label='anode')
+        plt.plot(self.stim_gains,self.thresh_difference['anode'],'ro',label='anode',)
+        plt.plot(self.stim_gains,self.thresh_difference['cathode'],'go',label='anode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Threshold difference')
         save_to_png(fig, '%s.png' % fname)
@@ -62,8 +62,8 @@ class ParamExploreReport():
         fname=os.path.join(self.reports_dir, furl)
         self.rt_diff_slope_url='%s.png' % furl
         fig=plt.figure()
-        plt.plot(self.stim_gains,self.rt_diff_slope['anode'],'r',label='anode',)
-        plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'g',label='anode')
+        plt.plot(self.stim_gains,self.rt_diff_slope['anode'],'ro',label='anode',)
+        plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'go',label='anode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('RT Difference slope')
         save_to_png(fig, '%s.png' % fname)
@@ -75,8 +75,8 @@ class ParamExploreReport():
         fname=os.path.join(self.reports_dir, furl)
         self.prestim_bias_diff_url='%s.png' % furl
         fig=plt.figure()
-        plt.plot(self.stim_gains,self.prestim_bias_diff['anode'],'r',label='anode',)
-        plt.plot(self.stim_gains,self.prestim_bias_diff['cathode'],'g',label='anode')
+        plt.plot(self.stim_gains,self.prestim_bias_diff['anode'],'ro',label='anode',)
+        plt.plot(self.stim_gains,self.prestim_bias_diff['cathode'],'go',label='anode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Prestimulus Bias Difference')
         save_to_png(fig, '%s.png' % fname)
