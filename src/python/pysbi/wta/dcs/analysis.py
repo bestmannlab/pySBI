@@ -901,9 +901,9 @@ class DCSComparisonReport:
             cathode_rt_diffs=[]
             for contrast_level in self.contrast_range:
                 if contrast_level in control_contrast and contrast_level in anode_contrast:
-                    anode_rt_diffs.append(anode_mean_rt[anode_contrast.find(contrast_level)]-control_mean_rt[control_contrast.find(contrast_level)])
+                    anode_rt_diffs.append(anode_mean_rt[anode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
                 if contrast_level in control_contrast and contrast_level in cathode_contrast:
-                    cathode_rt_diffs.append(cathode_mean_rt[cathode_contrast.find(contrast_level)-control_mean_rt[control_contrast.find(contrast_level)]])
+                    cathode_rt_diffs.append(cathode_mean_rt[cathode_contrast.index(contrast_level)-control_mean_rt[control_contrast.index(contrast_level)]])
             if len(anode_rt_diffs):
                 mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
             if len(cathode_rt_diffs):
