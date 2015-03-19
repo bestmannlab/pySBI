@@ -899,11 +899,15 @@ class DCSComparisonReport:
             cathode_contrast,cathode_mean_rt,cathode_std_rt=subj_report.sessions['cathode'].series.get_contrast_rt_stats()
             anode_rt_diffs=[]
             cathode_rt_diffs=[]
-            for idx in range(len(control_contrast)):
-                anode_rt_diffs.append(anode_mean_rt[idx]-control_mean_rt[idx])
-                cathode_rt_diffs.append(cathode_mean_rt[idx]-control_mean_rt[idx])
-            mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
-            mean_cathode_rt_diffs.append(np.mean(cathode_rt_diffs))
+            for contrast_level in self.contrast_range:
+                if contrast_level in control_contrast and contrast_level in anode_contrast:
+                    anode_rt_diffs.append(anode_mean_rt[anode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
+                if contrast_level in control_contrast and contrast_level in cathode_contrast:
+                    cathode_rt_diffs.append(cathode_mean_rt[cathode_contrast.index(contrast_level)-control_mean_rt[control_contrast.index(contrast_level)]])
+            if len(anode_rt_diffs):
+                mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
+            if len(cathode_rt_diffs):
+                mean_cathode_rt_diffs.append(np.mean(cathode_rt_diffs))
         anode_rt_hist,anode_rt_bins=np.histogram(np.array(mean_anode_rt_diffs), bins=5)
         bin_width=anode_rt_bins[1]-anode_rt_bins[0]
         bars=plt.bar(anode_rt_bins[:-1],anode_rt_hist/float(len(mean_anode_rt_diffs)),width=bin_width, label='anode')
