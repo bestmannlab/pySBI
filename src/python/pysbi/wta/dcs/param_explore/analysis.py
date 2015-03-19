@@ -16,8 +16,8 @@ class ParamExploreReport():
         self.virtual_subj_ids=virtual_subj_ids
         self.num_trials=num_trials
         self.reports_dir=reports_dir
-        #self.stim_gains=[8,4,2,1,0.5,0.25]
-        self.stim_gains=[4,2,1,0.5,0.25]
+        self.stim_gains=[8,4,2,1,0.5,0.25]
+        #self.stim_gains=[4,2,1,0.5,0.25]
         self.stim_level_reports={}
 
     def create_report(self, regenerate_stim_level_plots=False, regenerate_subject_plots=False,
