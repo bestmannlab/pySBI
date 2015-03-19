@@ -787,6 +787,7 @@ class DCSComparisonReport:
         self.subjects={}
         self.thresh={}
         self.rt_diff_slope={}
+        self.mean_biases={}
 
     def create_report(self, regenerate_plots=True, regenerate_subject_plots=True, regenerate_session_plots=True,
                       regenerate_trial_plots=True):
@@ -1435,6 +1436,7 @@ class DCSComparisonReport:
         conditions=['control','anode','cathode']
         pos = np.arange(len(conditions))+0.5    # Center bars on the Y-axis ticks
         for idx in range(len(conditions)):
+            self.mean_biases[conditions[idx]]=np.mean(biases[conditions[idx]])
             bar=ax.bar(pos[idx],np.mean(biases[conditions[idx]]), width=.5,
                 yerr=np.std(biases[conditions[idx]])/np.sqrt(len(biases[conditions[idx]])), align='center',ecolor='k')
             bar[0].set_color(colors[conditions[idx]])

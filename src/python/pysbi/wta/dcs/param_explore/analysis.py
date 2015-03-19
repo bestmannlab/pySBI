@@ -29,6 +29,7 @@ class ParamExploreReport():
 
         self.thresh_difference={'anode':[],'cathode':[]}
         self.rt_diff_slope={'anode':[],'cathode':[]}
+        self.prestim_bias_diff={'anode':[],'cathode':[]}
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
@@ -42,6 +43,8 @@ class ParamExploreReport():
             self.thresh_difference['cathode'].append(self.stim_level_reports[stim_gain].thresh['cathode']-self.stim_level_reports[stim_gain].thresh['control'])
             self.rt_diff_slope['anode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['anode'])
             self.rt_diff_slope['cathode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['cathode'])
+            self.prestim_bias_diff['anode'].append(self.stim_level_reports[stim_gain].mean_biases['anode']-self.stim_level_reports[stim_gain].mean_biases['control'])
+            self.prestim_bias_diff['cathode'].append(self.stim_level_reports[stim_gain].mean_biases['cathode']-self.stim_level_reports[stim_gain].mean_biases['control'])
 
         furl='img/thresh'
         fname=os.path.join(self.reports_dir, furl)
@@ -63,6 +66,19 @@ class ParamExploreReport():
         plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'g',label='anode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('RT Difference slope')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+
+        furl='img/prestim_bias_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.prestim_bias_diff_url='%s.png' % furl
+        fig=plt.figure()
+        plt.plot(self.stim_gains,self.prestim_bias_diff['anode'],'r',label='anode',)
+        plt.plot(self.stim_gains,self.prestim_bias_diff['cathode'],'g',label='anode')
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Prestimulus Bias Difference')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
