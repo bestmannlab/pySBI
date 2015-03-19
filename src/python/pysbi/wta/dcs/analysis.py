@@ -1,8 +1,7 @@
-from scipy.optimize import curve_fit
 import matplotlib
-from sklearn.linear_model import LinearRegression
-
 matplotlib.use('Agg')
+from scipy.optimize import curve_fit
+from sklearn.linear_model import LinearRegression
 import pylab
 from brian import second
 import os
