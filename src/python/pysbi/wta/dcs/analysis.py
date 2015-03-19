@@ -988,20 +988,23 @@ class DCSComparisonReport:
         fname=os.path.join(self.reports_dir, furl)
 
         fig=plt.figure()
-        condition_contrast={}
+        condition_contrast={'control':self.contrast_range,'anode':self.contrast_range,'cathode':self.contrast_range}
         condition_rt={}
         for subj_report in self.subjects.itervalues():
-            for stim_level, session_report in subj_report.sessions.iteritems():
+            for condition, session_report in subj_report.sessions.iteritems():
+                if not condition in condition_rt:
+                    condition_rt[condition]={}
                 contrast, mean_rt, std_rt = session_report.series.get_contrast_rt_stats()
-                if not stim_level in condition_contrast:
-                    condition_contrast[stim_level]=contrast
-                if not stim_level in condition_rt:
-                    condition_rt[stim_level]=[]
-                condition_rt[stim_level].append(mean_rt)
-
+                for contrast_level, contrast_mean_rt in zip(contrast,mean_rt):
+                    if not contrast_level in condition_rt[condition]:
+                        condition_rt[condition][contrast_level]=[]
+                    condition_rt[condition][contrast_level].append(contrast_mean_rt)
         for condition, contrast in condition_contrast.iteritems():
-            mean_rt=np.mean(np.array(condition_rt[condition]),axis=0)
-            std_rt=np.std(np.array(condition_rt[condition]),axis=0)/np.sqrt(len(self.subjects))
+            mean_rt=[]
+            std_rt=[]
+            for contrast_level in contrast:
+                mean_rt.append(np.mean(condition_rt[condition][contrast_level]))
+                std_rt.append(np.std(condition_rt[condition][contrast_level]))
             rt_fit = FitRT(np.array(contrast), mean_rt, guess=[-550,3,600])
             if not condition in self.params:
                 self.params[condition]={}

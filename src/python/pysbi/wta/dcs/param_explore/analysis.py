@@ -70,7 +70,6 @@ class ParamExploreReport():
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-
         furl='img/prestim_bias_diff'
         fname=os.path.join(self.reports_dir, furl)
         self.prestim_bias_diff_url='%s.png' % furl
