@@ -226,7 +226,7 @@
     <tbody>
     {% for stim_level in rinfo.stim_level_reports %}
     <tr>
-        <td><a href="level_{{ stim_level|floatformat:2 }}/dcs.html">{{ stim_level }}</a></td>
+        <td><a href="level_{{ stim_level|round(2) }}/dcs.html">{{ stim_level }}</a></td>
     </tr>
     {% endfor %}
     </tbody>
