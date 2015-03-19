@@ -1,8 +1,10 @@
+import matplotlib.pyplot as plt
 import os
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
+from pysbi.util.utils import save_to_png, save_to_eps
 from pysbi.wta.dcs.analysis import DCSComparisonReport
 
 class ParamExploreReport():
@@ -22,6 +24,9 @@ class ParamExploreReport():
         make_report_dirs(self.reports_dir)
 
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+
+        self.thresh_difference={'anode':[],'cathode':[]}
+        self.rt_diff_slope={'anode':[],'cathode':[]}
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
@@ -31,6 +36,34 @@ class ParamExploreReport():
             self.stim_level_reports[stim_gain].create_report(regenerate_plots=regenerate_stim_level_plots,
                 regenerate_subject_plots=regenerate_subject_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
+            self.thresh_difference['anode'].append(self.stim_level_reports[stim_gain].thresh['anode']-self.stim_level_reports[stim_gain].thresh['control'])
+            self.thresh_difference['cathode'].append(self.stim_level_reports[stim_gain].thresh['cathode']-self.stim_level_reports[stim_gain].thresh['control'])
+            self.rt_diff_slope['anode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['anode'])
+            self.rt_diff_slope['cathode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['cathode'])
+
+        furl='img/thresh'
+        fname=os.path.join(self.reports_dir, furl)
+        self.thresh_url='%s.png' % furl
+        fig=plt.figure()
+        plt.plot(self.stim_gains,self.thresh_difference['anode'],'r',label='anode',)
+        plt.plot(self.stim_gains,self.thresh_difference['cathode'],'g',label='anode')
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Threshold difference')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        furl='img/rt_diff_slope'
+        fname=os.path.join(self.reports_dir, furl)
+        self.rt_diff_slope_url='%s.png' % furl
+        fig=plt.figure()
+        plt.plot(self.stim_gains,self.rt_diff_slope['anode'],'r',label='anode',)
+        plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'g',label='anode')
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('RT Difference slope')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
         self.pyr_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].pyr_params

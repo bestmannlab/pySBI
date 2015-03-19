@@ -786,6 +786,8 @@ class DCSComparisonReport:
         self.params={}
 
         self.subjects={}
+        self.thresh={}
+        self.rt_diff_slope={}
 
     def create_report(self, regenerate_plots=True, regenerate_subject_plots=True, regenerate_session_plots=True,
                       regenerate_trial_plots=True):
@@ -957,6 +959,8 @@ class DCSComparisonReport:
             np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
         plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--r',
             label='r^2=%.3f' % anode_r_sqr)
+        self.rt_diff_slope['anode']=anode_a
+
         clf = LinearRegression()
         clf.fit(np.reshape(np.array(control_contrast[1:]),(len(control_contrast[1:]),1)),
             np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
@@ -966,6 +970,7 @@ class DCSComparisonReport:
             np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
         plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
             label='r^2=%.3f' % cathode_r_sqr)
+        self.rt_diff_slope['cathode']=cathode_a
 
         plt.errorbar(control_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
         plt.errorbar(control_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
@@ -1041,12 +1046,12 @@ class DCSComparisonReport:
                 self.params[condition]={}
             self.params[condition]['alpha']=acc_fit.params[0]
             self.params[condition]['beta']=acc_fit.params[1]
-            thresh = np.max([0,acc_fit.inverse(0.8)])
+            self.thresh[condition] = np.max([0,acc_fit.inverse(0.8)])
             smoothInt = pylab.arange(0.01, max(contrast), 0.001)
             smoothResp = acc_fit.eval(smoothInt)
             plt.plot(smoothInt, smoothResp, '%s' % colors[condition], label=condition)
             plt.errorbar(contrast, mean_perc_correct,yerr=std_perc_correct,fmt='o%s' % colors[condition])
-            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[condition])
+            plt.plot([self.thresh[condition],self.thresh[condition]],[0.4,1.0],'%s' % colors[condition])
 
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
