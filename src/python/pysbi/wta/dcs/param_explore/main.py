@@ -6,7 +6,8 @@ from pysbi.wta.network import default_params
 from pysbi.wta.run import get_wta_cmds
 
 
-def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_param_file, trials, start_nodes=True):
+def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_param_file, trials,
+                                     stim_gains=[8,4,2,1,0.5,0.25], start_nodes=True):
     """
     nodes = nodes to run simulation on
     data_dir = directory containing subject data
@@ -30,7 +31,6 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
     alpha_vals=np.array(control_group['alpha'])
     beta_vals=np.array(control_group['beta'])
 
-    stim_gains=[8,4,2,1,0.5,0.25]
     # For each virtual subject
     for virtual_subj_id in virtual_subj_ids:
 
