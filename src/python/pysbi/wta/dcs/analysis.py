@@ -1163,6 +1163,10 @@ class DCSComparisonReport:
                 std_prestim_bias[stim_level].append(np.std(contrast_biases[stim_level])/np.sqrt(len(contrast_biases[stim_level])))
 
         fig=plt.figure()
+        self.coherence_prestim_bias_params={
+            'n': {},
+            'lambda': {}
+        }
         for stim_level in mean_prestim_bias:
             plt.errorbar(self.contrast_range, mean_prestim_bias[stim_level], yerr=std_prestim_bias[stim_level], fmt='o%s' % colors[stim_level])
             popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
@@ -1175,6 +1179,8 @@ class DCSComparisonReport:
             max_x=np.max(self.contrast_range)+.01
             x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
             plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+            self.coherence_prestim_bias_params['n'][stim_level]=popt[0]
+            self.coherence_prestim_bias_params['lambda'][stim_level]=popt[1]
 
         plt.legend(loc='best')
         plt.xlabel('Coherence')

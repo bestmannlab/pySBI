@@ -30,6 +30,8 @@ class ParamExploreReport():
         self.thresh_difference={'anode':[],'cathode':[]}
         self.rt_diff_slope={'anode':[],'cathode':[]}
         self.prestim_bias_diff={'anode':[],'cathode':[]}
+        self.coherence_prestim_bias_diff={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
+        
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
@@ -47,13 +49,17 @@ class ParamExploreReport():
             self.rt_diff_slope['cathode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['cathode'])
             self.prestim_bias_diff['anode'].append(self.stim_level_reports[stim_gain].mean_biases['anode']-self.stim_level_reports[stim_gain].mean_biases['control'])
             self.prestim_bias_diff['cathode'].append(self.stim_level_reports[stim_gain].mean_biases['cathode']-self.stim_level_reports[stim_gain].mean_biases['control'])
+            self.coherence_prestim_bias_diff['n']['anode'].append(self.stim_level_reports[stim_gain].coherence_prestim_bias_params['n']['anode']-self.stim_level_reports[stim_gain].coherence_prestim_bias_params['n']['control'])
+            self.coherence_prestim_bias_diff['lambda']['anode'].append(self.stim_level_reports[stim_gain].coherence_prestim_bias_params['lambda']['anode']-self.stim_level_reports[stim_gain].coherence_prestim_bias_params['lambda']['control'])
+            self.coherence_prestim_bias_diff['n']['cathode'].append(self.stim_level_reports[stim_gain].coherence_prestim_bias_params['n']['cathode']-self.stim_level_reports[stim_gain].coherence_prestim_bias_params['n']['control'])
+            self.coherence_prestim_bias_diff['lambda']['cathode'].append(self.stim_level_reports[stim_gain].coherence_prestim_bias_params['lambda']['cathode']-self.stim_level_reports[stim_gain].coherence_prestim_bias_params['lambda']['control'])
 
         furl='img/thresh'
         fname=os.path.join(self.reports_dir, furl)
         self.thresh_url='%s.png' % furl
         fig=plt.figure()
         plt.plot(self.stim_gains,self.thresh_difference['anode'],'ro',label='anode',)
-        plt.plot(self.stim_gains,self.thresh_difference['cathode'],'go',label='anode')
+        plt.plot(self.stim_gains,self.thresh_difference['cathode'],'go',label='cathode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Threshold difference')
         save_to_png(fig, '%s.png' % fname)
@@ -65,7 +71,7 @@ class ParamExploreReport():
         self.rt_diff_slope_url='%s.png' % furl
         fig=plt.figure()
         plt.plot(self.stim_gains,self.rt_diff_slope['anode'],'ro',label='anode',)
-        plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'go',label='anode')
+        plt.plot(self.stim_gains,self.rt_diff_slope['cathode'],'go',label='cathode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('RT Difference slope')
         save_to_png(fig, '%s.png' % fname)
@@ -77,11 +83,35 @@ class ParamExploreReport():
         self.prestim_bias_diff_url='%s.png' % furl
         fig=plt.figure()
         plt.plot(self.stim_gains,self.prestim_bias_diff['anode'],'ro',label='anode',)
-        plt.plot(self.stim_gains,self.prestim_bias_diff['cathode'],'go',label='anode')
+        plt.plot(self.stim_gains,self.prestim_bias_diff['cathode'],'go',label='cathode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Prestimulus Bias Difference')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        furl='img/coherence_prestim_bias_n'
+        fname=os.path.join(self.reports_dir, furl)
+        self.coherence_prestim_bias_n_url='%s.png' % furl
+        fig=plt.figure()
+        plt.plot(self.stim_gains,self.coherence_prestim_bias_diff['n']['anode'],'ro',label='anode')
+        plt.plot(self.stim_gains,self.coherence_prestim_bias_diff['n']['cathode'],'go',label='cathode')
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Coherence - Prestim Bias: n')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        furl='img/coherence_prestim_bias_lambda'
+        fname=os.path.join(self.reports_dir, furl)
+        self.coherence_prestim_bias_lambda_url='%s.png' % furl
+        fig=plt.figure()
+        plt.plot(self.stim_gains,self.coherence_prestim_bias_diff['lambda']['anode'],'ro',label='anode')
+        plt.plot(self.stim_gains,self.coherence_prestim_bias_diff['lambda']['cathode'],'go',label='cathode')
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Coherence - Prestim Bias: lambda')
+        save_to_png(fig, '%.png' % fname)
+        save_to_eps(fig, '%.eps' % fname)
         plt.close(fig)
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
