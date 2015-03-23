@@ -1,7 +1,9 @@
+import os
 from brian import second, pA
 from ezrcluster.launcher import Launcher
 import h5py
 import numpy as np
+from pysbi.config import SRC_DIR
 from pysbi.wta.network import default_params
 from pysbi.wta.run import get_wta_cmds
 
