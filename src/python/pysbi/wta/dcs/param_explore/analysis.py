@@ -16,7 +16,7 @@ class ParamExploreReport():
         self.virtual_subj_ids=virtual_subj_ids
         self.num_trials=num_trials
         self.reports_dir=reports_dir
-        self.stim_gains=[8,4,2,1,0.5,0.25]
+        self.stim_gains=[8,7,6,5,4,3,2,1,0.5,0.25]
         #self.stim_gains=[4,2,1,0.5,0.25]
         self.stim_level_reports={}
 
@@ -39,6 +39,8 @@ class ParamExploreReport():
             self.stim_level_reports[stim_gain].create_report(regenerate_plots=regenerate_stim_level_plots,
                 regenerate_subject_plots=regenerate_subject_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
+            for subj in self.stim_level_reports[stim_gain].subjects:
+                self.stim_level_reports[stim_gain].subjects[subj].sessions={}
             self.thresh_difference['anode'].append(self.stim_level_reports[stim_gain].thresh['anode']-self.stim_level_reports[stim_gain].thresh['control'])
             self.thresh_difference['cathode'].append(self.stim_level_reports[stim_gain].thresh['cathode']-self.stim_level_reports[stim_gain].thresh['control'])
             self.rt_diff_slope['anode'].append(self.stim_level_reports[stim_gain].rt_diff_slope['anode'])
@@ -109,5 +111,5 @@ if __name__=='__main__':
     report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(20), 20,
         '/data/pySBI/reports/rdmd/virtual_subjects_param_explore')
-    report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=False,
-        regenerate_session_plots=False, regenerate_trial_plots=False)
+    report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=False, regenerate_session_plots=False,
+                         regenerate_trial_plots=False)
