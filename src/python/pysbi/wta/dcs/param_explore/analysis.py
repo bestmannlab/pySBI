@@ -115,8 +115,8 @@ class ParamExploreReport():
         plt.plot(self.stim_gains,self.coherence_prestim_bias_diff['lambda']['cathode'],'go',label='cathode')
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Coherence - Prestim Bias: lambda')
-        save_to_png(fig, '%.png' % fname)
-        save_to_eps(fig, '%.eps' % fname)
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
         furl='img/prestim_bias_rt_diff_offset'
