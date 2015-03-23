@@ -476,16 +476,19 @@ class SubjectReport:
         fig=plt.figure()
         for stim_level in self.sessions:
             plt.errorbar(self.contrast_range, mean_prestim_bias[stim_level], yerr=std_prestim_bias[stim_level], fmt='o%s' % colors[stim_level])
-            popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
-            y_hat=exp_decay(np.array(self.contrast_range),*popt)
-            ybar=np.sum(np.array(mean_prestim_bias[stim_level]))/len(np.array(mean_prestim_bias[stim_level]))
-            ssres=np.sum((np.array(mean_prestim_bias[stim_level])-y_hat)**2.0)
-            sstot=np.sum((np.array(mean_prestim_bias[stim_level])-ybar)**2.0)
-            r_sqr=1.0-ssres/sstot
-            min_x=np.min(self.contrast_range)-.01
-            max_x=np.max(self.contrast_range)+.01
-            x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
-            plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+            try:
+                popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
+                y_hat=exp_decay(np.array(self.contrast_range),*popt)
+                ybar=np.sum(np.array(mean_prestim_bias[stim_level]))/len(np.array(mean_prestim_bias[stim_level]))
+                ssres=np.sum((np.array(mean_prestim_bias[stim_level])-y_hat)**2.0)
+                sstot=np.sum((np.array(mean_prestim_bias[stim_level])-ybar)**2.0)
+                r_sqr=1.0-ssres/sstot
+                min_x=np.min(self.contrast_range)-.01
+                max_x=np.max(self.contrast_range)+.01
+                x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
+                plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+            except:
+                pass
         plt.legend(loc='best')
         plt.xlabel('Coherence')
         plt.ylabel('Pyr Rate Diff (Hz)')
@@ -793,7 +796,7 @@ class DCSComparisonReport:
                       regenerate_trial_plots=True):
         make_report_dirs(self.reports_dir)
 
-        self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+        self.version = ''#subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
 
         for virtual_subj_id in self.virtual_subj_ids:
             print('Creating report for subject %d' % virtual_subj_id)
@@ -903,7 +906,7 @@ class DCSComparisonReport:
                 if contrast_level in control_contrast and contrast_level in anode_contrast:
                     anode_rt_diffs.append(anode_mean_rt[anode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
                 if contrast_level in control_contrast and contrast_level in cathode_contrast:
-                    cathode_rt_diffs.append(cathode_mean_rt[cathode_contrast.index(contrast_level)-control_mean_rt[control_contrast.index(contrast_level)]])
+                    cathode_rt_diffs.append(cathode_mean_rt[cathode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
             if len(anode_rt_diffs):
                 mean_anode_rt_diffs.append(np.mean(anode_rt_diffs))
             if len(cathode_rt_diffs):
@@ -935,49 +938,56 @@ class DCSComparisonReport:
             control_contrast,control_mean_rt,control_std_rt=subj_report.sessions['control'].series.get_contrast_rt_stats()
             anode_contrast,anode_mean_rt,anode_std_rt=subj_report.sessions['anode'].series.get_contrast_rt_stats()
             cathode_contrast,cathode_mean_rt,cathode_std_rt=subj_report.sessions['cathode'].series.get_contrast_rt_stats()
-            for idx in range(len(control_contrast)):
-                if not control_contrast[idx] in anode_coherence_rt_diff:
-                    anode_coherence_rt_diff[control_contrast[idx]]=[]
-                    cathode_coherence_rt_diff[control_contrast[idx]]=[]
-                anode_coherence_rt_diff[control_contrast[idx]].append(anode_mean_rt[idx]-control_mean_rt[idx])
-                cathode_coherence_rt_diff[control_contrast[idx]].append(cathode_mean_rt[idx]-control_mean_rt[idx])
+            for contrast_level in self.contrast_range:
+                if not contrast_level in anode_coherence_rt_diff:
+                    anode_coherence_rt_diff[contrast_level]=[]
+                    cathode_coherence_rt_diff[contrast_level]=[]
+                if contrast_level in control_contrast and contrast_level in anode_contrast:
+                    anode_coherence_rt_diff[contrast_level].append(anode_mean_rt[anode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
+                if contrast_level in control_contrast and contrast_level in cathode_contrast:
+                    cathode_coherence_rt_diff[contrast_level].append(cathode_mean_rt[cathode_contrast.index(contrast_level)]-control_mean_rt[control_contrast.index(contrast_level)])
         anode_rt_diff_mean=[]
         cathode_rt_diff_mean=[]
         anode_rt_diff_std=[]
         cathode_rt_diff_std=[]
-        for idx in range(len(control_contrast)):
-            anode_rt_diff_mean.append(np.mean(anode_coherence_rt_diff[control_contrast[idx]]))
-            anode_rt_diff_std.append(np.std(anode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(anode_coherence_rt_diff[control_contrast[idx]])))
-            cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[control_contrast[idx]]))
-            cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[control_contrast[idx]])/np.sqrt(len(cathode_coherence_rt_diff[control_contrast[idx]])))
+        for contrast_level in self.contrast_range:
+            if len(anode_coherence_rt_diff[contrast_level]):
+                anode_rt_diff_mean.append(np.mean(anode_coherence_rt_diff[contrast_level]))
+                anode_rt_diff_std.append(np.std(anode_coherence_rt_diff[contrast_level])/np.sqrt(len(anode_coherence_rt_diff[contrast_level])))
+            if len(cathode_coherence_rt_diff[contrast_level]):
+                cathode_rt_diff_mean.append(np.mean(cathode_coherence_rt_diff[contrast_level]))
+                cathode_rt_diff_std.append(np.std(cathode_coherence_rt_diff[contrast_level])/np.sqrt(len(cathode_coherence_rt_diff[contrast_level])))
 
-        min_x=control_contrast[1]
-        max_x=control_contrast[-1]
+        min_x=anode_contrast[1]
+        max_x=anode_contrast[-1]
 
         clf = LinearRegression()
-        clf.fit(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+        clf.fit(np.reshape(np.array(anode_contrast[1:]), (len(anode_contrast[1:]),1)),
             np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
         anode_a = clf.coef_[0][0]
         anode_b = clf.intercept_[0]
-        anode_r_sqr=clf.score(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+        anode_r_sqr=clf.score(np.reshape(np.array(anode_contrast[1:]), (len(anode_contrast[1:]),1)),
             np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
         plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--r',
             label='r^2=%.3f' % anode_r_sqr)
         self.rt_diff_slope['anode']=anode_a
 
+        min_x=cathode_contrast[1]
+        max_x=cathode_contrast[-1]
+
         clf = LinearRegression()
-        clf.fit(np.reshape(np.array(control_contrast[1:]),(len(control_contrast[1:]),1)),
+        clf.fit(np.reshape(np.array(cathode_contrast[1:]),(len(cathode_contrast[1:]),1)),
             np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
         cathode_a = clf.coef_[0][0]
         cathode_b = clf.intercept_[0]
-        cathode_r_sqr=clf.score(np.reshape(np.array(control_contrast[1:]), (len(control_contrast[1:]),1)),
+        cathode_r_sqr=clf.score(np.reshape(np.array(cathode_contrast[1:]), (len(cathode_contrast[1:]),1)),
             np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
         plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
             label='r^2=%.3f' % cathode_r_sqr)
         self.rt_diff_slope['cathode']=cathode_a
 
-        plt.errorbar(control_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
-        plt.errorbar(control_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
+        plt.errorbar(anode_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
+        plt.errorbar(cathode_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
         plt.legend(loc='best')
         plt.xscale('log')
         plt.xlabel('Coherence')
