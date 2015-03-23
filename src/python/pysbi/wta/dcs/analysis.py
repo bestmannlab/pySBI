@@ -870,6 +870,11 @@ class DCSComparisonReport:
         if regenerate_plots:
             self.plot_bias_bar(furl, self.dt, condition_colors)
 
+        furl='img/accuracy_logistic'
+        self.logistic_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_accuracy_logistic(furl, self.dt)
+
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
         self.inh_params=self.subjects[self.subjects.keys()[0]].inh_params
@@ -960,8 +965,7 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','EV Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        self.logistic_furl='img/rate_diff_perc_correct_logistic_use_z'
-        logistic_fname = os.path.join(self.reports_dir,self.logistic_furl)
+        logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
         save_to_eps(fig, '%s.eps' % logistic_fname)
         plt.close(fig)
