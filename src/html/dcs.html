@@ -299,6 +299,9 @@
 <h4>Prestim bias</h4>
 <img src="{{ rinfo.bias_bar_url }}"/>
 
+<h4>Prestim Bias - Input Diff - % Correct Regression</h4>
+<img src="{{ rinfo.logistic_furl }}"/>
+
 <h3>Subjects</h3>
 <table id="subjects_table" class="tablesorter">
     <thead>
@@ -312,7 +315,7 @@
     <tbody>
     {% for subj_id in rinfo.subjects %}
     <tr>
-        <td><a href="virtual_subject.{{ subj_id }}/dcs_subject.{{ subj_id }}.html">{{ subj_id }}</td>
+        <td><a href="virtual_subject.{{ subj_id }}/dcs_subject.{{ subj_id }}.html">{{ subj_id }}</a></td>
         <td>{{ rinfo.subjects[subj_id].background_freq }}</td>
         <td><img src="virtual_subject.{{ subj_id }}/img/perc_correct.png"/></td>
         <td><img src="virtual_subject.{{ subj_id }}/img/rt.png"/></td>

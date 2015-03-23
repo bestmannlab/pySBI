@@ -1,7 +1,8 @@
+from scipy.stats import ttest_1samp
 import matplotlib
 matplotlib.use('Agg')
 from scipy.optimize import curve_fit
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 import pylab
 from brian import second
 import os
@@ -891,6 +892,82 @@ class DCSComparisonReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
+    def plot_accuracy_logistic(self, furl, dt):
+        stim_conditions=['control','anode','cathode']
+        condition_coeffs={}
+        for stim_condition in stim_conditions:
+            condition_coeffs[stim_condition]=[]
+            coeffs=[]
+            intercepts=[]
+            accuracy=[]
+            for subj_report in self.subjects.itervalues():
+                biases=[]
+                input_diffs=[]
+                correct=[]
+                for idx,trial_summary in enumerate(subj_report.sessions[stim_condition].series.trial_summaries):
+                    if trial_summary.data.rt is not None:
+                        left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        input_diff=np.abs(trial_summary.data.input_freq[0]-trial_summary.data.input_freq[1])
+                        bias=np.abs(left_mean-right_mean)
+                        if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
+                            bias=left_mean-right_mean
+                        elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
+                            bias=right_mean-left_mean
+                        biases.append(bias)
+                        input_diffs.append(input_diff)
+                        choice_correct=0.0
+                        if trial_summary.correct:
+                            choice_correct=1.0
+                        correct.append(choice_correct)
+                biases=np.array(biases)
+                input_diffs=np.array(input_diffs)
+                biases=(biases-np.mean(biases))/np.std(biases)
+                input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
+
+                x=np.zeros((len(biases),2))
+                x[:,0]=biases
+                x[:,1]=input_diffs
+                y=np.array(correct)
+                logit = LogisticRegression(C=1000.0)
+                logit = logit.fit(x, y)
+                y_mod=logit.predict(x)
+                accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
+                coeffs.append(logit.coef_[0])
+                intercepts.append(logit.intercept_)
+
+            print('%s, mean accuracy=%.4f' % (stim_condition,np.mean(accuracy)))
+            coeffs=np.array(coeffs)
+            (t,p)=ttest_1samp(coeffs[:,0],0.0)
+            print('%s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
+            (t,p)=ttest_1samp(coeffs[:,1],0.0)
+            print('%s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
+
+            condition_coeffs[stim_condition]=coeffs
+
+        fig=plt.figure()
+        ax=fig.add_subplot(1,1,1)
+        ind=np.array([1,2])
+        width=0.3
+        rects=[]
+        for idx,stim_condition in enumerate(stim_conditions):
+            coeff_array=np.mean(condition_coeffs[stim_condition],axis=0)
+            coeff_std_err_array=np.std(condition_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_coeffs[stim_condition]))
+            rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
+            yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
+            rects.append(rect)
+        ax.set_ylabel('Coefficient')
+        ax.set_xticks(ind+width)
+        ax.set_xticklabels(['Bias','EV Diff'])
+        ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+        self.logistic_furl='img/rate_diff_perc_correct_logistic_use_z'
+        logistic_fname = os.path.join(self.reports_dir,self.logistic_furl)
+        save_to_png(fig, '%s.png' % logistic_fname)
+        save_to_eps(fig, '%s.eps' % logistic_fname)
+        plt.close(fig)
+
+
+
     def plot_rt_diff_bar(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
         fig=plt.figure()
@@ -1318,6 +1395,7 @@ class DCSComparisonReport:
                     mean_condition_rts[condition].append(np.mean(bin_rts))
                     std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
 
+        self.bias_rt_params={'slope':{},'offset':{}}
         for condition in mean_condition_biases:
             plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
                 yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
@@ -1332,6 +1410,8 @@ class DCSComparisonReport:
             min_x=mean_condition_biases[condition][0]-0.1
             max_x=mean_condition_biases[condition][-1]+0.1
             plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
+            self.bias_rt_params['offset'][condition]=b
+            self.bias_rt_params['slope'][condition]=a
 
         plt.legend(loc='best')
         plt.xlabel('Bias')
