@@ -19,8 +19,8 @@ from pysbi.wta.analysis import TrialSeries, get_lfp_signal
 
 condition_colors={
     'control': 'b',
-    'anode':'r',
-    'cathode':'g',
+    'anode':'g',
+    'cathode':'r',
     }
 
 
@@ -314,6 +314,16 @@ class SubjectReport:
         self.version=version
         if self.version is None:
             self.version=subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+
+        self.thresh={}
+        self.rt_diff_slope={}
+        self.mean_biases={}
+        self.coherence_prestim_bias_params={
+            'n': {},
+            'lambda': {}
+        }
+        self.bias_rt_params={'slope':{},'offset':{}}
+
         self.sessions={}
 
     def create_report(self, regenerate_plots=True, regenerate_session_plots=True, regenerate_trial_plots=True):
@@ -348,6 +358,11 @@ class SubjectReport:
         self.rt_url='%s.png' % furl
         if regenerate_plots:
             self.plot_rt(furl, condition_colors)
+
+        furl='img/rt_diff'
+        self.rt_diff_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt_diff(furl, condition_colors)
 
         furl='img/perc_correct'
         self.perc_correct_url='%s.png' % furl
@@ -391,6 +406,11 @@ class SubjectReport:
         if regenerate_plots:
             self.plot_bias_perc_left(furl, self.dt, condition_colors)
 
+        furl='img/bias_bar'
+        self.bias_bar_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_bias_bar(furl, self.dt, condition_colors)
+
         #create report
         template_file='dcs_subject.html'
         env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -421,6 +441,68 @@ class SubjectReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+    def plot_rt_diff(self, furl, colors):
+        fname=os.path.join(self.report_dir, furl)
+        fig=plt.figure()
+
+        contrast_rt = {}
+        contrasts={}
+        for stim_level, session_report in self.sessions.iteritems():
+            contrast_rt[stim_level]={}
+            for trial_summary in session_report.series.trial_summaries:
+                if not trial_summary.data.rt is None:
+                    if not trial_summary.contrast in contrast_rt[stim_level]:
+                        contrast_rt[stim_level][trial_summary.contrast] = []
+                    contrast_rt[stim_level][trial_summary.contrast].append(trial_summary.data.rt)
+            contrasts[stim_level]=sorted(contrast_rt[stim_level].keys())
+
+        anode_rt_diff_mean=[]
+        cathode_rt_diff_mean=[]
+        for contrast_level in self.contrast_range:
+            if contrast_level in contrasts['control'] and contrast_level in contrasts['anode']:
+                anode_rt_diff_mean.append(np.mean(contrast_rt['anode'][contrast_level])-np.mean(contrast_rt['control'][contrast_level]))
+            if contrast_level in contrasts['control'] and contrast_level in contrasts['cathode']:
+                cathode_rt_diff_mean.append(np.mean(contrast_rt['cathode'][contrast_level])-np.mean(contrast_rt['control'][contrast_level]))
+
+        min_x=contrasts['anode'][1]
+        max_x=contrasts['anode'][-1]
+
+        clf = LinearRegression()
+        clf.fit(np.reshape(np.array(contrasts['anode'][1:]), (len(contrasts['anode'][1:]),1)),
+            np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
+        anode_a = clf.coef_[0][0]
+        anode_b = clf.intercept_[0]
+        anode_r_sqr=clf.score(np.reshape(np.array(contrasts['anode'][1:]), (len(contrasts['anode'][1:]),1)),
+            np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
+        plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--r',
+            label='r^2=%.3f' % anode_r_sqr)
+        plt.plot(contrasts['anode'],anode_rt_diff_mean,'o%s' % condition_colors['anode'])
+
+        self.rt_diff_slope['anode']=anode_a
+
+        min_x=contrasts['cathode'][1]
+        max_x=contrasts['cathode'][-1]
+
+        clf = LinearRegression()
+        clf.fit(np.reshape(np.array(contrasts['cathode'][1:]),(len(contrasts['cathode'][1:]),1)),
+            np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
+        cathode_a = clf.coef_[0][0]
+        cathode_b = clf.intercept_[0]
+        cathode_r_sqr=clf.score(np.reshape(np.array(contrasts['cathode'][1:]), (len(contrasts['cathode'][1:]),1)),
+            np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
+        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
+            label='r^2=%.3f' % cathode_r_sqr)
+        plt.plot(contrasts['cathode'],cathode_rt_diff_mean,'o%s' % condition_colors['cathode'])
+        self.rt_diff_slope['cathode']=cathode_a
+
+        plt.legend(loc='best')
+        plt.xscale('log')
+        plt.xlabel('Coherence')
+        plt.ylabel('RT Diff')
+        #plt.ylim([-75,75])
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
 
     def plot_perc_correct(self, furl, colors):
         fname=os.path.join(self.report_dir, furl)
@@ -429,12 +511,12 @@ class SubjectReport:
         for stim_level, session_report in self.sessions.iteritems():
             contrast, perc_correct = session_report.series.get_contrast_perc_correct_stats()
             acc_fit=FitWeibull(contrast, perc_correct, guess=[0.2, 0.5])
-            thresh = np.max([0,acc_fit.inverse(0.8)])
+            self.thresh[stim_level] = np.max([0,acc_fit.inverse(0.8)])
             smoothInt = pylab.arange(0.0, max(contrast), 0.001)
             smoothResp = acc_fit.eval(smoothInt)
             plt.plot(smoothInt, smoothResp, '%s' % colors[stim_level], label=stim_level)
             plt.plot(contrast, perc_correct, 'o%s' % colors[stim_level])
-            plt.plot([thresh,thresh],[0.4,1.0],'%s' % colors[stim_level])
+            plt.plot([self.thresh[stim_level],self.thresh[stim_level]],[0.4,1.0],'%s' % colors[stim_level])
 
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
@@ -488,6 +570,8 @@ class SubjectReport:
                 max_x=np.max(self.contrast_range)+.01
                 x_range=min_x+np.array(range(1000))*(max_x-min_x)/1000.0
                 plt.plot(x_range,exp_decay(x_range,*popt),colors[stim_level],label='%s, r^2=%.3f' % (stim_level,r_sqr))
+                self.coherence_prestim_bias_params['n'][stim_level]=popt[0]
+                self.coherence_prestim_bias_params['lambda'][stim_level]=popt[1]
             except:
                 pass
         plt.legend(loc='best')
@@ -499,43 +583,66 @@ class SubjectReport:
 
     def plot_bias_rt(self, furl, dt, colors):
         fname=os.path.join(self.report_dir, furl)
-        all_biases=[]
-        biases={}
-        rts={}
+        condition_biases={}
+        condition_rts={}
         for stim_level, session_report in self.sessions.iteritems():
-            biases[stim_level]=[]
-            rts[stim_level]=[]
+            if not stim_level in condition_biases:
+                condition_biases[stim_level]=[]
+                condition_rts[stim_level]=[]
             for idx,trial_summary in enumerate(session_report.series.trial_summaries):
                 if trial_summary.data.rt is not None:
                     prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
                                         np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
-                    biases[stim_level].append(prestim_bias)
-                    rts[stim_level].append(trial_summary.data.rt)
-                    all_biases.append(prestim_bias)
-
-        hist,bins=np.histogram(all_biases, bins=10)
+                    condition_biases[stim_level].append(prestim_bias)
+                    condition_rts[stim_level].append(trial_summary.data.rt)
 
         fig=plt.figure()
-        for stim_level in self.sessions:
-            mean_biases=[]
-            mean_rts=[]
+        mean_condition_biases={}
+        mean_condition_rts={}
+        std_condition_rts={}
+        for condition in condition_biases:
+            if not condition in mean_condition_biases:
+                mean_condition_biases[condition]=[]
+                mean_condition_rts[condition]=[]
+                std_condition_rts[condition]=[]
+            hist,bins=np.histogram(condition_biases[condition], bins=10)
             for i in range(10):
                 bin_rts=[]
                 bin_biases=[]
-                for bias,rt in zip(biases[stim_level],rts[stim_level]):
+                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
                     if bias>=bins[i] and bias<bins[i+1]:
-                        bin_rts.append(rt)
                         bin_biases.append(bias)
-                if len(bin_biases):
-                    mean_biases.append(np.mean(bin_biases))
-                    mean_rts.append(np.mean(bin_rts))
-            plt.plot(mean_biases,mean_rts,'o%s' % colors[stim_level], label=stim_level)
+                        bin_rts.append(rt)
+                if len(bin_biases)>=10:
+                    mean_condition_biases[condition].append(np.mean(bin_biases))
+                    mean_condition_rts[condition].append(np.mean(bin_rts))
+                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
+
+        for condition in mean_condition_biases:
+            if len(mean_condition_rts[condition]):
+                plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
+                    yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
+
+                clf = LinearRegression()
+                clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+                a = clf.coef_[0][0]
+                b = clf.intercept_[0]
+                r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+                min_x=mean_condition_biases[condition][0]-0.1
+                max_x=mean_condition_biases[condition][-1]+0.1
+                plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
+                self.bias_rt_params['offset'][condition]=b
+                self.bias_rt_params['slope'][condition]=a
+
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
+
 
     def plot_bias_perc_correct(self, furl, dt, colors):
         fname=os.path.join(self.report_dir, furl)
@@ -710,6 +817,35 @@ class SubjectReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+    def plot_bias_bar(self, furl, dt, colors):
+        fname=os.path.join(self.report_dir, furl)
+        biases={}
+        for stim_level, session_report in self.sessions.iteritems():
+            if not stim_level in biases:
+                biases[stim_level]=[]
+            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    prestim_bias=np.abs(np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])-
+                                        np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)]))
+                    biases[stim_level].append(prestim_bias)
+
+        fig=Figure()
+        ax=fig.add_subplot(1,1,1)
+        conditions=['control','anode','cathode']
+        pos = np.arange(len(conditions))+0.5    # Center bars on the Y-axis ticks
+        for idx in range(len(conditions)):
+            self.mean_biases[conditions[idx]]=np.mean(biases[conditions[idx]])
+            bar=ax.bar(pos[idx],np.mean(biases[conditions[idx]]), width=.5,
+                yerr=np.std(biases[conditions[idx]])/np.sqrt(len(biases[conditions[idx]])), align='center',ecolor='k')
+            bar[0].set_color(colors[conditions[idx]])
+        ax.set_xticks(pos)
+        ax.set_xticklabels(conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Prestimulus Bias (Hz)')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
     def plot_mean_firing_rate(self, furl, coherence, dt,  colors):
         fname=os.path.join(self.report_dir, furl)
         chosen_rates={}
@@ -788,10 +924,17 @@ class DCSComparisonReport:
         self.edesc=edesc
         self.params={}
 
-        self.subjects={}
         self.thresh={}
         self.rt_diff_slope={}
         self.mean_biases={}
+        self.coherence_prestim_bias_params={
+            'n': {},
+            'lambda': {}
+        }
+        self.bias_rt_params={'slope':{},'offset':{}}
+
+        self.subjects={}
+
 
     def create_report(self, regenerate_plots=True, regenerate_subject_plots=True, regenerate_session_plots=True,
                       regenerate_trial_plots=True):
@@ -910,36 +1053,36 @@ class DCSComparisonReport:
                 input_diffs=[]
                 correct=[]
                 for idx,trial_summary in enumerate(subj_report.sessions[stim_condition].series.trial_summaries):
-                    if trial_summary.data.rt is not None:
-                        left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                        right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                        input_diff=np.abs(trial_summary.data.input_freq[0]-trial_summary.data.input_freq[1])
-                        bias=np.abs(left_mean-right_mean)
-                        if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
-                            bias=left_mean-right_mean
-                        elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
-                            bias=right_mean-left_mean
-                        biases.append(bias)
-                        input_diffs.append(input_diff)
-                        choice_correct=0.0
-                        if trial_summary.correct:
-                            choice_correct=1.0
-                        correct.append(choice_correct)
+                    left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                    right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                    input_diff=np.abs(trial_summary.data.input_freq[0]-trial_summary.data.input_freq[1])
+                    bias=np.abs(left_mean-right_mean)
+                    if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
+                        bias=left_mean-right_mean
+                    elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
+                        bias=right_mean-left_mean
+                    biases.append(bias)
+                    input_diffs.append(input_diff)
+                    choice_correct=0.0
+                    if trial_summary.correct:
+                        choice_correct=1.0
+                    correct.append(choice_correct)
                 biases=np.array(biases)
                 input_diffs=np.array(input_diffs)
                 biases=(biases-np.mean(biases))/np.std(biases)
                 input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
 
-                x=np.zeros((len(biases),2))
-                x[:,0]=biases
-                x[:,1]=input_diffs
-                y=np.array(correct)
-                logit = LogisticRegression(C=1000.0)
-                logit = logit.fit(x, y)
-                y_mod=logit.predict(x)
-                accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
-                coeffs.append(logit.coef_[0])
-                intercepts.append(logit.intercept_)
+                if np.sum(correct)>0:
+                    x=np.zeros((len(biases),2))
+                    x[:,0]=biases
+                    x[:,1]=input_diffs
+                    y=np.array(correct)
+                    logit = LogisticRegression(C=1000.0)
+                    logit = logit.fit(x, y)
+                    y_mod=logit.predict(x)
+                    accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
+                    coeffs.append(logit.coef_[0])
+                    intercepts.append(logit.intercept_)
 
             print('%s, mean accuracy=%.4f' % (stim_condition,np.mean(accuracy)))
             coeffs=np.array(coeffs)
@@ -1244,10 +1387,6 @@ class DCSComparisonReport:
                 std_prestim_bias[stim_level].append(np.std(contrast_biases[stim_level])/np.sqrt(len(contrast_biases[stim_level])))
 
         fig=plt.figure()
-        self.coherence_prestim_bias_params={
-            'n': {},
-            'lambda': {}
-        }
         for stim_level in mean_prestim_bias:
             plt.errorbar(self.contrast_range, mean_prestim_bias[stim_level], yerr=std_prestim_bias[stim_level], fmt='o%s' % colors[stim_level])
             popt,pcov=curve_fit(exp_decay, np.array(self.contrast_range), np.array(mean_prestim_bias[stim_level]))
@@ -1399,7 +1538,6 @@ class DCSComparisonReport:
                     mean_condition_rts[condition].append(np.mean(bin_rts))
                     std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
 
-        self.bias_rt_params={'slope':{},'offset':{}}
         for condition in mean_condition_biases:
             plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
                 yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
