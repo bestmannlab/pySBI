@@ -35,6 +35,7 @@ class ParamExploreReport():
         self.prestim_bias_diff={'anode':{},'cathode':{}}
         self.coherence_prestim_bias_diff={'n':{'anode':{},'cathode':{}},'lambda':{'anode':{},'cathode':{}}}
         self.prestim_bias_rt_diff={'offset':{'anode':{}, 'cathode':{}},'slope':{'anode':{}, 'cathode':{}}}
+        self.logistic_coeff_diff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
         
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
@@ -60,6 +61,10 @@ class ParamExploreReport():
             self.prestim_bias_rt_diff['offset']['cathode'][stim_gain]=[]
             self.prestim_bias_rt_diff['slope']['anode'][stim_gain]=[]
             self.prestim_bias_rt_diff['slope']['cathode'][stim_gain]=[]
+            self.logistic_coeff_diff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['anode']-self.stim_level_reports[stim_gain].logistic_coeffs['bias']['control']
+            self.logistic_coeff_diff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['bias']['control']
+            self.logistic_coeff_diff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['anode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
+            self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
             for subj in self.stim_level_reports[stim_gain].subjects:
                 self.thresh_difference['anode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['anode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
                 self.thresh_difference['cathode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['cathode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
@@ -99,6 +104,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Threshold difference')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -121,6 +127,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('RT Difference slope')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -143,6 +150,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Prestimulus Bias Difference')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -171,6 +179,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Coherence - Prestim Bias: n')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -186,6 +195,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Coherence - Prestim Bias: lambda')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -213,6 +223,7 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Prestim Bias - RT: offset')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -228,6 +239,51 @@ class ParamExploreReport():
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Prestim Bias - RT: slope')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        
+        mean_logistic_coeff_diffs={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        std_logistic_coeff_diffs={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        for stim_gain in self.stim_gains:
+            mean_logistic_coeff_diffs['bias']['anode'].append(np.mean(self.logistic_coeff_diff['bias']['anode'][stim_gain]))
+            std_logistic_coeff_diffs['bias']['anode'].append(np.std(self.logistic_coeff_diff['bias']['anode'][stim_gain]))
+            mean_logistic_coeff_diffs['bias']['cathode'].append(np.mean(self.logistic_coeff_diff['bias']['cathode'][stim_gain]))
+            std_logistic_coeff_diffs['bias']['cathode'].append(np.std(self.logistic_coeff_diff['bias']['cathode'][stim_gain]))
+            mean_logistic_coeff_diffs['ev diff']['anode'].append(np.mean(self.logistic_coeff_diff['ev diff']['anode'][stim_gain]))
+            std_logistic_coeff_diffs['ev diff']['anode'].append(np.std(self.logistic_coeff_diff['ev diff']['anode'][stim_gain]))
+            mean_logistic_coeff_diffs['ev diff']['cathode'].append(np.mean(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]))
+            std_logistic_coeff_diffs['ev diff']['cathode'].append(np.std(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]))
+
+        furl='img/logistic_coeff_diff_bias'
+        fname=os.path.join(self.reports_dir, furl)
+        self.logistic_coeff_diff_bias_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_logistic_coeff_diffs['bias']['anode'],yerr=std_logistic_coeff_diffs['bias']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_logistic_coeff_diffs['bias']['cathode'],yerr=std_logistic_coeff_diffs['bias']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: bias')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        furl='img/logistic_coeff_diff_ev_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.logistic_coeff_diff_ev_diff_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_logistic_coeff_diffs['ev diff']['anode'],yerr=std_logistic_coeff_diffs['ev diff']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_logistic_coeff_diffs['ev diff']['cathode'],yerr=std_logistic_coeff_diffs['ev diff']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: EV diff')
+        plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)

@@ -932,6 +932,7 @@ class DCSComparisonReport:
             'lambda': {}
         }
         self.bias_rt_params={'slope':{},'offset':{}}
+        self.logistic_coeffs={'bias':{},'ev diff':{}}
 
         self.subjects={}
 
@@ -1100,6 +1101,8 @@ class DCSComparisonReport:
         rects=[]
         for idx,stim_condition in enumerate(stim_conditions):
             coeff_array=np.mean(condition_coeffs[stim_condition],axis=0)
+            self.logistic_coeffs['bias'][stim_condition]=condition_coeffs[stim_condition][:,0]
+            self.logistic_coeffs['ev diff'][stim_condition]=condition_coeffs[stim_condition][:,1]
             coeff_std_err_array=np.std(condition_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_coeffs[stim_condition]))
             rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
             yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
