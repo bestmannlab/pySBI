@@ -160,13 +160,13 @@ class ParamExploreReport():
         std_coherence_prestim_bias_diffs={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
         for stim_gain in self.stim_gains:
             mean_coherence_prestim_bias_diffs['n']['anode'].append(np.mean(self.coherence_prestim_bias_diff['n']['anode'][stim_gain]))
-            std_coherence_prestim_bias_diffs['n']['anode'].append(np.std(self.coherence_prestim_bias_diff['n']['anode'][stim_gain])/np.sqrt(self.coherence_prestim_bias_diff['n']['anode'][stim_gain]))
+            std_coherence_prestim_bias_diffs['n']['anode'].append(np.std(self.coherence_prestim_bias_diff['n']['anode'][stim_gain])/np.sqrt(len(self.coherence_prestim_bias_diff['n']['anode'][stim_gain])))
             mean_coherence_prestim_bias_diffs['n']['cathode'].append(np.mean(self.coherence_prestim_bias_diff['n']['cathode'][stim_gain]))
-            std_coherence_prestim_bias_diffs['n']['cathode'].append(np.std(self.coherence_prestim_bias_diff['n']['cathode'][stim_gain])/np.sqrt(self.coherence_prestim_bias_diff['n']['cathode'][stim_gain]))
+            std_coherence_prestim_bias_diffs['n']['cathode'].append(np.std(self.coherence_prestim_bias_diff['n']['cathode'][stim_gain])/np.sqrt(len(self.coherence_prestim_bias_diff['n']['cathode'][stim_gain])))
             mean_coherence_prestim_bias_diffs['lambda']['anode'].append(np.mean(self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain]))
-            std_coherence_prestim_bias_diffs['lambda']['anode'].append(np.std(self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain])/np.sqrt(self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain]))
+            std_coherence_prestim_bias_diffs['lambda']['anode'].append(np.std(self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain])/np.sqrt(len(self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain])))
             mean_coherence_prestim_bias_diffs['lambda']['cathode'].append(np.mean(self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain]))
-            std_coherence_prestim_bias_diffs['lambda']['cathode'].append(np.std(self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain])/np.sqrt(self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain]))
+            std_coherence_prestim_bias_diffs['lambda']['cathode'].append(np.std(self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain])/np.sqrt(len(self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain])))
         
         furl='img/coherence_prestim_bias_n'
         fname=os.path.join(self.reports_dir, furl)
@@ -204,13 +204,13 @@ class ParamExploreReport():
         std_prestim_bias_rt_diffs={'offset':{'anode':[],'cathode':[]},'slope':{'anode':[],'cathode':[]}}
         for stim_gain in self.stim_gains:
             mean_prestim_bias_rt_diffs['offset']['anode'].append(np.mean(self.prestim_bias_rt_diff['offset']['anode'][stim_gain]))
-            std_prestim_bias_rt_diffs['offset']['anode'].append(np.std(self.prestim_bias_rt_diff['offset']['anode'][stim_gain])/np.sqrt(self.prestim_bias_rt_diff['offset']['anode'][stim_gain]))
+            std_prestim_bias_rt_diffs['offset']['anode'].append(np.std(self.prestim_bias_rt_diff['offset']['anode'][stim_gain])/np.sqrt(len(self.prestim_bias_rt_diff['offset']['anode'][stim_gain])))
             mean_prestim_bias_rt_diffs['offset']['cathode'].append(np.mean(self.prestim_bias_rt_diff['offset']['cathode'][stim_gain]))
-            std_prestim_bias_rt_diffs['offset']['cathode'].append(np.std(self.prestim_bias_rt_diff['offset']['cathode'][stim_gain])/np.sqrt(self.prestim_bias_rt_diff['offset']['cathode'][stim_gain]))
+            std_prestim_bias_rt_diffs['offset']['cathode'].append(np.std(self.prestim_bias_rt_diff['offset']['cathode'][stim_gain])/np.sqrt(len(self.prestim_bias_rt_diff['offset']['cathode'][stim_gain])))
             mean_prestim_bias_rt_diffs['slope']['anode'].append(np.mean(self.prestim_bias_rt_diff['slope']['anode'][stim_gain]))
-            std_prestim_bias_rt_diffs['slope']['anode'].append(np.std(self.prestim_bias_rt_diff['slope']['anode'][stim_gain])/np.sqrt(self.prestim_bias_rt_diff['slope']['anode'][stim_gain]))
+            std_prestim_bias_rt_diffs['slope']['anode'].append(np.std(self.prestim_bias_rt_diff['slope']['anode'][stim_gain])/np.sqrt(len(self.prestim_bias_rt_diff['slope']['anode'][stim_gain])))
             mean_prestim_bias_rt_diffs['slope']['cathode'].append(np.mean(self.prestim_bias_rt_diff['slope']['cathode'][stim_gain]))
-            std_prestim_bias_rt_diffs['slope']['cathode'].append(np.std(self.prestim_bias_rt_diff['slope']['cathode'][stim_gain])/np.sqrt(self.prestim_bias_rt_diff['slope']['cathode'][stim_gain]))
+            std_prestim_bias_rt_diffs['slope']['cathode'].append(np.std(self.prestim_bias_rt_diff['slope']['cathode'][stim_gain])/np.sqrt(len(self.prestim_bias_rt_diff['slope']['cathode'][stim_gain])))
 
         furl='img/prestim_bias_rt_diff_offset'
         fname=os.path.join(self.reports_dir, furl)
@@ -248,13 +248,13 @@ class ParamExploreReport():
         std_logistic_coeff_diffs={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         for stim_gain in self.stim_gains:
             mean_logistic_coeff_diffs['bias']['anode'].append(np.mean(self.logistic_coeff_diff['bias']['anode'][stim_gain]))
-            std_logistic_coeff_diffs['bias']['anode'].append(np.std(self.logistic_coeff_diff['bias']['anode'][stim_gain])/np.sqrt(self.logistic_coeff_diff['bias']['anode'][stim_gain]))
+            std_logistic_coeff_diffs['bias']['anode'].append(np.std(self.logistic_coeff_diff['bias']['anode'][stim_gain])/np.sqrt(len(self.logistic_coeff_diff['bias']['anode'][stim_gain])))
             mean_logistic_coeff_diffs['bias']['cathode'].append(np.mean(self.logistic_coeff_diff['bias']['cathode'][stim_gain]))
-            std_logistic_coeff_diffs['bias']['cathode'].append(np.std(self.logistic_coeff_diff['bias']['cathode'][stim_gain])/np.sqrt(self.logistic_coeff_diff['bias']['cathode'][stim_gain]))
+            std_logistic_coeff_diffs['bias']['cathode'].append(np.std(self.logistic_coeff_diff['bias']['cathode'][stim_gain])/np.sqrt(len(self.logistic_coeff_diff['bias']['cathode'][stim_gain])))
             mean_logistic_coeff_diffs['ev diff']['anode'].append(np.mean(self.logistic_coeff_diff['ev diff']['anode'][stim_gain]))
-            std_logistic_coeff_diffs['ev diff']['anode'].append(np.std(self.logistic_coeff_diff['ev diff']['anode'][stim_gain])/np.sqrt(self.logistic_coeff_diff['ev diff']['anode'][stim_gain]))
+            std_logistic_coeff_diffs['ev diff']['anode'].append(np.std(self.logistic_coeff_diff['ev diff']['anode'][stim_gain])/np.sqrt(len(self.logistic_coeff_diff['ev diff']['anode'][stim_gain])))
             mean_logistic_coeff_diffs['ev diff']['cathode'].append(np.mean(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]))
-            std_logistic_coeff_diffs['ev diff']['cathode'].append(np.std(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain])/np.sqrt(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]))
+            std_logistic_coeff_diffs['ev diff']['cathode'].append(np.std(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain])/np.sqrt(len(self.logistic_coeff_diff['ev diff']['cathode'][stim_gain])))
 
         furl='img/logistic_coeff_diff_bias'
         fname=os.path.join(self.reports_dir, furl)
