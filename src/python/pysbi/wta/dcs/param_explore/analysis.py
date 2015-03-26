@@ -36,13 +36,14 @@ class ParamExploreReport():
         self.coherence_prestim_bias_diff={'n':{'anode':{},'cathode':{}},'lambda':{'anode':{},'cathode':{}}}
         self.prestim_bias_rt_diff={'offset':{'anode':{}, 'cathode':{}},'slope':{'anode':{}, 'cathode':{}}}
         self.logistic_coeff_diff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        self.perc_no_response_diff={'anode':{},'cathode':{}}
         
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
                 self.file_prefix,self.virtual_subj_ids,
                 {'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)},
-                self.num_trials, report_dir, '', contrast_range=(0.0, .032, .064, .128, .256, .512))
+                self.num_trials, report_dir, '', contrast_range=(0.0, .032, .064, .128, .256, .512), xlog=False)
             self.stim_level_reports[stim_gain].create_report(regenerate_plots=regenerate_stim_level_plots,
                 regenerate_subject_plots=regenerate_subject_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
@@ -65,6 +66,8 @@ class ParamExploreReport():
             self.logistic_coeff_diff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['bias']['control']
             self.logistic_coeff_diff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['anode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
             self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
+            self.perc_no_response_diff['anode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['anode'])-np.array(self.stim_level_reports[stim_gain].perc_no_response['control'])
+            self.perc_no_response_diff['cathode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['cathode'])-np.array(self.stim_level_reports[stim_gain].perc_no_response['control'])
             for subj in self.stim_level_reports[stim_gain].subjects:
                 self.thresh_difference['anode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['anode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
                 self.thresh_difference['cathode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['cathode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
@@ -282,7 +285,30 @@ class ParamExploreReport():
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: EV diff')
+        plt.ylabel('Logistic Coefficient: Input diff')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        furl='img/perc_no_response_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.perc_no_response_diff_url='%s.png' % furl
+        fig=plt.figure()
+        mean_perc_no_response_diffs={'anode':[],'cathode':[]}
+        std_perc_no_response_diffs={'anode':[],'cathode':[]}
+        for stim_gain in self.stim_gains:
+            mean_perc_no_response_diffs['anode'].append(np.mean(self.perc_no_response_diff['anode'][stim_gain]))
+            std_perc_no_response_diffs['anode'].append(np.std(self.perc_no_response_diff['anode'][stim_gain])/np.sqrt(len(self.perc_no_response_diff['anode'][stim_gain])))
+            mean_perc_no_response_diffs['cathode'].append(np.mean(self.perc_no_response_diff['cathode'][stim_gain]))
+            std_perc_no_response_diffs['cathode'].append(np.std(self.perc_no_response_diff['cathode'][stim_gain])/np.sqrt(len(self.perc_no_response_diff['cathode'][stim_gain])))
+        plt.errorbar(self.stim_gains, mean_perc_no_response_diffs['anode'],yerr=std_perc_no_response_diffs['anode'],
+                     fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_perc_no_response_diffs['cathode'],yerr=std_perc_no_response_diffs['cathode'],
+                     fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('% No Response difference')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
@@ -313,8 +339,7 @@ class ParamExploreReport():
 
 if __name__=='__main__':
     report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore',
-        #'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(20), 20,
-        'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(10), 20,
+        'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(20), 20,
         '/data/pySBI/reports/rdmd/virtual_subjects_param_explore')
     #report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=False, regenerate_session_plots=False,
     report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=True, regenerate_session_plots=False,

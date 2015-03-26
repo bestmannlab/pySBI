@@ -902,7 +902,7 @@ class SubjectReport:
 
 class DCSComparisonReport:
     def __init__(self, data_dir, file_prefix, virtual_subj_ids, stim_levels, num_trials, reports_dir, edesc, dt=.5*ms,
-                 contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512)):
+                 contrast_range=(0.0, .016, .032, .064, .096, .128, .256, .512), xlog=True):
         """
         Create report for DCS simulations
         data_dir=directory where datafiles are stored
@@ -922,6 +922,7 @@ class DCSComparisonReport:
         self.dt=dt
         self.reports_dir=reports_dir
         self.edesc=edesc
+        self.xlog=xlog
         self.params={}
 
         self.thresh={}
@@ -933,6 +934,7 @@ class DCSComparisonReport:
         }
         self.bias_rt_params={'slope':{},'offset':{}}
         self.logistic_coeffs={'bias':{},'ev diff':{}}
+        self.perc_no_response={}
 
         self.subjects={}
 
@@ -951,6 +953,21 @@ class DCSComparisonReport:
                 version=self.version, dt=self.dt)
             self.subjects[virtual_subj_id].create_report(regenerate_plots=regenerate_subject_plots,
                 regenerate_session_plots=regenerate_session_plots, regenerate_trial_plots=regenerate_trial_plots)
+
+            num_no_responses={}
+            num_trials={}
+            for stim_level, session_report in self.subjects[virtual_subj_id].sessions.iteritems():
+                if not stim_level in num_no_responses:
+                    num_no_responses[stim_level]=0
+                    num_trials[stim_level]=0
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    num_trials[stim_level]+=1.0
+                    if trial_summary.data.rt is None:
+                        num_no_responses[stim_level]+=1.0
+            for stim_level in num_no_responses:
+                if not stim_level in self.perc_no_response:
+                    self.perc_no_response[stim_level]=[]
+                self.perc_no_response[stim_level].append(num_no_responses[stim_level]/num_trials[stim_level])
 
         furl='img/rt'
         self.rt_url='%s.png' % furl
@@ -1090,7 +1107,7 @@ class DCSComparisonReport:
             (t,p)=ttest_1samp(coeffs[:,0],0.0)
             print('%s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
             (t,p)=ttest_1samp(coeffs[:,1],0.0)
-            print('%s, ev diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
+            print('%s, input diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
 
             condition_coeffs[stim_condition]=coeffs
 
@@ -1109,7 +1126,7 @@ class DCSComparisonReport:
             rects.append(rect)
         ax.set_ylabel('Coefficient')
         ax.set_xticks(ind+width)
-        ax.set_xticklabels(['Bias','EV Diff'])
+        ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
         logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
@@ -1216,7 +1233,8 @@ class DCSComparisonReport:
         plt.errorbar(anode_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
         plt.errorbar(cathode_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
         plt.legend(loc='best')
-        plt.xscale('log')
+        if self.xlog:
+            plt.xscale('log')
         plt.xlabel('Coherence')
         plt.ylabel('RT Diff')
         #plt.ylim([-75,75])
@@ -1260,7 +1278,8 @@ class DCSComparisonReport:
         #plt.ylim([155,710])
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (ms)')
-        plt.xscale('log')
+        if self.xlog:
+            plt.xscale('log')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
@@ -1300,7 +1319,8 @@ class DCSComparisonReport:
         plt.xlabel('Contrast')
         plt.ylabel('% correct')
         plt.legend(loc='best')
-        plt.xscale('log')
+        if self.xlog:
+            plt.xscale('log')
         #plt.ylim([0.4,1])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
