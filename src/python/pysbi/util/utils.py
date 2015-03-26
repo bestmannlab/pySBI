@@ -263,3 +263,104 @@ class FitSigmoid(_baseFunctionFit):
         k = params[0]
         xx = -np.log((1/yy)-1)/k
         return xx
+
+
+"""
+file    twoway_interaction.py
+author  Ernesto P. Adorio, Ph.D.
+        ernesto.adorio@gmail.com
+        UPDEPP at Clarkfield
+desc    Performs an anova with interaction
+        on replicated input data.
+        Each block must have the same number
+        of input values.
+version 0.0.2 Sep 12, 2011
+
+"""
+
+def twoway_interaction(groups, first_factor_label, second_factor_label, format="html"):
+    b = len(groups[0][0])
+    a = len(groups)
+    c = len(groups[0])
+    groupsums = [0.0] * c
+
+    #print "blocks, a, c=", b, a, c
+
+    #print "Input groups:"
+    v = 0.0   #total variation
+    vs = 0.0  #subtotal variation
+    vr = 0.0  #variation between rows
+    GT = 0
+    for i in range(a):
+        vsx = 0.0
+        vrx = 0.0
+        for j in range(c):
+            vsx = sum(groups[i][j])
+            groupsums[j] += vsx
+            #print "debug vsx", vsx
+            vrx += vsx
+            vs += vsx * vsx
+            for k in range(b):
+                x = groups[i][j][k]
+                v += x * x
+                GT += x
+        vr += vrx* vrx
+
+    #print "groupsums=", groupsums, vs
+
+    totadjustment = GT*GT/(a * b * c)
+    vs = vs/b - totadjustment
+    vr = vr/(b * c)- totadjustment
+    v  -= totadjustment
+    vc = sum([x * x for x in groupsums])/ (a*b)-totadjustment
+    vi = vs-vr -vc
+    ve = v- (vr + vc + vi)
+    #print "debug vs, vr, vc=", vs, vr, vc
+
+    dfvr = (a-1)
+    dfvc = (c-1.0)
+    dfvi = ((a-1)*(c-1))
+    dfve = (a * c* (b-1))
+    dfvs = a*c - 1
+    dfv  = (a * b * c -1)
+    mvr = vr/(dfvr)
+    mvc = vc/(dfvc)
+    mvi = vi / dfvi
+    mve = ve/dfve
+    Fr = mvr/mve
+    Fc = mvc/mve
+    Fi = mvi/mve
+
+    from scipy import stats
+
+    pvalr = 1.0 - stats.f.cdf(Fr, dfvr, dfve)
+    pvalc = 1.0 - stats.f.cdf(Fc, dfvc, dfve)
+    pvali = 1.0 - stats.f.cdf(Fi, dfvi, dfve)
+
+
+    if format=="html":
+        output="""
+    <table border="1">
+    <tr><th>Variation  </th><th>Sum of Squares</th><th>  df</th><th>  Mean Sum of Squares</th><th>   F-value</th><th> p-value</th></tr>
+    <td>Rows(%s) </td><td>%f</td><td>    %d</td><td>     %f</td> <td> %f</td> <td>%f</td></tr>
+    <tr><td>Columns(%s)</td><td>%f</td><td>  %d</td><td>     %f</td> <td> %f</td> <td>%f</td></tr>
+    <tr><td>Interaction</td><td>%f</td><td>  %d</td><td>     %f</td> <td> %f</td> <td>%f</td></tr>
+    <tr><td>Subtotals </td><td> %f</td><td> %d</td></tr>
+    <tr><td>Residuals(random)  </td><td>%f</td><td>  %d</td><td>%f</td></tr>
+    <tr><td>Totals</td><td>%f.2 </td><td>%d </td></tr>
+    </table>
+    """ % (first_factor_label,vr, dfvr, mvr, mvr/mve, pvalr,
+           second_factor_label,vc, dfvc, mvc, mvc/mve, pvalc,
+           vi, dfvi, mvi, mvi/mve, pvali,
+           vs, dfvs,
+           ve, dfve, mve,
+           v,  dfv)
+    else:
+        output=[[vr, dfvr, mvr, mvr/mve, pvalr],
+                [vc, dfvc, mvc, mvc/mve, pvalc],
+                [vi, dfvi, mvi, mvi/mve, pvali],
+                [vs, dfvs],
+                [ve, dfve, mve],
+                [v,  dfv]]
+
+    return output

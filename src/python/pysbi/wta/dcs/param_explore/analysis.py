@@ -7,7 +7,7 @@ import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps
+from pysbi.util.utils import save_to_png, save_to_eps, twoway_interaction
 from pysbi.wta.dcs.analysis import DCSComparisonReport, condition_colors
 
 
@@ -37,7 +37,24 @@ class ParamExploreReport():
         self.prestim_bias_rt_diff={'offset':{'anode':{}, 'cathode':{}},'slope':{'anode':{}, 'cathode':{}}}
         self.logistic_coeff_diff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
         self.perc_no_response_diff={'anode':{},'cathode':{}}
-        
+
+        thresh_diff_groups=[]
+        rt_diff_slope_groups=[]
+        prestim_bias_diff_groups=[]
+        coherence_prestim_bias_diff_groups={
+            'n':[],
+            'lambda':[]
+        }
+        prestim_bias_rt_groups={
+            'offset':[],
+            'slope':[]
+        }
+        logistic_coeff_diff_groups={
+            'bias':[],
+            'ev diff':[]
+        }
+        perc_no_response_diff_groups=[]
+
         for stim_gain in self.stim_gains:
             report_dir=os.path.join(self.reports_dir,'level_%.2f' % stim_gain)
             self.stim_level_reports[stim_gain]=DCSComparisonReport(self.data_dir,
@@ -50,24 +67,31 @@ class ParamExploreReport():
 
             self.thresh_difference['anode'][stim_gain]=[]
             self.thresh_difference['cathode'][stim_gain]=[]
+
             self.rt_diff_slope['anode'][stim_gain]=[]
             self.rt_diff_slope['cathode'][stim_gain]=[]
+
             self.prestim_bias_diff['anode'][stim_gain]=[]
             self.prestim_bias_diff['cathode'][stim_gain]=[]
+
             self.coherence_prestim_bias_diff['n']['anode'][stim_gain]=[]
             self.coherence_prestim_bias_diff['n']['cathode'][stim_gain]=[]
             self.coherence_prestim_bias_diff['lambda']['anode'][stim_gain]=[]
             self.coherence_prestim_bias_diff['lambda']['cathode'][stim_gain]=[]
+
             self.prestim_bias_rt_diff['offset']['anode'][stim_gain]=[]
             self.prestim_bias_rt_diff['offset']['cathode'][stim_gain]=[]
             self.prestim_bias_rt_diff['slope']['anode'][stim_gain]=[]
             self.prestim_bias_rt_diff['slope']['cathode'][stim_gain]=[]
+
             self.logistic_coeff_diff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['anode']-self.stim_level_reports[stim_gain].logistic_coeffs['bias']['control']
             self.logistic_coeff_diff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['bias']['control']
             self.logistic_coeff_diff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['anode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
             self.logistic_coeff_diff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['cathode']-self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['control']
+
             self.perc_no_response_diff['anode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['anode'])-np.array(self.stim_level_reports[stim_gain].perc_no_response['control'])
             self.perc_no_response_diff['cathode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['cathode'])-np.array(self.stim_level_reports[stim_gain].perc_no_response['control'])
+
             for subj in self.stim_level_reports[stim_gain].subjects:
                 self.thresh_difference['anode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['anode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
                 self.thresh_difference['cathode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['cathode']-self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
@@ -88,6 +112,9 @@ class ParamExploreReport():
                     self.prestim_bias_rt_diff['offset']['cathode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params['offset']['cathode']-self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params['offset']['control'])
                     self.prestim_bias_rt_diff['slope']['cathode'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params['slope']['cathode']-self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params['slope']['control'])
                 self.stim_level_reports[stim_gain].subjects[subj].sessions={}
+            thresh_diff_groups.append([self.thresh_difference['anode'][stim_gain],self.thresh_difference['cathode'][stim_gain]])
+            rt_diff_slope_groups.append([self.rt_diff_slope['anode'][stim_gain],self.rt_diff_slope['cathode'][stim_gain]])
+            prestim_bias_diff_groups.append([self.prestim_bias_diff['anode'][stim_gain],self.prestim_bias_diff['cathode'][stim_gain]])
 
         furl='img/thresh'
         fname=os.path.join(self.reports_dir, furl)
@@ -111,6 +138,7 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
+        self.thresh_anova=twoway_interaction(thresh_diff_groups,'condition','stim gain','html')
 
         furl='img/rt_diff_slope'
         fname=os.path.join(self.reports_dir, furl)
@@ -134,6 +162,7 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
+        self.rt_diff_slope_anova=twoway_interaction(rt_diff_slope_groups,'condition','stim gain','html')
 
         furl='img/prestim_bias_diff'
         fname=os.path.join(self.reports_dir, furl)
@@ -157,7 +186,7 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-
+        self.prestim_bias_diff_anova=twoway_interaction(prestim_bias_diff_groups,'condition','stim gain','html')
         
         mean_coherence_prestim_bias_diffs={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
         std_coherence_prestim_bias_diffs={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
