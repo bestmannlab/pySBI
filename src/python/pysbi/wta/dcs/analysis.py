@@ -323,6 +323,7 @@ class SubjectReport:
             'lambda': {}
         }
         self.bias_rt_params={'slope':{},'offset':{}}
+        self.bias_perc_left_params={'k':{}}
 
         self.sessions={}
 
@@ -722,7 +723,12 @@ class SubjectReport:
                 if len(bin_biases):
                     mean_bias.append(np.mean(bin_biases))
                     mean_perc_left.append(np.mean(bin_responses))
-            plt.plot(mean_bias,mean_perc_left,'o%s' % colors[stim_level], label=stim_level)
+            plt.plot(mean_bias,mean_perc_left,'o%s' % colors[stim_level])
+            fit=FitSigmoid(mean_bias, mean_perc_left, guess=[1.0,0.0])
+            smoothInt = pylab.arange(mean_bias[0]-0.1, mean_bias[-1]+0.1, 0.001)
+            smoothResp = fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, '--%s' % colors[stim_level], label=stim_level)
+            self.bias_perc_left_params['k'][stim_level]=fit.params[0]
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('% left')
@@ -1066,7 +1072,8 @@ class DCSComparisonReport:
             coeffs=[]
             intercepts=[]
             accuracy=[]
-            for subj_report in self.subjects.itervalues():
+            for subj_id in self.virtual_subj_ids:
+                subj_report=self.subjects[subj_id]
                 biases=[]
                 input_diffs=[]
                 correct=[]
@@ -1159,12 +1166,12 @@ class DCSComparisonReport:
         bin_width=anode_rt_bins[1]-anode_rt_bins[0]
         bars=plt.bar(anode_rt_bins[:-1],anode_rt_hist/float(len(mean_anode_rt_diffs)),width=bin_width, label='anode')
         for bar in bars:
-            bar.set_color('r')
+            bar.set_color(condition_colors['anode'])
         cathode_rt_hist,cathode_rt_bins=np.histogram(np.array(mean_cathode_rt_diffs), bins=5)
         bin_width=cathode_rt_bins[1]-cathode_rt_bins[0]
         bars=plt.bar(cathode_rt_bins[:-1],cathode_rt_hist/float(len(mean_cathode_rt_diffs)),width=bin_width, label='cathode')
         for bar in bars:
-            bar.set_color('g')
+            bar.set_color(condition_colors['cathode'])
         plt.legend(loc='best')
         #plt.xlim([-175,175])
         plt.xlabel('Mean RT Diff')
@@ -1212,7 +1219,7 @@ class DCSComparisonReport:
         anode_b = clf.intercept_[0]
         anode_r_sqr=clf.score(np.reshape(np.array(anode_contrast[1:]), (len(anode_contrast[1:]),1)),
             np.reshape(np.array(anode_rt_diff_mean[1:]), (len(anode_rt_diff_mean[1:]),1)))
-        plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--r',
+        plt.plot([min_x, max_x], [anode_a * min_x + anode_b, anode_a * max_x + anode_b], '--%s' % condition_colors['anode'],
             label='r^2=%.3f' % anode_r_sqr)
         self.rt_diff_slope['anode']=anode_a
 
@@ -1226,18 +1233,17 @@ class DCSComparisonReport:
         cathode_b = clf.intercept_[0]
         cathode_r_sqr=clf.score(np.reshape(np.array(cathode_contrast[1:]), (len(cathode_contrast[1:]),1)),
             np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
-        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
+        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--%s' % condition_colors['cathode'],
             label='r^2=%.3f' % cathode_r_sqr)
         self.rt_diff_slope['cathode']=cathode_a
 
-        plt.errorbar(anode_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='or')
-        plt.errorbar(cathode_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='og')
+        plt.errorbar(anode_contrast,anode_rt_diff_mean,yerr=anode_rt_diff_std,fmt='o%s' % condition_colors['anode'])
+        plt.errorbar(cathode_contrast,cathode_rt_diff_mean,yerr=cathode_rt_diff_std,fmt='o%s' % condition_colors['cathode'])
         plt.legend(loc='best')
         if self.xlog:
             plt.xscale('log')
         plt.xlabel('Coherence')
         plt.ylabel('RT Diff')
-        #plt.ylim([-75,75])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -1275,7 +1281,6 @@ class DCSComparisonReport:
             plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[condition])
             plt.plot(smoothInt, smoothResp, colors[condition], label=condition)
 
-        #plt.ylim([155,710])
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (ms)')
         if self.xlog:
