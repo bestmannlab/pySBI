@@ -4,6 +4,8 @@ from brian.connections.delayconnection import DelayConnection
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pylab as plt
 import numpy as np
+import rpy2.rlike.container as rlc
+import rpy2.robjects as robjects
 
 class Struct():
     def __init__(self):
@@ -364,3 +366,27 @@ def twoway_interaction(groups, first_factor_label, second_factor_label, format="
                 [v,  dfv]]
 
     return output
+
+def twoway_interaction_r(outcome, factors, data):
+    od = rlc.OrdDict()
+    od[outcome] = robjects.FloatVector([x(0) for x in data])
+    od[factors[0]] = robjects.FloatVector([x(1) for x in data])
+    od[factors[1]] = robjects.StrVector([x(2) for x in data])
+
+
+    dataf = robjects.DataFrame(od)
+    rcode = 'data = %s' % dataf.r_repr()
+    res = robjects.r(rcode)
+    anova_data = robjects.r('anova(lm(%s ~ %s*%s, data))' % (outcome,factors[0],factors[1]))
+
+    fvals = anova_data[3]
+    fprobs = anova_data[4]
+
+    var_indices = {factors[0]:0, factors[1]:1, '%s+%s' % factors:2}
+    all_fvals = {}
+    all_fprobs = {}
+
+    for var_name,var_index in var_indices.iteritems():
+        all_fvals[var_name] = fvals[var_index]
+        all_fprobs[var_name] = fprobs[var_index]
+    return (all_fvals,all_fprobs)

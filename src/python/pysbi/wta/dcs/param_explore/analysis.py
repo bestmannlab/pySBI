@@ -7,7 +7,7 @@ import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps, twoway_interaction
+from pysbi.util.utils import save_to_png, save_to_eps, twoway_interaction, twoway_interaction_r
 from pysbi.wta.dcs.analysis import DCSComparisonReport, condition_colors
 
 
@@ -130,15 +130,19 @@ class ParamExploreReport():
                             coherence_bias_param=self.stim_level_reports[stim_gain].subjects[subj].coherence_prestim_bias_params[param][condition]
                             self.coherence_prestim_bias[param][condition][stim_gain].append(coherence_bias_param)
                             data_vals.append('%.4f' % coherence_bias_param)
+                            coherence_prestim_bias_groups[param].append((coherence_bias_param,stim_gain,condition))
                         else:
                             data_vals.append('NA')
+                            coherence_prestim_bias_groups[param].append((float('NaN'),stim_gain,condition))
                     for param in ['offset','slope']:
                         if condition in self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params[param]:
                             bias_rt_param=self.stim_level_reports[stim_gain].subjects[subj].bias_rt_params[param][condition]
                             self.prestim_bias_rt[param][condition][stim_gain].append(bias_rt_param)
                             data_vals.append('%.4f' % bias_rt_param)
+                            prestim_bias_rt_groups[param].append((bias_rt_param,stim_gain,condition))
                         else:
                             data_vals.append('NA')
+                            prestim_bias_rt_groups[param].append((float('NaN'),stim_gain,condition))
                     data_vals.append('%.4f' % self.logistic_coeff['bias'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.logistic_coeff['ev diff'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.perc_no_response[condition][stim_gain][idx])
@@ -147,19 +151,29 @@ class ParamExploreReport():
                     data_vals.append('%.4f' % bias_per_left_param)
                     out_file.write('%s\n' % ','.join(data_vals))
 
+                    thresh_diff_groups.append((thresh_diff,stim_gain,condition))
+                    rt_diff_slope_groups.append((rt_diff_slope,stim_gain,condition))
+                    prestim_bias_diff_groups.append((prestim_bias_diff,stim_gain,condition))
+                    prestim_bias_groups.append((prestim_bias,stim_gain,condition))
+                    logistic_coeff_groups['bias'].append((self.logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                    logistic_coeff_groups['ev diff'].append((self.logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    perc_no_response_groups.append((self.perc_no_response[condition][stim_gain][idx],stim_gain,condition))
+                    bias_perc_left_groups['k'].append((bias_per_left_param,stim_gain,condition))
+
+
                 self.stim_level_reports[stim_gain].subjects[subj].sessions={}
-            thresh_diff_groups.append([self.thresh_difference['anode'][stim_gain],self.thresh_difference['cathode'][stim_gain]])
-            rt_diff_slope_groups.append([self.rt_diff_slope['anode'][stim_gain],self.rt_diff_slope['cathode'][stim_gain]])
-            prestim_bias_diff_groups.append([self.prestim_bias_diff['anode'][stim_gain],self.prestim_bias_diff['cathode'][stim_gain]])
-            prestim_bias_groups.append([self.prestim_bias['anode'][stim_gain],self.prestim_bias['cathode'][stim_gain]])
-            coherence_prestim_bias_groups['n'].append([self.coherence_prestim_bias['n']['anode'][stim_gain],self.coherence_prestim_bias['n']['cathode'][stim_gain]])
-            coherence_prestim_bias_groups['lambda'].append([self.coherence_prestim_bias['lambda']['anode'][stim_gain],self.coherence_prestim_bias['lambda']['cathode'][stim_gain]])
-            prestim_bias_rt_groups['offset'].append([self.prestim_bias_rt['offset']['anode'][stim_gain],self.prestim_bias_rt['offset']['cathode'][stim_gain]])
-            prestim_bias_rt_groups['slope'].append([self.prestim_bias_rt['slope']['anode'][stim_gain],self.prestim_bias_rt['slope']['cathode'][stim_gain]])
-            logistic_coeff_groups['bias'].append([self.logistic_coeff['bias']['anode'][stim_gain],self.logistic_coeff['bias']['cathode'][stim_gain]])
-            logistic_coeff_groups['ev diff'].append([self.logistic_coeff['ev diff']['anode'][stim_gain],self.logistic_coeff['ev diff']['cathode'][stim_gain]])
-            perc_no_response_groups.append([self.perc_no_response['anode'][stim_gain],self.perc_no_response['cathode'][stim_gain]])
-            bias_perc_left_groups['k'].append([self.bias_perc_left_params['k']['anode'][stim_gain],self.bias_perc_left_params['k']['cathode'][stim_gain]])
+            #thresh_diff_groups.append([self.thresh_difference['anode'][stim_gain],self.thresh_difference['cathode'][stim_gain]])
+            #rt_diff_slope_groups.append([self.rt_diff_slope['anode'][stim_gain],self.rt_diff_slope['cathode'][stim_gain]])
+            #prestim_bias_diff_groups.append([self.prestim_bias_diff['anode'][stim_gain],self.prestim_bias_diff['cathode'][stim_gain]])
+            #prestim_bias_groups.append([self.prestim_bias['anode'][stim_gain],self.prestim_bias['cathode'][stim_gain]])
+            #coherence_prestim_bias_groups['n'].append([self.coherence_prestim_bias['n']['anode'][stim_gain],self.coherence_prestim_bias['n']['cathode'][stim_gain]])
+            #coherence_prestim_bias_groups['lambda'].append([self.coherence_prestim_bias['lambda']['anode'][stim_gain],self.coherence_prestim_bias['lambda']['cathode'][stim_gain]])
+            #prestim_bias_rt_groups['offset'].append([self.prestim_bias_rt['offset']['anode'][stim_gain],self.prestim_bias_rt['offset']['cathode'][stim_gain]])
+            #prestim_bias_rt_groups['slope'].append([self.prestim_bias_rt['slope']['anode'][stim_gain],self.prestim_bias_rt['slope']['cathode'][stim_gain]])
+            #logistic_coeff_groups['bias'].append([self.logistic_coeff['bias']['anode'][stim_gain],self.logistic_coeff['bias']['cathode'][stim_gain]])
+            #logistic_coeff_groups['ev diff'].append([self.logistic_coeff['ev diff']['anode'][stim_gain],self.logistic_coeff['ev diff']['cathode'][stim_gain]])
+            #perc_no_response_groups.append([self.perc_no_response['anode'][stim_gain],self.perc_no_response['cathode'][stim_gain]])
+            #bias_perc_left_groups['k'].append([self.bias_perc_left_params['k']['anode'][stim_gain],self.bias_perc_left_params['k']['cathode'][stim_gain]])
 
         out_file.close()
 
@@ -185,7 +199,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.thresh_anova=twoway_interaction(thresh_diff_groups,'stim gain','condition','html')
+        #self.thresh_anova=twoway_interaction(thresh_diff_groups,'stim gain','condition','html')
+        self.thresh_diff_stats=twoway_interaction_r('thresh_diff',['stim_intensity','condition'],thresh_diff_groups)
 
         furl='img/rt_diff_slope'
         fname=os.path.join(self.reports_dir, furl)
@@ -209,7 +224,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.rt_diff_slope_anova=twoway_interaction(rt_diff_slope_groups,'stim gain','condition','html')
+        #self.rt_diff_slope_anova=twoway_interaction(rt_diff_slope_groups,'stim gain','condition','html')
+        self.rt_diff_slope_stats=twoway_interaction_r('rt_diff_slope',['stim_intensity','condition'],rt_diff_slope_groups)
 
         furl='img/prestim_bias_diff'
         fname=os.path.join(self.reports_dir, furl)
@@ -234,7 +250,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.prestim_bias_diff_anova=twoway_interaction(prestim_bias_diff_groups,'stim gain','condition','html')
+        #self.prestim_bias_diff_anova=twoway_interaction(prestim_bias_diff_groups,'stim gain','condition','html')
+        self.prestim_bias_diff_stats=twoway_interaction_r('prestim_bias_diff',['stim_intensity','condition'],prestim_bias_diff_groups)
 
         furl='img/prestim_bias'
         fname=os.path.join(self.reports_dir, furl)
@@ -259,7 +276,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.prestim_bias_anova=twoway_interaction(prestim_bias_groups,'stim gain','condition','html')
+        #self.prestim_bias_anova=twoway_interaction(prestim_bias_groups,'stim gain','condition','html')
+        self.prestim_bias_stats=twoway_interaction_r('prestim_bias',['stim_intensity','condition'],prestim_bias_groups)
         
         mean_coherence_prestim_bias={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
         std_coherence_prestim_bias={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
@@ -284,7 +302,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.coherence_prestim_bias_n_anova=''#twoway_interaction(coherence_prestim_bias_groups['n'],'stim gain','condition','html')
+        #self.coherence_prestim_bias_n_anova=''#twoway_interaction(coherence_prestim_bias_groups['n'],'stim gain','condition','html')
+        self.coherence_prestim_bias_n_stats=twoway_interaction_r('coherence_prestim_bias_n',['stim_intensity','condition'],coherence_prestim_bias_groups['n'])
 
         furl='img/coherence_prestim_bias_lambda'
         fname=os.path.join(self.reports_dir, furl)
@@ -301,7 +320,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.coherence_prestim_bias_lambda_anova=''#twoway_interaction(coherence_prestim_bias_groups['lambda'],'stim gain','condition','html')
+        #self.coherence_prestim_bias_lambda_anova=''#twoway_interaction(coherence_prestim_bias_groups['lambda'],'stim gain','condition','html')
+        self.coherence_prestim_bias_lambda_stats=twoway_interaction_r('coherence_prestim_bias_lambda',['stim_intensity','condition'],coherence_prestim_bias_groups['lambda'])
 
         mean_prestim_bias_rt={'offset':{'anode':[],'cathode':[]},'slope':{'anode':[],'cathode':[]}}
         std_prestim_bias_rt={'offset':{'anode':[],'cathode':[]},'slope':{'anode':[],'cathode':[]}}
@@ -327,7 +347,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.prestim_bias_rt_offset_anova=''#twoway_interaction(prestim_bias_rt_groups['offset'],'stim gain','condition','html')
+        #self.prestim_bias_rt_offset_anova=''#twoway_interaction(prestim_bias_rt_groups['offset'],'stim gain','condition','html')
+        self.prestim_bias_rt_offset_stats=twoway_interaction_r('prestim_bias_rt_offset',['stim_intensity','condition'],prestim_bias_rt_groups['offset'])
 
         furl='img/prestim_bias_rt_slope'
         fname=os.path.join(self.reports_dir, furl)
@@ -345,7 +366,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.prestim_bias_rt_slope_anova=''#twoway_interaction(prestim_bias_rt_groups['slope'],'stim gain','condition','html')
+        #self.prestim_bias_rt_slope_anova=''#twoway_interaction(prestim_bias_rt_groups['slope'],'stim gain','condition','html')
+        self.prestim_bias_rt_slope_stats=twoway_interaction_r('prestim_bias_rt_slope',['stim_intensity','condition'],prestim_bias_rt_groups['slope'])
         
         mean_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         std_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
@@ -371,7 +393,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.logistic_coeff_bias_anova=twoway_interaction(logistic_coeff_groups['bias'],'stim gain','condition','html')
+        #self.logistic_coeff_bias_anova=twoway_interaction(logistic_coeff_groups['bias'],'stim gain','condition','html')
+        self.logistic_coeff_bias_stats=twoway_interaction_r('logistic_coeff_bias',['stim_intensity','condition'],logistic_coeff_groups['bias'])
 
         furl='img/logistic_coeff_ev_diff'
         fname=os.path.join(self.reports_dir, furl)
@@ -389,7 +412,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.logistic_coeff_ev_diff_anova=twoway_interaction(logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+        #self.logistic_coeff_ev_diff_anova=twoway_interaction(logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.logistic_coeff_ev_diff_stats=twoway_interaction_r('logistic_coeff_ev_diff',['stim_intensity','condition'],logistic_coeff_groups['ev diff'])
 
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir, furl)
@@ -418,7 +442,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.perc_no_response_anova=twoway_interaction(perc_no_response_groups,'stim gain','condition','html')
+        #self.perc_no_response_anova=twoway_interaction(perc_no_response_groups,'stim gain','condition','html')
+        self.perc_no_response_stats=twoway_interaction_r('perc_no_response',['stim_intensity','condition'],perc_no_response_groups)
 
         mean_bias_perc_left_params={'k':{'anode':[],'cathode':[]}}
         std_bias_perc_left_params={'k':{'anode':[],'cathode':[]}}
@@ -444,7 +469,8 @@ class ParamExploreReport():
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        self.bias_perc_left_k_anova=twoway_interaction(bias_perc_left_groups['k'],'stim gain','condition','html')
+        #self.bias_perc_left_k_anova=twoway_interaction(bias_perc_left_groups['k'],'stim gain','condition','html')
+        self.bias_perc_left_k_stats=twoway_interaction_r('bias_perc_left_k',['stim_intensity','condition'],bias_perc_left_groups['k'])
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
         self.pyr_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].pyr_params

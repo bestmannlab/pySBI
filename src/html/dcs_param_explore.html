@@ -218,51 +218,303 @@
 
 <h3>Threshold Difference</h3>
 <img src="{{ rinfo.thresh_url }}"/>
-{{ rinfo.thresh_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.thresh_diff_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.thresh_diff_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.thresh_diff_stats[0]['condition']</td>
+        <td>{{ rinfo.thresh_diff_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.thresh_diff_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.thresh_diff_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>RT Difference Slope</h3>
 <img src="{{ rinfo.rt_diff_slope_url }}"/>
-{{ rinfo.rt_diff_slope_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.rt_diff_slope_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.rt_diff_slope_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.rt_diff_slope_stats[0]['condition']</td>
+        <td>{{ rinfo.rt_diff_slope_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.rt_diff_slope_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.rt_diff_slope_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Prestimulus Bias Difference</h3>
 <img src="{{ rinfo.prestim_bias_diff_url }}"/>
-{{ rinfo.prestim_bias_diff_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[0]['condition']</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.prestim_bias_diff_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Prestimulus Bias</h3>
 <img src="{{ rinfo.prestim_bias_url }}"/>
-{{ rinfo.prestim_bias_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.prestim_bias_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.prestim_bias_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.prestim_bias_stats[0]['condition']</td>
+        <td>{{ rinfo.prestim_bias_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.prestim_bias_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.prestim_bias_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Coherence - Prestimulus Bias: n</h3>
 <img src="{{ rinfo.coherence_prestim_bias_n_url }}"/>
-{{ rinfo.coherence_prestim_bias_n_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[0]['condition']</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Coherence - Prestimulus Bias: lambda</h3>
 <img src="{{ rinfo.coherence_prestim_bias_lambda_url }}"/>
-{{ rinfo.coherence_prestim_bias_lambda_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[0]['condition']</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Prestimulus Bias - RT: offset</h3>
 <img src="{{ rinfo.prestim_bias_rt_offset_url }}"/>
-{{ rinfo.prestim_bias_rt_diff_offset_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[0]['condition']</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Prestimulus Bias - RT: slope</h3>
 <img src="{{ rinfo.prestim_bias_rt_slope_url }}"/>
-{{ rinfo.prestim_bias_rt_diff_slope_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[0]['condition']</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Accuracy Logistic Coefficient: bias</h3>
 <img src="{{ rinfo.logistic_coeff_bias_url }}"/>
-{{ rinfo.logistic_coeff_bias_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[0]['condition']</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.logistic_coeff_bias_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Accuracy Logistic Coefficient: input contrast</h3>
 <img src="{{ rinfo.logistic_coeff_ev_diff_url }}"/>
-{{ rinfo.logistic_coeff_ev_diff_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['condition']</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>% No Response</h3>
 <img src="{{ rinfo.perc_no_response_url }}"/>
-{{ rinfo.perc_no_response_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.perc_no_response_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.perc_no_response_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.perc_no_response_stats[0]['condition']</td>
+        <td>{{ rinfo.perc_no_response_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.perc_no_response_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.perc_no_response_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Bias - % Left: k</h3>
 <img src="{{ rinfo.bias_perc_left_k_url }}"/>
-{{ rinfo.bias_perc_left_k_anova }}
+<table border="1">
+    <tr>
+        <td></td>
+        <td>F</td>
+        <td>p</td>
+    </tr>
+    <tr>
+        <td>stim intensity</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[0]['stim_intensity']</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[1]['stim_intensity']</td>
+    </tr>
+    <tr>
+        <td>condition</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[0]['condition']</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[1]['condition']</td>
+    </tr>
+    <tr>
+        <td>stim intensity+condition</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[0]['stim_intensity+condition']</td>
+        <td>{{ rinfo.bias_perc_left_k_stats[1]['stim_intensity+condition']</td>
+    </tr>
+</table>
 
 <h3>Stimulation Levels</h3>
 <table id="stim_levels_table" class="tablesorter">
