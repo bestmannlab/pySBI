@@ -1145,7 +1145,7 @@ class DCSComparisonReport:
                 biases=(biases-np.mean(biases))/np.std(biases)
                 input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
 
-                if np.sum(correct)>0:
+                if np.sum(correct)>0 and np.sum(correct)<len(correct):
                     x=np.zeros((len(biases),2))
                     x[:,0]=biases
                     x[:,1]=input_diffs
@@ -1157,7 +1157,7 @@ class DCSComparisonReport:
                     coeffs.append(logit.coef_[0])
                     intercepts.append(logit.intercept_)
                 
-                if np.sum(small_input_diff_correct)>0:
+                if np.sum(small_input_diff_correct)>0 and np.sum(small_input_diff_correct)<len(small_input_diff_correct):
                     x=np.zeros((len(small_input_diff_biases),2))
                     x[:,0]=small_input_diff_biases
                     x[:,1]=small_input_diff_input_diffs
@@ -1169,7 +1169,7 @@ class DCSComparisonReport:
                     small_input_diff_coeffs.append(logit.coef_[0])
                     small_input_diff_intercepts.append(logit.intercept_)
     
-                if np.sum(large_input_diff_correct)>0:
+                if np.sum(large_input_diff_correct)>0 and np.sum(large_input_diff_correct)<len(large_input_diff_correct):
                     x=np.zeros((len(large_input_diff_biases),2))
                     x[:,0]=large_input_diff_biases
                     x[:,1]=large_input_diff_input_diffs
