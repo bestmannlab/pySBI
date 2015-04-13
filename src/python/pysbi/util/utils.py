@@ -1,4 +1,5 @@
 from scipy import optimize
+from scipy.stats import ttest_ind
 from brian import ms, second
 from brian.connections.delayconnection import DelayConnection
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -390,3 +391,11 @@ def twoway_interaction_r(outcome, factors, data):
         all_fvals[var_name] = fvals[var_index]
         all_fprobs[var_name] = fprobs[var_index]
     return (all_fvals,all_fprobs)
+
+def pairwise_comparisons(measure_dict, factor_levels, comparison_factors):
+    num_comparisons=len(factor_levels)
+    pairwise={}
+    for factor_value in factor_levels:
+        (t,p)=ttest_ind(measure_dict[comparison_factors[0]][factor_value],measure_dict[comparison_factors[1]][factor_value])
+        pairwise[factor_value]=(t,p*num_comparisons/2.0)
+    return pairwise

@@ -1,4 +1,3 @@
-from scipy.stats import ttest_rel
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -8,7 +7,7 @@ import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from pysbi.config import TEMPLATE_DIR
 from pysbi.reports.utils import make_report_dirs
-from pysbi.util.utils import save_to_png, save_to_eps, twoway_interaction, twoway_interaction_r
+from pysbi.util.utils import save_to_png, save_to_eps, twoway_interaction_r, pairwise_comparisons
 from pysbi.wta.dcs.analysis import DCSComparisonReport, condition_colors
 
 
@@ -25,15 +24,7 @@ class ParamExploreReport():
         #self.stim_gains=[8,6,4,2,1,0.5,0.25]
         #self.stim_gains=[4,2,1,0.5,0.25]
         self.control=control
-        self.stim_level_reports={}
-
-    def pairwise_comparisons(self, measure_dict):
-        num_comparisons=len(self.stim_gains)
-        pairwise={}
-        for stim_gain in self.stim_gains:
-            (t,p)=ttest_rel(measure_dict['anode'][stim_gain],measure_dict['cathode'][stim_gain])
-            pairwise[stim_gain]=(t,p*num_comparisons/2.0)
-        return pairwise
+        self.stim_level_reports={}    
 
     def create_report(self, regenerate_stim_level_plots=False, regenerate_subject_plots=False,
                       regenerate_session_plots=False, regenerate_trial_plots=False):
@@ -50,6 +41,8 @@ class ParamExploreReport():
         self.coherence_prestim_bias={'n':{'anode':{},'cathode':{}},'lambda':{'anode':{},'cathode':{}}}
         self.prestim_bias_rt={'offset':{'anode':{}, 'cathode':{}},'slope':{'anode':{}, 'cathode':{}}}
         self.logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        self.small_input_diff_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        self.large_input_diff_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
         self.perc_no_response={'anode':{},'cathode':{}}
         self.bias_perc_left_params={'k':{'anode':{}, 'cathode':{}}}
 
@@ -69,6 +62,14 @@ class ParamExploreReport():
             'bias':[],
             'ev diff':[]
         }
+        small_input_diff_logistic_coeff_groups={
+            'bias':[],
+            'ev diff':[]
+        }
+        large_input_diff_logistic_coeff_groups={
+            'bias':[],
+            'ev diff':[]
+        }
         perc_no_response_groups=[]
         bias_perc_left_groups={
             'k':[]
@@ -79,6 +80,8 @@ class ParamExploreReport():
                                           'prestim_bias_diff','prestim_bias','coherence_prestim_bias_n',
                                           'coherence_prestim_bias_lambda','prestim_bias_rt_offset',
                                           'prestim_bias_rt_slope','logistic_coeff_bias','logistic_coeff_ev_diff',
+                                          'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
+                                          'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
                                           'perc_no_resp','bias_perc_left_n']))
         for stim_gain in self.stim_gains:
             stim_levels={'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)}
@@ -123,6 +126,16 @@ class ParamExploreReport():
             self.logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['anode']
             self.logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['cathode']
 
+            self.small_input_diff_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['anode']
+            self.small_input_diff_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['cathode']
+            self.small_input_diff_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['anode']
+            self.small_input_diff_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['cathode']
+
+            self.large_input_diff_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['anode']
+            self.large_input_diff_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['cathode']
+            self.large_input_diff_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['anode']
+            self.large_input_diff_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['cathode']
+
             self.perc_no_response['anode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['anode'])
             self.perc_no_response['cathode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['cathode'])
 
@@ -163,6 +176,10 @@ class ParamExploreReport():
                             prestim_bias_rt_groups[param].append((float('NaN'),stim_gain,condition))
                     data_vals.append('%.4f' % self.logistic_coeff['bias'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.perc_no_response[condition][stim_gain][idx])
                     bias_per_left_param=self.stim_level_reports[stim_gain].subjects[subj].bias_perc_left_params['k'][condition]
                     self.bias_perc_left_params['k'][condition][stim_gain].append(bias_per_left_param)
@@ -175,6 +192,10 @@ class ParamExploreReport():
                     prestim_bias_groups.append((prestim_bias,stim_gain,condition))
                     logistic_coeff_groups['bias'].append((self.logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
                     logistic_coeff_groups['ev diff'].append((self.logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    small_input_diff_logistic_coeff_groups['bias'].append((self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                    small_input_diff_logistic_coeff_groups['ev diff'].append((self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    large_input_diff_logistic_coeff_groups['bias'].append((self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                    large_input_diff_logistic_coeff_groups['ev diff'].append((self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
                     perc_no_response_groups.append((self.perc_no_response[condition][stim_gain][idx],stim_gain,condition))
                     bias_perc_left_groups['k'].append((bias_per_left_param,stim_gain,condition))
 
@@ -226,7 +247,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.thresh_anova=twoway_interaction(thresh_diff_groups,'stim gain','condition','html')
         self.thresh_diff_stats=twoway_interaction_r('thresh_diff',['stim_intensity','condition'],thresh_diff_groups)
-        self.thresh_diff_pairwise=self.pairwise_comparisons(self.thresh_difference)
+        self.thresh_diff_pairwise=pairwise_comparisons(self.thresh_difference,self.stim_gains,['anode','cathode'])
 
         furl='img/rt_diff_slope'
         fname=os.path.join(self.reports_dir, furl)
@@ -252,7 +273,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.rt_diff_slope_anova=twoway_interaction(rt_diff_slope_groups,'stim gain','condition','html')
         self.rt_diff_slope_stats=twoway_interaction_r('rt_diff_slope',['stim_intensity','condition'],rt_diff_slope_groups)
-        self.rt_diff_slope_pairwise=self.pairwise_comparisons(self.rt_diff_slope)
+        self.rt_diff_slope_pairwise=pairwise_comparisons(self.rt_diff_slope,self.stim_gains,['anode','cathode'])
 
         furl='img/prestim_bias_diff'
         fname=os.path.join(self.reports_dir, furl)
@@ -279,7 +300,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.prestim_bias_diff_anova=twoway_interaction(prestim_bias_diff_groups,'stim gain','condition','html')
         self.prestim_bias_diff_stats=twoway_interaction_r('prestim_bias_diff',['stim_intensity','condition'],prestim_bias_diff_groups)
-        self.prestim_bias_diff_pairwise=self.pairwise_comparisons(self.prestim_bias_diff)
+        self.prestim_bias_diff_pairwise=pairwise_comparisons(self.prestim_bias_diff,self.stim_gains,['anode','cathode'])
 
         furl='img/prestim_bias'
         fname=os.path.join(self.reports_dir, furl)
@@ -306,7 +327,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.prestim_bias_anova=twoway_interaction(prestim_bias_groups,'stim gain','condition','html')
         self.prestim_bias_stats=twoway_interaction_r('prestim_bias',['stim_intensity','condition'],prestim_bias_groups)
-        self.prestim_bias_pairwise=self.pairwise_comparisons(self.prestim_bias)
+        self.prestim_bias_pairwise=pairwise_comparisons(self.prestim_bias,self.stim_gains,['anode','cathode'])
 
         mean_coherence_prestim_bias={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
         std_coherence_prestim_bias={'n':{'anode':[],'cathode':[]},'lambda':{'anode':[],'cathode':[]}}
@@ -333,7 +354,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.coherence_prestim_bias_n_anova=''#twoway_interaction(coherence_prestim_bias_groups['n'],'stim gain','condition','html')
         self.coherence_prestim_bias_n_stats=twoway_interaction_r('coherence_prestim_bias_n',['stim_intensity','condition'],coherence_prestim_bias_groups['n'])
-        self.coherence_prestim_bias_n_pairwise=self.pairwise_comparisons(self.coherence_prestim_bias['n'])
+        self.coherence_prestim_bias_n_pairwise=pairwise_comparisons(self.coherence_prestim_bias['n'],self.stim_gains,['anode','cathode'])
 
         furl='img/coherence_prestim_bias_lambda'
         fname=os.path.join(self.reports_dir, furl)
@@ -352,7 +373,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.coherence_prestim_bias_lambda_anova=''#twoway_interaction(coherence_prestim_bias_groups['lambda'],'stim gain','condition','html')
         self.coherence_prestim_bias_lambda_stats=twoway_interaction_r('coherence_prestim_bias_lambda',['stim_intensity','condition'],coherence_prestim_bias_groups['lambda'])
-        self.coherence_prestim_bias_lambda_pairwise=self.pairwise_comparisons(self.coherence_prestim_bias['lambda'])
+        self.coherence_prestim_bias_lambda_pairwise=pairwise_comparisons(self.coherence_prestim_bias['lambda'],self.stim_gains,['anode','cathode'])
 
         mean_prestim_bias_rt={'offset':{'anode':[],'cathode':[]},'slope':{'anode':[],'cathode':[]}}
         std_prestim_bias_rt={'offset':{'anode':[],'cathode':[]},'slope':{'anode':[],'cathode':[]}}
@@ -380,7 +401,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.prestim_bias_rt_offset_anova=''#twoway_interaction(prestim_bias_rt_groups['offset'],'stim gain','condition','html')
         self.prestim_bias_rt_offset_stats=twoway_interaction_r('prestim_bias_rt_offset',['stim_intensity','condition'],prestim_bias_rt_groups['offset'])
-        self.prestim_bias_rt_offset_pairwise=self.pairwise_comparisons(self.prestim_bias_rt['offset'])
+        self.prestim_bias_rt_offset_pairwise=pairwise_comparisons(self.prestim_bias_rt['offset'],self.stim_gains,['anode','cathode'])
 
         furl='img/prestim_bias_rt_slope'
         fname=os.path.join(self.reports_dir, furl)
@@ -400,15 +421,25 @@ class ParamExploreReport():
         plt.close(fig)
         #self.prestim_bias_rt_slope_anova=''#twoway_interaction(prestim_bias_rt_groups['slope'],'stim gain','condition','html')
         self.prestim_bias_rt_slope_stats=twoway_interaction_r('prestim_bias_rt_slope',['stim_intensity','condition'],prestim_bias_rt_groups['slope'])
-        self.prestim_bias_rt_slope_pairwise=self.pairwise_comparisons(self.prestim_bias_rt['slope'])
+        self.prestim_bias_rt_slope_pairwise=pairwise_comparisons(self.prestim_bias_rt['slope'],self.stim_gains,['anode','cathode'])
         
         mean_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         std_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        mean_small_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        std_small_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        mean_large_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        std_large_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         for stim_gain in self.stim_gains:
             for param in mean_logistic_coeff:
                 for condition in mean_logistic_coeff[param]:
                     mean_logistic_coeff[param][condition].append(np.mean(self.logistic_coeff[param][condition][stim_gain]))
                     std_logistic_coeff[param][condition].append(np.std(self.logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.logistic_coeff[param][condition][stim_gain])))
+
+                    mean_small_input_diff_logistic_coeff[param][condition].append(np.mean(self.small_input_diff_logistic_coeff[param][condition][stim_gain]))
+                    std_small_input_diff_logistic_coeff[param][condition].append(np.std(self.small_input_diff_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.small_input_diff_logistic_coeff[param][condition][stim_gain])))
+
+                    mean_large_input_diff_logistic_coeff[param][condition].append(np.mean(self.large_input_diff_logistic_coeff[param][condition][stim_gain]))
+                    std_large_input_diff_logistic_coeff[param][condition].append(np.std(self.large_input_diff_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.large_input_diff_logistic_coeff[param][condition][stim_gain])))
 
         furl='img/logistic_coeff_bias'
         fname=os.path.join(self.reports_dir, furl)
@@ -428,7 +459,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.logistic_coeff_bias_anova=twoway_interaction(logistic_coeff_groups['bias'],'stim gain','condition','html')
         self.logistic_coeff_bias_stats=twoway_interaction_r('logistic_coeff_bias',['stim_intensity','condition'],logistic_coeff_groups['bias'])
-        self.logistic_coeff_bias_pairwise=self.pairwise_comparisons(self.logistic_coeff['bias'])
+        self.logistic_coeff_bias_pairwise=pairwise_comparisons(self.logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
 
         furl='img/logistic_coeff_ev_diff'
         fname=os.path.join(self.reports_dir, furl)
@@ -448,8 +479,88 @@ class ParamExploreReport():
         plt.close(fig)
         #self.logistic_coeff_ev_diff_anova=twoway_interaction(logistic_coeff_groups['ev diff'],'stim gain','condition','html')
         self.logistic_coeff_ev_diff_stats=twoway_interaction_r('logistic_coeff_ev_diff',['stim_intensity','condition'],logistic_coeff_groups['ev diff'])
-        self.logistic_coeff_ev_diff_pairwise=self.pairwise_comparisons(self.logistic_coeff['ev diff'])
+        self.logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
 
+        furl='img/small_input_diff_logistic_coeff_bias'
+        fname=os.path.join(self.reports_dir, furl)
+        self.small_input_diff_logistic_coeff_bias_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['bias']['anode'],yerr=std_small_input_diff_logistic_coeff['bias']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['bias']['cathode'],yerr=std_small_input_diff_logistic_coeff['bias']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.ylim([0,12])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: bias')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.small_input_diff_logistic_coeff_bias_anova=twoway_interaction(small_input_diff_logistic_coeff_groups['bias'],'stim gain','condition','html')
+        self.small_input_diff_logistic_coeff_bias_stats=twoway_interaction_r('small_input_diff_logistic_coeff_bias',['stim_intensity','condition'],small_input_diff_logistic_coeff_groups['bias'])
+        self.small_input_diff_logistic_coeff_bias_pairwise=pairwise_comparisons(self.small_input_diff_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
+
+        furl='img/small_input_diff_logistic_coeff_ev_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.small_input_diff_logistic_coeff_ev_diff_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['ev diff']['anode'],yerr=std_small_input_diff_logistic_coeff['ev diff']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['ev diff']['cathode'],yerr=std_small_input_diff_logistic_coeff['ev diff']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.ylim([0,12])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: Input diff')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.small_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(small_input_diff_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.small_input_diff_logistic_coeff_ev_diff_stats=twoway_interaction_r('small_input_diff_logistic_coeff_ev_diff',['stim_intensity','condition'],small_input_diff_logistic_coeff_groups['ev diff'])
+        self.small_input_diff_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.small_input_diff_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+
+        furl='img/large_input_diff_logistic_coeff_bias'
+        fname=os.path.join(self.reports_dir, furl)
+        self.large_input_diff_logistic_coeff_bias_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['bias']['anode'],yerr=std_large_input_diff_logistic_coeff['bias']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['bias']['cathode'],yerr=std_large_input_diff_logistic_coeff['bias']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.ylim([0,12])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: bias')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.large_input_diff_logistic_coeff_bias_anova=twoway_interaction(large_input_diff_logistic_coeff_groups['bias'],'stim gain','condition','html')
+        self.large_input_diff_logistic_coeff_bias_stats=twoway_interaction_r('large_input_diff_logistic_coeff_bias',['stim_intensity','condition'],large_input_diff_logistic_coeff_groups['bias'])
+        self.large_input_diff_logistic_coeff_bias_pairwise=pairwise_comparisons(self.large_input_diff_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
+
+        furl='img/large_input_diff_logistic_coeff_ev_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.large_input_diff_logistic_coeff_ev_diff_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['ev diff']['anode'],yerr=std_large_input_diff_logistic_coeff['ev diff']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['ev diff']['cathode'],yerr=std_large_input_diff_logistic_coeff['ev diff']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        plt.ylim([0,12])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Logistic Coefficient: Input diff')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.large_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(large_input_diff_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.large_input_diff_logistic_coeff_ev_diff_stats=twoway_interaction_r('large_input_diff_logistic_coeff_ev_diff',['stim_intensity','condition'],large_input_diff_logistic_coeff_groups['ev diff'])
+        self.large_input_diff_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.large_input_diff_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+        
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir, furl)
         self.perc_no_response_url='%s.png' % furl
@@ -480,7 +591,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.perc_no_response_anova=twoway_interaction(perc_no_response_groups,'stim gain','condition','html')
         self.perc_no_response_stats=twoway_interaction_r('perc_no_response',['stim_intensity','condition'],perc_no_response_groups)
-        self.perc_no_response_pairwise=self.pairwise_comparisons(self.perc_no_response)
+        self.perc_no_response_pairwise=pairwise_comparisons(self.perc_no_response,self.stim_gains,['anode','cathode'])
 
         mean_bias_perc_left_params={'k':{'anode':[],'cathode':[]}}
         std_bias_perc_left_params={'k':{'anode':[],'cathode':[]}}
@@ -508,7 +619,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.bias_perc_left_k_anova=twoway_interaction(bias_perc_left_groups['k'],'stim gain','condition','html')
         self.bias_perc_left_k_stats=twoway_interaction_r('bias_perc_left_k',['stim_intensity','condition'],bias_perc_left_groups['k'])
-        self.bias_perc_left_k_pairwise=self.pairwise_comparisons(self.bias_perc_left_params['k'])
+        self.bias_perc_left_k_pairwise=pairwise_comparisons(self.bias_perc_left_params,self.stim_gains,['anode','cathode'])
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
         self.pyr_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].pyr_params
