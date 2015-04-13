@@ -240,6 +240,20 @@
         <td>{{ rinfo.thresh_diff_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+        <tr>
+            <td>{{ stim_level }}</td>
+            <td>{{ rinfo.thresh_diff_pairwise[stim_gain][0] }}</td>
+            <td>{{ rinfo.thresh_diff_pairwise[stim_gain][1] }}</td>
+        </tr>
+    {% endfor %}
+</table>
 
 <h3>RT Difference Slope</h3>
 <img src="{{ rinfo.rt_diff_slope_url }}"/>

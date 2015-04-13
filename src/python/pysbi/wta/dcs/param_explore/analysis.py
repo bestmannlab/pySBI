@@ -1,3 +1,4 @@
+from scipy.stats import ttest_rel
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -217,6 +218,11 @@ class ParamExploreReport():
         plt.close(fig)
         #self.thresh_anova=twoway_interaction(thresh_diff_groups,'stim gain','condition','html')
         self.thresh_diff_stats=twoway_interaction_r('thresh_diff',['stim_intensity','condition'],thresh_diff_groups)
+        num_comparisons=len(self.stim_gains)
+        self.thresh_diff_pairwise={}
+        for stim_gain in self.stim_gains:
+            (t,p)=ttest_rel(self.thresh_difference['anode'][stim_gain],self.thresh_difference['cathode'][stim_gain])
+            self.thresh_diff_pairwise[stim_gain]=(t,p*num_comparisons/2.0)
 
         furl='img/rt_diff_slope'
         fname=os.path.join(self.reports_dir, furl)
