@@ -481,20 +481,21 @@ class SubjectReport:
 
         self.rt_diff_slope['anode']=anode_a
 
-        min_x=contrasts['cathode'][1]
-        max_x=contrasts['cathode'][-1]
+        if len(contrasts['cathode'])>1:
+            min_x=contrasts['cathode'][1]
+            max_x=contrasts['cathode'][-1]
 
-        clf = LinearRegression()
-        clf.fit(np.reshape(np.array(contrasts['cathode'][1:]),(len(contrasts['cathode'][1:]),1)),
-            np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
-        cathode_a = clf.coef_[0][0]
-        cathode_b = clf.intercept_[0]
-        cathode_r_sqr=clf.score(np.reshape(np.array(contrasts['cathode'][1:]), (len(contrasts['cathode'][1:]),1)),
-            np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
-        plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
-            label='r^2=%.3f' % cathode_r_sqr)
-        plt.plot(contrasts['cathode'],cathode_rt_diff_mean,'o%s' % condition_colors['cathode'])
-        self.rt_diff_slope['cathode']=cathode_a
+            clf = LinearRegression()
+            clf.fit(np.reshape(np.array(contrasts['cathode'][1:]),(len(contrasts['cathode'][1:]),1)),
+                np.reshape(np.array(cathode_rt_diff_mean[1:]),(len(cathode_rt_diff_mean[1:]),1)))
+            cathode_a = clf.coef_[0][0]
+            cathode_b = clf.intercept_[0]
+            cathode_r_sqr=clf.score(np.reshape(np.array(contrasts['cathode'][1:]), (len(contrasts['cathode'][1:]),1)),
+                np.reshape(np.array(cathode_rt_diff_mean[1:]), (len(cathode_rt_diff_mean[1:]),1)))
+            plt.plot([min_x, max_x], [cathode_a * min_x + cathode_b, cathode_a * max_x + cathode_b], '--g',
+                label='r^2=%.3f' % cathode_r_sqr)
+            plt.plot(contrasts['cathode'],cathode_rt_diff_mean,'o%s' % condition_colors['cathode'])
+            self.rt_diff_slope['cathode']=cathode_a
 
         plt.legend(loc='best')
         plt.xscale('log')
@@ -1135,6 +1136,7 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+        ax.set_ylim([0, 5])
         logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
         save_to_eps(fig, '%s.eps' % logistic_fname)
@@ -1242,6 +1244,7 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         if self.xlog:
             plt.xscale('log')
+        plt.ylim([-400,400])
         plt.xlabel('Coherence')
         plt.ylabel('RT Diff')
         save_to_png(fig, '%s.png' % fname)
@@ -1281,6 +1284,7 @@ class DCSComparisonReport:
             plt.errorbar(contrast, mean_rt,yerr=std_rt,fmt='o%s' % colors[condition])
             plt.plot(smoothInt, smoothResp, colors[condition], label=condition)
 
+        plt.ylim([0,1200])
         plt.xlabel('Contrast')
         plt.ylabel('Decision time (ms)')
         if self.xlog:
@@ -1373,7 +1377,8 @@ class DCSComparisonReport:
             baseline,=ax.plot(time_ticks, mean_unchosen_rate, color=colors[stim_level], linestyle='--', label='%s - unchosen' % stim_level)
             ax.fill_between(time_ticks, mean_unchosen_rate-std_unchosen_rate, mean_unchosen_rate+std_unchosen_rate, alpha=0.5,
                 facecolor=baseline.get_color())
-        ax.set_ylim([0,10+max_pop_rate])
+        #ax.set_ylim([0,10+max_pop_rate])
+        ax.set_ylim([0,50])
         ax.legend(loc=0)
         ax.set_title('Coherence=%.4f' % coherence)
         ax.set_xlabel('Time (s)')
@@ -1389,7 +1394,8 @@ class DCSComparisonReport:
             baseline,=ax.plot(time_ticks, mean_inh_rate, color=colors[stim_level], linestyle='-', label=stim_level)
             ax.fill_between(time_ticks, mean_inh_rate-std_inh_rate, mean_inh_rate+std_inh_rate, alpha=0.5,
                 facecolor=baseline.get_color())
-        ax.set_ylim([0,10+max_pop_rate])
+        #ax.set_ylim([0,10+max_pop_rate])
+        ax.set_ylim([0,10])
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Firing Rate (Hz)')
         save_to_png(fig, '%s.png' % fname)
@@ -1586,6 +1592,8 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
+        plt.xlim([0,10])
+        plt.ylim([0,700])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -1686,6 +1694,7 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('% left')
+        plt.xlim([-10,10])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -1717,6 +1726,7 @@ class DCSComparisonReport:
         ax.set_xticklabels(conditions)
         ax.set_xlabel('Condition')
         ax.set_ylabel('Prestimulus Bias (Hz)')
+        ax.set_ylim([0, 3])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
