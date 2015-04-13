@@ -369,9 +369,9 @@ def twoway_interaction(groups, first_factor_label, second_factor_label, format="
 
 def twoway_interaction_r(outcome, factors, data):
     od = rlc.OrdDict()
-    od[outcome] = robjects.FloatVector([x(0) for x in data])
-    od[factors[0]] = robjects.FloatVector([x(1) for x in data])
-    od[factors[1]] = robjects.StrVector([x(2) for x in data])
+    od[outcome] = robjects.FloatVector([x[0] for x in data])
+    od[factors[0]] = robjects.FloatVector([x[1] for x in data])
+    od[factors[1]] = robjects.StrVector([x[2] for x in data])
 
 
     dataf = robjects.DataFrame(od)
@@ -382,7 +382,7 @@ def twoway_interaction_r(outcome, factors, data):
     fvals = anova_data[3]
     fprobs = anova_data[4]
 
-    var_indices = {factors[0]:0, factors[1]:1, '%s+%s' % factors:2}
+    var_indices = {factors[0]:0, factors[1]:1, '%s+%s' % (factors[0],factors[1]):2}
     all_fvals = {}
     all_fprobs = {}
 
