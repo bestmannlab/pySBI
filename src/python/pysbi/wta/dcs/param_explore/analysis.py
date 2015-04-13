@@ -12,14 +12,16 @@ from pysbi.wta.dcs.analysis import DCSComparisonReport, condition_colors
 
 
 class ParamExploreReport():
-    def __init__(self, data_dir, file_prefix, virtual_subj_ids, num_trials, reports_dir, control=False):
+    def __init__(self, data_dir, file_prefix, virtual_subj_ids, num_trials, reports_dir, control=False,
+                 stim_gains=[8,6,4,2,1,0.5,0.25]):
         self.data_dir=data_dir
         self.file_prefix=file_prefix
         self.virtual_subj_ids=virtual_subj_ids
         self.num_trials=num_trials
         self.reports_dir=reports_dir
+        self.stim_gains=stim_gains
         #self.stim_gains=[8,7,6,5,4,3,2,1,0.5,0.25]
-        self.stim_gains=[8,6,4,2,1,0.5,0.25]
+        #self.stim_gains=[8,6,4,2,1,0.5,0.25]
         #self.stim_gains=[4,2,1,0.5,0.25]
         self.control=control
         self.stim_level_reports={}
@@ -31,6 +33,7 @@ class ParamExploreReport():
 
         self.version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
 
+        thresh={'control':{},'anode':{},'cathode':{}}
         self.thresh_difference={'anode':{},'cathode':{}}
         self.rt_diff_slope={'anode':{},'cathode':{}}
         self.prestim_bias_diff={'anode':{},'cathode':{}}
@@ -80,6 +83,10 @@ class ParamExploreReport():
                 regenerate_subject_plots=regenerate_subject_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
 
+            thresh['control'][stim_gain]=[]
+            thresh['anode'][stim_gain]=[]
+            thresh['cathode'][stim_gain]=[]
+
             self.thresh_difference['anode'][stim_gain]=[]
             self.thresh_difference['cathode'][stim_gain]=[]
 
@@ -114,7 +121,9 @@ class ParamExploreReport():
             self.bias_perc_left_params['k']['cathode'][stim_gain]=[]
 
             for idx,subj in enumerate(self.stim_level_reports[stim_gain].virtual_subj_ids):
+                thresh['control'][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh['control'])
                 for condition in ['anode','cathode']:
+                    thresh[condition][stim_gain].append(self.stim_level_reports[stim_gain].subjects[subj].thresh[condition])
                     thresh_diff=self.stim_level_reports[stim_gain].subjects[subj].thresh[condition]-self.stim_level_reports[stim_gain].subjects[subj].thresh['control']
                     rt_diff_slope=self.stim_level_reports[stim_gain].subjects[subj].rt_diff_slope[condition]
                     prestim_bias_diff=self.stim_level_reports[stim_gain].subjects[subj].mean_biases[condition]-self.stim_level_reports[stim_gain].subjects[subj].mean_biases['control']
@@ -174,6 +183,13 @@ class ParamExploreReport():
             #logistic_coeff_groups['ev diff'].append([self.logistic_coeff['ev diff']['anode'][stim_gain],self.logistic_coeff['ev diff']['cathode'][stim_gain]])
             #perc_no_response_groups.append([self.perc_no_response['anode'][stim_gain],self.perc_no_response['cathode'][stim_gain]])
             #bias_perc_left_groups['k'].append([self.bias_perc_left_params['k']['anode'][stim_gain],self.bias_perc_left_params['k']['cathode'][stim_gain]])
+
+        self.mean_thresh={'control':{},'anode':{},'cathode':{}}
+        self.std_thresh={'control':{},'anode':{},'cathode':{}}
+        for condition in self.mean_thresh:
+            for stim_gain in self.stim_gains:
+                self.mean_thresh[condition][stim_gain]=np.mean(thresh[condition][stim_gain])
+                self.std_thresh[condition][stim_gain]=np.std(thresh[condition][stim_gain])/np.sqrt(len(thresh[condition][stim_gain]))
 
         out_file.close()
 
@@ -427,18 +443,19 @@ class ParamExploreReport():
                     std_perc_no_response[condition].append(np.std(self.perc_no_response[condition][stim_gain])/np.sqrt(len(self.perc_no_response[condition][stim_gain])))
         ax=fig.add_subplot(1,1,1)
         ind=np.array(range(len(self.stim_gains)))+1.0
-        width=0.5
+        width=0.4
         rects=[]
         for idx,stim_condition in enumerate(['anode','cathode']):
-            rect=ax.bar(ind-width, mean_perc_no_response[stim_condition], width,
+            rect=ax.bar(ind-idx*width+.5, mean_perc_no_response[stim_condition], width,
                         yerr=std_perc_no_response[stim_condition], ecolor='k', color=condition_colors[stim_condition])
             rects.append(rect)
         ax.set_xticks(ind+width)
-        ax.set_xticklabels([str(x) for x in self.stim_gains])
+        ax.set_xticklabels([str(x) for x in sorted(self.stim_gains)])
         ax.legend([rect[0] for rect in rects],['anode','cathode'],loc='best')
         ax.set_xlabel('Stimulation Gain')
         ax.set_ylabel('% No Response')
         ax.set_ylim([0,.2])
+        ax.set_xlim([0,len(self.stim_gains)+1])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -498,7 +515,9 @@ class ParamExploreReport():
 if __name__=='__main__':
     report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(20), 20,
-        #'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(5), 10,
         '/data/pySBI/reports/rdmd/virtual_subjects_param_explore', control=False)
+    # report=ParamExploreReport('/data/pySBI/rdmd/virtual_subjects_param_explore_control',
+    #     'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200', range(20), 20,
+    #     '/data/pySBI/reports/rdmd/virtual_subjects_param_explore_control', control=True, stim_gains=[10,8,6,4,2,1,0.5,0.25])
     report.create_report(regenerate_stim_level_plots=True, regenerate_subject_plots=True, regenerate_session_plots=False,
                          regenerate_trial_plots=False)
