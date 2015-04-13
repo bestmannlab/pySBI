@@ -1128,11 +1128,11 @@ class DCSComparisonReport:
                 #input_diff_lower_lim=np.percentile(np.abs(np.array(input_diffs)), 25)
                 #input_diff_upper_lim=np.percentile(np.abs(np.array(input_diffs)), 75)
                 for i in range(len(biases)):
-                    if np.abs(input_diffs[i])<np.median(input_diffs):
+                    if np.abs(input_diffs[i])<np.median(np.abs(input_diffs)):
                         small_input_diff_biases.append(biases[i])
                         small_input_diff_input_diffs.append(input_diffs[i])
                         small_input_diff_correct.append(correct[i])
-                    elif np.abs(input_diffs[i])>=np.median(input_diffs):
+                    elif np.abs(input_diffs[i])>=np.median(np.abs(input_diffs)):
                         large_input_diff_biases.append(biases[i])
                         large_input_diff_input_diffs.append(input_diffs[i])
                         large_input_diff_correct.append(correct[i])
