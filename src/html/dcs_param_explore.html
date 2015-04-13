@@ -279,6 +279,20 @@
         <td>{{ rinfo.rt_diff_slope_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.rt_diff_slope_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.rt_diff_slope_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>Prestimulus Bias Difference</h3>
 <img src="{{ rinfo.prestim_bias_diff_url }}"/>
@@ -303,6 +317,20 @@
         <td>{{ rinfo.prestim_bias_diff_stats[0]['stim_intensity+condition'] }}</td>
         <td>{{ rinfo.prestim_bias_diff_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
+</table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <h3>Prestimulus Bias</h3>
@@ -329,6 +357,20 @@
         <td>{{ rinfo.prestim_bias_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.prestim_bias_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.prestim_bias_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>Coherence - Prestimulus Bias: n</h3>
 <img src="{{ rinfo.coherence_prestim_bias_n_url }}"/>
@@ -353,6 +395,20 @@
         <td>{{ rinfo.coherence_prestim_bias_n_stats[0]['stim_intensity+condition'] }}</td>
         <td>{{ rinfo.coherence_prestim_bias_n_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
+</table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <h3>Coherence - Prestimulus Bias: lambda</h3>
@@ -379,6 +435,20 @@
         <td>{{ rinfo.coherence_prestim_bias_lambda_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>Prestimulus Bias - RT: offset</h3>
 <img src="{{ rinfo.prestim_bias_rt_offset_url }}"/>
@@ -403,6 +473,20 @@
         <td>{{ rinfo.prestim_bias_rt_offset_stats[0]['stim_intensity+condition'] }}</td>
         <td>{{ rinfo.prestim_bias_rt_offset_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
+</table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <h3>Prestimulus Bias - RT: slope</h3>
@@ -429,6 +513,20 @@
         <td>{{ rinfo.prestim_bias_rt_slope_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>Accuracy Logistic Coefficient: bias</h3>
 <img src="{{ rinfo.logistic_coeff_bias_url }}"/>
@@ -453,6 +551,20 @@
         <td>{{ rinfo.logistic_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
         <td>{{ rinfo.logistic_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
+</table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <h3>Accuracy Logistic Coefficient: input contrast</h3>
@@ -479,6 +591,20 @@
         <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>% No Response</h3>
 <img src="{{ rinfo.perc_no_response_url }}"/>
@@ -504,6 +630,20 @@
         <td>{{ rinfo.perc_no_response_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.perc_no_response_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.perc_no_response_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h3>Bias - % Left: k</h3>
 <img src="{{ rinfo.bias_perc_left_k_url }}"/>
@@ -528,6 +668,20 @@
         <td>{{ rinfo.bias_perc_left_k_stats[0]['stim_intensity+condition'] }}</td>
         <td>{{ rinfo.bias_perc_left_k_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
+</table>
+<table border="1">
+    <tr>
+        <td>Stimulation Intensity</td>
+        <td>t</td>
+        <td>p</td>
+    </tr>
+    {% for stim_level in rinfo.stim_gains %}
+    <tr>
+        <td>{{ stim_level }}</td>
+        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_gain][1] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <h3>Stimulation Levels</h3>
