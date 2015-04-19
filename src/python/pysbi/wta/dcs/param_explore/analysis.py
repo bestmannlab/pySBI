@@ -80,8 +80,8 @@ class ParamExploreReport():
                                           'prestim_bias_diff','prestim_bias','coherence_prestim_bias_n',
                                           'coherence_prestim_bias_lambda','prestim_bias_rt_offset',
                                           'prestim_bias_rt_slope','logistic_coeff_bias','logistic_coeff_ev_diff',
-                                          'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
-                                          'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
+                                          #'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
+                                          #'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
                                           'perc_no_resp','bias_perc_left_n']))
         for stim_gain in self.stim_gains:
             stim_levels={'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)}
@@ -176,10 +176,10 @@ class ParamExploreReport():
                             prestim_bias_rt_groups[param].append((float('NaN'),stim_gain,condition))
                     data_vals.append('%.4f' % self.logistic_coeff['bias'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.logistic_coeff['ev diff'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    # data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
+                    # data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    # data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
+                    # data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.perc_no_response[condition][stim_gain][idx])
                     bias_per_left_param=self.stim_level_reports[stim_gain].subjects[subj].bias_perc_left_params['k'][condition]
                     self.bias_perc_left_params['k'][condition][stim_gain].append(bias_per_left_param)
@@ -192,10 +192,12 @@ class ParamExploreReport():
                     prestim_bias_groups.append((prestim_bias,stim_gain,condition))
                     logistic_coeff_groups['bias'].append((self.logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
                     logistic_coeff_groups['ev diff'].append((self.logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
-                    small_input_diff_logistic_coeff_groups['bias'].append((self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
-                    small_input_diff_logistic_coeff_groups['ev diff'].append((self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
-                    large_input_diff_logistic_coeff_groups['bias'].append((self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
-                    large_input_diff_logistic_coeff_groups['ev diff'].append((self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    if idx<len(self.small_input_diff_logistic_coeff['bias'][condition][stim_gain]):
+                        small_input_diff_logistic_coeff_groups['bias'].append((self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                        small_input_diff_logistic_coeff_groups['ev diff'].append((self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    if idx<len(self.large_input_diff_logistic_coeff['bias'][condition][stim_gain]):
+                        large_input_diff_logistic_coeff_groups['bias'].append((self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                        large_input_diff_logistic_coeff_groups['ev diff'].append((self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
                     perc_no_response_groups.append((self.perc_no_response[condition][stim_gain][idx],stim_gain,condition))
                     bias_perc_left_groups['k'].append((bias_per_left_param,stim_gain,condition))
 
@@ -619,7 +621,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.bias_perc_left_k_anova=twoway_interaction(bias_perc_left_groups['k'],'stim gain','condition','html')
         self.bias_perc_left_k_stats=twoway_interaction_r('bias_perc_left_k',['stim_intensity','condition'],bias_perc_left_groups['k'])
-        self.bias_perc_left_k_pairwise=pairwise_comparisons(self.bias_perc_left_params,self.stim_gains,['anode','cathode'])
+        self.bias_perc_left_k_pairwise=pairwise_comparisons(self.bias_perc_left_params['k'],self.stim_gains,['anode','cathode'])
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
         self.pyr_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].pyr_params

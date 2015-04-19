@@ -1108,31 +1108,36 @@ class DCSComparisonReport:
                 large_input_diff_correct=[]
 
                 for idx,trial_summary in enumerate(subj_report.sessions[stim_condition].series.trial_summaries):
-                    left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                    right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
                     input_diff=np.abs(trial_summary.data.input_freq[0]-trial_summary.data.input_freq[1])
-                    bias=np.abs(left_mean-right_mean)
-                    if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
-                        bias=left_mean-right_mean
-                    elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
-                        bias=right_mean-left_mean
-                    biases.append(bias)
-                    input_diffs.append(input_diff)
-                    choice_correct=0.0
-                    if trial_summary.correct:
-                        choice_correct=1.0
-                    correct.append(choice_correct)
+                    if input_diff>0.0:
+                        left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        bias=np.abs(left_mean-right_mean)
+                        if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
+                            bias=left_mean-right_mean
+                        elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
+                            bias=right_mean-left_mean
+                        biases.append(bias)
+                        input_diffs.append(input_diff)
+                        choice_correct=0.0
+                        if trial_summary.correct:
+                            choice_correct=1.0
+                        correct.append(choice_correct)
                 biases=np.array(biases)
                 input_diffs=np.array(input_diffs)
                 
                 #input_diff_lower_lim=np.percentile(np.abs(np.array(input_diffs)), 25)
                 #input_diff_upper_lim=np.percentile(np.abs(np.array(input_diffs)), 75)
+                input_diff_lim=np.median(input_diffs)
+                #input_diff_lim=np.percentile(input_diffs,50)
                 for i in range(len(biases)):
-                    if np.abs(input_diffs[i])<np.median(np.abs(input_diffs)):
+                    if input_diffs[i]<input_diff_lim:
+                    #if input_diffs[i]<input_diff_lower_lim:
                         small_input_diff_biases.append(biases[i])
                         small_input_diff_input_diffs.append(input_diffs[i])
                         small_input_diff_correct.append(correct[i])
-                    elif np.abs(input_diffs[i])>=np.median(np.abs(input_diffs)):
+                    elif input_diffs[i]>=input_diff_lim:
+                    #elif input_diffs[i]>=input_diff_upper_lim:
                         large_input_diff_biases.append(biases[i])
                         large_input_diff_input_diffs.append(input_diffs[i])
                         large_input_diff_correct.append(correct[i])
@@ -1187,6 +1192,8 @@ class DCSComparisonReport:
             print('%s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
             (t,p)=ttest_1samp(coeffs[:,1],0.0)
             print('%s, input diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
+            small_input_diff_coeffs=np.array(small_input_diff_coeffs)
+            large_input_diff_coeffs=np.array(large_input_diff_coeffs)
 
             condition_coeffs[stim_condition]=coeffs
             condition_small_input_diff_coeffs[stim_condition]=small_input_diff_coeffs
@@ -1209,7 +1216,8 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        ax.set_ylim([0, 5])
+        #ax.set_ylim([0, 5])
+        ax.set_ylim([0, 8])
         logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
         save_to_eps(fig, '%s.eps' % logistic_fname)

@@ -249,8 +249,8 @@
     {% for stim_level in rinfo.stim_gains %}
         <tr>
             <td>{{ stim_level }}</td>
-            <td>{{ rinfo.thresh_diff_pairwise[stim_gain][0] }}</td>
-            <td>{{ rinfo.thresh_diff_pairwise[stim_gain][1] }}</td>
+            <td>{{ rinfo.thresh_diff_pairwise[stim_level][0] }}</td>
+            <td>{{ rinfo.thresh_diff_pairwise[stim_level][1] }}</td>
         </tr>
     {% endfor %}
 </table>
@@ -288,8 +288,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.rt_diff_slope_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.rt_diff_slope_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.rt_diff_slope_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.rt_diff_slope_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -327,8 +327,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.prestim_bias_diff_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -366,8 +366,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.prestim_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.prestim_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.prestim_bias_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.prestim_bias_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -405,8 +405,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_n_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -444,8 +444,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.coherence_prestim_bias_lambda_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -483,8 +483,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_offset_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -522,8 +522,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.prestim_bias_rt_slope_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -561,8 +561,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -600,8 +600,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -639,8 +639,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -678,8 +678,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -717,8 +717,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -756,8 +756,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -795,8 +795,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.perc_no_response_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.perc_no_response_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.perc_no_response_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.perc_no_response_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -834,8 +834,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_level][0] }}</td>
+        <td>{{ rinfo.bias_perc_left_k_pairwise[stim_level][1] }}</td>
     </tr>
     {% endfor %}
 </table>
