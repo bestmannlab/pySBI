@@ -683,7 +683,7 @@ class ParamExploreReport():
         plt.close(fig)
         #self.bias_perc_left_k_anova=twoway_interaction(bias_perc_left_groups['k'],'stim gain','condition','html')
         self.bias_perc_left_k_stats=twoway_interaction_r('bias_perc_left_k',['stim_intensity','condition'],bias_perc_left_groups['k'])
-        self.bias_perc_left_k_pairwise=pairwise_comparisons(self.bias_perc_left_params,self.stim_gains,['anode','cathode'])
+        self.bias_perc_left_k_pairwise=pairwise_comparisons(self.bias_perc_left_params['k'],self.stim_gains,['anode','cathode'])
 
         self.wta_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].wta_params
         self.pyr_params=self.stim_level_reports[self.stim_level_reports.keys()[0]].pyr_params
