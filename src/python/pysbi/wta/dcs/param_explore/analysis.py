@@ -40,9 +40,11 @@ class ParamExploreReport():
         self.prestim_bias={'anode':{},'cathode':{}}
         self.coherence_prestim_bias={'n':{'anode':{},'cathode':{}},'lambda':{'anode':{},'cathode':{}}}
         self.prestim_bias_rt={'offset':{'anode':{}, 'cathode':{}},'slope':{'anode':{}, 'cathode':{}}}
-        self.logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
-        self.small_input_diff_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
-        self.large_input_diff_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        self.accuracy_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        #self.small_input_diff_accuracy_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        #self.large_input_diff_accuracy_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        self.rt_linear_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
+        
         self.perc_no_response={'anode':{},'cathode':{}}
         self.bias_perc_left_params={'k':{'anode':{}, 'cathode':{}}}
 
@@ -58,15 +60,19 @@ class ParamExploreReport():
             'offset':[],
             'slope':[]
         }
-        logistic_coeff_groups={
+        accuracy_logistic_coeff_groups={
             'bias':[],
             'ev diff':[]
         }
-        small_input_diff_logistic_coeff_groups={
-            'bias':[],
-            'ev diff':[]
-        }
-        large_input_diff_logistic_coeff_groups={
+#        small_input_diff_accuracy_logistic_coeff_groups={
+#            'bias':[],
+#            'ev diff':[]
+#        }
+#        large_input_diff_accuracy_logistic_coeff_groups={
+#            'bias':[],
+#            'ev diff':[]
+#        }
+        rt_linear_coeff_groups={
             'bias':[],
             'ev diff':[]
         }
@@ -79,9 +85,10 @@ class ParamExploreReport():
         out_file.write('%s\n' % ','.join(['subject','intensity','condition','thresh_diff','rt_diff_slope',
                                           'prestim_bias_diff','prestim_bias','coherence_prestim_bias_n',
                                           'coherence_prestim_bias_lambda','prestim_bias_rt_offset',
-                                          'prestim_bias_rt_slope','logistic_coeff_bias','logistic_coeff_ev_diff',
-                                          'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
-                                          'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
+                                          'prestim_bias_rt_slope','accuracy_logistic_coeff_bias','acurracy_logistic_coeff_ev_diff',
+#                                          'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
+#                                          'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
+                                          'rt_linear_coeff_bias', 'rt_linear_coeff_ev_diff',
                                           'perc_no_resp','bias_perc_left_n']))
         for stim_gain in self.stim_gains:
             stim_levels={'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)}
@@ -121,20 +128,25 @@ class ParamExploreReport():
             self.prestim_bias_rt['slope']['anode'][stim_gain]=[]
             self.prestim_bias_rt['slope']['cathode'][stim_gain]=[]
 
-            self.logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['anode']
-            self.logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['bias']['cathode']
-            self.logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['anode']
-            self.logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].logistic_coeffs['ev diff']['cathode']
+            self.accuracy_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].accuracy_logistic_coeffs['bias']['anode']
+            self.accuracy_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].accuracy_logistic_coeffs['bias']['cathode']
+            self.accuracy_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].accuracy_logistic_coeffs['ev diff']['anode']
+            self.accuracy_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].accuracy_logistic_coeffs['ev diff']['cathode']
 
-            self.small_input_diff_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['anode']
-            self.small_input_diff_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['cathode']
-            self.small_input_diff_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['anode']
-            self.small_input_diff_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['cathode']
-
-            self.large_input_diff_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['anode']
-            self.large_input_diff_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['cathode']
-            self.large_input_diff_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['anode']
-            self.large_input_diff_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['cathode']
+#            self.small_input_diff_accuracy_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['anode']
+#            self.small_input_diff_accuracy_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['bias']['cathode']
+#            self.small_input_diff_accuracy_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['anode']
+#            self.small_input_diff_accuracy_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].small_input_diff_logistic_coeffs['ev diff']['cathode']
+#
+#            self.large_input_diff_accuracy_logistic_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['anode']
+#            self.large_input_diff_accuracy_logistic_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['bias']['cathode']
+#            self.large_input_diff_accuracy_logistic_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['anode']
+#            self.large_input_diff_accuracy_logistic_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].large_input_diff_logistic_coeffs['ev diff']['cathode']
+            
+            self.rt_linear_coeff['bias']['anode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['bias']['anode']
+            self.rt_linear_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['bias']['cathode']
+            self.rt_linear_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['ev diff']['anode']
+            self.rt_linear_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['ev diff']['cathode']
 
             self.perc_no_response['anode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['anode'])
             self.perc_no_response['cathode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['cathode'])
@@ -174,12 +186,14 @@ class ParamExploreReport():
                         else:
                             data_vals.append('NA')
                             prestim_bias_rt_groups[param].append((float('NaN'),stim_gain,condition))
-                    data_vals.append('%.4f' % self.logistic_coeff['bias'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.logistic_coeff['ev diff'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx])
-                    data_vals.append('%.4f' % self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.accuracy_logistic_coeff['bias'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx])
+#                    data_vals.append('%.4f' % self.small_input_diff_accuracy_logistic_coeff['bias'][condition][stim_gain][idx])
+#                    data_vals.append('%.4f' % self.small_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx])
+#                    data_vals.append('%.4f' % self.large_input_diff_accuracy_logistic_coeff['bias'][condition][stim_gain][idx])
+#                    data_vals.append('%.4f' % self.large_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.rt_linear_coeff['bias'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.rt_linear['ev diff'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.perc_no_response[condition][stim_gain][idx])
                     bias_per_left_param=self.stim_level_reports[stim_gain].subjects[subj].bias_perc_left_params['k'][condition]
                     self.bias_perc_left_params['k'][condition][stim_gain].append(bias_per_left_param)
@@ -190,12 +204,14 @@ class ParamExploreReport():
                     rt_diff_slope_groups.append((rt_diff_slope,stim_gain,condition))
                     prestim_bias_diff_groups.append((prestim_bias_diff,stim_gain,condition))
                     prestim_bias_groups.append((prestim_bias,stim_gain,condition))
-                    logistic_coeff_groups['bias'].append((self.logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
-                    logistic_coeff_groups['ev diff'].append((self.logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
-                    small_input_diff_logistic_coeff_groups['bias'].append((self.small_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
-                    small_input_diff_logistic_coeff_groups['ev diff'].append((self.small_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
-                    large_input_diff_logistic_coeff_groups['bias'].append((self.large_input_diff_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
-                    large_input_diff_logistic_coeff_groups['ev diff'].append((self.large_input_diff_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    accuracy_logistic_coeff_groups['bias'].append((self.accuracy_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                    accuracy_logistic_coeff_groups['ev diff'].append((self.accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+#                    small_input_diff_accuracy_logistic_coeff_groups['bias'].append((self.small_input_diff_accuracy_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+#                    small_input_diff_accuracy_logistic_coeff_groups['ev diff'].append((self.small_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+#                    large_input_diff_accuracy_logistic_coeff_groups['bias'].append((self.large_input_diff_accuracy_logistic_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+#                    large_input_diff_accuracy_logistic_coeff_groups['ev diff'].append((self.large_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    rt_linear_coeff_groups['bias'].append((self.rt_linear_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
+                    rt_linear_coeff_groups['ev diff'].append((self.rt_linear_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
                     perc_no_response_groups.append((self.perc_no_response[condition][stim_gain][idx],stim_gain,condition))
                     bias_perc_left_groups['k'].append((bias_per_left_param,stim_gain,condition))
 
@@ -209,8 +225,8 @@ class ParamExploreReport():
             #coherence_prestim_bias_groups['lambda'].append([self.coherence_prestim_bias['lambda']['anode'][stim_gain],self.coherence_prestim_bias['lambda']['cathode'][stim_gain]])
             #prestim_bias_rt_groups['offset'].append([self.prestim_bias_rt['offset']['anode'][stim_gain],self.prestim_bias_rt['offset']['cathode'][stim_gain]])
             #prestim_bias_rt_groups['slope'].append([self.prestim_bias_rt['slope']['anode'][stim_gain],self.prestim_bias_rt['slope']['cathode'][stim_gain]])
-            #logistic_coeff_groups['bias'].append([self.logistic_coeff['bias']['anode'][stim_gain],self.logistic_coeff['bias']['cathode'][stim_gain]])
-            #logistic_coeff_groups['ev diff'].append([self.logistic_coeff['ev diff']['anode'][stim_gain],self.logistic_coeff['ev diff']['cathode'][stim_gain]])
+            #accuracy_logistic_coeff_groups['bias'].append([self.logistic_coeff['bias']['anode'][stim_gain],self.logistic_coeff['bias']['cathode'][stim_gain]])
+            #accuracy_logistic_coeff_groups['ev diff'].append([self.logistic_coeff['ev diff']['anode'][stim_gain],self.logistic_coeff['ev diff']['cathode'][stim_gain]])
             #perc_no_response_groups.append([self.perc_no_response['anode'][stim_gain],self.perc_no_response['cathode'][stim_gain]])
             #bias_perc_left_groups['k'].append([self.bias_perc_left_params['k']['anode'][stim_gain],self.bias_perc_left_params['k']['cathode'][stim_gain]])
 
@@ -423,143 +439,191 @@ class ParamExploreReport():
         self.prestim_bias_rt_slope_stats=twoway_interaction_r('prestim_bias_rt_slope',['stim_intensity','condition'],prestim_bias_rt_groups['slope'])
         self.prestim_bias_rt_slope_pairwise=pairwise_comparisons(self.prestim_bias_rt['slope'],self.stim_gains,['anode','cathode'])
         
-        mean_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
-        std_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
-        mean_small_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
-        std_small_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
-        mean_large_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
-        std_large_input_diff_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        mean_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        std_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+#        mean_small_input_diff_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+#        std_small_input_diff_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+#        mean_large_input_diff_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+#        std_large_input_diff_accuracy_logistic_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         for stim_gain in self.stim_gains:
-            for param in mean_logistic_coeff:
-                for condition in mean_logistic_coeff[param]:
-                    mean_logistic_coeff[param][condition].append(np.mean(self.logistic_coeff[param][condition][stim_gain]))
-                    std_logistic_coeff[param][condition].append(np.std(self.logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.logistic_coeff[param][condition][stim_gain])))
+            for param in mean_accuracy_logistic_coeff:
+                for condition in mean_accuracy_logistic_coeff[param]:
+                    mean_accuracy_logistic_coeff[param][condition].append(np.mean(self.accuracy_logistic_coeff[param][condition][stim_gain]))
+                    std_accuracy_logistic_coeff[param][condition].append(np.std(self.accuracy_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.accuracy_logistic_coeff[param][condition][stim_gain])))
 
-                    mean_small_input_diff_logistic_coeff[param][condition].append(np.mean(self.small_input_diff_logistic_coeff[param][condition][stim_gain]))
-                    std_small_input_diff_logistic_coeff[param][condition].append(np.std(self.small_input_diff_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.small_input_diff_logistic_coeff[param][condition][stim_gain])))
+#                    mean_small_input_diff_accuracy_logistic_coeff[param][condition].append(np.mean(self.small_input_diff_accuracy_logistic_coeff[param][condition][stim_gain]))
+#                    std_small_input_diff_accuracy_logistic_coeff[param][condition].append(np.std(self.small_input_diff_accuracy_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.small_input_diff_accuracy_logistic_coeff[param][condition][stim_gain])))
+#
+#                    mean_large_input_diff_accuracy_logistic_coeff[param][condition].append(np.mean(self.large_input_diff_accuracy_logistic_coeff[param][condition][stim_gain]))
+#                    std_large_input_diff_accuracy_logistic_coeff[param][condition].append(np.std(self.large_input_diff_accuracy_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.large_input_diff_accuracy_logistic_coeff[param][condition][stim_gain])))
 
-                    mean_large_input_diff_logistic_coeff[param][condition].append(np.mean(self.large_input_diff_logistic_coeff[param][condition][stim_gain]))
-                    std_large_input_diff_logistic_coeff[param][condition].append(np.std(self.large_input_diff_logistic_coeff[param][condition][stim_gain])/np.sqrt(len(self.large_input_diff_logistic_coeff[param][condition][stim_gain])))
-
-        furl='img/logistic_coeff_bias'
+        furl='img/accuracy_logistic_coeff_bias'
         fname=os.path.join(self.reports_dir, furl)
-        self.logistic_coeff_bias_url='%s.png' % furl
+        self.accuracy_logistic_coeff_bias_url='%s.png' % furl
         fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_logistic_coeff['bias']['anode'],yerr=std_logistic_coeff['bias']['anode'],
+        plt.errorbar(self.stim_gains, mean_accuracy_logistic_coeff['bias']['anode'],yerr=std_accuracy_logistic_coeff['bias']['anode'],
             fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_logistic_coeff['bias']['cathode'],yerr=std_logistic_coeff['bias']['cathode'],
+        plt.errorbar(self.stim_gains, mean_accuracy_logistic_coeff['bias']['cathode'],yerr=std_accuracy_logistic_coeff['bias']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.ylim([0,12])
         plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: bias')
+        plt.ylabel('Accuracy Logistic Coefficient: bias')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        #self.logistic_coeff_bias_anova=twoway_interaction(logistic_coeff_groups['bias'],'stim gain','condition','html')
-        self.logistic_coeff_bias_stats=twoway_interaction_r('logistic_coeff_bias',['stim_intensity','condition'],logistic_coeff_groups['bias'])
-        self.logistic_coeff_bias_pairwise=pairwise_comparisons(self.logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
+        #self.logistic_coeff_bias_anova=twoway_interaction(accuracy_logistic_coeff_groups['bias'],'stim gain','condition','html')
+        self.accuracy_logistic_coeff_bias_stats=twoway_interaction_r('accuracy_logistic_coeff_bias',['stim_intensity','condition'],accuracy_logistic_coeff_groups['bias'])
+        self.accuracy_logistic_coeff_bias_pairwise=pairwise_comparisons(self.accuracy_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
 
-        furl='img/logistic_coeff_ev_diff'
+        furl='img/accuracy_logistic_coeff_ev_diff'
         fname=os.path.join(self.reports_dir, furl)
-        self.logistic_coeff_ev_diff_url='%s.png' % furl
+        self.accuracy_logistic_coeff_ev_diff_url='%s.png' % furl
         fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_logistic_coeff['ev diff']['anode'],yerr=std_logistic_coeff['ev diff']['anode'],
+        plt.errorbar(self.stim_gains, mean_accuracy_logistic_coeff['ev diff']['anode'],yerr=std_accuracy_logistic_coeff['ev diff']['anode'],
             fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_logistic_coeff['ev diff']['cathode'],yerr=std_logistic_coeff['ev diff']['cathode'],
+        plt.errorbar(self.stim_gains, mean_accuracy_logistic_coeff['ev diff']['cathode'],yerr=std_accuracy_logistic_coeff['ev diff']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.ylim([0,12])
         plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: Input diff')
+        plt.ylabel('Accuracy Logistic Coefficient: Input diff')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        #self.logistic_coeff_ev_diff_anova=twoway_interaction(logistic_coeff_groups['ev diff'],'stim gain','condition','html')
-        self.logistic_coeff_ev_diff_stats=twoway_interaction_r('logistic_coeff_ev_diff',['stim_intensity','condition'],logistic_coeff_groups['ev diff'])
-        self.logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+        #self.logistic_coeff_ev_diff_anova=twoway_interaction(accuracy_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.accuracy_logistic_coeff_ev_diff_stats=twoway_interaction_r('accuracy_logistic_coeff_ev_diff',['stim_intensity','condition'],accuracy_logistic_coeff_groups['ev diff'])
+        self.accuracy_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.accuracy_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
 
-        furl='img/small_input_diff_logistic_coeff_bias'
+#        furl='img/small_input_diff_accuracy_logistic_coeff_bias'
+#        fname=os.path.join(self.reports_dir, furl)
+#        self.small_input_diff_accuracy_logistic_coeff_bias_url='%s.png' % furl
+#        fig=plt.figure()
+#        plt.errorbar(self.stim_gains, mean_small_input_diff_accuracy_logistic_coeff['bias']['anode'],yerr=std_small_input_diff_accuracy_logistic_coeff['bias']['anode'],
+#            fmt='o%s' % condition_colors['anode'],label='anode')
+#        plt.errorbar(self.stim_gains, mean_small_input_diff_accuracy_logistic_coeff['bias']['cathode'],yerr=std_small_input_diff_accuracy_logistic_coeff['bias']['cathode'],
+#            fmt='o%s' % condition_colors['cathode'],label='cathode')
+#        plt.xlim([0,np.max(self.stim_gains)+.5])
+#        plt.ylim([0,12])
+#        plt.xlabel('Stimulation Gain')
+#        plt.ylabel('Accuracy Logistic Coefficient: bias')
+#        plt.legend(loc='best')
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#        #self.small_input_diff_logistic_coeff_bias_anova=twoway_interaction(small_input_diff_accuracy_logistic_coeff_groups['bias'],'stim gain','condition','html')
+#        self.small_input_diff_accuracy_logistic_coeff_bias_stats=twoway_interaction_r('small_input_diff_accuracy_logistic_coeff_bias',['stim_intensity','condition'],small_input_diff_accuracy_logistic_coeff_groups['bias'])
+#        self.small_input_diff_accuracy_logistic_coeff_bias_pairwise=pairwise_comparisons(self.small_input_diff_accuracy_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
+
+#        furl='img/small_input_diff_accuracy_logistic_coeff_ev_diff'
+#        fname=os.path.join(self.reports_dir, furl)
+#        self.small_input_diff_accuracy_logistic_coeff_ev_diff_url='%s.png' % furl
+#        fig=plt.figure()
+#        plt.errorbar(self.stim_gains, mean_small_input_diff_accuracy_logistic_coeff['ev diff']['anode'],yerr=std_small_input_diff_accuracy_logistic_coeff['ev diff']['anode'],
+#            fmt='o%s' % condition_colors['anode'],label='anode')
+#        plt.errorbar(self.stim_gains, mean_small_input_diff_accuracy_logistic_coeff['ev diff']['cathode'],yerr=std_small_input_diff_accuracy_logistic_coeff['ev diff']['cathode'],
+#            fmt='o%s' % condition_colors['cathode'],label='cathode')
+#        plt.xlim([0,np.max(self.stim_gains)+.5])
+#        plt.ylim([0,12])
+#        plt.xlabel('Stimulation Gain')
+#        plt.ylabel('Accuracy Logistic Coefficient: Input diff')
+#        plt.legend(loc='best')
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#        #self.small_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(small_input_diff_accuracy_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+#        self.small_input_diff_accuracy_logistic_coeff_ev_diff_stats=twoway_interaction_r('small_input_diff_accuracy_logistic_coeff_ev_diff',['stim_intensity','condition'],small_input_diff_accuracy_logistic_coeff_groups['ev diff'])
+#        self.small_input_diff_accuracy_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.small_input_diff_accuracy_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+
+#        furl='img/large_input_diff_accuracy_logistic_coeff_bias'
+#        fname=os.path.join(self.reports_dir, furl)
+#        self.large_input_diff_accuracy_logistic_coeff_bias_url='%s.png' % furl
+#        fig=plt.figure()
+#        plt.errorbar(self.stim_gains, mean_large_input_diff_accuracy_logistic_coeff['bias']['anode'],yerr=std_large_input_diff_accuracy_logistic_coeff['bias']['anode'],
+#            fmt='o%s' % condition_colors['anode'],label='anode')
+#        plt.errorbar(self.stim_gains, mean_large_input_diff_accuracy_logistic_coeff['bias']['cathode'],yerr=std_large_input_diff_accuracy_logistic_coeff['bias']['cathode'],
+#            fmt='o%s' % condition_colors['cathode'],label='cathode')
+#        plt.xlim([0,np.max(self.stim_gains)+.5])
+#        plt.ylim([0,12])
+#        plt.xlabel('Stimulation Gain')
+#        plt.ylabel('Accuracy Logistic Coefficient: bias')
+#        plt.legend(loc='best')
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#        #self.large_input_diff_logistic_coeff_bias_anova=twoway_interaction(large_input_diff_accuracy_logistic_coeff_groups['bias'],'stim gain','condition','html')
+#        self.large_input_diff_accuracy_logistic_coeff_bias_stats=twoway_interaction_r('large_input_diff_accuracy_logistic_coeff_bias',['stim_intensity','condition'],large_input_diff_accuracy_logistic_coeff_groups['bias'])
+#        self.large_input_diff_accuracy_logistic_coeff_bias_pairwise=pairwise_comparisons(self.large_input_diff_accuracy_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
+
+#        furl='img/large_input_diff_accuracy_logistic_coeff_ev_diff'
+#        fname=os.path.join(self.reports_dir, furl)
+#        self.large_input_diff_accuracy_logistic_coeff_ev_diff_url='%s.png' % furl
+#        fig=plt.figure()
+#        plt.errorbar(self.stim_gains, mean_large_input_diff_accuracy_logistic_coeff['ev diff']['anode'],yerr=std_large_input_diff_accuracy_logistic_coeff['ev diff']['anode'],
+#            fmt='o%s' % condition_colors['anode'],label='anode')
+#        plt.errorbar(self.stim_gains, mean_large_input_diff_accuracy_logistic_coeff['ev diff']['cathode'],yerr=std_large_input_diff_accuracy_logistic_coeff['ev diff']['cathode'],
+#            fmt='o%s' % condition_colors['cathode'],label='cathode')
+#        plt.xlim([0,np.max(self.stim_gains)+.5])
+#        plt.ylim([0,12])
+#        plt.xlabel('Stimulation Gain')
+#        plt.ylabel('Accuracy Logistic Coefficient: Input diff')
+#        plt.legend(loc='best')
+#        save_to_png(fig, '%s.png' % fname)
+#        save_to_eps(fig, '%s.eps' % fname)
+#        plt.close(fig)
+#        #self.large_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(large_input_diff_accuracy_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
+#        self.large_input_diff_accuracy_logistic_coeff_ev_diff_stats=twoway_interaction_r('large_input_diff_accuracy_logistic_coeff_ev_diff',['stim_intensity','condition'],large_input_diff_accuracy_logistic_coeff_groups['ev diff'])
+#        self.large_input_diff_accuracy_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.large_input_diff_accuracy_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+
+        mean_rt_linear_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        std_rt_linear_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        for stim_gain in self.stim_gains:
+            for param in mean_rt_linear_coeff:
+                for condition in mean_rt_linear_coeff[param]:
+                    mean_rt_linear_coeff[param][condition].append(np.mean(self.rt_linear_coeff[param][condition][stim_gain]))
+                    std_rt_linear_coeff[param][condition].append(np.std(self.rt_linear_coeff[param][condition][stim_gain])/np.sqrt(len(self.rt_linear_coeff[param][condition][stim_gain])))
+        
+        furl='img/rt_linear_coeff_bias'
         fname=os.path.join(self.reports_dir, furl)
-        self.small_input_diff_logistic_coeff_bias_url='%s.png' % furl
+        self.rt_linear_coeff_bias_url='%s.png' % furl
         fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['bias']['anode'],yerr=std_small_input_diff_logistic_coeff['bias']['anode'],
+        plt.errorbar(self.stim_gains, mean_rt_linear_coeff['bias']['anode'],yerr=std_rt_linear_coeff['bias']['anode'],
             fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['bias']['cathode'],yerr=std_small_input_diff_logistic_coeff['bias']['cathode'],
+        plt.errorbar(self.stim_gains, mean_rt_linear_coeff['bias']['cathode'],yerr=std_rt_linear_coeff['bias']['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        #plt.ylim([0,12])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Accuracy Logistic Coefficient: bias')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.logistic_coeff_bias_anova=twoway_interaction(rt_linear_coeff_groups['bias'],'stim gain','condition','html')
+        self.rt_linear_coeff_bias_stats=twoway_interaction_r('rt_linear_coeff_bias',['stim_intensity','condition'],rt_linear_coeff_groups['bias'])
+        self.rt_linear_coeff_bias_pairwise=pairwise_comparisons(self.rt_linear_coeff['bias'],self.stim_gains,['anode','cathode'])
+
+        furl='img/rt_linear_coeff_ev_diff'
+        fname=os.path.join(self.reports_dir, furl)
+        self.rt_linear_coeff_ev_diff_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_rt_linear_coeff['ev diff']['anode'],yerr=std_rt_linear_coeff['ev diff']['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_rt_linear_coeff['ev diff']['cathode'],yerr=std_rt_linear_coeff['ev diff']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
         plt.ylim([0,12])
         plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: bias')
+        plt.ylabel('Accuracy Logistic Coefficient: Input diff')
         plt.legend(loc='best')
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
-        #self.small_input_diff_logistic_coeff_bias_anova=twoway_interaction(small_input_diff_logistic_coeff_groups['bias'],'stim gain','condition','html')
-        self.small_input_diff_logistic_coeff_bias_stats=twoway_interaction_r('small_input_diff_logistic_coeff_bias',['stim_intensity','condition'],small_input_diff_logistic_coeff_groups['bias'])
-        self.small_input_diff_logistic_coeff_bias_pairwise=pairwise_comparisons(self.small_input_diff_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
-
-        furl='img/small_input_diff_logistic_coeff_ev_diff'
-        fname=os.path.join(self.reports_dir, furl)
-        self.small_input_diff_logistic_coeff_ev_diff_url='%s.png' % furl
-        fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['ev diff']['anode'],yerr=std_small_input_diff_logistic_coeff['ev diff']['anode'],
-            fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_small_input_diff_logistic_coeff['ev diff']['cathode'],yerr=std_small_input_diff_logistic_coeff['ev diff']['cathode'],
-            fmt='o%s' % condition_colors['cathode'],label='cathode')
-        plt.xlim([0,np.max(self.stim_gains)+.5])
-        plt.ylim([0,12])
-        plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: Input diff')
-        plt.legend(loc='best')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-        #self.small_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(small_input_diff_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
-        self.small_input_diff_logistic_coeff_ev_diff_stats=twoway_interaction_r('small_input_diff_logistic_coeff_ev_diff',['stim_intensity','condition'],small_input_diff_logistic_coeff_groups['ev diff'])
-        self.small_input_diff_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.small_input_diff_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
-
-        furl='img/large_input_diff_logistic_coeff_bias'
-        fname=os.path.join(self.reports_dir, furl)
-        self.large_input_diff_logistic_coeff_bias_url='%s.png' % furl
-        fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['bias']['anode'],yerr=std_large_input_diff_logistic_coeff['bias']['anode'],
-            fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['bias']['cathode'],yerr=std_large_input_diff_logistic_coeff['bias']['cathode'],
-            fmt='o%s' % condition_colors['cathode'],label='cathode')
-        plt.xlim([0,np.max(self.stim_gains)+.5])
-        plt.ylim([0,12])
-        plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: bias')
-        plt.legend(loc='best')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-        #self.large_input_diff_logistic_coeff_bias_anova=twoway_interaction(large_input_diff_logistic_coeff_groups['bias'],'stim gain','condition','html')
-        self.large_input_diff_logistic_coeff_bias_stats=twoway_interaction_r('large_input_diff_logistic_coeff_bias',['stim_intensity','condition'],large_input_diff_logistic_coeff_groups['bias'])
-        self.large_input_diff_logistic_coeff_bias_pairwise=pairwise_comparisons(self.large_input_diff_logistic_coeff['bias'],self.stim_gains,['anode','cathode'])
-
-        furl='img/large_input_diff_logistic_coeff_ev_diff'
-        fname=os.path.join(self.reports_dir, furl)
-        self.large_input_diff_logistic_coeff_ev_diff_url='%s.png' % furl
-        fig=plt.figure()
-        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['ev diff']['anode'],yerr=std_large_input_diff_logistic_coeff['ev diff']['anode'],
-            fmt='o%s' % condition_colors['anode'],label='anode')
-        plt.errorbar(self.stim_gains, mean_large_input_diff_logistic_coeff['ev diff']['cathode'],yerr=std_large_input_diff_logistic_coeff['ev diff']['cathode'],
-            fmt='o%s' % condition_colors['cathode'],label='cathode')
-        plt.xlim([0,np.max(self.stim_gains)+.5])
-        plt.ylim([0,12])
-        plt.xlabel('Stimulation Gain')
-        plt.ylabel('Logistic Coefficient: Input diff')
-        plt.legend(loc='best')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-        #self.large_input_diff_logistic_coeff_ev_diff_anova=twoway_interaction(large_input_diff_logistic_coeff_groups['ev diff'],'stim gain','condition','html')
-        self.large_input_diff_logistic_coeff_ev_diff_stats=twoway_interaction_r('large_input_diff_logistic_coeff_ev_diff',['stim_intensity','condition'],large_input_diff_logistic_coeff_groups['ev diff'])
-        self.large_input_diff_logistic_coeff_ev_diff_pairwise=pairwise_comparisons(self.large_input_diff_logistic_coeff['ev diff'],self.stim_gains,['anode','cathode'])
+        #self.logistic_coeff_ev_diff_anova=twoway_interaction(rt_linear_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.rt_linear_coeff_ev_diff_stats=twoway_interaction_r('rt_linear_coeff_ev_diff',['stim_intensity','condition'],rt_linear_coeff_groups['ev diff'])
+        self.rt_linear_coeff_ev_diff_pairwise=pairwise_comparisons(self.rt_linear_coeff['ev diff'],self.stim_gains,['anode','cathode'])
         
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir, furl)

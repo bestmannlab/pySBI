@@ -529,7 +529,7 @@
 </table>
 
 <h3>Accuracy Logistic Coefficient: bias</h3>
-<img src="{{ rinfo.logistic_coeff_bias_url }}"/>
+<img src="{{ rinfo.accuracy_logistic_coeff_bias_url }}"/>
 <table border="1">
     <tr>
         <td></td>
@@ -538,18 +538,18 @@
     </tr>
     <tr>
         <td>stim intensity</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[1]['stim_intensity'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[0]['stim_intensity'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[1]['stim_intensity'] }}</td>
     </tr>
     <tr>
         <td>condition</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[1]['condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[0]['condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[1]['condition'] }}</td>
     </tr>
     <tr>
         <td>stim intensity+condition</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
 <table border="1">
@@ -561,14 +561,14 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
     </tr>
     {% endfor %}
 </table>
 
 <h3>Accuracy Logistic Coefficient: input contrast</h3>
-<img src="{{ rinfo.logistic_coeff_ev_diff_url }}"/>
+<img src="{{ rinfo.accuracy_logistic_coeff_ev_diff_url }}"/>
 <table border="1">
     <tr>
         <td></td>
@@ -577,18 +577,18 @@
     </tr>
     <tr>
         <td>stim intensity</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['stim_intensity'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[0]['stim_intensity'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[1]['stim_intensity'] }}</td>
     </tr>
     <tr>
         <td>condition</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[0]['condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[1]['condition'] }}</td>
     </tr>
     <tr>
         <td>stim intensity+condition</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[0]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
 <table border="1">
@@ -600,14 +600,14 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.accuracy_logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
     </tr>
     {% endfor %}
 </table>
 
-<h3>Accuracy Logistic Coefficient - Small Input Diff: bias</h3>
-<img src="{{ rinfo.small_input_diff_logistic_coeff_bias_url }}"/>
+<h3>Decision Time Linear Coefficient: bias</h3>
+<img src="{{ rinfo.rt_linear_coeff_bias_url }}"/>
 <table border="1">
     <tr>
         <td></td>
@@ -616,18 +616,18 @@
     </tr>
     <tr>
         <td>stim intensity</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[1]['stim_intensity'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[0]['stim_intensity'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[1]['stim_intensity'] }}</td>
     </tr>
     <tr>
         <td>condition</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[1]['condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[0]['condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[1]['condition'] }}</td>
     </tr>
     <tr>
         <td>stim intensity+condition</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
 <table border="1">
@@ -639,14 +639,14 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_bias_pairwise[stim_gain][1] }}</td>
     </tr>
     {% endfor %}
 </table>
 
-<h3>Accuracy Logistic Coefficient - Small Input Diff: input contrast</h3>
-<img src="{{ rinfo.small_input_diff_logistic_coeff_ev_diff_url }}"/>
+<h3>Decision Time Linear Coefficient: input contrast</h3>
+<img src="{{ rinfo.rt_linear_coeff_ev_diff_url }}"/>
 <table border="1">
     <tr>
         <td></td>
@@ -655,18 +655,18 @@
     </tr>
     <tr>
         <td>stim intensity</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[1]['stim_intensity'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[0]['stim_intensity'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[1]['stim_intensity'] }}</td>
     </tr>
     <tr>
         <td>condition</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[1]['condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[0]['condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[1]['condition'] }}</td>
     </tr>
     <tr>
         <td>stim intensity+condition</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[0]['stim_intensity+condition'] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
     </tr>
 </table>
 <table border="1">
@@ -678,86 +678,8 @@
     {% for stim_level in rinfo.stim_gains %}
     <tr>
         <td>{{ stim_level }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.small_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-<h3>Accuracy Logistic Coefficient - Large Input Diff: bias</h3>
-<img src="{{ rinfo.large_input_diff_logistic_coeff_bias_url }}"/>
-<table border="1">
-    <tr>
-        <td></td>
-        <td>F</td>
-        <td>p</td>
-    </tr>
-    <tr>
-        <td>stim intensity</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[1]['stim_intensity'] }}</td>
-    </tr>
-    <tr>
-        <td>condition</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[1]['condition'] }}</td>
-    </tr>
-    <tr>
-        <td>stim intensity+condition</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_stats[1]['stim_intensity+condition'] }}</td>
-    </tr>
-</table>
-<table border="1">
-    <tr>
-        <td>Stimulation Intensity</td>
-        <td>t</td>
-        <td>p</td>
-    </tr>
-    {% for stim_level in rinfo.stim_gains %}
-    <tr>
-        <td>{{ stim_level }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_bias_pairwise[stim_gain][1] }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-<h3>Accuracy Logistic Coefficient - Large Input Diff: input contrast</h3>
-<img src="{{ rinfo.large_input_diff_logistic_coeff_ev_diff_url }}"/>
-<table border="1">
-    <tr>
-        <td></td>
-        <td>F</td>
-        <td>p</td>
-    </tr>
-    <tr>
-        <td>stim intensity</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[0]['stim_intensity'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[1]['stim_intensity'] }}</td>
-    </tr>
-    <tr>
-        <td>condition</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[0]['condition'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[1]['condition'] }}</td>
-    </tr>
-    <tr>
-        <td>stim intensity+condition</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[0]['stim_intensity+condition'] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_stats[1]['stim_intensity+condition'] }}</td>
-    </tr>
-</table>
-<table border="1">
-    <tr>
-        <td>Stimulation Intensity</td>
-        <td>t</td>
-        <td>p</td>
-    </tr>
-    {% for stim_level in rinfo.stim_gains %}
-    <tr>
-        <td>{{ stim_level }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
-        <td>{{ rinfo.large_input_diff_logistic_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_pairwise[stim_gain][0] }}</td>
+        <td>{{ rinfo.rt_linear_coeff_ev_diff_pairwise[stim_gain][1] }}</td>
     </tr>
     {% endfor %}
 </table>

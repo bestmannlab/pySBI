@@ -940,9 +940,10 @@ class DCSComparisonReport:
             'lambda': {}
         }
         self.bias_rt_params={'slope':{},'offset':{}}
-        self.logistic_coeffs={'bias':{},'ev diff':{}}
-        self.small_input_diff_logistic_coeffs={'bias':{},'ev diff':{}}
-        self.large_input_diff_logistic_coeffs={'bias':{},'ev diff':{}}
+        self.accuracy_logistic_coeffs={'bias':{},'ev diff':{}}
+#        self.small_input_diff_accuracy_logistic_coeffs={'bias':{},'ev diff':{}}
+#        self.large_input_diff_accuracy_logistic_coeffs={'bias':{},'ev diff':{}}
+        self.rt_linear_coeffs={'bias':{},'ev diff':{}}
         self.perc_no_response={}
 
         self.subjects={}
@@ -1041,11 +1042,16 @@ class DCSComparisonReport:
             self.plot_bias_bar(furl, self.dt, condition_colors)
 
         furl='img/accuracy_logistic'
-        self.logistic_url='%s.png' % furl
-        self.small_input_diff_logistic_url='%s_small_input_diff.png' % furl
-        self.large_input_diff_logistic_url='%s_large_input_diff.png' % furl
+        self.rt_linear_url='%s.png' % furl
+#        self.small_input_diff_accuracy_logistic_url='%s_small_input_diff.png' % furl
+#        self.large_input_diff_accuracy_logistic_url='%s_large_input_diff.png' % furl
         if regenerate_plots:
             self.plot_accuracy_logistic(furl, self.dt)
+
+        furl='img/rt_linear'
+        self.rt_linear_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_rt_linear(furl, self.dt)
 
         self.wta_params=self.subjects[self.subjects.keys()[0]].wta_params
         self.pyr_params=self.subjects[self.subjects.keys()[0]].pyr_params
@@ -1072,25 +1078,25 @@ class DCSComparisonReport:
     def plot_accuracy_logistic(self, furl, dt):
         stim_conditions=['control','anode','cathode']
         condition_coeffs={}
-        condition_small_input_diff_coeffs={}
-        condition_large_input_diff_coeffs={}
+#        condition_small_input_diff_coeffs={}
+#        condition_large_input_diff_coeffs={}
 
         for stim_condition in stim_conditions:
             condition_coeffs[stim_condition]=[]
-            condition_small_input_diff_coeffs[stim_condition]=[]
-            condition_large_input_diff_coeffs[stim_condition]=[]
+#            condition_small_input_diff_coeffs[stim_condition]=[]
+#            condition_large_input_diff_coeffs[stim_condition]=[]
 
             coeffs=[]
-            small_input_diff_coeffs=[]
-            large_input_diff_coeffs=[]
+#            small_input_diff_coeffs=[]
+#            large_input_diff_coeffs=[]
 
             intercepts=[]
-            small_input_diff_intercepts=[]
-            large_input_diff_intercepts=[]
+#            small_input_diff_intercepts=[]
+#            large_input_diff_intercepts=[]
 
             accuracy=[]
-            small_input_diff_accuracy=[]
-            large_input_diff_accuracy=[]
+#            small_input_diff_accuracy=[]
+#            large_input_diff_accuracy=[]
 
             for subj_id in self.virtual_subj_ids:
                 subj_report=self.subjects[subj_id]
@@ -1099,13 +1105,13 @@ class DCSComparisonReport:
                 input_diffs=[]
                 correct=[]
 
-                small_input_diff_biases=[]
-                small_input_diff_input_diffs=[]
-                small_input_diff_correct=[]
-
-                large_input_diff_biases=[]
-                large_input_diff_input_diffs=[]
-                large_input_diff_correct=[]
+#                small_input_diff_biases=[]
+#                small_input_diff_input_diffs=[]
+#                small_input_diff_correct=[]
+#
+#                large_input_diff_biases=[]
+#                large_input_diff_input_diffs=[]
+#                large_input_diff_correct=[]
 
                 for idx,trial_summary in enumerate(subj_report.sessions[stim_condition].series.trial_summaries):
                     left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
@@ -1127,20 +1133,20 @@ class DCSComparisonReport:
                 
                 #input_diff_lower_lim=np.percentile(np.abs(np.array(input_diffs)), 25)
                 #input_diff_upper_lim=np.percentile(np.abs(np.array(input_diffs)), 75)
-                for i in range(len(biases)):
-                    if np.abs(input_diffs[i])<np.median(np.abs(input_diffs)):
-                        small_input_diff_biases.append(biases[i])
-                        small_input_diff_input_diffs.append(input_diffs[i])
-                        small_input_diff_correct.append(correct[i])
-                    elif np.abs(input_diffs[i])>=np.median(np.abs(input_diffs)):
-                        large_input_diff_biases.append(biases[i])
-                        large_input_diff_input_diffs.append(input_diffs[i])
-                        large_input_diff_correct.append(correct[i])
-
-                small_input_diff_biases=(np.array(small_input_diff_biases)-np.mean(small_input_diff_biases))/np.std(small_input_diff_biases)
-                small_input_diff_input_diffs=(np.array(small_input_diff_input_diffs)-np.mean(small_input_diff_input_diffs))/np.std(small_input_diff_input_diffs)
-                large_input_diff_biases=(np.array(large_input_diff_biases)-np.mean(large_input_diff_biases))/np.std(large_input_diff_biases)
-                large_input_diff_input_diffs=(np.array(large_input_diff_input_diffs)-np.mean(large_input_diff_input_diffs))/np.std(large_input_diff_input_diffs)
+#                for i in range(len(biases)):
+#                    if np.abs(input_diffs[i])<np.median(np.abs(input_diffs)):
+#                        small_input_diff_biases.append(biases[i])
+#                        small_input_diff_input_diffs.append(input_diffs[i])
+#                        small_input_diff_correct.append(correct[i])
+#                    elif np.abs(input_diffs[i])>=np.median(np.abs(input_diffs)):
+#                        large_input_diff_biases.append(biases[i])
+#                        large_input_diff_input_diffs.append(input_diffs[i])
+#                        large_input_diff_correct.append(correct[i])
+#
+#                small_input_diff_biases=(np.array(small_input_diff_biases)-np.mean(small_input_diff_biases))/np.std(small_input_diff_biases)
+#                small_input_diff_input_diffs=(np.array(small_input_diff_input_diffs)-np.mean(small_input_diff_input_diffs))/np.std(small_input_diff_input_diffs)
+#                large_input_diff_biases=(np.array(large_input_diff_biases)-np.mean(large_input_diff_biases))/np.std(large_input_diff_biases)
+#                large_input_diff_input_diffs=(np.array(large_input_diff_input_diffs)-np.mean(large_input_diff_input_diffs))/np.std(large_input_diff_input_diffs)
 
                 biases=(biases-np.mean(biases))/np.std(biases)
                 input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
@@ -1157,29 +1163,29 @@ class DCSComparisonReport:
                     coeffs.append(logit.coef_[0])
                     intercepts.append(logit.intercept_)
                 
-                if np.sum(small_input_diff_correct)>0 and np.sum(small_input_diff_correct)<len(small_input_diff_correct):
-                    x=np.zeros((len(small_input_diff_biases),2))
-                    x[:,0]=small_input_diff_biases
-                    x[:,1]=small_input_diff_input_diffs
-                    y=np.array(small_input_diff_correct)
-                    logit = LogisticRegression(C=1000.0)
-                    logit = logit.fit(x, y)
-                    y_mod=logit.predict(x)
-                    small_input_diff_accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
-                    small_input_diff_coeffs.append(logit.coef_[0])
-                    small_input_diff_intercepts.append(logit.intercept_)
-    
-                if np.sum(large_input_diff_correct)>0 and np.sum(large_input_diff_correct)<len(large_input_diff_correct):
-                    x=np.zeros((len(large_input_diff_biases),2))
-                    x[:,0]=large_input_diff_biases
-                    x[:,1]=large_input_diff_input_diffs
-                    y=np.array(large_input_diff_correct)
-                    logit = LogisticRegression(C=1000.0)
-                    logit = logit.fit(x, y)
-                    y_mod=logit.predict(x)
-                    large_input_diff_accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
-                    large_input_diff_coeffs.append(logit.coef_[0])
-                    large_input_diff_intercepts.append(logit.intercept_)
+#                if np.sum(small_input_diff_correct)>0 and np.sum(small_input_diff_correct)<len(small_input_diff_correct):
+#                    x=np.zeros((len(small_input_diff_biases),2))
+#                    x[:,0]=small_input_diff_biases
+#                    x[:,1]=small_input_diff_input_diffs
+#                    y=np.array(small_input_diff_correct)
+#                    logit = LogisticRegression(C=1000.0)
+#                    logit = logit.fit(x, y)
+#                    y_mod=logit.predict(x)
+#                    small_input_diff_accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
+#                    small_input_diff_coeffs.append(logit.coef_[0])
+#                    small_input_diff_intercepts.append(logit.intercept_)
+#
+#                if np.sum(large_input_diff_correct)>0 and np.sum(large_input_diff_correct)<len(large_input_diff_correct):
+#                    x=np.zeros((len(large_input_diff_biases),2))
+#                    x[:,0]=large_input_diff_biases
+#                    x[:,1]=large_input_diff_input_diffs
+#                    y=np.array(large_input_diff_correct)
+#                    logit = LogisticRegression(C=1000.0)
+#                    logit = logit.fit(x, y)
+#                    y_mod=logit.predict(x)
+#                    large_input_diff_accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
+#                    large_input_diff_coeffs.append(logit.coef_[0])
+#                    large_input_diff_intercepts.append(logit.intercept_)
 
             print('%s, mean accuracy=%.4f' % (stim_condition,np.mean(accuracy)))
             coeffs=np.array(coeffs)
@@ -1189,8 +1195,8 @@ class DCSComparisonReport:
             print('%s, input diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
 
             condition_coeffs[stim_condition]=coeffs
-            condition_small_input_diff_coeffs[stim_condition]=small_input_diff_coeffs
-            condition_large_input_diff_coeffs[stim_condition]=large_input_diff_coeffs
+#            condition_small_input_diff_coeffs[stim_condition]=small_input_diff_coeffs
+#            condition_large_input_diff_coeffs[stim_condition]=large_input_diff_coeffs
 
         fig=plt.figure()
         ax=fig.add_subplot(1,1,1)
@@ -1199,8 +1205,8 @@ class DCSComparisonReport:
         rects=[]
         for idx,stim_condition in enumerate(stim_conditions):
             coeff_array=np.mean(condition_coeffs[stim_condition],axis=0)
-            self.logistic_coeffs['bias'][stim_condition]=condition_coeffs[stim_condition][:,0]
-            self.logistic_coeffs['ev diff'][stim_condition]=condition_coeffs[stim_condition][:,1]
+            self.accuracy_logistic_coeffs['bias'][stim_condition]=condition_coeffs[stim_condition][:,0]
+            self.accuracy_logistic_coeffs['ev diff'][stim_condition]=condition_coeffs[stim_condition][:,1]
             coeff_std_err_array=np.std(condition_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_coeffs[stim_condition]))
             rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
             yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
@@ -1215,29 +1221,110 @@ class DCSComparisonReport:
         save_to_eps(fig, '%s.eps' % logistic_fname)
         plt.close(fig)
 
-        fig=plt.figure()
-        ax=fig.add_subplot(1,1,1)
-        ind=np.array([1,2])
-        width=0.3
-        rects=[]
-        for idx,stim_condition in enumerate(stim_conditions):
-            coeff_array=np.mean(condition_small_input_diff_coeffs[stim_condition],axis=0)
-            self.small_input_diff_logistic_coeffs['bias'][stim_condition]=condition_small_input_diff_coeffs[stim_condition][:,0]
-            self.small_input_diff_logistic_coeffs['ev diff'][stim_condition]=condition_small_input_diff_coeffs[stim_condition][:,1]
-            coeff_std_err_array=np.std(condition_small_input_diff_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_small_input_diff_coeffs[stim_condition]))
-            rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
-                yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
-            rects.append(rect)
-        ax.set_ylabel('Coefficient')
-        ax.set_xticks(ind+width)
-        ax.set_xticklabels(['Bias','Input Diff'])
-        ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        ax.set_ylim([0, 5])
-        ax.set_title('Small Input Diff')
-        logistic_fname = os.path.join(self.reports_dir,furl)
-        save_to_png(fig, '%s_small_input_diff.png' % logistic_fname)
-        save_to_eps(fig, '%s_small_input_diff.eps' % logistic_fname)
-        plt.close(fig)
+#        fig=plt.figure()
+#        ax=fig.add_subplot(1,1,1)
+#        ind=np.array([1,2])
+#        width=0.3
+#        rects=[]
+#        for idx,stim_condition in enumerate(stim_conditions):
+#            coeff_array=np.mean(condition_small_input_diff_coeffs[stim_condition],axis=0)
+#            self.small_input_diff_accuracy_logistic_coeffs['bias'][stim_condition]=condition_small_input_diff_coeffs[stim_condition][:,0]
+#            self.small_input_diff_accuracy_logistic_coeffs['ev diff'][stim_condition]=condition_small_input_diff_coeffs[stim_condition][:,1]
+#            coeff_std_err_array=np.std(condition_small_input_diff_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_small_input_diff_coeffs[stim_condition]))
+#            rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
+#                yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
+#            rects.append(rect)
+#        ax.set_ylabel('Coefficient')
+#        ax.set_xticks(ind+width)
+#        ax.set_xticklabels(['Bias','Input Diff'])
+#        ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+#        ax.set_ylim([0, 5])
+#        ax.set_title('Small Input Diff')
+#        logistic_fname = os.path.join(self.reports_dir,furl)
+#        save_to_png(fig, '%s_small_input_diff.png' % logistic_fname)
+#        save_to_eps(fig, '%s_small_input_diff.eps' % logistic_fname)
+#        plt.close(fig)
+#
+#        fig=plt.figure()
+#        ax=fig.add_subplot(1,1,1)
+#        ind=np.array([1,2])
+#        width=0.3
+#        rects=[]
+#        for idx,stim_condition in enumerate(stim_conditions):
+#            coeff_array=np.mean(condition_large_input_diff_coeffs[stim_condition],axis=0)
+#            self.large_input_diff_accuracy_logistic_coeffs['bias'][stim_condition]=condition_large_input_diff_coeffs[stim_condition][:,0]
+#            self.large_input_diff_accuracy_logistic_coeffs['ev diff'][stim_condition]=condition_large_input_diff_coeffs[stim_condition][:,1]
+#            coeff_std_err_array=np.std(condition_large_input_diff_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_large_input_diff_coeffs[stim_condition]))
+#            rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
+#                yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
+#            rects.append(rect)
+#        ax.set_ylabel('Coefficient')
+#        ax.set_xticks(ind+width)
+#        ax.set_xticklabels(['Bias','Input Diff'])
+#        ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+#        ax.set_ylim([0, 5])
+#        ax.set_title('Large Input Diff')
+#        logistic_fname = os.path.join(self.reports_dir,furl)
+#        save_to_png(fig, '%s_large_input_diff.png' % logistic_fname)
+#        save_to_eps(fig, '%s_large_input_diff.eps' % logistic_fname)
+#        plt.close(fig)
+
+
+    def plot_rt_linear(self, furl, dt):
+        stim_conditions=['control','anode','cathode']
+        condition_coeffs={}
+
+        for stim_condition in stim_conditions:
+            condition_coeffs[stim_condition]=[]
+            coeffs=[]
+            intercepts=[]
+            accuracy=[]
+
+            for subj_id in self.virtual_subj_ids:
+                subj_report=self.subjects[subj_id]
+
+                biases=[]
+                input_diffs=[]
+                subj_rts=[]
+
+                for idx,trial_summary in enumerate(subj_report.sessions[stim_condition].series.trial_summaries):
+                    left_mean=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                    right_mean=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                    input_diff=np.abs(trial_summary.data.input_freq[0]-trial_summary.data.input_freq[1])
+                    bias=np.abs(left_mean-right_mean)
+                    if trial_summary.data.input_freq[0]>trial_summary.data.input_freq[1]:
+                        bias=left_mean-right_mean
+                    elif trial_summary.data.input_freq[1]>trial_summary.data.input_freq[0]:
+                        bias=right_mean-left_mean
+                    if trial_summary.data.rt is not None:
+                        biases.append(bias)
+                        input_diffs.append(input_diff)
+                        subj_rts.append(trial_summary.data.rt)
+                biases=np.array(biases)
+                input_diffs=np.array(input_diffs)
+
+                biases=(biases-np.mean(biases))/np.std(biases)
+                input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
+
+                x=np.zeros((len(biases),2))
+                x[:,0]=biases
+                x[:,1]=input_diffs
+                y=np.array(subj_rts)
+                logit = LogisticRegression(C=1000.0)
+                logit = logit.fit(x, y)
+                y_mod=logit.predict(x)
+                accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
+                coeffs.append(logit.coef_[0])
+                intercepts.append(logit.intercept_)
+
+            print('%s, mean accuracy=%.4f' % (stim_condition,np.mean(accuracy)))
+            coeffs=np.array(coeffs)
+            (t,p)=ttest_1samp(coeffs[:,0],0.0)
+            print('%s, bias, t=%.3f, p=%.5f' % (stim_condition,t,p))
+            (t,p)=ttest_1samp(coeffs[:,1],0.0)
+            print('%s, input diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
+
+            condition_coeffs[stim_condition]=coeffs
 
         fig=plt.figure()
         ax=fig.add_subplot(1,1,1)
@@ -1245,10 +1332,10 @@ class DCSComparisonReport:
         width=0.3
         rects=[]
         for idx,stim_condition in enumerate(stim_conditions):
-            coeff_array=np.mean(condition_large_input_diff_coeffs[stim_condition],axis=0)
-            self.large_input_diff_logistic_coeffs['bias'][stim_condition]=condition_large_input_diff_coeffs[stim_condition][:,0]
-            self.large_input_diff_logistic_coeffs['ev diff'][stim_condition]=condition_large_input_diff_coeffs[stim_condition][:,1]
-            coeff_std_err_array=np.std(condition_large_input_diff_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_large_input_diff_coeffs[stim_condition]))
+            coeff_array=np.mean(condition_coeffs[stim_condition],axis=0)
+            self.rt_linear_coeffs['bias'][stim_condition]=condition_coeffs[stim_condition][:,0]
+            self.rt_linear_coeffs['ev diff'][stim_condition]=condition_coeffs[stim_condition][:,1]
+            coeff_std_err_array=np.std(condition_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_coeffs[stim_condition]))
             rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
                 yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
             rects.append(rect)
@@ -1256,13 +1343,12 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        ax.set_ylim([0, 5])
-        ax.set_title('Large Input Diff')
+        #ax.set_ylim([0, 5])
         logistic_fname = os.path.join(self.reports_dir,furl)
-        save_to_png(fig, '%s_large_input_diff.png' % logistic_fname)
-        save_to_eps(fig, '%s_large_input_diff.eps' % logistic_fname)
+        save_to_png(fig, '%s.png' % logistic_fname)
+        save_to_eps(fig, '%s.eps' % logistic_fname)
         plt.close(fig)
-        
+
 
     def plot_rt_diff_bar(self, furl, colors):
         fname=os.path.join(self.reports_dir, furl)
