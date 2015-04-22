@@ -1348,7 +1348,7 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        #ax.set_ylim([0, 0.035])
+        ax.set_ylim([0, 1])
         logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
         save_to_eps(fig, '%s.eps' % logistic_fname)

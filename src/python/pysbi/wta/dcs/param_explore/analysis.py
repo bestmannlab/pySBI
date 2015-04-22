@@ -594,7 +594,7 @@ class ParamExploreReport():
         plt.errorbar(self.stim_gains, mean_rt_linear_coeff['bias']['cathode'],yerr=std_rt_linear_coeff['bias']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
-        #plt.ylim([-0.01, 0.035])
+        plt.ylim([-0.1, 1.0])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Accuracy Logistic Coefficient: bias')
         plt.legend(loc='best')
@@ -614,7 +614,7 @@ class ParamExploreReport():
         plt.errorbar(self.stim_gains, mean_rt_linear_coeff['ev diff']['cathode'],yerr=std_rt_linear_coeff['ev diff']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
-        #plt.ylim([-0.01, 0.035])
+        plt.ylim([-0.1, 1.0])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Accuracy Logistic Coefficient: Input diff')
         plt.legend(loc='best')
