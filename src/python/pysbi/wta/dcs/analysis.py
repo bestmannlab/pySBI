@@ -1042,7 +1042,7 @@ class DCSComparisonReport:
             self.plot_bias_bar(furl, self.dt, condition_colors)
 
         furl='img/accuracy_logistic'
-        self.rt_linear_url='%s.png' % furl
+        self.accuracy_logistic_url='%s.png' % furl
 #        self.small_input_diff_accuracy_logistic_url='%s_small_input_diff.png' % furl
 #        self.large_input_diff_accuracy_logistic_url='%s_large_input_diff.png' % furl
         if regenerate_plots:
@@ -1304,20 +1304,23 @@ class DCSComparisonReport:
                         subj_rts.append(trial_summary.data.rt)
                 biases=np.array(biases)
                 input_diffs=np.array(input_diffs)
+                subj_rts=np.array(subj_rts)
 
                 biases=(biases-np.mean(biases))/np.std(biases)
                 input_diffs=(input_diffs-np.mean(input_diffs))/np.std(input_diffs)
+                subj_rts=1.0/(subj_rts)
+                subj_rts=(subj_rts-np.mean(subj_rts))/np.std(subj_rts)
 
                 x=np.zeros((len(biases),2))
                 x[:,0]=biases
                 x[:,1]=input_diffs
-                y=np.array(subj_rts)
-                logit = LogisticRegression(C=1000.0)
-                logit = logit.fit(x, y)
-                y_mod=logit.predict(x)
-                accuracy.append(float(len(np.where(y-y_mod==0)[0]))/float(len(y)))
-                coeffs.append(logit.coef_[0])
-                intercepts.append(logit.intercept_)
+                y=subj_rts
+                lr = LinearRegression()
+                lr = lr.fit(x, y)
+                y_mod=lr.predict(x)
+                accuracy.append(np.sqrt(np.mean((y-y_mod)**2.0)))
+                coeffs.append(lr.coef_)
+                intercepts.append(lr.intercept_)
 
             print('%s, mean accuracy=%.4f' % (stim_condition,np.mean(accuracy)))
             coeffs=np.array(coeffs)
@@ -1345,7 +1348,7 @@ class DCSComparisonReport:
         ax.set_xticks(ind+width)
         ax.set_xticklabels(['Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
-        #ax.set_ylim([0, 5])
+        #ax.set_ylim([0, 0.035])
         logistic_fname = os.path.join(self.reports_dir,furl)
         save_to_png(fig, '%s.png' % logistic_fname)
         save_to_eps(fig, '%s.eps' % logistic_fname)
