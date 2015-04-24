@@ -44,7 +44,7 @@ class ParamExploreReport():
         #self.small_input_diff_accuracy_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
         #self.large_input_diff_accuracy_logistic_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
         self.rt_linear_coeff={'bias':{'anode':{}, 'cathode':{}},'ev diff':{'anode':{}, 'cathode':{}}}
-        
+        self.rt_linear_intercept={'anode':{}, 'cathode':{}}
         self.perc_no_response={'anode':{},'cathode':{}}
         self.bias_perc_left_params={'k':{'anode':{}, 'cathode':{}}}
 
@@ -76,6 +76,7 @@ class ParamExploreReport():
             'bias':[],
             'ev diff':[]
         }
+        rt_linear_intercept_groups=[]
         perc_no_response_groups=[]
         bias_perc_left_groups={
             'k':[]
@@ -88,7 +89,7 @@ class ParamExploreReport():
                                           'prestim_bias_rt_slope','accuracy_logistic_coeff_bias','acurracy_logistic_coeff_ev_diff',
 #                                          'small_input_diff_logistic_coeff_bias', 'small_input_diff_logistic_coeff_ev_diff',
 #                                          'large_input_diff_logistic_coeff_bias', 'large_input_diff_logistic_coeff_ev_diff',
-                                          'rt_linear_coeff_bias', 'rt_linear_coeff_ev_diff',
+                                          'rt_linear_coeff_bias', 'rt_linear_coeff_ev_diff', 'rt_linear_intercept',
                                           'perc_no_resp','bias_perc_left_n']))
         for stim_gain in self.stim_gains:
             stim_levels={'control':(0,0),'anode':(1.0*stim_gain,-0.5*stim_gain), 'cathode':(-1.0*stim_gain,0.5*stim_gain)}
@@ -147,6 +148,8 @@ class ParamExploreReport():
             self.rt_linear_coeff['bias']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['bias']['cathode']
             self.rt_linear_coeff['ev diff']['anode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['ev diff']['anode']
             self.rt_linear_coeff['ev diff']['cathode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_coeffs['ev diff']['cathode']
+            self.rt_linear_intercept['anode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_intercepts['anode']
+            self.rt_linear_intercept['cathode'][stim_gain]=self.stim_level_reports[stim_gain].rt_linear_intercepts['cathode']
 
             self.perc_no_response['anode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['anode'])
             self.perc_no_response['cathode'][stim_gain]=np.array(self.stim_level_reports[stim_gain].perc_no_response['cathode'])
@@ -194,6 +197,7 @@ class ParamExploreReport():
 #                    data_vals.append('%.4f' % self.large_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.rt_linear_coeff['bias'][condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.rt_linear_coeff['ev diff'][condition][stim_gain][idx])
+                    data_vals.append('%.4f' % self.rt_linear_intercept[condition][stim_gain][idx])
                     data_vals.append('%.4f' % self.perc_no_response[condition][stim_gain][idx])
                     bias_per_left_param=self.stim_level_reports[stim_gain].subjects[subj].bias_perc_left_params['k'][condition]
                     self.bias_perc_left_params['k'][condition][stim_gain].append(bias_per_left_param)
@@ -212,6 +216,7 @@ class ParamExploreReport():
 #                    large_input_diff_accuracy_logistic_coeff_groups['ev diff'].append((self.large_input_diff_accuracy_logistic_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
                     rt_linear_coeff_groups['bias'].append((self.rt_linear_coeff['bias'][condition][stim_gain][idx],stim_gain,condition))
                     rt_linear_coeff_groups['ev diff'].append((self.rt_linear_coeff['ev diff'][condition][stim_gain][idx],stim_gain,condition))
+                    rt_linear_intercept_groups.append((self.rt_linear_intercept[condition][stim_gain][idx],stim_gain,condition))
                     perc_no_response_groups.append((self.perc_no_response[condition][stim_gain][idx],stim_gain,condition))
                     bias_perc_left_groups['k'].append((bias_per_left_param,stim_gain,condition))
 
@@ -579,11 +584,15 @@ class ParamExploreReport():
 
         mean_rt_linear_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
         std_rt_linear_coeff={'bias':{'anode':[],'cathode':[]},'ev diff':{'anode':[],'cathode':[]}}
+        mean_rt_linear_intercept={'anode':[],'cathode':[]}
+        std_rt_linear_intercept={'anode':[],'cathode':[]}
         for stim_gain in self.stim_gains:
             for param in mean_rt_linear_coeff:
                 for condition in mean_rt_linear_coeff[param]:
                     mean_rt_linear_coeff[param][condition].append(np.mean(self.rt_linear_coeff[param][condition][stim_gain]))
                     std_rt_linear_coeff[param][condition].append(np.std(self.rt_linear_coeff[param][condition][stim_gain])/np.sqrt(len(self.rt_linear_coeff[param][condition][stim_gain])))
+                    mean_rt_linear_intercept[condition].append(np.mean(self.rt_linear_intercept[condition][stim_gain]))
+                    std_rt_linear_intercept[condition].append(np.std(self.rt_linear_intercept[condition][stim_gain])/np.sqrt(len(self.rt_linear_intercept[condition][stim_gain])))
         
         furl='img/rt_linear_coeff_bias'
         fname=os.path.join(self.reports_dir, furl)
@@ -624,7 +633,27 @@ class ParamExploreReport():
         #self.logistic_coeff_ev_diff_anova=twoway_interaction(rt_linear_coeff_groups['ev diff'],'stim gain','condition','html')
         self.rt_linear_coeff_ev_diff_stats=twoway_interaction_r('rt_linear_coeff_ev_diff',['stim_intensity','condition'],rt_linear_coeff_groups['ev diff'])
         self.rt_linear_coeff_ev_diff_pairwise=pairwise_comparisons(self.rt_linear_coeff['ev diff'],self.stim_gains,['anode','cathode'])
-        
+
+        furl='img/rt_linear_intercept'
+        fname=os.path.join(self.reports_dir, furl)
+        self.rt_linear_intercept_url='%s.png' % furl
+        fig=plt.figure()
+        plt.errorbar(self.stim_gains, mean_rt_linear_intercept['anode'],yerr=std_rt_linear_intercept['anode'],
+            fmt='o%s' % condition_colors['anode'],label='anode')
+        plt.errorbar(self.stim_gains, mean_rt_linear_intercept['cathode'],yerr=std_rt_linear_intercept['cathode'],
+            fmt='o%s' % condition_colors['cathode'],label='cathode')
+        plt.xlim([0,np.max(self.stim_gains)+.5])
+        #plt.ylim([-0.1, 1.0])
+        plt.xlabel('Stimulation Gain')
+        plt.ylabel('Accuracy Logistic Intercept')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+        #self.logistic_coeff_ev_diff_anova=twoway_interaction(rt_linear_coeff_groups['ev diff'],'stim gain','condition','html')
+        self.rt_linear_intercept_stats=twoway_interaction_r('rt_linear_intercept',['stim_intensity','condition'],rt_linear_intercept_groups)
+        self.rt_linear_intercept_pairwise=pairwise_comparisons(self.rt_linear_intercept,self.stim_gains,['anode','cathode'])
+
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir, furl)
         self.perc_no_response_url='%s.png' % furl

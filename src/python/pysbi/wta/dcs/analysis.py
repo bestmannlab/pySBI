@@ -944,6 +944,7 @@ class DCSComparisonReport:
 #        self.small_input_diff_accuracy_logistic_coeffs={'bias':{},'ev diff':{}}
 #        self.large_input_diff_accuracy_logistic_coeffs={'bias':{},'ev diff':{}}
         self.rt_linear_coeffs={'bias':{},'ev diff':{}}
+        self.rt_linear_intercepts={}
         self.perc_no_response={}
 
         self.subjects={}
@@ -1275,6 +1276,7 @@ class DCSComparisonReport:
     def plot_rt_linear(self, furl, dt):
         stim_conditions=['control','anode','cathode']
         condition_coeffs={}
+        condition_intercepts={}
 
         for stim_condition in stim_conditions:
             condition_coeffs[stim_condition]=[]
@@ -1330,6 +1332,7 @@ class DCSComparisonReport:
             print('%s, input diff, t=%.3f, p=%.5f' % (stim_condition,t,p))
 
             condition_coeffs[stim_condition]=coeffs
+            condition_intercepts[stim_condition]=intercepts
 
         fig=plt.figure()
         ax=fig.add_subplot(1,1,1)
@@ -1337,16 +1340,21 @@ class DCSComparisonReport:
         width=0.3
         rects=[]
         for idx,stim_condition in enumerate(stim_conditions):
-            coeff_array=np.mean(condition_coeffs[stim_condition],axis=0)
+            coeff_array=np.array([np.mean(condition_intercepts[stim_condition]),
+                                  np.mean(condition_coeffs[stim_condition][:,0]),
+                                  np.mean(condition_coeffs[stim_condition][:,1])])
             self.rt_linear_coeffs['bias'][stim_condition]=condition_coeffs[stim_condition][:,0]
             self.rt_linear_coeffs['ev diff'][stim_condition]=condition_coeffs[stim_condition][:,1]
-            coeff_std_err_array=np.std(condition_coeffs[stim_condition],axis=0)/np.sqrt(len(condition_coeffs[stim_condition]))
-            rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, coeff_array, width,
+            self.rt_linear_intercepts[stim_condition]=condition_intercepts[stim_condition]
+            coeff_std_err_array=np.array([np.std(condition_intercepts[stim_condition])/np.sqrt(len(condition_intercepts[stim_condition])),
+                                          np.std(condition_coeffs[stim_condition][:,0])/np.sqrt(len(condition_coeffs[stim_condition][:,0])),
+                                          np.std(condition_coeffs[stim_condition][:,1])/np.sqrt(len(condition_coeffs[stim_condition][:,1]))])
+            rect=ax.bar(np.array([1,2,3])+width*.5+(idx-1)*width, coeff_array, width,
                 yerr=coeff_std_err_array, ecolor='k', color=condition_colors[stim_condition])
             rects.append(rect)
-        ax.set_ylabel('Coefficient')
+        ax.set_ylabel('Parameter')
         ax.set_xticks(ind+width)
-        ax.set_xticklabels(['Bias','Input Diff'])
+        ax.set_xticklabels(['Intercept','Bias','Input Diff'])
         ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
         ax.set_ylim([0, 1])
         logistic_fname = os.path.join(self.reports_dir,furl)
