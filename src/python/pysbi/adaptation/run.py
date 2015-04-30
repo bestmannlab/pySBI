@@ -73,23 +73,23 @@ def adaptation_simulation(design, baseline, pop_class, N, network_params, sim_pa
     save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
-    fig=plt.figure()
-    plt.plot(pop_monitor['total_e'][0],'b',label='test')
-    plt.plot(baseline_pop_monitor['total_e'][0],'r',label='baseline')
-    plt.legend(loc='best')
-    fname='%s.baseline-%s.%s.%s.total_e' % (design,baseline,edesc,pop_class.__name__)
-    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-    plt.close(fig)
-
-    fig=plt.figure()
-    plt.plot(pop_monitor['total_r'][0],'b',label='test')
-    plt.plot(baseline_pop_monitor['total_r'][0],'r',label='baseline')
-    plt.legend(loc='best')
-    fname='%s.baseline-%s.%s.%s.total_r' % (design,baseline,edesc,pop_class.__name__)
-    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-    plt.close(fig)
+#    fig=plt.figure()
+#    plt.plot(pop_monitor['total_e'][0],'b',label='test')
+#    plt.plot(baseline_pop_monitor['total_e'][0],'r',label='baseline')
+#    plt.legend(loc='best')
+#    fname='%s.baseline-%s.%s.%s.total_e' % (design,baseline,edesc,pop_class.__name__)
+#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+#    plt.close(fig)
+#
+#    fig=plt.figure()
+#    plt.plot(pop_monitor['total_r'][0],'b',label='test')
+#    plt.plot(baseline_pop_monitor['total_r'][0],'r',label='baseline')
+#    plt.legend(loc='best')
+#    fname='%s.baseline-%s.%s.%s.total_r' % (design,baseline,edesc,pop_class.__name__)
+#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+#    plt.close(fig)
 
     fig=plt.figure()
     plt.plot(voxel_monitor['G_total'][0][0:100000],'b',label='test')
@@ -470,25 +470,25 @@ def test_simulation(design):
     save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
     plt.close(fig)
 
-    fig=plt.figure()
-    plt.plot(same_pop_monitor['total_e'][0],label='same')
-    plt.plot(diff_pop_monitor['total_e'][0],label='different')
-    #plt.plot(single_pop_monitor['total_e'][0],label='single')
-    plt.legend(loc='best')
-    fname='%s.total_e' % design
-    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-    plt.close(fig)
-
-    fig=plt.figure()
-    plt.plot(same_pop_monitor['total_r'][0],label='same')
-    plt.plot(diff_pop_monitor['total_r'][0],label='different')
-    #plt.plot(single_pop_monitor['total_r'][0],label='single')
-    plt.legend(loc='best')
-    fname='%s.total_r' % design
-    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
-    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
-    plt.close(fig)
+#    fig=plt.figure()
+#    plt.plot(same_pop_monitor['total_e'][0],label='same')
+#    plt.plot(diff_pop_monitor['total_e'][0],label='different')
+#    #plt.plot(single_pop_monitor['total_e'][0],label='single')
+#    plt.legend(loc='best')
+#    fname='%s.total_e' % design
+#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+#    plt.close(fig)
+#
+#    fig=plt.figure()
+#    plt.plot(same_pop_monitor['total_r'][0],label='same')
+#    plt.plot(diff_pop_monitor['total_r'][0],label='different')
+#    #plt.plot(single_pop_monitor['total_r'][0],label='single')
+#    plt.legend(loc='best')
+#    fname='%s.total_r' % design
+#    save_to_png(fig, os.path.join(data_dir,'%s.png' % fname))
+#    save_to_eps(fig, os.path.join(data_dir,'%s.eps' % fname))
+#    plt.close(fig)
 
     fig=plt.figure()
     plt.plot(same_voxel_monitor['G_total'][0][0:20000],label='same')
@@ -693,14 +693,14 @@ if __name__=='__main__':
     #run_mean_adaptation_simulation()
     #run_uncertainty_adaptation_simulation()
     #run_isi_simulation()
-    #run_full_adaptation_simulation()
-    ap = argparse.ArgumentParser(description='Run the fMRI adaptation correlation simulation')
-    ap.add_argument('--mat_file', type=str, default=None, help='Stimulation mat file')
-    ap.add_argument('--pop_class', type=str, default=None, help='Population code class')
-    ap.add_argument('--output_file', type=str, default=None, help='Simulation output file')
-    argvals = ap.parse_args()
-    pop_class=SamplingPopulationCode
-    if argvals.pop_class=='prob':
-        pop_class=ProbabilisticPopulationCode
-    run_correlation_analysis(argvals.mat_file, pop_class, argvals.output_file)
+    run_full_adaptation_simulation('short','repeated')
+#    ap = argparse.ArgumentParser(description='Run the fMRI adaptation correlation simulation')
+#    ap.add_argument('--mat_file', type=str, default=None, help='Stimulation mat file')
+#    ap.add_argument('--pop_class', type=str, default=None, help='Population code class')
+#    ap.add_argument('--output_file', type=str, default=None, help='Simulation output file')
+#    argvals = ap.parse_args()
+#    pop_class=SamplingPopulationCode
+#    if argvals.pop_class=='prob':
+#        pop_class=ProbabilisticPopulationCode
+#    run_correlation_analysis(argvals.mat_file, pop_class, argvals.output_file)
 

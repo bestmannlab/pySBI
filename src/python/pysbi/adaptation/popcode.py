@@ -90,7 +90,7 @@ def run_restricted_pop_code(pop_class, N, network_params, stimuli, trial_duratio
 
     pop=pop_class(N, simulation_clock, network_params)
     #pop_monitor=MultiStateMonitor(pop, vars=['x','r','e','total_e','total_r'], record=True)
-    pop_monitor=MultiStateMonitor(pop, vars=['x','e'], record=True, clock=simulation_clock)
+    pop_monitor=MultiStateMonitor(pop, vars=['x','r','e'], record=True, clock=simulation_clock)
 
     @network_operation(when='start', clock=simulation_clock)
     def get_pop_input():
@@ -112,7 +112,7 @@ def run_pop_code(pop_class, N, network_params, stimuli, trial_duration, report=N
     simulation_clock=Clock(dt=1*ms)
 
     pop=pop_class(N,simulation_clock,network_params)
-    pop_monitor=MultiStateMonitor(pop, vars=['x','r','e','total_e','total_r'], record=True, clock=simulation_clock)
+    pop_monitor=MultiStateMonitor(pop, vars=['x','r','e'], record=True, clock=simulation_clock)
 
     @network_operation(when='start', clock=simulation_clock)
     def get_pop_input():
