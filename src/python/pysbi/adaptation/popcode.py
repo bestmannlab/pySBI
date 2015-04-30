@@ -21,19 +21,15 @@ default_params=Parameters(
 class PopulationCode(NeuronGroup):
 
     def __init__(self, N, clock, params=default_params):
-#        eqs=Equations('''
-#            dr/dt=x/tau_r1-r/tau_r2      : 1
-#            da/dt=(eta*r)/tau_ar-a/tau_a : 1
-#            e=1.0-a                      : 1
-#            tau_a                        : second
-#            tau_r1                       : second
-#            tau_r2                       : second
-#            tau_ar                       : second
-#            eta                          : 1
-#            total_e                      : 1
-#            total_r                      : 1
-#            x                            : 1
-#            ''')
+        # x=input
+        # r=firing rate
+        # a=adaptation signal
+        # e=efficacy
+        # tau_r1 = firing rate rise time constant
+        # tau_r2 = firing rate decay rate
+        # tau_ar = adaptation rate
+        # tau_a = adaptation recovery rate
+        # eta = rate - adaptation gain
         eqs=Equations('''
             dr/dt=x/tau_r1-r/tau_r2      : 1
             da/dt=(eta*r)/tau_ar-a/tau_a : 1
