@@ -236,13 +236,13 @@ class SessionReport:
         stream=template.stream(rinfo=self)
         stream.dump(fname)
 
-    def get_trial_firing_rates(self, coherence):
+    def get_trial_firing_rates(self, coherence=None):
         chosen_rates=[]
         unchosen_rates=[]
         inh_rates=[]
 
         for idx,trial_summary in enumerate(self.series.trial_summaries):
-            if trial_summary.contrast==coherence and trial_summary.decision_idx>-1:
+            if trial_summary.decision_idx>-1 and (coherence is None or trial_summary.contrast==coherence):
                 chosen_rates.append(trial_summary.data.e_firing_rates[trial_summary.decision_idx])
                 unchosen_rates.append(trial_summary.data.e_firing_rates[1-trial_summary.decision_idx])
                 inh_rates.append(trial_summary.data.i_firing_rates[0])
@@ -543,6 +543,13 @@ class SubjectReport:
         for trial in range(chosen_rates.shape[0]):
             biases.append(np.mean(chosen_rates[trial,int(500*ms/dt):int(950*ms/dt)])-np.mean(unchosen_rates[trial,int(500*ms/dt):int(950*ms/dt)]))
         return np.mean(biases)
+
+    def get_prestim_biases(self, stim_level, dt):
+        chosen_rates,unchosen_rates,inh_rates=self.sessions[stim_level].get_trial_firing_rates()
+        biases=[]
+        for trial in range(chosen_rates.shape[0]):
+            biases.append(np.abs(np.mean(chosen_rates[trial,int(500*ms/dt):int(950*ms/dt)])-np.mean(unchosen_rates[trial,int(500*ms/dt):int(950*ms/dt)])))
+        return biases
 
     def plot_coherence_prestim_bias(self, furl, dt, colors):
         fname=os.path.join(self.report_dir, furl)
@@ -1041,6 +1048,11 @@ class DCSComparisonReport:
         self.bias_bar_url='%s.png' % furl
         if regenerate_plots:
             self.plot_bias_bar(furl, self.dt, condition_colors)
+
+        furl='img/bias_dist'
+        self.bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_prestim_bias_dist(furl, self.dt, condition_colors)
 
         furl='img/accuracy_logistic'
         self.accuracy_logistic_url='%s.png' % furl
@@ -1617,6 +1629,31 @@ class DCSComparisonReport:
         ax.set_ylim([0,10])
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Firing Rate (Hz)')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_prestim_bias_dist(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        prestim_bias={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in prestim_bias:
+                    prestim_bias[stim_level]=[]
+                prestim_bias[stim_level].extend(subj_report.get_prestim_biases(stim_level, dt))
+
+        fig=plt.figure()
+        for stim_level in prestim_bias:
+            hist,bins=np.histogram(np.array(prestim_bias[stim_level]), bins=10)
+            bin_width=bins[1]-bins[0]
+            bars=plt.bar(bins[:-1],hist/float(len(prestim_bias[stim_level]))*100.0,width=bin_width, label=stim_level)
+            for bar in bars:
+                bar.set_color(colors[stim_level])
+        plt.legend(loc='best')
+        plt.xlabel('Prestimulus Bias')
+        plt.ylabel('% Trials')
+        #plt.xlim([-.01,0.6])
+        #plt.ylim([-.25,1.75])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
