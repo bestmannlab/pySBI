@@ -1336,7 +1336,7 @@ class DCSComparisonReport:
 
         fig=plt.figure()
         ax=fig.add_subplot(1,1,1)
-        ind=np.array([1,2])
+        ind=np.array([1,2,3])
         width=0.3
         rects=[]
         for idx,stim_condition in enumerate(stim_conditions):
