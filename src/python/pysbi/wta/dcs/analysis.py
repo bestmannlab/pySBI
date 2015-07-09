@@ -1643,10 +1643,10 @@ class DCSComparisonReport:
                 prestim_bias[stim_level].extend(subj_report.get_prestim_biases(stim_level, dt))
 
         fig=plt.figure()
-        for stim_level in ['cathode','control','anode']:
-            hist,bins=np.histogram(np.array(prestim_bias[stim_level])*2.0, bins=range(0,21,2))
+        for idx,stim_level in enumerate(['cathode','control','anode']):
+            hist,bins=np.histogram(np.array(prestim_bias[stim_level])*2.0, bins=range(15))
             bin_width=bins[1]-bins[0]
-            bars=plt.bar(bins[:-1],hist/float(len(prestim_bias[stim_level]))*100.0,width=bin_width, label=stim_level)
+            bars=plt.bar(bins[:-1]+idx*.33,hist/float(len(prestim_bias[stim_level]))*100.0,width=.33, label=stim_level)
             for bar in bars:
                 bar.set_color(colors[stim_level])
         plt.legend(loc='best')
