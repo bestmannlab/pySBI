@@ -1643,8 +1643,8 @@ class DCSComparisonReport:
                 prestim_bias[stim_level].extend(subj_report.get_prestim_biases(stim_level, dt))
 
         fig=plt.figure()
-        for stim_level in prestim_bias:
-            hist,bins=np.histogram(np.array(prestim_bias[stim_level]), bins=10)
+        for stim_level in ['cathode','control','anode']:
+            hist,bins=np.histogram(np.array(prestim_bias[stim_level])*2.0, bins=range(0,21,2))
             bin_width=bins[1]-bins[0]
             bars=plt.bar(bins[:-1],hist/float(len(prestim_bias[stim_level]))*100.0,width=bin_width, label=stim_level)
             for bar in bars:
@@ -1990,6 +1990,6 @@ class DCSComparisonReport:
 if __name__=='__main__':
     dcs_report=DCSComparisonReport('/data/pySBI/rdmd/virtual_subjects_half_dcs',
         'wta.groups.2.duration.4.000.p_e_e.0.080.p_e_i.0.100.p_i_i.0.100.p_i_e.0.200',range(20),
-        {'control':(0,0),'anode':(1.0,-0.5),'cathode':(-1.0,0.5)},25,
+        {'control':(0,0),'anode':(1.0,-0.5),'cathode':(-1.0,0.5)},20,
         '/data/pySBI/reports/rdmd/postexp_sim_virtual_subjects_half_dcs','')
     dcs_report.create_report(regenerate_subject_plots=False,regenerate_session_plots=False,regenerate_trial_plots=False)
