@@ -210,7 +210,7 @@ class WTANetworkGroup(NeuronGroup):
 
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, input_var=4*Hz, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
-            record_firing_rate=True, record_inputs=False, plot_output=False, muscimol_amount=0*nS, injection_site=0,
+            record_firing_rate=True, record_inputs=False, record_connections=None, plot_output=False, muscimol_amount=0*nS, injection_site=0,
             p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms, report='text'):
     """
     Run WTA network
@@ -282,7 +282,8 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     # Create network monitor
     wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, record_lfp=record_lfp, record_voxel=record_voxel,
         record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate,
-        record_inputs=record_inputs, save_summary_only=save_summary_only, clock=simulation_clock)
+        record_inputs=record_inputs, record_connections=record_connections, save_summary_only=save_summary_only,
+        clock=simulation_clock)
 
     @network_operation(when='start', clock=simulation_clock)
     def inject_muscimol():
@@ -390,6 +391,7 @@ if __name__=='__main__':
         record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
         record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
         record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
+        record_connections='t0->e0_ampa',
         muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
         p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA,dcs_start_time=argvals.dcs_start_time*second,
         save_summary_only=argvals.save_summary_only, plot_output=argvals.plot_output)
