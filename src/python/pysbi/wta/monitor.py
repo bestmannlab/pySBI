@@ -69,8 +69,10 @@ class WTAMonitor():
             self.monitors['inhibitory_spike']=SpikeMonitor(network.group_i)
 
         if record_connections is not None:
-            self.monitors['connection']=ConnectionMonitor(network.connections[record_connections], store=True,
-                clock=Clock(dt=.5*second))
+            self.monitors['connection']={}
+            for connection in record_connections:
+                self.monitors['connection'][connection]=ConnectionMonitor(network.connections[connection], store=True,
+                    clock=Clock(dt=.5*second))
 
     # Plot monitor data
     def plot(self):
@@ -292,16 +294,18 @@ class WTAMonitor():
                 ylim(y_min, y_max)
 
         if 'connection' in self.monitors:
-            conns=np.zeros((len(self.monitors['connection'].values),1))
-            conn_times=[]
-            for idx, (time, conn_matrix) in enumerate(self.monitors['connection'].values):
-                conn_diag=np.diagonal(conn_matrix.todense())
-                mean_w=np.mean(conn_diag)
-                conns[idx,0]=mean_w
-                conn_times.append(time)
             figure()
             ax=subplot(111)
-            ax.plot(np.array(conn_times) / ms, conns[:,0]/nS)
+            for connection in self.monitors['connection']:
+                conns=np.zeros((len(self.monitors['connection'][connection].values),1))
+                conn_times=[]
+                for idx, (time, conn_matrix) in enumerate(self.monitors['connection'][connection].values):
+                    conn_diag=np.diagonal(conn_matrix.todense())
+                    mean_w=np.mean(conn_diag)
+                    conns[idx,0]=mean_w
+                    conn_times.append(time)
+                ax.plot(np.array(conn_times) / ms, conns[:,0]/nS, label=connection)
+            legend(loc='best')
             xlabel('Time (ms)')
             ylabel('Connection Weight (nS)')
 
