@@ -268,7 +268,7 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
             task_inputs[idx]._S[0, :]=rate
 
     @network_operation(clock=simulation_clock)
-    def inject_current(c):
+    def inject_current():
         if simulation_clock.t>dcs_start_time:
             wta_network.group_e.I_dcs=p_dcs
             wta_network.group_i.I_dcs=i_dcs
