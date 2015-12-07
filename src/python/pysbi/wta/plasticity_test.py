@@ -11,7 +11,7 @@ def test():
     tau_pre = 20 * ms
     tau_post = tau_pre
     dA_pre= .005
-    dA_post = -dA_pre * 2.5
+    dA_post = -dA_pre * 1.05
     gmax = 4 * nS
     ntrials = 40
     sim_clock = Clock(dt= 0.5 * ms)
@@ -36,10 +36,10 @@ def test():
         wta_net.group_e.I_dcs= p_dcs
         wta_net.group_i.I_dcs= i_dcs
 
-    stdp0_0 = ExponentialSTDP(wta_net.connections['t0->e0_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='mixed')
-    stdp1_1 = ExponentialSTDP(wta_net.connections['t1->e1_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='mixed')
-    stdp0_1= ExponentialSTDP(wta_net.connections['t0->e1_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='mixed')
-    stdp1_0 = ExponentialSTDP(wta_net.connections['t1->e0_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='mixed')
+    stdp0_0 = ExponentialSTDP(wta_net.connections['t0->e0_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='additive')
+    stdp1_1 = ExponentialSTDP(wta_net.connections['t1->e1_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='additive')
+    stdp0_1= ExponentialSTDP(wta_net.connections['t0->e1_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='additive')
+    stdp1_0 = ExponentialSTDP(wta_net.connections['t1->e0_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax, update='additive')
     wta_monitor = WTAMonitor(wta_net, None, None, record_lfp = False, record_voxel = False, record_connections=['t0->e0_ampa','t1->e1_ampa','t0->e1_ampa','t1->e0_ampa'], clock = sim_clock)
     net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(), wta_monitor.monitors.values(), stdp0_0, stdp1_1, stdp1_0, stdp0_1, inject_current)
     trial_weights = np.zeros((4,ntrials))
@@ -68,13 +68,12 @@ def test():
         avg_weight = np.mean(connection_diagonal)
         trial_weights[3,i] = avg_weight
         print('trial %d' % i)
-    plt.plot(trial_weights[0,:], label = 't0->e0_ampa')
-    plt.plot(trial_weights[1,:], label = 't1->e1_ampa')
-    plt.plot(trial_weights[2,:],'--', label = 't0->e1_ampa')
-    plt.plot(trial_weights[3,:],'--', label = 't1->e0_ampa')
+    plt.plot(trial_weights[0,:]/nS, label = 't0->e0_ampa')
+    plt.plot(trial_weights[1,:]/nS, label = 't1->e1_ampa')
+    plt.plot(trial_weights[2,:]/nS,'--', label = 't0->e1_ampa')
+    plt.plot(trial_weights[3,:]/nS,'--', label = 't1->e0_ampa')
     plt.legend(loc = 'best')
-    #plt.ylim([wta_net.pyr_params.w_ampa_ext, gmax])
-    #plt.ylim(0, gmax/nS)
+    plt.ylim(0, gmax/nS)
     plt.xlabel('trial')
     plt.ylabel('average weight')
     plt.show()
