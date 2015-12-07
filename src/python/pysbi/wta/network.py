@@ -208,7 +208,7 @@ class WTANetworkGroup(NeuronGroup):
                     delay=.5*ms)
                 self.connections['t%d->e%d_ampa' % (i,1-i)]=DelayConnection(self.task_inputs[i], self.groups_e[1-i],
                     'g_ampa_x')
-                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight=.001 * self.pyr_params.w_ampa_ext,
+                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight=.01 * self.pyr_params.w_ampa_ext,
                     delay=.5*ms)
 
 
