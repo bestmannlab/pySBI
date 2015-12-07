@@ -19,9 +19,9 @@ import numpy as np
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 from pysbi.wta.monitor import WTAMonitor, write_output
-brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
-                             gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
-                             usecodegenreset = True)
+#brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
+ #                            gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
+  #                           usecodegenreset = True)
 
 pyr_params=Parameters(
     C=0.5*nF,
@@ -206,6 +206,12 @@ class WTANetworkGroup(NeuronGroup):
                     'g_ampa_x')
                 self.connections['t%d->e%d_ampa' % (i,i)].connect_one_to_one(weight=self.pyr_params.w_ampa_ext,
                     delay=.5*ms)
+                self.connections['t%d->e%d_ampa' % (i,1-i)]=DelayConnection(self.task_inputs[i], self.groups_e[1-i],
+                    'g_ampa_x')
+                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight=.001 * self.pyr_params.w_ampa_ext,
+                    delay=.5*ms)
+
+
 
 
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, input_var=4*Hz, output_file=None,
