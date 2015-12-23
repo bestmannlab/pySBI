@@ -2529,6 +2529,49 @@ class RLReport:
         self.anode_beta_wilcoxon_test={}
         self.cathode_alpha_wilcoxon_test={}
         self.cathode_beta_wilcoxon_test={}
+
+        fname=os.path.join(self.reports_dir, 'img/alpha_bar')
+        fig=plt.figure()
+        pos = np.arange(len(self.stim_condition))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            color='b'
+            if stim_condition.startswith('anode'):
+                color='r'
+            elif stim_condition.startswith('cathode'):
+                color='g'
+            filtered=reject_outliers(np.array(self.stim_condition_reports[stim_condition].condition_alphas))
+            bar=ax.bar(pos[0],np.mean(filtered), width=.5, yerr=np.std(filtered), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('alpha')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        fname=os.path.join(self.reports_dir, 'img/beta_bar')
+        fig=plt.figure()
+        pos = np.arange(len(self.stim_condition))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(1,1,1)
+        for stim_condition in self.stim_conditions:
+            color='b'
+            if stim_condition.startswith('anode'):
+                color='r'
+            elif stim_condition.startswith('cathode'):
+                color='g'
+            filtered=reject_outliers(np.array(self.stim_condition_reports[stim_condition].condition_betas))
+            bar=ax.bar(pos[0],np.mean(filtered), width=.5, yerr=np.std(filtered), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('beta')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
         for stim_condition in self.stim_conditions:
             if not stim_condition=='control':
                 # Create alpha plot

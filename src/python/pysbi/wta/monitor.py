@@ -1,6 +1,7 @@
 import h5py
+from brian.experimental.connectionmonitor import ConnectionMonitor
 import numpy as np
-from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock
+from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
 
@@ -17,8 +18,8 @@ class WTAMonitor():
     #       record_firing_rate = record firing rate if true
     #       record_inputs = record inputs if true
     def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
-                 record_spikes=True, record_firing_rate=True, record_inputs=False, save_summary_only=False,
-                 clock=defaultclock):
+                 record_spikes=True, record_firing_rate=True, record_inputs=False, record_connections=None,
+                 save_summary_only=False, clock=defaultclock):
         self.num_groups=network.num_groups
         self.N=network.N
         self.monitors={}
@@ -66,6 +67,11 @@ class WTAMonitor():
                 self.monitors['excitatory_spike_%d' % i]=SpikeMonitor(group_e)
 
             self.monitors['inhibitory_spike']=SpikeMonitor(network.group_i)
+
+        if record_connections is not None:
+            for connection in record_connections:
+                self.monitors['connection_%s' % connection]=ConnectionMonitor(network.connections[connection], store=True,
+                    clock=Clock(dt=.5*second))
 
     # Plot monitor data
     def plot(self):
@@ -285,6 +291,30 @@ class WTAMonitor():
                 xlabel('Time (ms)')
                 ylabel('BOLD')
                 ylim(y_min, y_max)
+
+        contains_connections=False
+        for mon in self.monitors:
+            if mon.startswith('connection_'):
+                contains_connections=True
+                break
+        if contains_connections:
+            figure()
+            ax=subplot(111)
+            for mon in self.monitors:
+                if mon.startswith('connection_'):
+                    conn_name=mon[11:]
+                    conns=np.zeros((len(self.monitors[mon].values),1))
+                    conn_times=[]
+                    for idx, (time, conn_matrix) in enumerate(self.monitors[mon].values):
+                        conn_diag=np.diagonal(conn_matrix.todense())
+                        mean_w=np.mean(conn_diag)
+                        conns[idx,0]=mean_w
+                        conn_times.append(time)
+                    ax.plot(np.array(conn_times) / ms, conns[:,0]/nS, label=conn_name)
+            legend(loc='best')
+            xlabel('Time (ms)')
+            ylabel('Connection Weight (nS)')
+
         show()
 
 
