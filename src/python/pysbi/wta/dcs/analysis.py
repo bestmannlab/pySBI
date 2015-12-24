@@ -656,262 +656,6 @@ class SubjectReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-    def plot_congruent_correct_bias_rt(self, furl, dt, colors):
-        fname=os.path.join(self.report_dir, furl)
-        condition_biases={}
-        condition_rts={}
-        for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level in condition_biases:
-                condition_biases[stim_level]=[]
-                condition_rts[stim_level]=[]
-            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                if trial_summary.data.rt is not None and trial_summary.correct:
-                    prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                    prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                    if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
-                        prestim_bias=np.abs(prestim_e0-prestim_e1)
-                        condition_biases[stim_level].append(prestim_bias)
-                        condition_rts[stim_level].append(trial_summary.data.rt)
-
-        fig=plt.figure()
-        mean_condition_biases={}
-        mean_condition_rts={}
-        std_condition_rts={}
-        for condition in condition_biases:
-            if not condition in mean_condition_biases:
-                mean_condition_biases[condition]=[]
-                mean_condition_rts[condition]=[]
-                std_condition_rts[condition]=[]
-            hist,bins=np.histogram(condition_biases[condition], bins=10)
-            for i in range(10):
-                bin_rts=[]
-                bin_biases=[]
-                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
-                    if bias>=bins[i] and bias<bins[i+1]:
-                        bin_biases.append(bias)
-                        bin_rts.append(rt)
-                if len(bin_biases)>=10:
-                    mean_condition_biases[condition].append(np.mean(bin_biases))
-                    mean_condition_rts[condition].append(np.mean(bin_rts))
-                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
-
-        for condition in mean_condition_biases:
-            if len(mean_condition_rts[condition]):
-                plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
-                    yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
-
-                clf = LinearRegression()
-                clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                a = clf.coef_[0][0]
-                b = clf.intercept_[0]
-                r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                min_x=mean_condition_biases[condition][0]-0.1
-                max_x=mean_condition_biases[condition][-1]+0.1
-                plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
-                self.bias_rt_params['offset'][condition]=b
-                self.bias_rt_params['slope'][condition]=a
-
-        plt.legend(loc='best')
-        plt.xlabel('Bias')
-        plt.ylabel('RT')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-    def plot_congruent_incorrect_bias_rt(self, furl, dt, colors):
-        fname=os.path.join(self.report_dir, furl)
-        condition_biases={}
-        condition_rts={}
-        for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level in condition_biases:
-                condition_biases[stim_level]=[]
-                condition_rts[stim_level]=[]
-            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                if trial_summary.data.rt is not None and not trial_summary.correct:
-                    prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                    prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                    if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
-                        prestim_bias=np.abs(prestim_e0-prestim_e1)
-                        condition_biases[stim_level].append(prestim_bias)
-                        condition_rts[stim_level].append(trial_summary.data.rt)
-
-        fig=plt.figure()
-        mean_condition_biases={}
-        mean_condition_rts={}
-        std_condition_rts={}
-        for condition in condition_biases:
-            if not condition in mean_condition_biases:
-                mean_condition_biases[condition]=[]
-                mean_condition_rts[condition]=[]
-                std_condition_rts[condition]=[]
-            hist,bins=np.histogram(condition_biases[condition], bins=10)
-            for i in range(10):
-                bin_rts=[]
-                bin_biases=[]
-                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
-                    if bias>=bins[i] and bias<bins[i+1]:
-                        bin_biases.append(bias)
-                        bin_rts.append(rt)
-                if len(bin_biases)>=10:
-                    mean_condition_biases[condition].append(np.mean(bin_biases))
-                    mean_condition_rts[condition].append(np.mean(bin_rts))
-                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
-
-        for condition in mean_condition_biases:
-            if len(mean_condition_rts[condition]):
-                plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
-                    yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
-
-                clf = LinearRegression()
-                clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                a = clf.coef_[0][0]
-                b = clf.intercept_[0]
-                r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                min_x=mean_condition_biases[condition][0]-0.1
-                max_x=mean_condition_biases[condition][-1]+0.1
-                plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
-                self.bias_rt_params['offset'][condition]=b
-                self.bias_rt_params['slope'][condition]=a
-
-        plt.legend(loc='best')
-        plt.xlabel('Bias')
-        plt.ylabel('RT')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-    def plot_incongruent_correct_bias_rt(self, furl, dt, colors):
-        fname=os.path.join(self.report_dir, furl)
-        condition_biases={}
-        condition_rts={}
-        for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level in condition_biases:
-                condition_biases[stim_level]=[]
-                condition_rts[stim_level]=[]
-            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                if trial_summary.data.rt is not None and trial_summary.correct:
-                    prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                    prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                    if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
-                        prestim_bias=np.abs(prestim_e0-prestim_e1)
-                        condition_biases[stim_level].append(prestim_bias)
-                        condition_rts[stim_level].append(trial_summary.data.rt)
-
-        fig=plt.figure()
-        mean_condition_biases={}
-        mean_condition_rts={}
-        std_condition_rts={}
-        for condition in condition_biases:
-            if not condition in mean_condition_biases:
-                mean_condition_biases[condition]=[]
-                mean_condition_rts[condition]=[]
-                std_condition_rts[condition]=[]
-            hist,bins=np.histogram(condition_biases[condition], bins=10)
-            for i in range(10):
-                bin_rts=[]
-                bin_biases=[]
-                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
-                    if bias>=bins[i] and bias<bins[i+1]:
-                        bin_biases.append(bias)
-                        bin_rts.append(rt)
-                if len(bin_biases)>=10:
-                    mean_condition_biases[condition].append(np.mean(bin_biases))
-                    mean_condition_rts[condition].append(np.mean(bin_rts))
-                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
-
-        for condition in mean_condition_biases:
-            if len(mean_condition_rts[condition]):
-                plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
-                    yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
-
-                clf = LinearRegression()
-                clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                a = clf.coef_[0][0]
-                b = clf.intercept_[0]
-                r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                min_x=mean_condition_biases[condition][0]-0.1
-                max_x=mean_condition_biases[condition][-1]+0.1
-                plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
-                self.bias_rt_params['offset'][condition]=b
-                self.bias_rt_params['slope'][condition]=a
-
-        plt.legend(loc='best')
-        plt.xlabel('Bias')
-        plt.ylabel('RT')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
-    def plot_incongruent_incorrect_bias_rt(self, furl, dt, colors):
-        fname=os.path.join(self.report_dir, furl)
-        condition_biases={}
-        condition_rts={}
-        for stim_level, session_report in self.sessions.iteritems():
-            if not stim_level in condition_biases:
-                condition_biases[stim_level]=[]
-                condition_rts[stim_level]=[]
-            for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                if trial_summary.data.rt is not None and not trial_summary.correct:
-                    prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
-                    prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
-                    if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
-                        prestim_bias=np.abs(prestim_e0-prestim_e1)
-                        condition_biases[stim_level].append(prestim_bias)
-                        condition_rts[stim_level].append(trial_summary.data.rt)
-
-        fig=plt.figure()
-        mean_condition_biases={}
-        mean_condition_rts={}
-        std_condition_rts={}
-        for condition in condition_biases:
-            if not condition in mean_condition_biases:
-                mean_condition_biases[condition]=[]
-                mean_condition_rts[condition]=[]
-                std_condition_rts[condition]=[]
-            hist,bins=np.histogram(condition_biases[condition], bins=10)
-            for i in range(10):
-                bin_rts=[]
-                bin_biases=[]
-                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
-                    if bias>=bins[i] and bias<bins[i+1]:
-                        bin_biases.append(bias)
-                        bin_rts.append(rt)
-                if len(bin_biases)>=10:
-                    mean_condition_biases[condition].append(np.mean(bin_biases))
-                    mean_condition_rts[condition].append(np.mean(bin_rts))
-                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
-
-        for condition in mean_condition_biases:
-            if len(mean_condition_rts[condition]):
-                plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
-                    yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
-
-                clf = LinearRegression()
-                clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                a = clf.coef_[0][0]
-                b = clf.intercept_[0]
-                r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
-                    np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
-                min_x=mean_condition_biases[condition][0]-0.1
-                max_x=mean_condition_biases[condition][-1]+0.1
-                plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
-                self.bias_rt_params['offset'][condition]=b
-                self.bias_rt_params['slope'][condition]=a
-
-        plt.legend(loc='best')
-        plt.xlabel('Bias')
-        plt.ylabel('RT')
-        save_to_png(fig, '%s.png' % fname)
-        save_to_eps(fig, '%s.eps' % fname)
-        plt.close(fig)
-
     def plot_bias_perc_correct(self, furl, dt, colors):
         fname=os.path.join(self.report_dir, furl)
         all_biases=[]
@@ -2242,7 +1986,7 @@ class DCSComparisonReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
-    def plot_congruent_bias_rt(self, furl, dt, colors):
+    def plot_congruent_correct_bias_rt(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
         condition_biases={}
         condition_rts={}
@@ -2252,7 +1996,7 @@ class DCSComparisonReport:
                     condition_biases[stim_level]=[]
                     condition_rts[stim_level]=[]
                 for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                    if trial_summary.data.rt is not None:
+                    if trial_summary.data.rt is not None and trial_summary.correct:
                         prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
                         prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
                         if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
@@ -2309,7 +2053,7 @@ class DCSComparisonReport:
         plt.close(fig)
 
 
-    def plot_incongruent_bias_rt(self, furl, dt, colors):
+    def plot_congruent_incorrect_bias_rt(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
         condition_biases={}
         condition_rts={}
@@ -2319,7 +2063,74 @@ class DCSComparisonReport:
                     condition_biases[stim_level]=[]
                     condition_rts[stim_level]=[]
                 for idx,trial_summary in enumerate(session_report.series.trial_summaries):
-                    if trial_summary.data.rt is not None:
+                    if trial_summary.data.rt is not None and not trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+                            condition_rts[stim_level].append(trial_summary.data.rt)
+
+        fig=plt.figure()
+        mean_condition_biases={}
+        mean_condition_rts={}
+        std_condition_rts={}
+        for condition in condition_biases:
+            if not condition in mean_condition_biases:
+                mean_condition_biases[condition]=[]
+                mean_condition_rts[condition]=[]
+                std_condition_rts[condition]=[]
+            hist,bins=np.histogram(condition_biases[condition], bins=10)
+            for i in range(10):
+                bin_rts=[]
+                bin_biases=[]
+                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_biases.append(bias)
+                        bin_rts.append(rt)
+                if len(bin_biases)>=10:
+                    mean_condition_biases[condition].append(np.mean(bin_biases))
+                    mean_condition_rts[condition].append(np.mean(bin_rts))
+                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
+
+        for condition in mean_condition_biases:
+            plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
+                yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
+
+            clf = LinearRegression()
+            clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            a = clf.coef_[0][0]
+            b = clf.intercept_[0]
+            r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            min_x=mean_condition_biases[condition][0]-0.1
+            max_x=mean_condition_biases[condition][-1]+0.1
+            plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
+            self.bias_rt_params['offset'][condition]=b
+            self.bias_rt_params['slope'][condition]=a
+
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('RT')
+        plt.xlim([0,7])
+        plt.ylim([0,650])
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+
+    def plot_incongruent_correct_bias_rt(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        condition_rts={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                    condition_rts[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and trial_summary.correct:
                         prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
                         prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
                         if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
@@ -2374,6 +2185,74 @@ class DCSComparisonReport:
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
+
+
+    def plot_incongruent_incorrect_bias_rt(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        condition_rts={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                    condition_rts[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and not trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+                            condition_rts[stim_level].append(trial_summary.data.rt)
+
+        fig=plt.figure()
+        mean_condition_biases={}
+        mean_condition_rts={}
+        std_condition_rts={}
+        for condition in condition_biases:
+            if not condition in mean_condition_biases:
+                mean_condition_biases[condition]=[]
+                mean_condition_rts[condition]=[]
+                std_condition_rts[condition]=[]
+            hist,bins=np.histogram(condition_biases[condition], bins=10)
+            for i in range(10):
+                bin_rts=[]
+                bin_biases=[]
+                for bias,rt in zip(condition_biases[condition],condition_rts[condition]):
+                    if bias>=bins[i] and bias<bins[i+1]:
+                        bin_biases.append(bias)
+                        bin_rts.append(rt)
+                if len(bin_biases)>=10:
+                    mean_condition_biases[condition].append(np.mean(bin_biases))
+                    mean_condition_rts[condition].append(np.mean(bin_rts))
+                    std_condition_rts[condition].append(np.std(bin_rts)/np.sqrt(len(bin_rts)))
+
+        for condition in mean_condition_biases:
+            plt.errorbar(mean_condition_biases[condition],mean_condition_rts[condition],
+                yerr=std_condition_rts[condition], fmt='o%s' % colors[condition])
+
+            clf = LinearRegression()
+            clf.fit(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            a = clf.coef_[0][0]
+            b = clf.intercept_[0]
+            r_sqr=clf.score(np.reshape(np.array(mean_condition_biases[condition]), (len(mean_condition_biases[condition]),1)),
+                np.reshape(np.array(mean_condition_rts[condition]), (len(mean_condition_rts[condition]),1)))
+            min_x=mean_condition_biases[condition][0]-0.1
+            max_x=mean_condition_biases[condition][-1]+0.1
+            plt.plot([min_x, max_x], [a * min_x + b, a * max_x + b], '--%s' % colors[condition], label='%s - r^2=%.3f' % (condition,r_sqr))
+            self.bias_rt_params['offset'][condition]=b
+            self.bias_rt_params['slope'][condition]=a
+
+        plt.legend(loc='best')
+        plt.xlabel('Bias')
+        plt.ylabel('RT')
+        plt.xlim([0,7])
+        plt.ylim([0,650])
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
 
     def plot_bias_perc_correct(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
