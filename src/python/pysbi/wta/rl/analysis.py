@@ -389,6 +389,13 @@ class SessionReport:
 
         self.perc_no_response=0.0
         self.perc_correct_response=0.0
+        self.low_ev_diff_perc_correct=0.0
+        self.high_ev_diff_perc_correct=0.0
+
+        median_ev_diff=np.median(np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:]))
+        num_low_ev_diff_trials=0.0
+        num_high_ev_diff_trials=0.0
+
         self.trials=[]
         for trial in range(self.num_trials):
             trial_ev=data.vals[:,trial]*data.mags[:,trial]
@@ -404,8 +411,22 @@ class SessionReport:
                 self.perc_no_response+=1.0
             elif trial_data.correct:
                 self.perc_correct_response+=1.0
+            ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+            if ev_diff<=median_ev_diff:
+                if trial_data.correct:
+                    self.low_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_low_ev_diff_trials+=1.0
+            else:
+                if trial_data.correct:
+                    self.high_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_high_ev_diff_trials+=1.0
+
             self.trials.append(trial_data)
         self.perc_correct_response=self.perc_correct_response/(self.num_trials-self.perc_no_response)*100.0
+        self.low_ev_diff_perc_correct=self.low_ev_diff_perc_correct/num_low_ev_diff_trials*100.0
+        self.high_ev_diff_perc_correct=self.high_ev_diff_perc_correct/num_high_ev_diff_trials*100.0
         self.perc_no_response=self.perc_no_response/self.num_trials*100.0
 
         #create report
@@ -1043,6 +1064,177 @@ class RLReport:
         self.num_subjects=num_subjects
 
         self.stim_condition_reports={}
+
+    def process_perc_correct(self, num_comparisons, regenerate_plots):
+        # Create % correct plot
+        furl = 'img/perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.perc_correct_url = '%s.png' % furl
+        self.perc_correct_freidman = stats.friedmanchisquare(*self.stim_condition_perc_correct.values())
+        self.perc_correct_control_wilcoxon = {}
+        self.perc_correct_anode_wilcoxon = {}
+        self.perc_correct_cathode_wilcoxon = {}
+        self.perc_correct_mean = {}
+        self.perc_correct_std = {}
+        perc_correct_mean = []
+        perc_correct_std_err = []
+        for stim_condition in self.stim_conditions:
+            if not stim_condition == 'control':
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['control'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            if stim_condition.startswith('anode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['anode'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            elif stim_condition.startswith('cathode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            self.perc_correct_mean[stim_condition] = np.mean(self.stim_condition_perc_correct[stim_condition])
+            self.perc_correct_std[stim_condition] = np.std(self.stim_condition_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_perc_correct[stim_condition]))
+            perc_correct_mean.append(self.perc_correct_mean[stim_condition])
+            perc_correct_std_err.append(self.perc_correct_std[stim_condition])
+        if regenerate_plots:
+            fig = Figure(figsize=(20, 6))
+            pos = np.arange(len(self.stim_conditions)) + 0.5    # Center bars on the Y-axis ticks
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, perc_correct_mean, width=.5, yerr=perc_correct_std_err, align='center', ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_anode_only')
+            fig = Figure()
+            pos = np.arange(2) + 0.5
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, [self.perc_correct_mean['control'], self.perc_correct_mean['anode']], width=.5,
+                yerr=[self.perc_correct_std['control'], self.perc_correct_std['anode']], align='center', ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(['Control', 'Anode'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+    def process_perc_correct_ev_diff(self, num_comparisons, regenerate_plots):
+        # Create % correct plot
+        furl = 'img/perc_correct_ev_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.perc_correct_ev_diff_url = '%s.png' % furl
+        
+        self.perc_correct_low_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_low_ev_diff_perc_correct.values())
+        self.perc_correct_low_ev_diff_control_wilcoxon = {}
+        self.perc_correct_low_ev_diff_anode_wilcoxon = {}
+        self.perc_correct_low_ev_diff_cathode_wilcoxon = {}
+        self.perc_correct_low_ev_diff_mean = {}
+        self.perc_correct_low_ev_diff_std = {}
+        perc_correct_low_ev_diff_mean = []
+        perc_correct_low_ev_diff_std_err = []
+
+        self.perc_correct_high_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_high_ev_diff_perc_correct.values())
+        self.perc_correct_high_ev_diff_control_wilcoxon = {}
+        self.perc_correct_high_ev_diff_anode_wilcoxon = {}
+        self.perc_correct_high_ev_diff_cathode_wilcoxon = {}
+        self.perc_correct_high_ev_diff_mean = {}
+        self.perc_correct_high_ev_diff_std = {}
+        perc_correct_high_ev_diff_mean = []
+        perc_correct_high_ev_diff_std_err = []
+        
+        for stim_condition in self.stim_conditions:
+            if not stim_condition == 'control':
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['control'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['control'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            if stim_condition.startswith('anode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['anode'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['anode'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            elif stim_condition.startswith('cathode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['cathode'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['cathode'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+                
+            self.perc_correct_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_low_ev_diff_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_low_ev_diff_perc_correct[stim_condition]))
+            perc_correct_low_ev_diff_mean.append(self.perc_correct_low_ev_diff_mean[stim_condition])
+            perc_correct_low_ev_diff_std_err.append(self.perc_correct_low_ev_diff_std[stim_condition])
+
+            self.perc_correct_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_high_ev_diff_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_high_ev_diff_perc_correct[stim_condition]))
+            perc_correct_high_ev_diff_mean.append(self.perc_correct_high_ev_diff_mean[stim_condition])
+            perc_correct_high_ev_diff_std_err.append(self.perc_correct_high_ev_diff_std[stim_condition])
+        if regenerate_plots:
+            fig = Figure(figsize=(20, 6))
+            pos = np.arange(len(self.stim_conditions)) + 0.5    # Center bars on the Y-axis ticks
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, np.array([[perc_correct_low_ev_diff_mean],[perc_correct_high_ev_diff_mean]]), width=.5,
+                yerr=np.array([[perc_correct_low_ev_diff_std_err],[perc_correct_high_ev_diff_std_err]]), align='center',
+                ecolor='k')
+            ax.set_legend(['low EV diff','high EV diff'])
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_anode_only')
+            fig = Figure()
+            pos = np.arange(2) + 0.5
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, np.array([[self.perc_correct_low_ev_diff_mean['control'],
+                                   self.perc_correct_low_ev_diff_mean['anode']],
+                                  [self.perc_correct_high_ev_diff_mean['control'],
+                                   self.perc_correct_high_ev_diff_mean['anode']]]), width=.5,
+                yerr=np.array([[self.perc_correct_low_ev_diff_std['control'],
+                                self.perc_correct_low_ev_diff_std['anode']],
+                               [self.perc_correct_low_ev_diff_std['control'],
+                                self.perc_correct_high_ev_diff_std['anode']]]), align='center', ecolor='k')
+            ax.set_legend(['low EV diff','high EV diff'])
+            ax.set_xticks(pos)
+            ax.set_xticklabels(['Control', 'Anode'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        return num_comparisons
 
     def generate_data_files(self):
         # Figure 1c
@@ -1795,6 +1987,8 @@ class RLReport:
             self.cathode_stim_condition_large_ev_inh_rate_std_err={}
 
         self.stim_condition_perc_correct={}
+        self.stim_condition_low_ev_diff_perc_correct={}
+        self.stim_condition_high_ev_diff_perc_correct={}
         self.stim_condition_no_response={}
         for stim_condition in self.stim_conditions:
             if regenerate_plots:
@@ -1857,91 +2051,31 @@ class RLReport:
                     self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
 
             self.stim_condition_perc_correct[stim_condition]=[]
+            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=[]
             self.stim_condition_no_response[stim_condition]=[]
             for session in self.stim_condition_reports[stim_condition].sessions:
                 self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
+                self.stim_condition_low_ev_diff_perc_correct[stim_condition].append(session.low_ev_diff_perc_correct)
+                self.stim_condition_high_ev_diff_perc_correct[stim_condition].append(session.high_ev_diff_perc_correct)
                 self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
         for stim_condition in self.stim_conditions:
             self.stim_condition_perc_correct[stim_condition]=np.array(self.stim_condition_perc_correct[stim_condition])
+            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
             self.stim_condition_no_response[stim_condition]=np.array(self.stim_condition_no_response[stim_condition])
 
-        # Create % correct plot
-        furl='img/perc_correct'
-        fname=os.path.join(self.reports_dir,furl)
-        self.perc_correct_url='%s.png' % furl
-
-        self.perc_correct_freidman=stats.friedmanchisquare(*self.stim_condition_perc_correct.values())
-        #self.perc_correct_control_ttest={}
-        #self.perc_correct_anode_ttest={}
-        #self.perc_correct_cathode_ttest={}
-        self.perc_correct_control_wilcoxon={}
-        self.perc_correct_anode_wilcoxon={}
-        self.perc_correct_cathode_wilcoxon={}
-        num_comparisons=0.0
+        num_comparisons = 0.0
         for stim_condition in self.stim_conditions:
-            if not stim_condition=='control':
-                num_comparisons+=1.0
+            if not stim_condition == 'control':
+                num_comparisons += 1.0
             if stim_condition.startswith('anode_control'):
-                num_comparisons+=1.0
+                num_comparisons += 1.0
             elif stim_condition.startswith('cathode_control'):
-                num_comparisons+=1.0
-        self.perc_correct_mean={}
-        self.perc_correct_std={}
-        perc_correct_mean=[]
-        perc_correct_std_err=[]
-        for stim_condition in self.stim_conditions:
-            if not stim_condition=='control':
-                #self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['control'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            if stim_condition.startswith('anode_control'):
-                #self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['anode'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            elif stim_condition.startswith('cathode_control'):
-                #self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            self.perc_correct_mean[stim_condition]=np.mean(self.stim_condition_perc_correct[stim_condition])
-            self.perc_correct_std[stim_condition]=np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition]))
-            perc_correct_mean.append(self.perc_correct_mean[stim_condition])
-            perc_correct_std_err.append(self.perc_correct_std[stim_condition])
+                num_comparisons += 1.0
 
-        if regenerate_plots:
-            fig=Figure(figsize=(20,6))
-            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
-            ax=fig.add_subplot(2,1,1)
-            ax.bar(pos,perc_correct_mean, width=.5,yerr=perc_correct_std_err,align='center',ecolor='k')
-            ax.set_xticks(pos)
-            ax.set_xticklabels(self.stim_conditions)
-            ax.set_xlabel('Condition')
-            ax.set_ylabel('% Correct')
-            ax.set_ylim([50,90])
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
+        self.process_perc_correct(num_comparisons, regenerate_plots)
 
-            fname=os.path.join(self.reports_dir,'img/perc_correct_anode_only')
-            fig=Figure()
-            pos = np.arange(2)+0.5
-            ax=fig.add_subplot(2,1,1)
-            ax.bar(pos,[self.perc_correct_mean['control'],self.perc_correct_mean['anode']],width=.5,
-                yerr=[self.perc_correct_std['control'],self.perc_correct_std['anode']],align='center',ecolor='k')
-            ax.set_xticks(pos)
-            ax.set_xticklabels(['Control','Anode'])
-            ax.set_xlabel('Condition')
-            ax.set_ylabel('% Correct')
-            ax.set_ylim([50,90])
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
-            
         # Create perc no response plot
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
@@ -4644,6 +4778,4 @@ if __name__=='__main__':
     #debug_trial_plot('../../data/rerw/virtual_subject_0.control.h5')
     #back_range=850+np.array(range(5))*20
     #report=BackgroundBetaReport('/data/pySBI/rl/background_beta.v2','rl.background_freq.%0.3f.trial.%d',back_range,'/data/pySBI/reports/rl/background.v2',10,'')
-    #report.create_report(regenerate_plots=True)
-    #report.generate_data_files()
-    report.test_data_files()
+    report.create_report(regenerate_plots=True)
