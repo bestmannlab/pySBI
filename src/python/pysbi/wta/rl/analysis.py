@@ -389,6 +389,13 @@ class SessionReport:
 
         self.perc_no_response=0.0
         self.perc_correct_response=0.0
+        self.low_ev_diff_perc_correct=0.0
+        self.high_ev_diff_perc_correct=0.0
+
+        median_ev_diff=np.median(np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:]))
+        num_low_ev_diff_trials=0.0
+        num_high_ev_diff_trials=0.0
+
         self.trials=[]
         for trial in range(self.num_trials):
             trial_ev=data.vals[:,trial]*data.mags[:,trial]
@@ -404,8 +411,22 @@ class SessionReport:
                 self.perc_no_response+=1.0
             elif trial_data.correct:
                 self.perc_correct_response+=1.0
+            ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+            if ev_diff<=median_ev_diff:
+                if trial_data.correct:
+                    self.low_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_low_ev_diff_trials+=1.0
+            else:
+                if trial_data.correct:
+                    self.high_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_high_ev_diff_trials+=1.0
+
             self.trials.append(trial_data)
         self.perc_correct_response=self.perc_correct_response/(self.num_trials-self.perc_no_response)*100.0
+        self.low_ev_diff_perc_correct=self.low_ev_diff_perc_correct/num_low_ev_diff_trials*100.0
+        self.high_ev_diff_perc_correct=self.high_ev_diff_perc_correct/num_high_ev_diff_trials*100.0
         self.perc_no_response=self.perc_no_response/self.num_trials*100.0
 
         #create report
@@ -689,7 +710,7 @@ class StimConditionReport:
         rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))/np.sqrt(trial_count)
         #rate_std_err=np.sqrt(rate_std_sum/(trial_count-1))
         return rate_mean,rate_std_err
-    
+
     def create_report(self, version, excluded=None, regenerate_plots=False, regenerate_session_plots=False, regenerate_trial_plots=False):
         make_report_dirs(self.reports_dir)
 
@@ -1044,6 +1065,845 @@ class RLReport:
 
         self.stim_condition_reports={}
 
+    def process_perc_correct(self, num_comparisons, regenerate_plots):
+        # Create % correct plot
+        furl = 'img/perc_correct'
+        fname = os.path.join(self.reports_dir, furl)
+        self.perc_correct_url = '%s.png' % furl
+        self.perc_correct_freidman = stats.friedmanchisquare(*self.stim_condition_perc_correct.values())
+        self.perc_correct_control_wilcoxon = {}
+        self.perc_correct_anode_wilcoxon = {}
+        self.perc_correct_cathode_wilcoxon = {}
+        self.perc_correct_mean = {}
+        self.perc_correct_std = {}
+        perc_correct_mean = []
+        perc_correct_std_err = []
+        for stim_condition in self.stim_conditions:
+            if not stim_condition == 'control':
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['control'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            if stim_condition.startswith('anode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['anode'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            elif stim_condition.startswith('cathode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
+                    self.stim_condition_perc_correct[stim_condition])
+                self.perc_correct_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            self.perc_correct_mean[stim_condition] = np.mean(self.stim_condition_perc_correct[stim_condition])
+            self.perc_correct_std[stim_condition] = np.std(self.stim_condition_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_perc_correct[stim_condition]))
+            perc_correct_mean.append(self.perc_correct_mean[stim_condition])
+            perc_correct_std_err.append(self.perc_correct_std[stim_condition])
+        if regenerate_plots:
+            fig = Figure(figsize=(20, 6))
+            pos = np.arange(len(self.stim_conditions)) + 0.5    # Center bars on the Y-axis ticks
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, perc_correct_mean, width=.5, yerr=perc_correct_std_err, align='center', ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_anode_only')
+            fig = Figure()
+            pos = np.arange(2) + 0.5
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, [self.perc_correct_mean['control'], self.perc_correct_mean['anode']], width=.5,
+                yerr=[self.perc_correct_std['control'], self.perc_correct_std['anode']], align='center', ecolor='k')
+            ax.set_xticks(pos)
+            ax.set_xticklabels(['Control', 'Anode'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+    def process_perc_correct_ev_diff(self, num_comparisons, regenerate_plots):
+        # Create % correct plot
+        furl = 'img/perc_correct_ev_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.perc_correct_ev_diff_url = '%s.png' % furl
+        
+        self.perc_correct_low_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_low_ev_diff_perc_correct.values())
+        self.perc_correct_low_ev_diff_control_wilcoxon = {}
+        self.perc_correct_low_ev_diff_anode_wilcoxon = {}
+        self.perc_correct_low_ev_diff_cathode_wilcoxon = {}
+        self.perc_correct_low_ev_diff_mean = {}
+        self.perc_correct_low_ev_diff_std = {}
+        perc_correct_low_ev_diff_mean = []
+        perc_correct_low_ev_diff_std_err = []
+
+        self.perc_correct_high_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_high_ev_diff_perc_correct.values())
+        self.perc_correct_high_ev_diff_control_wilcoxon = {}
+        self.perc_correct_high_ev_diff_anode_wilcoxon = {}
+        self.perc_correct_high_ev_diff_cathode_wilcoxon = {}
+        self.perc_correct_high_ev_diff_mean = {}
+        self.perc_correct_high_ev_diff_std = {}
+        perc_correct_high_ev_diff_mean = []
+        perc_correct_high_ev_diff_std_err = []
+        
+        for stim_condition in self.stim_conditions:
+            if not stim_condition == 'control':
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['control'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['control'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_control_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            if stim_condition.startswith('anode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['anode'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['anode'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_anode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+            elif stim_condition.startswith('cathode_control'):
+                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['cathode'],
+                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_low_ev_diff_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+
+                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['cathode'],
+                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+                self.perc_correct_high_ev_diff_cathode_wilcoxon[stim_condition] = (
+                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+                
+            self.perc_correct_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_low_ev_diff_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_low_ev_diff_perc_correct[stim_condition]))
+            perc_correct_low_ev_diff_mean.append(self.perc_correct_low_ev_diff_mean[stim_condition])
+            perc_correct_low_ev_diff_std_err.append(self.perc_correct_low_ev_diff_std[stim_condition])
+
+            self.perc_correct_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_high_ev_diff_perc_correct[stim_condition]) / np.sqrt(
+                len(self.stim_condition_high_ev_diff_perc_correct[stim_condition]))
+            perc_correct_high_ev_diff_mean.append(self.perc_correct_high_ev_diff_mean[stim_condition])
+            perc_correct_high_ev_diff_std_err.append(self.perc_correct_high_ev_diff_std[stim_condition])
+        if regenerate_plots:
+            fig = Figure(figsize=(20, 6))
+            pos = np.arange(len(self.stim_conditions)) + 0.5    # Center bars on the Y-axis ticks
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, np.array([[perc_correct_low_ev_diff_mean],[perc_correct_high_ev_diff_mean]]), width=.5,
+                yerr=np.array([[perc_correct_low_ev_diff_std_err],[perc_correct_high_ev_diff_std_err]]), align='center',
+                ecolor='k')
+            ax.set_legend(['low EV diff','high EV diff'])
+            ax.set_xticks(pos)
+            ax.set_xticklabels(self.stim_conditions)
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_anode_only')
+            fig = Figure()
+            pos = np.arange(2) + 0.5
+            ax = fig.add_subplot(2, 1, 1)
+            ax.bar(pos, np.array([[self.perc_correct_low_ev_diff_mean['control'],
+                                   self.perc_correct_low_ev_diff_mean['anode']],
+                                  [self.perc_correct_high_ev_diff_mean['control'],
+                                   self.perc_correct_high_ev_diff_mean['anode']]]), width=.5,
+                yerr=np.array([[self.perc_correct_low_ev_diff_std['control'],
+                                self.perc_correct_low_ev_diff_std['anode']],
+                               [self.perc_correct_low_ev_diff_std['control'],
+                                self.perc_correct_high_ev_diff_std['anode']]]), align='center', ecolor='k')
+            ax.set_legend(['low EV diff','high EV diff'])
+            ax.set_xticks(pos)
+            ax.set_xticklabels(['Control', 'Anode'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Correct')
+            ax.set_ylim([50, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+        return num_comparisons
+
+    def generate_data_files(self):
+        # Figure 1c
+        # small expected value difference = control, subject 0, trial 68
+        small_ev_diff_session_prefix=self.file_prefix % (0,'control')
+        small_ev_diff_session_report_file=os.path.join(self.data_dir,'%s.h5' % small_ev_diff_session_prefix)
+        small_ev_diff_data=FileInfo(small_ev_diff_session_report_file)
+        small_ev_diff_rate_1=small_ev_diff_data.trial_e_rates[68][0,:]
+        small_ev_diff_rate_2=small_ev_diff_data.trial_e_rates[68][1,:]
+        times=np.array(range(len(small_ev_diff_rate_1)))*0.5*ms-1.0
+        
+        # large expected value difference = control, subject 0, trial 160
+        large_ev_diff_session_prefix=self.file_prefix % (0,'control')
+        large_ev_diff_session_report_file=os.path.join(self.data_dir,'%s.h5' % large_ev_diff_session_prefix)
+        large_ev_diff_data=FileInfo(large_ev_diff_session_report_file)
+        large_ev_diff_rate_1=large_ev_diff_data.trial_e_rates[160][0,:]
+        large_ev_diff_rate_2=large_ev_diff_data.trial_e_rates[160][1,:]
+        
+        fig1c_file=file(os.path.join(self.reports_dir,'fig1c.csv'),'w')
+        fig1c_file.write('time,small_ev_diff_p1,small_ev_diff_p2, large_ev_diff_p1, large_ev_diff_p2\n')
+        for t in range(len(times)):
+            fig1c_file.write('%.6f,%.3f,%.3f,%.3f,%.3f\n' % (times[t], small_ev_diff_rate_1[t], small_ev_diff_rate_2[t],
+                                                            large_ev_diff_rate_1[t], large_ev_diff_rate_2[t]))
+        fig1c_file.close()
+
+        # Figure 2
+        for stim_condition in ['control','anode','cathode']:
+            small_ev_diff_chosen_rates=[]
+            small_ev_diff_unchosen_rates=[]
+            small_ev_diff_inh_rates=[]
+            large_ev_diff_chosen_rates=[]
+            large_ev_diff_unchosen_rates=[]
+            large_ev_diff_inh_rates=[]
+            for virtual_subj_id in range(self.num_subjects):
+                if virtual_subj_id not in self.stim_condition_reports[stim_condition].excluded_sessions:
+                    session_prefix=self.file_prefix % (virtual_subj_id,stim_condition)
+                    session_report_file=os.path.join(self.data_dir,'%s.h5' % session_prefix)
+                    data=FileInfo(session_report_file)
+                    ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+
+                    for trial in range(data.num_trials):
+                        if data.choice[trial]>-1:
+                            if ev_diff[trial]>=self.ev_diff_bins[0] and ev_diff[trial]<self.ev_diff_bins[3]:
+                                small_ev_diff_chosen_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
+                                small_ev_diff_unchosen_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
+                                small_ev_diff_inh_rates.append(data.trial_i_rates[trial][0,:])
+                            elif ev_diff[trial]>=self.ev_diff_bins[6] and ev_diff[trial]<self.ev_diff_bins[-1]:
+                                large_ev_diff_chosen_rates.append(data.trial_e_rates[trial][data.choice[trial],:])
+                                large_ev_diff_unchosen_rates.append(data.trial_e_rates[trial][1-data.choice[trial],:])
+                                large_ev_diff_inh_rates.append(data.trial_i_rates[trial][0,:])
+
+            fig2_control_small_ev_diff_chosen_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.chosen.csv' % stim_condition),'w')
+            fig2_control_small_ev_diff_chosen_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(small_ev_diff_chosen_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(small_ev_diff_chosen_rates)):
+                    line='%s,%.3f' % (line, small_ev_diff_chosen_rates[trial][t])
+                fig2_control_small_ev_diff_chosen_file.write('%s\n' % line)
+            fig2_control_small_ev_diff_chosen_file.close()
+
+            fig2_control_small_ev_diff_unchosen_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.unchosen.csv' % stim_condition),'w')
+            fig2_control_small_ev_diff_unchosen_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(small_ev_diff_unchosen_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(small_ev_diff_unchosen_rates)):
+                    line='%s,%.3f' % (line, small_ev_diff_unchosen_rates[trial][t])
+                fig2_control_small_ev_diff_unchosen_file.write('%s\n' % line)
+            fig2_control_small_ev_diff_unchosen_file.close()
+
+            fig2_control_small_ev_diff_inh_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.inh.csv' % stim_condition),'w')
+            fig2_control_small_ev_diff_inh_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(small_ev_diff_inh_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(small_ev_diff_inh_rates)):
+                    line='%s,%.3f' % (line, small_ev_diff_inh_rates[trial][t])
+                fig2_control_small_ev_diff_inh_file.write('%s\n' % line)
+            fig2_control_small_ev_diff_inh_file.close()
+
+            fig2_control_large_ev_diff_chosen_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.chosen.csv' % stim_condition),'w')
+            fig2_control_large_ev_diff_chosen_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(large_ev_diff_chosen_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(large_ev_diff_chosen_rates)):
+                    line='%s,%.3f' % (line, large_ev_diff_chosen_rates[trial][t])
+                fig2_control_large_ev_diff_chosen_file.write('%s\n' % line)
+            fig2_control_large_ev_diff_chosen_file.close()
+
+            fig2_control_large_ev_diff_unchosen_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.unchosen.csv' % stim_condition),'w')
+            fig2_control_large_ev_diff_unchosen_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(large_ev_diff_unchosen_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(large_ev_diff_unchosen_rates)):
+                    line='%s,%.3f' % (line, large_ev_diff_unchosen_rates[trial][t])
+                fig2_control_large_ev_diff_unchosen_file.write('%s\n' % line)
+            fig2_control_large_ev_diff_unchosen_file.close()
+
+            fig2_control_large_ev_diff_inh_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.inh.csv' % stim_condition),'w')
+            fig2_control_large_ev_diff_inh_file.write('time,%s\n' % ','.join(['trial_%d' % i for i in range(len(large_ev_diff_inh_rates))]))
+            for t in range(len(times)):
+                line='%.6f' % times[t]
+                for trial in range(len(large_ev_diff_inh_rates)):
+                    line='%s,%.3f' % (line, large_ev_diff_inh_rates[trial][t])
+                fig2_control_large_ev_diff_inh_file.write('%s\n' % line)
+            fig2_control_large_ev_diff_inh_file.close()
+                        
+                            
+        #Figure 2 - insets
+        for stim_condition in ['control','anode','cathode']:
+            fig2insets_file=file(os.path.join(self.reports_dir,'fig2_insets.%s.csv' % stim_condition),'w')
+            small_ev_stim_diffs,trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(self.ev_diff_bins[0],self.ev_diff_bins[5])
+            small_ev_stim_pyr_rates,small_ev_stim_inh_rates,trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(self.ev_diff_bins[0],self.ev_diff_bins[5])
+            large_ev_stim_diffs,trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(self.ev_diff_bins[5],self.ev_diff_bins[-1])
+            large_ev_stim_pyr_rates,large_ev_stim_inh_rates,trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(self.ev_diff_bins[5],self.ev_diff_bins[-1])
+            fig2insets_file.write('%s\n' % ','.join(['%.3f' % x for x in small_ev_stim_diffs]))
+            fig2insets_file.write('%s\n' % ','.join(['%.3f' % x for x in small_ev_stim_inh_rates]))
+            fig2insets_file.write('%s\n' % ','.join(['%.3f' % x for x in large_ev_stim_diffs]))
+            fig2insets_file.write('%s\n' % ','.join(['%.3f' % x for x in large_ev_stim_inh_rates]))
+            fig2insets_file.close()
+
+
+        #Figure 3
+        for stim_condition in ['control','anode','cathode']:
+            #filtered_beta=reject_outliers(np.array(self.stim_condition_reports[stim_condition].condition_betas))
+            #filtered_alpha=reject_outliers(np.array(self.stim_condition_reports[stim_condition].condition_alphas))
+            fig3_file=file(os.path.join(self.reports_dir,'fig3.%s.csv' % stim_condition),'w')
+            fig3_file.write('%s\n' % ','.join(['%.4f' % x for x in self.stim_condition_reports[stim_condition].condition_betas]))
+            fig3_file.write('%s\n' % ','.join(['%.4f' % x for x in self.stim_condition_reports[stim_condition].condition_alphas]))
+            fig3_file.write('%s\n' % ','.join(['%.4f' % x for x in self.stim_condition_perc_correct[stim_condition]]))
+            fig3_file.close()
+        
+        # Figure 5A
+        for stim_condition in self.stim_conditions:
+            stim_condition_label=stim_condition.replace('4','1').replace('5','2').replace('6','3')
+            fig5a_file=file(os.path.join(self.reports_dir,'fig5a.%s.csv' % stim_condition_label),'w')
+            rate_diffs,trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(0,100000)
+            fig5a_file.write('%s\n' % ','.join(['%.4f' % x for x in rate_diffs]))
+            fig5a_file.close()
+
+        # Figure 5B
+        for stim_condition in self.stim_conditions:
+            stim_condition_label=stim_condition.replace('4','1').replace('5','2').replace('6','3')
+            fig5b_file=file(os.path.join(self.reports_dir,'fig5b.%s.csv' % stim_condition_label),'w')
+            pyr_rates,inh_rates,trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(0,100000)
+            fig5b_file.write('%s\n' % ','.join(['%.4f' % x for x in inh_rates]))
+            fig5b_file.close()
+
+        # Figure 5C
+        for stim_condition in self.stim_conditions:
+            stim_condition_label=stim_condition.replace('4','1').replace('5','2').replace('6','3')
+            fig5c_file=file(os.path.join(self.reports_dir,'fig5c.%s.csv' % stim_condition_label),'w')
+            fig5c_file.write('%s\n' % ','.join(['%.4f' % x for x in self.stim_condition_perc_correct[stim_condition]]))
+            fig5c_file.close()
+
+        # Figure 5D
+        for stim_condition in self.stim_conditions:
+            stim_condition_label=stim_condition.replace('4','1').replace('5','2').replace('6','3')
+            fig5d_file=file(os.path.join(self.reports_dir,'fig5d.%s.csv' % stim_condition_label),'w')
+            fig5d_file.write('%s\n' % ','.join(['%.4f' % x for x in self.stim_condition_reports[stim_condition].condition_betas]))
+            fig5d_file.close()
+                    
+    def test_data_files(self):
+        fig1c_file=file(os.path.join(self.reports_dir,'fig1c.csv'),'r')
+        times=[]
+        small_ev_diff_rate_1=[]
+        small_ev_diff_rate_2=[]
+        large_ev_diff_rate_1=[]
+        large_ev_diff_rate_2=[]
+        for idx,line in enumerate(fig1c_file):
+            if idx>0:
+                cols=line.split(',')
+                times.append(float(cols[0]))
+                small_ev_diff_rate_1.append(float(cols[1]))
+                small_ev_diff_rate_2.append(float(cols[2]))
+                large_ev_diff_rate_1.append(float(cols[3]))
+                large_ev_diff_rate_2.append(float(cols[4]))
+        fig1c_file.close()
+        fig=plt.figure()
+        ax=fig.add_subplot(2,1,1)
+        ax.plot(times,large_ev_diff_rate_1,'b',label='p1')
+        ax.plot(times,large_ev_diff_rate_2,'g',label='p2')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.set_title('Large expected value difference')
+        ax.legend(loc='best')
+        ax=fig.add_subplot(2,1,2)
+        ax.plot(times,small_ev_diff_rate_1,'b',label='p1')
+        ax.plot(times,small_ev_diff_rate_2,'g',label='p2')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+        ax.set_title('Small expected value difference')
+        
+        small_ev_diff_chosen_rates={}
+        small_ev_diff_unchosen_rates={}
+        small_ev_diff_inh_rates={}
+        large_ev_diff_chosen_rates={}
+        large_ev_diff_unchosen_rates={}
+        large_ev_diff_inh_rates={}
+        for stim_condition in ['control','depolarizing','hyperpolarizing']:
+            small_ev_diff_chosen_rates[stim_condition]=[]
+            small_ev_diff_unchosen_rates[stim_condition]=[]
+            small_ev_diff_inh_rates[stim_condition]=[]
+            large_ev_diff_chosen_rates[stim_condition]=[]
+            large_ev_diff_unchosen_rates[stim_condition]=[]
+            large_ev_diff_inh_rates[stim_condition]=[]
+
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.chosen.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_chosen_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_chosen_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.unchosen.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_unchosen_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_unchosen_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+            
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.small_ev_diff.inh.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_inh_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        small_ev_diff_inh_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+            
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.chosen.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_chosen_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_chosen_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.unchosen.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_unchosen_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_unchosen_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+            
+            fig2_file=file(os.path.join(self.reports_dir,'fig2.%s.large_ev_diff.inh.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_file):
+                cols=line.split(',')
+                if idx==0:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_inh_rates[stim_condition].append([])
+                else:
+                    for j in range(len(cols)-1):
+                        large_ev_diff_inh_rates[stim_condition][j].append(float(cols[j+1]))
+            fig2_file.close()
+
+        small_ev_diff_chosen_rates['control']=np.array(small_ev_diff_chosen_rates['control'])
+        control_small_ev_diff_chosen_mean=np.mean(small_ev_diff_chosen_rates['control'],axis=0)
+        control_small_ev_diff_chosen_std_err=np.std(small_ev_diff_chosen_rates['control'],axis=0)/np.sqrt(small_ev_diff_chosen_rates['control'].shape[0])
+        
+        small_ev_diff_unchosen_rates['control']=np.array(small_ev_diff_unchosen_rates['control'])
+        control_small_ev_diff_unchosen_mean=np.mean(small_ev_diff_unchosen_rates['control'],axis=0)
+        control_small_ev_diff_unchosen_std_err=np.std(small_ev_diff_unchosen_rates['control'],axis=0)/np.sqrt(small_ev_diff_unchosen_rates['control'].shape[0])
+        
+        small_ev_diff_inh_rates['control']=np.array(small_ev_diff_inh_rates['control'])
+        control_small_ev_diff_inh_mean=np.mean(small_ev_diff_inh_rates['control'],axis=0)
+        control_small_ev_diff_inh_std_err=np.std(small_ev_diff_inh_rates['control'],axis=0)/np.sqrt(small_ev_diff_inh_rates['control'].shape[0])
+        
+        small_ev_diff_chosen_rates['depolarizing']=np.array(small_ev_diff_chosen_rates['depolarizing'])
+        anode_small_ev_diff_chosen_mean=np.mean(small_ev_diff_chosen_rates['depolarizing'],axis=0)
+        anode_small_ev_diff_chosen_std_err=np.std(small_ev_diff_chosen_rates['depolarizing'],axis=0)/np.sqrt(small_ev_diff_chosen_rates['depolarizing'].shape[0])
+        
+        small_ev_diff_unchosen_rates['depolarizing']=np.array(small_ev_diff_unchosen_rates['depolarizing'])
+        anode_small_ev_diff_unchosen_mean=np.mean(small_ev_diff_unchosen_rates['depolarizing'],axis=0)
+        anode_small_ev_diff_unchosen_std_err=np.std(small_ev_diff_unchosen_rates['depolarizing'],axis=0)/np.sqrt(small_ev_diff_unchosen_rates['depolarizing'].shape[0])
+        
+        small_ev_diff_inh_rates['depolarizing']=np.array(small_ev_diff_inh_rates['depolarizing'])
+        anode_small_ev_diff_inh_mean=np.mean(small_ev_diff_inh_rates['depolarizing'],axis=0)
+        anode_small_ev_diff_inh_std_err=np.std(small_ev_diff_inh_rates['depolarizing'],axis=0)/np.sqrt(small_ev_diff_inh_rates['depolarizing'].shape[0])
+        
+        small_ev_diff_chosen_rates['hyperpolarizing']=np.array(small_ev_diff_chosen_rates['hyperpolarizing'])
+        cathode_small_ev_diff_chosen_mean=np.mean(small_ev_diff_chosen_rates['hyperpolarizing'],axis=0)
+        cathode_small_ev_diff_chosen_std_err=np.std(small_ev_diff_chosen_rates['hyperpolarizing'],axis=0)/np.sqrt(small_ev_diff_chosen_rates['hyperpolarizing'].shape[0])
+        
+        small_ev_diff_unchosen_rates['hyperpolarizing']=np.array(small_ev_diff_unchosen_rates['hyperpolarizing'])
+        cathode_small_ev_diff_unchosen_mean=np.mean(small_ev_diff_unchosen_rates['hyperpolarizing'],axis=0)
+        cathode_small_ev_diff_unchosen_std_err=np.std(small_ev_diff_unchosen_rates['hyperpolarizing'],axis=0)/np.sqrt(small_ev_diff_unchosen_rates['hyperpolarizing'].shape[0])
+
+        small_ev_diff_inh_rates['hyperpolarizing']=np.array(small_ev_diff_inh_rates['hyperpolarizing'])
+        cathode_small_ev_diff_inh_mean=np.mean(small_ev_diff_inh_rates['hyperpolarizing'],axis=0)
+        cathode_small_ev_diff_inh_std_err=np.std(small_ev_diff_inh_rates['hyperpolarizing'],axis=0)/np.sqrt(small_ev_diff_inh_rates['hyperpolarizing'].shape[0])
+        
+        large_ev_diff_chosen_rates['control']=np.array(large_ev_diff_chosen_rates['control'])
+        control_large_ev_diff_chosen_mean=np.mean(large_ev_diff_chosen_rates['control'],axis=0)
+        control_large_ev_diff_chosen_std_err=np.std(large_ev_diff_chosen_rates['control'],axis=0)/np.sqrt(large_ev_diff_chosen_rates['control'].shape[0])
+        
+        large_ev_diff_unchosen_rates['control']=np.array(large_ev_diff_unchosen_rates['control'])
+        control_large_ev_diff_unchosen_mean=np.mean(large_ev_diff_unchosen_rates['control'],axis=0)
+        control_large_ev_diff_unchosen_std_err=np.std(large_ev_diff_unchosen_rates['control'],axis=0)/np.sqrt(large_ev_diff_unchosen_rates['control'].shape[0])
+        
+        large_ev_diff_inh_rates['control']=np.array(large_ev_diff_inh_rates['control'])
+        control_large_ev_diff_inh_mean=np.mean(large_ev_diff_inh_rates['control'],axis=0)
+        control_large_ev_diff_inh_std_err=np.std(large_ev_diff_inh_rates['control'],axis=0)/np.sqrt(large_ev_diff_inh_rates['control'].shape[0])
+        
+        large_ev_diff_chosen_rates['depolarizing']=np.array(large_ev_diff_chosen_rates['depolarizing'])
+        anode_large_ev_diff_chosen_mean=np.mean(large_ev_diff_chosen_rates['depolarizing'],axis=0)
+        anode_large_ev_diff_chosen_std_err=np.std(large_ev_diff_chosen_rates['depolarizing'],axis=0)/np.sqrt(large_ev_diff_chosen_rates['depolarizing'].shape[0])
+        
+        large_ev_diff_unchosen_rates['depolarizing']=np.array(large_ev_diff_unchosen_rates['depolarizing'])
+        anode_large_ev_diff_unchosen_mean=np.mean(large_ev_diff_unchosen_rates['depolarizing'],axis=0)
+        anode_large_ev_diff_unchosen_std_err=np.std(large_ev_diff_unchosen_rates['depolarizing'],axis=0)/np.sqrt(large_ev_diff_unchosen_rates['depolarizing'].shape[0])
+        
+        large_ev_diff_inh_rates['depolarizing']=np.array(large_ev_diff_inh_rates['depolarizing'])
+        anode_large_ev_diff_inh_mean=np.mean(large_ev_diff_inh_rates['depolarizing'],axis=0)
+        anode_large_ev_diff_inh_std_err=np.std(large_ev_diff_inh_rates['depolarizing'],axis=0)/np.sqrt(large_ev_diff_inh_rates['depolarizing'].shape[0])
+        
+        large_ev_diff_chosen_rates['hyperpolarizing']=np.array(large_ev_diff_chosen_rates['hyperpolarizing'])
+        cathode_large_ev_diff_chosen_mean=np.mean(large_ev_diff_chosen_rates['hyperpolarizing'],axis=0)
+        cathode_large_ev_diff_chosen_std_err=np.std(large_ev_diff_chosen_rates['hyperpolarizing'],axis=0)/np.sqrt(large_ev_diff_chosen_rates['hyperpolarizing'].shape[0])
+        
+        large_ev_diff_unchosen_rates['hyperpolarizing']=np.array(large_ev_diff_unchosen_rates['hyperpolarizing'])
+        cathode_large_ev_diff_unchosen_mean=np.mean(large_ev_diff_unchosen_rates['hyperpolarizing'],axis=0)
+        cathode_large_ev_diff_unchosen_std_err=np.std(large_ev_diff_unchosen_rates['hyperpolarizing'],axis=0)/np.sqrt(large_ev_diff_unchosen_rates['hyperpolarizing'].shape[0])
+
+        large_ev_diff_inh_rates['hyperpolarizing']=np.array(large_ev_diff_inh_rates['hyperpolarizing'])
+        cathode_large_ev_diff_inh_mean=np.mean(large_ev_diff_inh_rates['hyperpolarizing'],axis=0)
+        cathode_large_ev_diff_inh_std_err=np.std(large_ev_diff_inh_rates['hyperpolarizing'],axis=0)/np.sqrt(large_ev_diff_inh_rates['hyperpolarizing'].shape[0])
+        
+        fig=plt.figure()
+        # Small EV Diff - Pyramidal
+        ax=fig.add_subplot(2,2,1)
+        # Chosen
+        ax.plot(times, control_small_ev_diff_chosen_mean, color='b', linestyle='-')
+        ax.fill_between(times, control_small_ev_diff_chosen_mean-control_small_ev_diff_chosen_std_err,
+                        control_small_ev_diff_chosen_mean+control_small_ev_diff_chosen_std_err, alpha=0.5, facecolor='b')
+        ax.plot(times, anode_small_ev_diff_chosen_mean, color='r', linestyle='-')
+        ax.fill_between(times, anode_small_ev_diff_chosen_mean-anode_small_ev_diff_chosen_std_err,
+                        anode_small_ev_diff_chosen_mean+anode_small_ev_diff_chosen_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_small_ev_diff_chosen_mean, color='g', linestyle='-')
+        ax.fill_between(times, cathode_small_ev_diff_chosen_mean-cathode_small_ev_diff_chosen_std_err,
+                        cathode_small_ev_diff_chosen_mean+cathode_small_ev_diff_chosen_std_err, alpha=0.5, facecolor='g')
+        # Unchosen
+        ax.plot(times, control_small_ev_diff_unchosen_mean, color='r', linestyle='--')
+        ax.fill_between(times, control_small_ev_diff_unchosen_mean-control_small_ev_diff_unchosen_std_err,
+                        control_small_ev_diff_unchosen_mean+control_small_ev_diff_unchosen_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, anode_small_ev_diff_unchosen_mean, color='r', linestyle='--')
+        ax.fill_between(times, anode_small_ev_diff_unchosen_mean-anode_small_ev_diff_unchosen_std_err,
+                        anode_small_ev_diff_unchosen_mean+anode_small_ev_diff_unchosen_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_small_ev_diff_chosen_mean, color='g', linestyle='-')
+        ax.fill_between(times, cathode_small_ev_diff_unchosen_mean-cathode_small_ev_diff_unchosen_std_err,
+                        cathode_small_ev_diff_unchosen_mean+cathode_small_ev_diff_unchosen_std_err, alpha=0.5, facecolor='g')
+        ax.set_ylabel('Firing Rate (Hz)')
+
+        # Small EV Diff - Interneuron
+        ax=fig.add_subplot(2,2,2)
+        ax.plot(times, control_small_ev_diff_inh_mean, color='b', linestyle='-',label='control')
+        ax.fill_between(times, control_small_ev_diff_inh_mean-control_small_ev_diff_inh_std_err,
+                        control_small_ev_diff_inh_mean+control_small_ev_diff_inh_std_err, alpha=0.5, facecolor='b')
+        ax.plot(times, anode_small_ev_diff_inh_mean, color='r', linestyle='-', label='depolarizing')
+        ax.fill_between(times, anode_small_ev_diff_inh_mean-anode_small_ev_diff_inh_std_err,
+                        anode_small_ev_diff_inh_mean+anode_small_ev_diff_inh_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_small_ev_diff_inh_mean, color='g', linestyle='-',label='hyperpolarizing')
+        ax.fill_between(times, cathode_small_ev_diff_inh_mean-cathode_small_ev_diff_inh_std_err,
+                        cathode_small_ev_diff_inh_mean+cathode_small_ev_diff_inh_std_err, alpha=0.5, facecolor='g')
+        ax.legend(loc='best')
+
+        # Large EV Diff - Pyramidal
+        ax=fig.add_subplot(2,2,3)
+        # Chosen
+        ax.plot(times, control_large_ev_diff_chosen_mean, color='b', linestyle='-')
+        ax.fill_between(times, control_large_ev_diff_chosen_mean-control_large_ev_diff_chosen_std_err,
+                        control_large_ev_diff_chosen_mean+control_large_ev_diff_chosen_std_err, alpha=0.5, facecolor='b')
+        ax.plot(times, anode_large_ev_diff_chosen_mean, color='r', linestyle='-')
+        ax.fill_between(times, anode_large_ev_diff_chosen_mean-anode_large_ev_diff_chosen_std_err,
+                        anode_large_ev_diff_chosen_mean+anode_large_ev_diff_chosen_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_large_ev_diff_chosen_mean, color='g', linestyle='-')
+        ax.fill_between(times, cathode_large_ev_diff_chosen_mean-cathode_large_ev_diff_chosen_std_err,
+                        cathode_large_ev_diff_chosen_mean+cathode_large_ev_diff_chosen_std_err, alpha=0.5, facecolor='g')
+        # Unchosen
+        ax.plot(times, control_large_ev_diff_unchosen_mean, color='b', linestyle='--')
+        ax.fill_between(times, control_large_ev_diff_unchosen_mean-control_large_ev_diff_unchosen_std_err,
+                        control_large_ev_diff_unchosen_mean+control_large_ev_diff_unchosen_std_err, alpha=0.5, facecolor='b')
+        ax.plot(times, anode_large_ev_diff_unchosen_mean, color='r', linestyle='--')
+        ax.fill_between(times, anode_large_ev_diff_unchosen_mean-anode_large_ev_diff_unchosen_std_err,
+                        anode_large_ev_diff_unchosen_mean+anode_large_ev_diff_unchosen_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_large_ev_diff_unchosen_mean, color='g', linestyle='--')
+        ax.fill_between(times, cathode_large_ev_diff_unchosen_mean-cathode_large_ev_diff_unchosen_std_err,
+                        cathode_large_ev_diff_unchosen_mean+cathode_large_ev_diff_unchosen_std_err, alpha=0.5, facecolor='g')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Firing Rate (Hz)')
+
+        # Large EV Diff - Interneuron
+        ax=fig.add_subplot(2,2,4)
+        ax.plot(times, control_large_ev_diff_inh_mean, color='b', linestyle='-',label='control')
+        ax.fill_between(times, control_large_ev_diff_inh_mean-control_large_ev_diff_inh_std_err,
+                        control_large_ev_diff_inh_mean+control_large_ev_diff_inh_std_err, alpha=0.5, facecolor='b')
+        ax.plot(times, anode_large_ev_diff_inh_mean, color='r', linestyle='-', label='depolarizing')
+        ax.fill_between(times, anode_large_ev_diff_inh_mean-anode_large_ev_diff_inh_std_err,
+                        anode_large_ev_diff_inh_mean+anode_large_ev_diff_inh_std_err, alpha=0.5, facecolor='r')
+        ax.plot(times, cathode_large_ev_diff_inh_mean, color='g', linestyle='-',label='hyperpolarizing')
+        ax.fill_between(times, cathode_large_ev_diff_inh_mean-cathode_large_ev_diff_inh_std_err,
+                        cathode_large_ev_diff_inh_mean+cathode_large_ev_diff_inh_std_err, alpha=0.5, facecolor='g')
+        ax.set_xlabel('Time (s)')
+
+        small_ev_diff_pyr={}
+        small_ev_diff_inh={}
+        large_ev_diff_pyr={}
+        large_ev_diff_inh={}
+        for stim_condition in ['control','depolarizing','hyperpolarizing']:
+
+            fig2_insets_file=file(os.path.join(self.reports_dir,'fig2_insets.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig2_insets_file):
+                cols=line.split(',')
+                if idx==0:
+                    small_ev_diff_pyr[stim_condition]=[float(x) for x in cols]
+                elif idx==1:
+                    small_ev_diff_inh[stim_condition]=[float(x) for x in cols]
+                elif idx==2:
+                    large_ev_diff_pyr[stim_condition]=[float(x) for x in cols]
+                elif idx==3:
+                    large_ev_diff_inh[stim_condition]=[float(x) for x in cols]
+            fig2_insets_file.close()
+
+        pos = np.arange(3)+0.5    # Center bars on the Y-axis ticks
+
+        fig=plt.figure()
+        ax=fig.add_subplot(2,2,1)
+        ax.bar(pos[0],np.mean(small_ev_diff_pyr['control']), width=.5,yerr=np.std(small_ev_diff_pyr['control'])/np.sqrt(len(small_ev_diff_pyr['control'])),align='center',ecolor='k',color='b')
+        ax.bar(pos[1],np.mean(small_ev_diff_pyr['depolarizing']), width=.5,yerr=np.std(small_ev_diff_pyr['depolarizing'])/np.sqrt(len(small_ev_diff_pyr['depolarizing'])),align='center',ecolor='k',color='r')
+        ax.bar(pos[2],np.mean(small_ev_diff_pyr['hyperpolarizing']), width=.5,yerr=np.std(small_ev_diff_pyr['hyperpolarizing'])/np.sqrt(len(small_ev_diff_pyr['hyperpolarizing'])),align='center',ecolor='k',color='g')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['control','depolarizing','hyperpolarizing'])
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Pyramidal Rate (Hz)')
+        
+        ax=fig.add_subplot(2,2,2)
+        ax.bar(pos[0],np.mean(small_ev_diff_inh['control']), width=.5,yerr=np.std(small_ev_diff_inh['control'])/np.sqrt(len(small_ev_diff_inh['control'])),align='center',ecolor='k',color='b')
+        ax.bar(pos[1],np.mean(small_ev_diff_inh['depolarizing']), width=.5,yerr=np.std(small_ev_diff_inh['depolarizing'])/np.sqrt(len(small_ev_diff_inh['depolarizing'])),align='center',ecolor='k',color='r')
+        ax.bar(pos[2],np.mean(small_ev_diff_inh['hyperpolarizing']), width=.5,yerr=np.std(small_ev_diff_inh['hyperpolarizing'])/np.sqrt(len(small_ev_diff_inh['hyperpolarizing'])),align='center',ecolor='k',color='g')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['control','depolarizing','hyperpolarizing'])
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Interneuron Rate (Hz)')
+        
+        ax=fig.add_subplot(2,2,3)
+        ax.bar(pos[0],np.mean(large_ev_diff_pyr['control']), width=.5,yerr=np.std(large_ev_diff_pyr['control'])/np.sqrt(len(large_ev_diff_pyr['control'])),align='center',ecolor='k',color='b')
+        ax.bar(pos[1],np.mean(large_ev_diff_pyr['depolarizing']), width=.5,yerr=np.std(large_ev_diff_pyr['depolarizing'])/np.sqrt(len(large_ev_diff_pyr['depolarizing'])),align='center',ecolor='k',color='r')
+        ax.bar(pos[2],np.mean(large_ev_diff_pyr['hyperpolarizing']), width=.5,yerr=np.std(large_ev_diff_pyr['hyperpolarizing'])/np.sqrt(len(large_ev_diff_pyr['hyperpolarizing'])),align='center',ecolor='k',color='g')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['control','depolarizing','hyperpolarizing'])
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Pyramidal Rate (Hz)')
+        
+        ax=fig.add_subplot(2,2,4)
+        ax.bar(pos[0],np.mean(large_ev_diff_inh['control']), width=.5,yerr=np.std(large_ev_diff_inh['control'])/np.sqrt(len(large_ev_diff_inh['control'])),align='center',ecolor='k',color='b')
+        ax.bar(pos[1],np.mean(large_ev_diff_inh['depolarizing']), width=.5,yerr=np.std(large_ev_diff_inh['depolarizing'])/np.sqrt(len(large_ev_diff_inh['depolarizing'])),align='center',ecolor='k',color='r')
+        ax.bar(pos[2],np.mean(large_ev_diff_inh['hyperpolarizing']), width=.5,yerr=np.std(large_ev_diff_inh['hyperpolarizing'])/np.sqrt(len(large_ev_diff_inh['hyperpolarizing'])),align='center',ecolor='k',color='g')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['control','depolarizing','hyperpolarizing'])
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Interneuron Rate (Hz)')
+
+        betas={}
+        alphas={}
+        acc={}
+        for stim_condition in ['control','depolarizing','hyperpolarizing']:
+            fig3_file=file(os.path.join(self.reports_dir,'fig3.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig3_file):
+                cols=line.split(',')
+                if idx==0:
+                    betas[stim_condition]=[float(x) for x in cols]
+                elif idx==1:
+                    alphas[stim_condition]=[float(x) for x in cols]
+                elif idx==2:
+                    acc[stim_condition]=[float(x) for x in cols]
+            fig3_file.close()
+
+        pos = np.arange(2)+0.5    # Center bars on the Y-axis ticks
+        
+        fig=plt.figure()
+        ax=fig.add_subplot(3,1,1)
+        bar=ax.bar(pos[0],np.mean(betas['depolarizing']), width=.5, yerr=np.std(betas['depolarizing'])/np.sqrt(len(betas['depolarizing'])), align='center',ecolor='k')
+        bar[0].set_color('r')
+        bar=ax.bar(pos[1],np.mean(betas['control']), width=.5, yerr=np.std(betas['control'])/np.sqrt(len(betas['control'])), align='center',ecolor='k')
+        bar[0].set_color('b')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['Depolarizing','Control'])
+        ax.set_ylabel('Inverse Temperature')
+        
+        ax=fig.add_subplot(3,1,2)
+        bar=ax.bar(pos[0],np.mean(alphas['depolarizing']), width=.5, yerr=np.std(alphas['depolarizing'])/np.sqrt(len(alphas['depolarizing'])), align='center',ecolor='k')
+        bar[0].set_color('r')
+        bar=ax.bar(pos[1],np.mean(alphas['control']), width=.5, yerr=np.std(alphas['control'])/np.sqrt(len(alphas['control'])),align='center',ecolor='k')
+        bar[0].set_color('b')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['Depolarizing','Control'])
+        ax.set_ylabel('Learning Rate')
+        
+        ax=fig.add_subplot(3,1,3)
+        bar=ax.bar(pos[0],np.mean(acc['depolarizing']), width=.5, yerr=np.std(acc['depolarizing'])/np.sqrt(len(acc['depolarizing'])), align='center',ecolor='k')
+        bar[0].set_color('r')
+        bar=ax.bar(pos[1],np.mean(acc['control']), width=.5, yerr=np.std(acc['control'])/np.sqrt(len(acc['control'])),align='center',ecolor='k')
+        bar[0].set_color('b')
+        ax.set_xticks(pos)
+        ax.set_xticklabels(['Depolarizing','Control'])
+        ax.set_ylabel('% Correct')
+
+        control_coeffs_file=file(os.path.join(self.reports_dir,'fig4.control.csv'))
+        control_prestim_coeffs=[]
+        control_evdiff_coeffs=[]
+        for idx,line in enumerate(control_coeffs_file):
+            cols=line.split(',')
+            if idx==0:
+                control_prestim_coeffs=[float(x) for x in cols]
+            else:
+                control_evdiff_coeffs=[float(x) for x in cols]
+        control_coeffs_file.close()
+        anode_coeffs_file=file(os.path.join(self.reports_dir,'fig4.depolarizing.csv'))
+        anode_prestim_coeffs=[]
+        anode_evdiff_coeffs=[]
+        for idx,line in enumerate(anode_coeffs_file):
+            cols=line.split(',')
+            if idx==0:
+                anode_prestim_coeffs=[float(x) for x in cols]
+            else:
+                anode_evdiff_coeffs=[float(x) for x in cols]
+        anode_coeffs_file.close()
+        cathode_coeffs_file=file(os.path.join(self.reports_dir,'fig4.hyperpolarizing.csv'))
+        cathode_prestim_coeffs=[]
+        cathode_evdiff_coeffs=[]
+        for idx,line in enumerate(cathode_coeffs_file):
+            cols=line.split(',')
+            if idx==0:
+                cathode_prestim_coeffs=[float(x) for x in cols]
+            else:
+                cathode_evdiff_coeffs=[float(x) for x in cols]
+        cathode_coeffs_file.close()
+
+        fig=plt.figure()
+        ax=fig.add_subplot(1,1,1)
+        width=0.3
+        stim_conditions=['control','depolarizing','hyperpolarizing']
+        ind=np.array(range(1,3))
+        rects=[]
+        rect=ax.bar(np.array([1,2])+width*.5+-1*width, [np.mean(control_prestim_coeffs),np.mean(control_evdiff_coeffs)], width,
+                    yerr=[np.std(control_prestim_coeffs)/np.sqrt(len(control_prestim_coeffs)),np.std(control_evdiff_coeffs)/np.sqrt(len(control_evdiff_coeffs))], color='b',ecolor='k')
+        rects.append(rect)
+        rect=ax.bar(np.array([1,2])+width*.5, [np.mean(anode_prestim_coeffs),np.mean(anode_evdiff_coeffs)], width,
+                    yerr=[np.std(anode_prestim_coeffs)/np.sqrt(len(anode_prestim_coeffs)),np.std(anode_evdiff_coeffs)/np.sqrt(len(anode_evdiff_coeffs))], color='r',ecolor='k')
+        rects.append(rect)
+        rect=ax.bar(np.array([1,2])+width*.5+width, [np.mean(cathode_prestim_coeffs),np.mean(cathode_evdiff_coeffs)], width,
+                    yerr=[np.std(cathode_prestim_coeffs)/np.sqrt(len(cathode_prestim_coeffs)),np.std(cathode_evdiff_coeffs)/np.sqrt(len(cathode_evdiff_coeffs))], color='g',ecolor='k')
+        rects.append(rect)
+        ax.set_ylabel('Coefficient')
+        ax.set_xticks(ind+width)
+        ax.set_xticklabels(['Prestimulus Bias','Expected Value Difference'])
+        ax.legend([rect[0] for rect in rects],stim_conditions,loc='best')
+
+        pyr={}
+        inh={}
+        perc_correct={}
+        betas={}
+        stim_conditions=['control','depolarizing','depolarizing_1','depolarizing_2','depolarizing_3','hyperpolarizing','hyperpolarizing_1','hyperpolarizing_2','hyperpolarizing_3']
+        for stim_condition in stim_conditions:
+
+            fig5a_file=file(os.path.join(self.reports_dir,'fig5a.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig5a_file):
+                cols=line.split(',')
+                pyr[stim_condition]=[float(x) for x in cols]
+            fig5a_file.close()
+
+            fig5b_file=file(os.path.join(self.reports_dir,'fig5b.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig5b_file):
+                cols=line.split(',')
+                inh[stim_condition]=[float(x) for x in cols]
+            fig5b_file.close()
+
+            fig5c_file=file(os.path.join(self.reports_dir,'fig5c.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig5c_file):
+                cols=line.split(',')
+                perc_correct[stim_condition]=[float(x) for x in cols]
+            fig5c_file.close()
+
+            fig5d_file=file(os.path.join(self.reports_dir,'fig5d.%s.csv' % stim_condition),'r')
+            for idx,line in enumerate(fig5d_file):
+                cols=line.split(',')
+                betas[stim_condition]=[float(x) for x in cols]
+            fig5d_file.close()
+
+        fig=plt.figure()
+        pos = np.arange(len(stim_conditions))+0.5    # Center bars on the Y-axis ticks
+
+        ax=fig.add_subplot(4,1,1)
+        for idx,stim_condition in enumerate(stim_conditions):
+            color='b'
+            if stim_condition.startswith('depolarizing'):
+                color='r'
+            elif stim_condition.startswith('hyperpolarizing'):
+                color='g'
+            filtered=np.array(pyr[stim_condition])
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered)/np.sqrt(len(filtered)), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Chosen-Unchosen Firing Rate (Hz)')
+
+        ax=fig.add_subplot(4,1,2)
+        for idx,stim_condition in enumerate(stim_conditions):
+            color='b'
+            if stim_condition.startswith('depolarizing'):
+                color='r'
+            elif stim_condition.startswith('hyperpolarizing'):
+                color='g'
+            filtered=np.array(inh[stim_condition])
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered)/np.sqrt(len(filtered)), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('Interneuron Firing Rate (Hz)')
+
+        ax=fig.add_subplot(4,1,3)
+        for idx,stim_condition in enumerate(stim_conditions):
+            color='b'
+            if stim_condition.startswith('depolarizing'):
+                color='r'
+            elif stim_condition.startswith('hyperpolarizing'):
+                color='g'
+            filtered=np.array(perc_correct[stim_condition])
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered)/np.sqrt(len(filtered)), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('% Correct')
+
+        ax=fig.add_subplot(4,1,4)
+        for idx,stim_condition in enumerate(stim_conditions):
+            color='b'
+            if stim_condition.startswith('depolarizing'):
+                color='r'
+            elif stim_condition.startswith('hyperpolarizing'):
+                color='g'
+            filtered=np.array(betas[stim_condition])
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered)/np.sqrt(len(filtered)), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('beta')
+
+        plt.show()
+
     def create_report(self, regenerate_plots=False, regenerate_condition_plots=False, regenerate_session_plots=False,
                       regenerate_trial_plots=False):
         make_report_dirs(self.reports_dir)
@@ -1053,20 +1913,20 @@ class RLReport:
 
         condition_colors={'control':'b','anode':'r','cathode':'g'}
 
-        excluded=None
-        ev_diffs=[]
+        self.excluded=None
+        self.ev_diffs=[]
         for stim_condition in self.stim_conditions:
             print(stim_condition)
             stim_condition_report_dir=os.path.join(self.reports_dir,stim_condition)
             self.stim_condition_reports[stim_condition] = StimConditionReport(self.data_dir, self.file_prefix,
                 stim_condition, stim_condition_report_dir, self.num_subjects, self.edesc)
-            self.stim_condition_reports[stim_condition].create_report(self.version, excluded=excluded,
+            self.stim_condition_reports[stim_condition].create_report(self.version, excluded=self.excluded,
                 regenerate_plots=regenerate_condition_plots, regenerate_session_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
-            excluded=self.stim_condition_reports[stim_condition].excluded_sessions
-            ev_diffs.extend(self.stim_condition_reports[stim_condition].ev_diff)
+            self.excluded=self.stim_condition_reports[stim_condition].excluded_sessions
+            self.ev_diffs.extend(self.stim_condition_reports[stim_condition].ev_diff)
 
-        ev_diff_hist,ev_diff_bins=np.histogram(np.array(ev_diffs), bins=10)
+        self.ev_diff_hist,self.ev_diff_bins=np.histogram(np.array(self.ev_diffs), bins=10)
 
         if regenerate_plots:
 
@@ -1127,6 +1987,8 @@ class RLReport:
             self.cathode_stim_condition_large_ev_inh_rate_std_err={}
 
         self.stim_condition_perc_correct={}
+        self.stim_condition_low_ev_diff_perc_correct={}
+        self.stim_condition_high_ev_diff_perc_correct={}
         self.stim_condition_no_response={}
         for stim_condition in self.stim_conditions:
             if regenerate_plots:
@@ -1141,23 +2003,23 @@ class RLReport:
                     self.anode_stim_condition_small_ev_chosen_rate_means[stim_condition],\
                     self.anode_stim_condition_small_ev_chosen_rate_std_err[stim_condition],\
                     self.anode_stim_condition_small_ev_unchosen_rate_means[stim_condition],\
-                    self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[0],ev_diff_bins[3])
+                    self.anode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[0],self.ev_diff_bins[3])
                     self.anode_stim_condition_small_ev_inh_rate_means[stim_condition],\
-                    self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[0],ev_diff_bins[3])
+                    self.anode_stim_condition_small_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[0],self.ev_diff_bins[3])
 
                     self.anode_stim_condition_med_ev_chosen_rate_means[stim_condition],\
                     self.anode_stim_condition_med_ev_chosen_rate_std_err[stim_condition],\
                     self.anode_stim_condition_med_ev_unchosen_rate_means[stim_condition],\
-                    self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[3],ev_diff_bins[6])
+                    self.anode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[3],self.ev_diff_bins[6])
                     self.anode_stim_condition_med_ev_inh_rate_means[stim_condition],\
-                    self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[3],ev_diff_bins[6])
+                    self.anode_stim_condition_med_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[3],self.ev_diff_bins[6])
 
                     self.anode_stim_condition_large_ev_chosen_rate_means[stim_condition],\
                     self.anode_stim_condition_large_ev_chosen_rate_std_err[stim_condition],\
                     self.anode_stim_condition_large_ev_unchosen_rate_means[stim_condition],\
-                    self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
+                    self.anode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
                     self.anode_stim_condition_large_ev_inh_rate_means[stim_condition],\
-                    self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
+                    self.anode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
 
                 if stim_condition=='control' or stim_condition.startswith('cathode'):
                     self.cathode_stim_condition_chosen_rate_means[stim_condition],\
@@ -1170,110 +2032,50 @@ class RLReport:
                     self.cathode_stim_condition_small_ev_chosen_rate_means[stim_condition],\
                     self.cathode_stim_condition_small_ev_chosen_rate_std_err[stim_condition],\
                     self.cathode_stim_condition_small_ev_unchosen_rate_means[stim_condition],\
-                    self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[0],ev_diff_bins[3])
+                    self.cathode_stim_condition_small_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[0],self.ev_diff_bins[3])
                     self.cathode_stim_condition_small_ev_inh_rate_means[stim_condition],\
-                    self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[0],ev_diff_bins[3])
+                    self.cathode_stim_condition_small_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[0],self.ev_diff_bins[3])
 
                     self.cathode_stim_condition_med_ev_chosen_rate_means[stim_condition],\
                     self.cathode_stim_condition_med_ev_chosen_rate_std_err[stim_condition],\
                     self.cathode_stim_condition_med_ev_unchosen_rate_means[stim_condition],\
-                    self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[3],ev_diff_bins[6])
+                    self.cathode_stim_condition_med_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[3],self.ev_diff_bins[6])
                     self.cathode_stim_condition_med_ev_inh_rate_means[stim_condition],\
-                    self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[3],ev_diff_bins[6])
+                    self.cathode_stim_condition_med_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[3],self.ev_diff_bins[6])
 
                     self.cathode_stim_condition_large_ev_chosen_rate_means[stim_condition],\
                     self.cathode_stim_condition_large_ev_chosen_rate_std_err[stim_condition],\
                     self.cathode_stim_condition_large_ev_unchosen_rate_means[stim_condition],\
-                    self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
+                    self.cathode_stim_condition_large_ev_unchosen_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_pyr_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
                     self.cathode_stim_condition_large_ev_inh_rate_means[stim_condition],\
-                    self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,ev_diff_bins[6],ev_diff_bins[-1])
+                    self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
 
             self.stim_condition_perc_correct[stim_condition]=[]
+            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=[]
             self.stim_condition_no_response[stim_condition]=[]
             for session in self.stim_condition_reports[stim_condition].sessions:
                 self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
+                self.stim_condition_low_ev_diff_perc_correct[stim_condition].append(session.low_ev_diff_perc_correct)
+                self.stim_condition_high_ev_diff_perc_correct[stim_condition].append(session.high_ev_diff_perc_correct)
                 self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
         for stim_condition in self.stim_conditions:
             self.stim_condition_perc_correct[stim_condition]=np.array(self.stim_condition_perc_correct[stim_condition])
+            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
             self.stim_condition_no_response[stim_condition]=np.array(self.stim_condition_no_response[stim_condition])
 
-        # Create % correct plot
-        furl='img/perc_correct'
-        fname=os.path.join(self.reports_dir,furl)
-        self.perc_correct_url='%s.png' % furl
-
-        self.perc_correct_freidman=stats.friedmanchisquare(*self.stim_condition_perc_correct.values())
-        #self.perc_correct_control_ttest={}
-        #self.perc_correct_anode_ttest={}
-        #self.perc_correct_cathode_ttest={}
-        self.perc_correct_control_wilcoxon={}
-        self.perc_correct_anode_wilcoxon={}
-        self.perc_correct_cathode_wilcoxon={}
-        num_comparisons=0.0
+        num_comparisons = 0.0
         for stim_condition in self.stim_conditions:
-            if not stim_condition=='control':
-                num_comparisons+=1.0
+            if not stim_condition == 'control':
+                num_comparisons += 1.0
             if stim_condition.startswith('anode_control'):
-                num_comparisons+=1.0
+                num_comparisons += 1.0
             elif stim_condition.startswith('cathode_control'):
-                num_comparisons+=1.0
-        self.perc_correct_mean={}
-        self.perc_correct_std={}
-        perc_correct_mean=[]
-        perc_correct_std_err=[]
-        for stim_condition in self.stim_conditions:
-            if not stim_condition=='control':
-                #self.perc_correct_control_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['control'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['control'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_control_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            if stim_condition.startswith('anode_control'):
-                #self.perc_correct_anode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['anode'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['anode'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_anode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            elif stim_condition.startswith('cathode_control'):
-                #self.perc_correct_cathode_ttest[stim_condition]=stats.ttest_rel(self.stim_condition_perc_correct['cathode'],
-                #    self.stim_condition_perc_correct[stim_condition])
-                T,p=stats.wilcoxon(self.stim_condition_perc_correct['cathode'],
-                    self.stim_condition_perc_correct[stim_condition])
-                self.perc_correct_cathode_wilcoxon[stim_condition]=(T,p*num_comparisons,norm.isf(np.min([1.0,p*num_comparisons/2.0])))
-            self.perc_correct_mean[stim_condition]=np.mean(self.stim_condition_perc_correct[stim_condition])
-            self.perc_correct_std[stim_condition]=np.std(self.stim_condition_perc_correct[stim_condition])/np.sqrt(len(self.stim_condition_perc_correct[stim_condition]))
-            perc_correct_mean.append(self.perc_correct_mean[stim_condition])
-            perc_correct_std_err.append(self.perc_correct_std[stim_condition])
+                num_comparisons += 1.0
 
-        if regenerate_plots:
-            fig=Figure(figsize=(20,6))
-            pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
-            ax=fig.add_subplot(2,1,1)
-            ax.bar(pos,perc_correct_mean, width=.5,yerr=perc_correct_std_err,align='center',ecolor='k')
-            ax.set_xticks(pos)
-            ax.set_xticklabels(self.stim_conditions)
-            ax.set_xlabel('Condition')
-            ax.set_ylabel('% Correct')
-            ax.set_ylim([50,90])
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
+        self.process_perc_correct(num_comparisons, regenerate_plots)
 
-            fname=os.path.join(self.reports_dir,'img/perc_correct_anode_only')
-            fig=Figure()
-            pos = np.arange(2)+0.5
-            ax=fig.add_subplot(2,1,1)
-            ax.bar(pos,[self.perc_correct_mean['control'],self.perc_correct_mean['anode']],width=.5,
-                yerr=[self.perc_correct_std['control'],self.perc_correct_std['anode']],align='center',ecolor='k')
-            ax.set_xticks(pos)
-            ax.set_xticklabels(['Control','Anode'])
-            ax.set_xlabel('Condition')
-            ax.set_ylabel('% Correct')
-            ax.set_ylim([50,90])
-            save_to_png(fig, '%s.png' % fname)
-            save_to_eps(fig, '%s.eps' % fname)
-            plt.close(fig)
-            
         # Create perc no response plot
         furl='img/perc_no_response'
         fname=os.path.join(self.reports_dir,furl)
@@ -1403,7 +2205,7 @@ class RLReport:
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
-            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[0],ev_diff_bins[5])
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(self.ev_diff_bins[0],self.ev_diff_bins[5])
             self.baseline_pyr_small_ev_diff_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
             self.baseline_pyr_small_ev_diff_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
             pyr_means.append(self.baseline_pyr_small_ev_diff_means[stim_condition])
@@ -1473,7 +2275,7 @@ class RLReport:
         stim_pyr_rates={}
         stim_inh_rates={}
         for stim_condition in self.stim_conditions:
-            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(ev_diff_bins[5],ev_diff_bins[-1])
+            stim_pyr_rates[stim_condition],stim_inh_rates[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_rates(self.ev_diff_bins[5],self.ev_diff_bins[-1])
             self.baseline_pyr_large_ev_diff_means[stim_condition]=np.mean(stim_pyr_rates[stim_condition])
             self.baseline_pyr_large_ev_diff_std_errs[stim_condition]=np.std(stim_pyr_rates[stim_condition])/np.sqrt(trials)
             pyr_means.append(self.baseline_pyr_large_ev_diff_means[stim_condition])
@@ -1538,7 +2340,7 @@ class RLReport:
         baseline_diff_std_errs=[]
         stim_baseline_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(ev_diff_bins[0],ev_diff_bins[3])
+            stim_baseline_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_baseline_diff_rates(self.ev_diff_bins[0],self.ev_diff_bins[3])
             self.baseline_diff_means[stim_condition]=np.mean(stim_baseline_diffs[stim_condition])
             self.baseline_diff_std_errs[stim_condition]=np.std(stim_baseline_diffs[stim_condition])/np.sqrt(trials)
             baseline_diff_means.append(self.baseline_diff_means[stim_condition])
@@ -1634,7 +2436,7 @@ class RLReport:
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[0],ev_diff_bins[5])
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(self.ev_diff_bins[0],self.ev_diff_bins[5])
             self.mean_diff_rates_small_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
             self.std_err_diff_rates_small_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
             mean_diff_rates.append(self.mean_diff_rates_small_ev_diff[stim_condition])
@@ -1682,7 +2484,7 @@ class RLReport:
         std_err_diff_rates=[]
         stim_diffs={}
         for stim_condition in self.stim_conditions:
-            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(ev_diff_bins[5],ev_diff_bins[-1])
+            stim_diffs[stim_condition],trials=self.stim_condition_reports[stim_condition].compute_ev_diff_rates(self.ev_diff_bins[5],self.ev_diff_bins[-1])
             self.mean_diff_rates_large_ev_diff[stim_condition]=np.mean(stim_diffs[stim_condition])
             self.std_err_diff_rates_large_ev_diff[stim_condition]=np.std(stim_diffs[stim_condition])/np.sqrt(trials)
             mean_diff_rates.append(self.mean_diff_rates_large_ev_diff[stim_condition])
@@ -2509,6 +3311,53 @@ class RLReport:
         self.trial_duration=self.stim_condition_reports['control'].sessions[0].trial_duration
         self.wta_params=self.stim_condition_reports['control'].sessions[0].wta_params
 
+
+        fname=os.path.join(self.reports_dir, 'img/alpha_bar')
+        fig=plt.figure()
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(1,1,1)
+        for idx,stim_condition in enumerate(self.stim_conditions):
+            color='b'
+            if stim_condition.startswith('anode'):
+                color='r'
+            elif stim_condition.startswith('cathode'):
+                color='g'
+            #filtered=reject_outliers(np.array(self.stim_condition_reports[stim_condition].condition_alphas))
+            filtered=np.array(self.stim_condition_reports[stim_condition].condition_alphas)
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('alpha')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+        fname=os.path.join(self.reports_dir, 'img/beta_bar')
+        fig=Figure(figsize=(16,6))
+        ax=fig.add_subplot(1,1,1)
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
+        ax=fig.add_subplot(1,1,1)
+        for idx,stim_condition in enumerate(self.stim_conditions):
+            color='b'
+            if stim_condition.startswith('anode'):
+                color='r'
+            elif stim_condition.startswith('cathode'):
+                color='g'
+            #filtered=reject_outliers(np.log10(np.array(self.stim_condition_reports[stim_condition].condition_betas)))
+            filtered=np.log10(np.array(self.stim_condition_reports[stim_condition].condition_betas))
+            bar=ax.bar(pos[idx],np.mean(filtered), width=.5, yerr=np.std(filtered)/np.sqrt(len(filtered)), align='center',ecolor='k')
+            bar[0].set_color(color)
+        ax.set_xticks(pos)
+        ax.set_xticklabels(self.stim_conditions)
+        ax.set_xlabel('Condition')
+        ax.set_ylabel('beta')
+        #ax.set_ylim([0,3.2])
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
         condition_alphas={}
         condition_betas={}
         for stim_condition in self.stim_conditions:
@@ -2731,6 +3580,8 @@ class RLReport:
             stim_conditions=['control','anode','cathode']
             ind=np.array(range(1,7))
             rects=[]
+            self.mean_logistic_coeffs={}
+            self.std_logistic_coeffs={}
             for idx,stim_condition in enumerate(stim_conditions):
                 num_trials=len(all_biases[stim_condition])
                 x=np.zeros((num_trials,2))
@@ -2744,8 +3595,10 @@ class RLReport:
                     logit = LogisticRegression()
                     logit = logit.fit(x[permute_trials[0:int(num_trials/2.0)],:], y[permute_trials[0:int(num_trials/2)]])
                     coeffs[:,i]=logit.coef_[0]
-                rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, np.mean(coeffs,axis=1), width,
-                    yerr=np.std(coeffs,axis=1), color=condition_colors[stim_condition])
+                self.mean_logistic_coeffs[stim_condition]=np.mean(coeffs,axis=1)
+                self.std_logistic_coeffs[stim_condition]=np.std(coeffs,axis=1)
+                rect=ax.bar(np.array([1,2])+width*.5+(idx-1)*width, self.mean_logistic_coeffs[stim_condition], width,
+                    yerr=self.std_logistic_coeffs[stim_condition], color=condition_colors[stim_condition])
                 rects.append(rect)
             for idx,stim_condition in enumerate(stim_conditions):
                 small_ev_diff_biases=[]
@@ -3487,6 +4340,8 @@ def run_accuracy_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_
     print('Posthoc, large EV Diff, EV Diff, control-anode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
     (t,p)=ttest_rel(condition_large_ev_diff_coeffs['control'][:,1],condition_large_ev_diff_coeffs['cathode'][:,1])
     print('Posthoc, large EV Diff, EV Diff, control-cathode, t=%.3f, p=%.5f' % (t,p*num_comparisons/2.0))
+
+    return condition_coeffs
 
 def run_choice_logistic(reports_dir, data_dir, file_prefix, num_subjects, use_z=False):
     stim_conditions=['control','anode','cathode']
