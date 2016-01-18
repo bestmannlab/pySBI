@@ -28,7 +28,8 @@ pyr_params=Parameters(
     gL=25*nS,
     refractory=2*ms,
     w_nmda = 0.165 * nS,
-    w_ampa_ext = 4 *nS,
+    w_ampa_ext = 2.1*nS,
+    w_ampa_bak = 2.1*nS,
     w_ampa_rec = 0.05*nS,
     w_gaba = 1.3*nS,
 )
@@ -38,6 +39,7 @@ inh_params=Parameters(
     refractory=1*ms,
     w_nmda = 0.13 * nS,
     w_ampa_ext = 1.62*nS,
+    w_ampa_bak = 1.62*nS,
     w_ampa_rec = 0.04*nS,
     w_gaba = 1.0*nS,
 )
@@ -77,7 +79,8 @@ class WTANetworkGroup(NeuronGroup):
     #       params = network parameters
     #       background_input = background input source
     #       task_inputs = task input sources
-    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None, clock=defaultclock):
+    def __init__(self, N, num_groups, params=default_params, pyr_params=pyr_params, inh_params=inh_params,
+                 background_input=None, task_inputs=None, clock=defaultclock):
         self.N=N
         self.num_groups=num_groups
         self.params=params
@@ -195,9 +198,9 @@ class WTANetworkGroup(NeuronGroup):
             self.connections['b->ampa'][:,:]=0
             for i in xrange(len(self.background_input)):
                 if i<int(self.N*.8):
-                    self.connections['b->ampa'][i,i]=self.pyr_params.w_ampa_ext
+                    self.connections['b->ampa'][i,i]=self.pyr_params.w_ampa_bak
                 else:
-                    self.connections['b->ampa'][i,i]=self.inh_params.w_ampa_ext
+                    self.connections['b->ampa'][i,i]=self.inh_params.w_ampa_bak
 
         if self.task_inputs is not None:
             # Task input -> E population connections
