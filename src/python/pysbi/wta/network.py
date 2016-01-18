@@ -19,9 +19,9 @@ import numpy as np
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
 from pysbi.wta.monitor import WTAMonitor, write_output
-#brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
- #                            gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
-  #                           usecodegenreset = True)
+brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
+                             gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
+                             usecodegenreset = True)
 
 pyr_params=Parameters(
     C=0.5*nF,
@@ -39,8 +39,7 @@ inh_params=Parameters(
     refractory=1*ms,
     w_nmda = 0.13 * nS,
     w_ampa_ext = 1.62*nS,
-    #w_ampa_bak = 1.62*nS,
-    w_ampa_bak = 1.5*nS,
+    w_ampa_bak = 1.63*nS,
     w_ampa_rec = 0.04*nS,
     w_gaba = 1.0*nS,
 )
