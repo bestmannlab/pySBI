@@ -39,7 +39,8 @@ inh_params=Parameters(
     refractory=1*ms,
     w_nmda = 0.13 * nS,
     w_ampa_ext = 1.62*nS,
-    w_ampa_bak = 1.62*nS,
+    #w_ampa_bak = 1.62*nS,
+    w_ampa_bak = 1.5*nS,
     w_ampa_rec = 0.04*nS,
     w_gaba = 1.0*nS,
 )
