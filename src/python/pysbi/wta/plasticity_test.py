@@ -107,8 +107,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
 
     # Construct list of trials
     trials=[]
-    #contrast_range=[.016, .032, .064, .128, .256, .512]
-    contrast_range=[.032]
+    contrast_range=[.016, .032, .064, .128, .256, .512]
     # Trials per contrast is at least one, or ntrials / number of contrasts
     trials_per_contrast=np.max([1,np.round(ntrials/len(contrast_range))])
     # For each contrast value
@@ -210,4 +209,4 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
 
 
 if __name__=='__main__':
-    test_plasticity(1, plasticity=False, p_dcs=0*pA, i_dcs=0*pA)
+    test_plasticity(120, plasticity=False, p_dcs=0*pA, i_dcs=0*pA)
