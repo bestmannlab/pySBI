@@ -6,7 +6,7 @@ import numpy as np
 
 from pysbi.util.utils import get_response_time
 
-def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
+def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS):
     # Plasticity parameters
     tau_pre = 20 * ms
     tau_post = tau_pre
@@ -47,7 +47,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
 
     # Background inputs
     background_size=network_size
-    background_rate=900*Hz
+    background_rate=950*Hz
     background_input = PoissonGroup(background_size, rates = background_rate, clock = sim_clock)
 
     # Task-related inputs
@@ -62,7 +62,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
     plasticity_pyr_params=pyr_params
     #plasticity_pyr_params.w_ampa_ext=4.1*nS # If weights get here, accuracy is worse again
     #plasticity_pyr_params.w_ampa_ext=2.1*nS # If weights get here, accuracy is better
-    plasticity_pyr_params.w_ampa_ext=1.1*nS # Initial weight with bad accuracy
+    plasticity_pyr_params.w_ampa_ext=init_weight # Initial weight with bad accuracy
     wta_net = WTANetworkGroup(network_size, num_options, pyr_params=plasticity_pyr_params,
         background_input = background_input, task_inputs = task_inputs, clock = sim_clock)
 
@@ -131,6 +131,8 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
     choice_trial = np.zeros((1, ntrials))
     correct_avg = np.zeros((1, ntrials))
 
+    num_no_response=0
+
     for i in range(ntrials):
 
         # Re-init network
@@ -154,6 +156,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
             print 'response time = %.3f correct = %d' % (rt, int(correct))
         else:
             print 'no response!'
+            num_no_response+=1
         if ntrials==1:
             wta_monitor.plot()
 
@@ -171,8 +174,12 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
         # Convolve accuracy
         correct_ma = (np.convolve(correct_choice[0,:], np.ones((conv_window,))/conv_window, mode='valid'))
 
-        print correct_avg
-        print correct_ma
+        resp_trials=np.where(choice_trial[0,:]>-1)[0]
+        perc_correct=float(np.sum(correct_choice[0,resp_trials]))/float(len(resp_trials))
+        perc_correct_overall=float(np.sum(correct_choice[0,:]))/float(ntrials)
+        print('perc correct (overall)=%.2f' % perc_correct_overall)
+        print('perc correct (responded)=%.2f' % perc_correct)
+        print('no response=%.2f' % (float(num_no_response)/float(ntrials)))
         plt.plot(trial_weights[0,:]/nS, label = 't0->e0_ampa')
         plt.plot(trial_weights[1,:]/nS, label = 't1->e1_ampa')
         plt.plot(trial_weights[2,:]/nS,'--', label = 't0->e1_ampa')
@@ -209,4 +216,4 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA):
 
 
 if __name__=='__main__':
-    test_plasticity(120, plasticity=False, p_dcs=0*pA, i_dcs=0*pA)
+    test_plasticity(120, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=0.55*nS)
