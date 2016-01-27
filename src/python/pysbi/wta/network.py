@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
-from pysbi.wta.monitor import WTAMonitor, write_output
+from pysbi.wta.monitor import WTAMonitor
 brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
                              gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
                              usecodegenreset = True)
@@ -219,8 +219,8 @@ class WTANetworkGroup(NeuronGroup):
 
 def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, input_var=4*Hz, output_file=None,
             save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
-            record_firing_rate=True, record_inputs=False, record_connections=None, plot_output=False, muscimol_amount=0*nS, injection_site=0,
-            p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms, report='text'):
+            record_firing_rate=True, record_inputs=False, record_connections=None, plot_output=False,
+            muscimol_amount=0*nS, injection_site=0, p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms, report='text'):
     """
     Run WTA network
        wta_params = network parameters
@@ -339,10 +339,9 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     # Write output to file
     if output_file is not None:
         start_time = time()
-        write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
-            record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
-            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params,
-            wta_network.pyr_params, wta_network.inh_params, muscimol_amount, injection_site, p_dcs, i_dcs)
+        wta_monitor.write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups,
+            output_file, stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_params, pyr_params,
+            inh_params, muscimol_amount, injection_site, p_dcs, i_dcs)
         print 'Wrote output to %s' % output_file
         print "Write output time: %.2fs" % (time() - start_time)
 

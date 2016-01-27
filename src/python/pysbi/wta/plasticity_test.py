@@ -1,12 +1,12 @@
-from brian import Clock, ms, PoissonGroup, Hz, second, network_operation, Network, ExponentialSTDP, nS, pA
+from brian import Clock, ms, PoissonGroup, Hz, second, network_operation, Network, ExponentialSTDP, nS, pA, DelayConnection
 from pysbi.wta.network import WTANetworkGroup, pyr_params
-from pysbi.wta.monitor import WTAMonitor
+from pysbi.wta.monitor import WTAMonitor, SessionMonitor
 import matplotlib.pyplot as plt
 import numpy as np
 
 from pysbi.util.utils import get_response_time
 
-def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS):
+def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS):
     # Plasticity parameters
     tau_pre = 20 * ms
     tau_post = tau_pre
@@ -28,6 +28,8 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     input_end_time = trial_duration - 1 * second
     # Accuracy convolution window size
     conv_window=10
+    # Response threshold
+    resp_threshold=25
 
     # Input parameters
     # Strength of each input at contrast=0
@@ -65,6 +67,12 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     plasticity_pyr_params.w_ampa_ext=init_weight # Initial weight with bad accuracy
     wta_net = WTANetworkGroup(network_size, num_options, pyr_params=plasticity_pyr_params,
         background_input = background_input, task_inputs = task_inputs, clock = sim_clock)
+    # Task input -> E population connections
+    for i in range(wta_net.num_groups):
+        wta_net.connections['t%d->e%d_ampa' % (i,1-i)]=DelayConnection(task_inputs[i], wta_net.groups_e[1-i],
+            'g_ampa_x')
+        wta_net.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight= init_incorrect_weight,
+            delay=.5*ms)
 
     # Task-related input update function
     @network_operation(when = 'start', clock = sim_clock)
@@ -80,8 +88,11 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
         wta_net.group_e.I_dcs= p_dcs
         wta_net.group_i.I_dcs= i_dcs
 
+    record_connections=[]
     # Create network
     if plasticity:
+        record_connections=['t0->e0_ampa','t1->e1_ampa','t0->e1_ampa','t1->e0_ampa']
+
         # Input projections plasticity
         stdp0_0 = ExponentialSTDP(wta_net.connections['t0->e0_ampa'], tau_pre, tau_post, dA_pre, dA_post, wmax=gmax,
             update='additive')
@@ -94,7 +105,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
         # Network monitor
         wta_monitor = WTAMonitor(wta_net, None, None, record_lfp = False, record_voxel = False,
-            record_connections=['t0->e0_ampa','t1->e1_ampa','t0->e1_ampa','t1->e0_ampa'], clock = sim_clock)
+            record_connections=record_connections, clock = sim_clock)
 
         net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values(), stdp0_0, stdp1_1, stdp1_0, stdp0_1)
@@ -104,6 +115,10 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
         net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values())
+
+    session_monitor=SessionMonitor(wta_net, ntrials, input_start_time, input_end_time, num_options,
+        record_connections=record_connections, conv_window=conv_window, trial_dt=dt, response_threshold=resp_threshold,
+        recording_firing_rates=False)
 
     # Construct list of trials
     trials=[]
@@ -124,15 +139,6 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     # Shuffle trials
     np.random.shuffle(trials)
 
-    # Store weights and behavior
-    trial_weights = np.zeros((4,ntrials))
-    response_time = np.zeros((1, ntrials))
-    correct_choice = np.zeros((1, ntrials))
-    choice_trial = np.zeros((1, ntrials))
-    correct_avg = np.zeros((1, ntrials))
-
-    num_no_response=0
-
     for i in range(ntrials):
 
         # Re-init network
@@ -147,73 +153,14 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
         # Run network and get response
         net.run(trial_duration, report='text')
-        rate_0 = wta_monitor.monitors['excitatory_rate_0'].smooth_rate(width= 5 * ms, filter = 'gaussian')
-        rate_1 = wta_monitor.monitors['excitatory_rate_1'].smooth_rate(width= 5 * ms, filter = 'gaussian')
-        rt, choice = get_response_time(np.array([rate_0, rate_1]), input_start_time, input_end_time,
-            upper_threshold = 25, dt = dt)
-        correct = choice == correct_input
-        if choice>-1:
-            print 'response time = %.3f correct = %d' % (rt, int(correct))
-        else:
-            print 'no response!'
-            num_no_response+=1
+        session_monitor.record_trial(i, task_input_rates, correct_input, wta_net, wta_monitor)
         if ntrials==1:
             wta_monitor.plot()
 
-        # Store behavior and weights
-        correct_choice[0,i] = correct
-        response_time[0,i] = rt
-        choice_trial[0,i] = choice
-        correct_avg[0,i] = (np.sum(correct_choice))/(i+1)
-        trial_weights[0,i] = np.mean(np.diagonal(wta_net.connections['t0->e0_ampa'].W.todense()))
-        trial_weights[1,i] = np.mean(np.diagonal(wta_net.connections['t1->e1_ampa'].W.todense()))
-        trial_weights[2,i] = np.mean(np.diagonal(wta_net.connections['t0->e1_ampa'].W.todense()))
-        trial_weights[3,i] = np.mean(np.diagonal(wta_net.connections['t1->e0_ampa'].W.todense()))
 
     if ntrials>1:
-        # Convolve accuracy
-        correct_ma = (np.convolve(correct_choice[0,:], np.ones((conv_window,))/conv_window, mode='valid'))
-
-        resp_trials=np.where(choice_trial[0,:]>-1)[0]
-        perc_correct=float(np.sum(correct_choice[0,resp_trials]))/float(len(resp_trials))
-        perc_correct_overall=float(np.sum(correct_choice[0,:]))/float(ntrials)
-        print('perc correct (overall)=%.2f' % perc_correct_overall)
-        print('perc correct (responded)=%.2f' % perc_correct)
-        print('no response=%.2f' % (float(num_no_response)/float(ntrials)))
-        plt.plot(trial_weights[0,:]/nS, label = 't0->e0_ampa')
-        plt.plot(trial_weights[1,:]/nS, label = 't1->e1_ampa')
-        plt.plot(trial_weights[2,:]/nS,'--', label = 't0->e1_ampa')
-        plt.plot(trial_weights[3,:]/nS,'--', label = 't1->e0_ampa')
-        plt.legend(loc = 'best')
-        plt.ylim(0, gmax/nS)
-        plt.xlabel('trial')
-        plt.ylabel('average weight')
-        plt.show()
-
-        plt.plot(correct_choice[0,:])
-        plt.xlabel('trial')
-        plt.ylabel('correct choice = 1')
-        plt.show()
-
-        plt.plot(correct_avg[0,:], label = 'average')
-        plt.plot(correct_ma, label = 'moving avg')
-        plt.legend(loc = 'best')
-        plt.ylim(0,1)
-        plt.xlabel('trial')
-        plt.ylabel('accuracy')
-        plt.show()
-
-        plt.plot(response_time[0,:])
-        plt.ylim(0, 2000)
-        plt.xlabel('trial')
-        plt.ylabel('response time')
-        plt.show()
-
-        plt.plot(choice_trial[0,:])
-        plt.xlabel('trial')
-        plt.ylabel('choice e0=0 e1=1')
-        plt.show()
+        session_monitor.plot()
 
 
 if __name__=='__main__':
-    test_plasticity(120, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=0.55*nS)
+    test_plasticity(6, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=2.1*nS, init_incorrect_weight=1.1*nS)
