@@ -1,11 +1,9 @@
 import h5py
 import numpy as np
 import os
-import scipy.io
 from brian import pA, second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
-from pysbi.wta.rl.analysis import FileInfo
 from pysbi.wta.rl.fit import stim_order, LAT, NOSTIM1
 
 def get_rerw_commands(mat_file, p_dcs, i_dcs, dcs_start_time, alpha, beta, background_freq, e_desc=''):
@@ -47,23 +45,6 @@ def launch_background_freq_processes(nodes, background_freq_range, trials, start
             cmds, log_file_template, out_file=get_rerw_commands(mat_file, 0*pA, 0*pA, 0*second, 0.4, 5.0,
                 background_freq, e_desc='background_freq.%.3f.trial.%d' % (background_freq,trial))
             launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
-
-
-def launch_missing_background_freq_processes(nodes, data_dir, background_freq_range, trials, start_nodes=True):
-    mat_file='value1_s1_t2.mat'
-
-    launcher=Launcher(nodes)
-    for background_freq in background_freq_range:
-        for trial in range(trials):
-            cmds, log_file_template, out_file=get_rerw_commands(mat_file, 0*pA, 0*pA, 0*second, 0.4, 5.0,
-                background_freq, e_desc='background_freq.%.3f.trial.%d' % (background_freq,trial))
-            out_path,out_filename=os.path.split(out_file)
-            if not os.path.exists(os.path.join(data_dir,out_filename)):
-                launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
 
     if start_nodes:
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
@@ -200,74 +181,6 @@ def launch_virtual_subject_processes(nodes, data_dir, num_real_subjects, virtual
         launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
         launcher.start_nodes()
 
-
-def launch_extra_virtual_subject_processes(nodes, virtual_subj_data_dir, virtual_subj_ids, file_prefix, start_nodes=True):
-    # Setup launcher
-    launcher=Launcher(nodes)
-
-    for virtual_subj_id in virtual_subj_ids:
-        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.%s.%d.anode.h5' % (file_prefix,virtual_subj_id)))
-        alpha=virtual_subj_data.alpha
-        beta=virtual_subj_data.beta
-        stim_file_name=virtual_subj_data.mat_file
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, 0*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.anode_control_2' % (file_prefix,virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 2*pA, 4*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.anode_control_3' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, 0*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.anode_control_4' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 4*pA, 2*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.anode_control_5' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, 0*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.cathode_control_2' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -2*pA, -4*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.cathode_control_3' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, 0*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.cathode_control_4' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, -4*pA, -2*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.cathode_control_5' % (file_prefix, virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
-
-def launch_extra_virtual_subject_processes2(nodes, virtual_subj_data_dir, virtual_subj_ids, file_prefix, start_nodes=True):
-    # Setup launcher
-    launcher=Launcher(nodes)
-
-    for virtual_subj_id in virtual_subj_ids:
-        virtual_subj_data=FileInfo(os.path.join(virtual_subj_data_dir,'rl.%s.%d.anode.h5' % (file_prefix,virtual_subj_id)))
-        alpha=virtual_subj_data.alpha
-        beta=virtual_subj_data.beta
-        stim_file_name=virtual_subj_data.mat_file
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 0*pA, -2*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.anode_control_6' % (file_prefix,virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-        cmds, log_file_template, out_file=get_rerw_commands(stim_file_name, 0*pA, 2*pA, 0*second, alpha, beta, None,
-            e_desc='%s.%d.cathode_control_6' % (file_prefix,virtual_subj_id))
-        launcher.add_job(cmds, log_file_template=log_file_template, output_file=out_file)
-
-    if start_nodes:
-        launcher.set_application_script(os.path.join(SRC_DIR, 'sh/ezrcluster-application-script.sh'))
-        launcher.start_nodes()
 
 if __name__=='__main__':
     launch_virtual_subject_processes({}, '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects', 24, 25,

@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io
 import h5py
 from pysbi.util.utils import get_response_time
-from pysbi.wta.network import default_params, run_wta, pyr_params, inh_params
+from pysbi.wta.network import default_params, run_wta, pyr_params, inh_params, simulation_params
 from pysbi.wta.rl.fit import fit_behavior
 
 
@@ -25,17 +25,22 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
     mags=mags.astype(np.float32, copy=False)
     mags /= 100.0
 
-    resp_thresh=25
-    num_groups=2
+    wta_params=default_params()
+    wta_params.input_var=0*Hz
+
+    sim_params=simulation_params()
+    sim_params.p_dcs=p_dcs
+    sim_params.i_dcs=i_dcs
+    sim_params.dcs_start_time=dcs_start_time
+
     exp_rew=np.array([0.5, 0.5])
-    trial_duration=4*second
     if background_freq is None:
-        #background_freq=(beta-87.46)/-12.5
-        #background_freq=(beta-148.14)/-17.29
         background_freq=(beta-161.08)/-.17
+    wta_params.background_freq=background_freq
 
 
     trials=prob_walk.shape[1]
+    sim_params.ntrials=trials
 
     vals=np.zeros(prob_walk.shape)
     choice=np.zeros(trials)
@@ -45,71 +50,41 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
 
     if output_file is not None:
         f = h5py.File(output_file, 'w')
-        f.attrs['trials']=trials
+
         f.attrs['alpha']=alpha
         f.attrs['beta']=beta
         f.attrs['mat_file']=mat_file
-        f.attrs['resp_threshold']=resp_thresh
-        f.attrs['num_groups'] = num_groups
-        f.attrs['trial_duration'] = trial_duration
-        f.attrs['background_freq'] = background_freq
-        f.attrs['C'] = default_params.C
-        f.attrs['gL'] = default_params.gL
-        f.attrs['EL'] = default_params.EL
-        f.attrs['VT'] = default_params.VT
-        f.attrs['Vr'] = default_params.Vr
-        f.attrs['DeltaT'] = default_params.DeltaT
-        f.attrs['Mg'] = default_params.Mg
-        f.attrs['E_ampa'] = default_params.E_ampa
-        f.attrs['E_nmda'] = default_params.E_nmda
-        f.attrs['E_gaba_a'] = default_params.E_gaba_a
-        f.attrs['tau_ampa'] = default_params.tau_ampa
-        f.attrs['tau1_nmda'] = default_params.tau1_nmda
-        f.attrs['tau2_nmda'] = default_params.tau2_nmda
-        f.attrs['tau_gaba_a'] = default_params.tau_gaba_a
-        f.attrs['p_e_e'] = default_params.p_e_e
-        f.attrs['p_e_i'] = default_params.p_e_i
-        f.attrs['p_i_i'] = default_params.p_i_i
-        f.attrs['p_i_e'] = default_params.p_i_e
-        f.attrs['p_dcs']=p_dcs
-        f.attrs['i_dcs']=i_dcs
-        f.attrs['dcs_start_time']=dcs_start_time
 
-        pyr_param_group=f.create_group('pyr_params')
-        pyr_param_group.attrs['C']=pyr_params.C
-        pyr_param_group.attrs['gL']=pyr_params.gL
-        pyr_param_group.attrs['refractory']=pyr_params.refractory
-        pyr_param_group.attrs['w_nmda']=pyr_params.w_nmda
-        pyr_param_group.attrs['w_ampa_ext']=pyr_params.w_ampa_ext
-        pyr_param_group.attrs['w_ampa_rec']=pyr_params.w_ampa_rec
-        pyr_param_group.attrs['w_gaba']=pyr_params.w_gaba
+        f_sim_params=f.create_group('sim_params')
+        for attr, value in sim_params.iteritems():
+            f_sim_params.attrs[attr] = value
 
-        inh_param_group=f.create_group('inh_params')
-        inh_param_group.attrs['C']=inh_params.C
-        inh_param_group.attrs['gL']=inh_params.gL
-        inh_param_group.attrs['refractory']=inh_params.refractory
-        inh_param_group.attrs['w_nmda']=inh_params.w_nmda
-        inh_param_group.attrs['w_ampa_ext']=inh_params.w_ampa_ext
-        inh_param_group.attrs['w_ampa_rec']=inh_params.w_ampa_rec
-        inh_param_group.attrs['w_gaba']=inh_params.w_gaba
+        f_network_params=f.create_group('network_params')
+        for attr, value in wta_params.iteritems():
+            f_network_params.attrs[attr] = value
 
-    for trial in range(trials):
+        f_pyr_params=f.create_group('pyr_params')
+        for attr, value in pyr_params.iteritems():
+            f_pyr_params.attrs[attr] = value
+
+        f_inh_params=f.create_group('inh_params')
+        for attr, value in inh_params.iteritems():
+            f_inh_params.attrs[attr] = value
+
+    for trial in range(sim_params.ntrials):
         print('Trial %d' % trial)
         vals[:,trial]=exp_rew
         ev=vals[:,trial]*mags[:,trial]
-#        inputs[0,trial]=ev[0]-ev[1]
-#        inputs[1,trial]=ev[1]-ev[0]
         inputs[0,trial]=ev[0]
         inputs[1,trial]=ev[1]
         inputs[:,trial]=40.0+40.0*inputs[:,trial]
 
-        trial_monitor=run_wta(default_params, num_groups, inputs[:,trial], trial_duration, background_freq=background_freq,
-            input_var=0*Hz, p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=dcs_start_time, record_lfp=False, record_voxel=False,
-            record_neuron_state=False, record_spikes=False, record_firing_rate=True, record_inputs=False,
+        trial_monitor=run_wta(wta_params, inputs[:,trial], sim_params, record_lfp=False, record_voxel=False,
+            record_neuron_state=False, record_spikes=True, record_firing_rate=True, record_inputs=False,
             plot_output=False)
 
         e_rates = []
-        for i in range(num_groups):
+        for i in range(wta_params.num_groups):
             e_rates.append(trial_monitor.monitors['excitatory_rate_%d' % i].smooth_rate(width=5 * ms, filter='gaussian'))
         i_rates = [trial_monitor.monitors['inhibitory_rate'].smooth_rate(width=5 * ms, filter='gaussian')]
 
@@ -119,8 +94,8 @@ def run_rl_simulation(mat_file, alpha=0.4, beta=5.0, background_freq=None, p_dcs
 
             trial_group['i_rates'] = np.array(i_rates)
 
-        rt,decision_idx=get_response_time(e_rates, 1*second, trial_duration-1*second, upper_threshold=resp_thresh,
-            lower_threshold=None, dt=.5*ms)
+        rt,decision_idx=get_response_time(e_rates, sim_params.stim_start_time, sim_params.stim_end_time,
+            upper_threshold=wta_params.resp_threshold, lower_threshold=None, dt=sim_params.dt)
 
         reward=0.0
         if decision_idx>=0 and np.random.random()<=prob_walk[decision_idx,trial]:

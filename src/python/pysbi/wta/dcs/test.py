@@ -2,8 +2,7 @@ import numpy as np
 from brian import Clock, ms, second, siemens, Current, Equations, InjectedCurrent, pA, NeuronGroup, mV, network_operation, StateMonitor, Network
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
-from matplotlib import pyplot as plt, pyplot
-from quantities import V
+from matplotlib import pyplot as plt
 from pysbi.wta.network import default_params, pyr_params, inh_params
 
 
@@ -117,8 +116,7 @@ def test_stim_interneuron_impact():
     plt.ylabel('Voltage Change (mV)')
     plt.show()
 
-def plot_coherence_stim():
-    mu_0=40.0
+def plot_coherence_stim(mu_0):
     p_a=mu_0/100.0
     p_b=p_a
     plt.figure()
@@ -130,5 +128,5 @@ def plot_coherence_stim():
 
 
 if __name__=='__main__':
-    #test_stim_pyramidal_impact()
+    test_stim_pyramidal_impact()
     test_stim_interneuron_impact()

@@ -1,32 +1,32 @@
 import h5py
 from brian.experimental.connectionmonitor import ConnectionMonitor
 import numpy as np
-from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock, Hz
+from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
 from pysbi.util.utils import get_response_time
 
 class SessionMonitor():
-    def __init__(self, network, ntrials, input_start_time, input_end_time, num_groups, response_threshold=25,
-                 trial_dt=0.5*ms, record_connections=[], conv_window=10, recording_firing_rates=False):
-        self.ntrials=ntrials
-        self.response_threshold=response_threshold
-        self.trial_dt=trial_dt
-        self.input_start_time=input_start_time
-        self.input_end_time=input_end_time
+    def __init__(self, network, sim_params, plasticity_params, record_connections=[], conv_window=10,
+                 record_firing_rates=False):
+        self.sim_params=sim_params
+        self.plasticity_params=plasticity_params
+        self.network_params=network.params
+        self.pyr_params=network.pyr_params
+        self.inh_params=network.inh_params
         # Accuracy convolution window size
         self.conv_window=conv_window
-        self.trial_inputs=np.zeros((num_groups,ntrials))
-        self.trial_rt=np.zeros((1,ntrials))
-        self.trial_resp=np.zeros((1,ntrials))
-        self.trial_correct=np.zeros((1,ntrials))
+        self.trial_inputs=np.zeros((self.network_params.num_groups,sim_params.ntrials))
+        self.trial_rt=np.zeros((1,sim_params.ntrials))
+        self.trial_resp=np.zeros((1,sim_params.ntrials))
+        self.trial_correct=np.zeros((1,sim_params.ntrials))
         self.record_connections=record_connections
-        self.record_firing_rates=recording_firing_rates
+        self.record_firing_rates=record_firing_rates
         self.trial_weights={}
         for conn in self.record_connections:
             self.trial_weights[conn]=[]
-        self.correct_avg = np.zeros((1, ntrials))
+        self.correct_avg = np.zeros((1, sim_params.ntrials))
         self.pop_rates={}
         if self.record_firing_rates:
             for i,group_e in enumerate(network.groups_e):
@@ -47,8 +47,10 @@ class SessionMonitor():
             self.pop_rates['excitatory_rate_1'].append(e_rate_1)
             self.pop_rates['inhibitory_rate'].append(i_rate)
 
-        rt, choice = get_response_time(np.array([e_rate_0, e_rate_1]), self.input_start_time, self.input_end_time,
-            upper_threshold = self.response_threshold, dt = self.trial_dt)
+        rt, choice = get_response_time(np.array([e_rate_0, e_rate_1]), self.sim_params.stim_start_time,
+            self.sim_params.stim_end_time, upper_threshold = self.network_params.resp_threshold,
+            dt = self.sim_params.dt)
+
         correct = choice == correct_input
         if choice>-1:
             print 'response time = %.3f correct = %d' % (rt, int(correct))
@@ -68,14 +70,14 @@ class SessionMonitor():
 
         resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
         perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
-        perc_correct_overall=float(np.sum(self.trial_correct[0,:]))/float(self.ntrials)
+        perc_correct_overall=float(np.sum(self.trial_correct[0,:]))/float(self.sim_params.ntrials)
         print('perc correct (overall)=%.2f' % perc_correct_overall)
         print('perc correct (responded)=%.2f' % perc_correct)
-        print('no response=%.2f' % (float(self.num_no_response)/float(self.ntrials)))
+        print('no response=%.2f' % (float(self.num_no_response)/float(self.sim_params.ntrials)))
 
-        trial_diag_weights=np.zeros((len(self.record_connections),self.ntrials))
+        trial_diag_weights=np.zeros((len(self.record_connections),self.sim_params.ntrials))
         for i, conn in enumerate(self.record_connections):
-            for trial_idx in range(self.ntrials):
+            for trial_idx in range(self.sim_params.ntrials):
                 trial_diag_weights[i,trial_idx]=np.mean(np.diagonal(self.trial_weights[conn][trial_idx]))
 
         if len(self.record_connections)>0:
@@ -112,44 +114,33 @@ class SessionMonitor():
         plt.ylabel('choice e0=0 e1=1')
         plt.show()
 
-    def write_output(self, background_input_size, background_freq, network_group_size, num_groups, output_file,
-                     task_input_size, trial_duration, wta_params, pyr_params, inh_params, muscimol_amount,
-                     injection_site, p_dcs, i_dcs):
+    def write_output(self, output_file):
 
         f = h5py.File(output_file, 'w')
 
         # Write basic parameters
 
-        f.attrs['ntrials']=self.ntrials
-        f.attrs['response_threshold']=self.response_threshold
         f.attrs['conv_window']=self.conv_window
 
-        f.attrs['num_groups'] = num_groups
-        f.attrs['trial_duration'] = trial_duration
-        f.attrs['dt']=self.trial_dt
-        f.attrs['background_freq'] = background_freq
-        f.attrs['stim_start_time'] = self.input_start_time
-        f.attrs['stim_end_time'] = self.input_end_time
-        f.attrs['network_group_size'] = network_group_size
-        f.attrs['background_input_size'] = background_input_size
-        f.attrs['task_input_size'] = task_input_size
+        f_sim_params=f.create_group('sim_params')
+        for attr, value in self.sim_params.iteritems():
+            f_sim_params.attrs[attr] = value
 
         f_network_params=f.create_group('network_params')
-        for attr, value in wta_params.iteritems():
+        for attr, value in self.network_params.iteritems():
             f_network_params.attrs[attr] = value
 
         f_pyr_params=f.create_group('pyr_params')
-        for attr, value in pyr_params.iteritems():
+        for attr, value in self.pyr_params.iteritems():
             f_pyr_params.attrs[attr] = value
 
         f_inh_params=f.create_group('inh_params')
-        for attr, value in inh_params.iteritems():
+        for attr, value in self.inh_params.iteritems():
             f_inh_params.attrs[attr] = value
 
-        f.attrs['muscimol_amount'] = muscimol_amount
-        f.attrs['injection_site'] = injection_site
-        f.attrs['p_dcs']=p_dcs
-        f.attrs['i_dcs']=i_dcs
+        f_plasticity_params=f.create_group('plasticity_params')
+        for attr, value in self.plasticity_params.iteritems():
+            f_plasticity_params.attrs[attr] = value
 
         f_behav=f.create_group('behavior')
         f_behav['num_no_response']=self.num_no_response
@@ -162,15 +153,15 @@ class SessionMonitor():
         f_conns=f_neur.create_group('connections')
         for conn in self.record_connections:
             f_conn=f_conns.create_group('conn')
-            for trial_idx in range(self.ntrials):
+            for trial_idx in range(self.sim_params.ntrials):
                 f_conn['trial_%d' % trial_idx]=self.trial_weights[conn][trial_idx]
 
         f_rates=f_neur.create_group('firing_rates')
         if self.record_firing_rates:
-            for trial_idx in range(self.ntrials):
+            for trial_idx in range(self.sim_params.ntrials):
                 f_trial=f_rates.create_group('trial_%d' % trial_idx)
                 f_trial['inhibitory_rate']=self.pop_rates['inhibitory_rate'][trial_idx]
-                for i in range(num_groups):
+                for i in range(self.network_params.num_groups):
                     f_trial['excitatory_rate_%d' % i]=self.pop_rates['excitatory_rate_%d' % i][trial_idx]
         f.close()
 
@@ -187,11 +178,14 @@ class WTAMonitor():
     #       record_spikes = record spikes if true
     #       record_firing_rate = record firing rate if true
     #       record_inputs = record inputs if true
-    def __init__(self, network, lfp_source, voxel, record_lfp=True, record_voxel=True, record_neuron_state=False,
+    def __init__(self, network, lfp_source, voxel, sim_params, record_lfp=True, record_voxel=True, record_neuron_state=False,
                  record_spikes=True, record_firing_rate=True, record_inputs=False, record_connections=None,
                  save_summary_only=False, clock=defaultclock):
-        self.num_groups=network.num_groups
-        self.N=network.N
+        self.network_params=network.params
+        self.pyr_params=network.pyr_params
+        self.inh_params=network.inh_params
+        self.sim_params=sim_params
+        self.voxel_params=voxel.params
         self.monitors={}
         self.save_summary_only=save_summary_only
         self.clock=clock
@@ -216,10 +210,10 @@ class WTAMonitor():
         # Network monitor
         if self.record_neuron_state:
             self.record_idx=[]
-            for i in range(self.num_groups):
-                e_idx=i*int(.8*self.N/self.num_groups)
+            for i in range(self.network_params.num_groups):
+                e_idx=i*int(.8*self.network_params.network_group_size/self.network_params.num_groups)
                 self.record_idx.append(e_idx)
-            i_idx=int(.8*self.N)
+            i_idx=int(.8*self.network_params.network_group_size)
             self.record_idx.append(i_idx)
             self.monitors['network'] = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b',
                                                                         'g_gaba_a', 'g_nmda','I_ampa_r','I_ampa_x',
@@ -256,10 +250,10 @@ class WTAMonitor():
     def plot(self):
 
         # Spike raster plots
-        if self.record_spikes:
-            num_plots=self.num_groups+1
+        if self.network_params.num_groups:
+            num_plots=self.network_params.num_groups+1
             figure()
-            for i in range(self.num_groups):
+            for i in range(self.network_params.num_groups):
                 subplot(num_plots,1,i+1)
                 raster_plot(self.monitors['excitatory_spike_%d' % i],newfigure=False)
             subplot(num_plots,1,num_plots)
@@ -270,11 +264,11 @@ class WTAMonitor():
             figure()
             ax=subplot(211)
             max_rates=[np.max(self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz)]
-            for i in range(self.num_groups):
+            for i in range(self.network_params.num_groups):
                 max_rates.append(np.max(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz))
             max_rate=np.max(max_rates)
 
-            for idx in range(self.num_groups):
+            for idx in range(self.network_params.num_groups):
                 pop_rate_monitor=self.monitors['excitatory_rate_%d' % idx]
                 ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
                 ylim(0,max_rate)
@@ -294,7 +288,7 @@ class WTAMonitor():
             figure()
             #max_rates=[np.max(self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)]
             max_rates=[]
-            for i in range(self.num_groups):
+            for i in range(self.network_params.num_groups):
                 max_rates.append(np.max(self.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,
                     filter='gaussian')/hertz))
             max_rate=np.max(max_rates)
@@ -302,7 +296,7 @@ class WTAMonitor():
 #            ax.plot(self.monitors['background_rate'].times/ms,
 #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             ylim(0,max_rate)
-            for i in range(self.num_groups):
+            for i in range(self.network_params.num_groups):
                 task_monitor=self.monitors['task_rate_%d' % i]
                 ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
                 ylim(0,max_rate)
@@ -321,9 +315,9 @@ class WTAMonitor():
             max_conductance=np.max(max_conductances)
 
             fig=figure()
-            for i in range(self.num_groups):
+            for i in range(self.network_params.num_groups):
                 neuron_idx=self.record_idx[i]
-                ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
+                ax=subplot(int('%d1%d' % (self.network_params.num_groups+1,i+1)))
                 title('e%d' % i)
                 ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS, 
                     label='AMPA-recurrent')
@@ -342,8 +336,8 @@ class WTAMonitor():
                 ylabel('Conductance (nS)')
                 legend()
 
-            neuron_idx=self.record_idx[self.num_groups]
-            ax=subplot('%d1%d' % (self.num_groups+1,self.num_groups+1))
+            neuron_idx=self.record_idx[self.network_params.num_groups]
+            ax=subplot('%d1%d' % (self.network_params.num_groups+1,self.network_params.num_groups+1))
             title('i')
             ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS,
                 label='AMPA-recurrent')
@@ -381,8 +375,8 @@ class WTAMonitor():
             min_current=np.min(min_currents)
 
             fig=figure()
-            for i in range(self.num_groups):
-                ax=subplot(int('%d1%d' % (self.num_groups+1,i+1)))
+            for i in range(self.network_params.num_groups):
+                ax=subplot(int('%d1%d' % (self.network_params.num_groups+1,i+1)))
                 neuron_idx=self.record_idx[i]
                 title('e%d' % i)
                 ax.plot(network_monitor['I_ampa_r'].times/ms, network_monitor['I_ampa_r'][neuron_idx]/nA,
@@ -402,8 +396,8 @@ class WTAMonitor():
                 ylabel('Current (nA)')
                 legend()
 
-            ax=subplot(int('%d1%d' % (self.num_groups+1,self.num_groups+1)))
-            neuron_idx=self.record_idx[self.num_groups]
+            ax=subplot(int('%d1%d' % (self.network_params.num_groups+1,self.network_params.num_groups+1)))
+            neuron_idx=self.record_idx[self.network_params.num_groups]
             title('i')
             ax.plot(network_monitor['I_ampa_r'].times/ms, network_monitor['I_ampa_r'][neuron_idx]/nA,
                 label='AMPA-recurrent')
@@ -512,39 +506,28 @@ class WTAMonitor():
     #       voxel = voxel for network
     #       wta_monitor = network monitor
     #       wta_params = network parameters
-    def write_output(self, background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
-                     stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_params,
-                     pyr_params, inh_params, muscimol_amount, injection_site, p_dcs, i_dcs):
+    def write_output(self, input_freq, output_file):
 
         f = h5py.File(output_file, 'w')
 
         # Write basic parameters
-        f.attrs['num_groups'] = num_groups
         f.attrs['input_freq'] = input_freq
-        f.attrs['trial_duration'] = trial_duration
-        f.attrs['background_freq'] = background_freq
-        f.attrs['stim_start_time'] = stim_start_time
-        f.attrs['stim_end_time'] = stim_end_time
-        f.attrs['network_group_size'] = network_group_size
-        f.attrs['background_input_size'] = background_input_size
-        f.attrs['task_input_size'] = task_input_size
-
+        
+        f_sim_params=f.create_group('sim_params')
+        for attr, value in self.sim_params.iteritems():
+            f_sim_params.attrs[attr] = value
+            
         f_network_params=f.create_group('network_params')
-        for attr, value in wta_params.iteritems():
+        for attr, value in self.network_params.iteritems():
             f_network_params.attrs[attr] = value
 
         f_pyr_params=f.create_group('pyr_params')
-        for attr, value in pyr_params.iteritems():
+        for attr, value in self.pyr_params.iteritems():
             f_pyr_params.attrs[attr] = value
 
         f_inh_params=f.create_group('inh_params')
-        for attr, value in inh_params.iteritems():
+        for attr, value in self.inh_params.iteritems():
             f_inh_params.attrs[attr] = value
-
-        f.attrs['muscimol_amount'] = muscimol_amount
-        f.attrs['injection_site'] = injection_site
-        f.attrs['p_dcs']=p_dcs
-        f.attrs['i_dcs']=i_dcs
 
         if not self.save_summary_only:
             # Write LFP data
@@ -555,25 +538,9 @@ class WTAMonitor():
             # Write voxel data
             if self.record_voxel:
                 f_vox = f.create_group('voxel')
-                f_vox.attrs['eta'] = voxel.eta
-                f_vox.attrs['G_base'] = voxel.G_base
-                f_vox.attrs['tau_f'] = voxel.tau_f
-                f_vox.attrs['tau_s'] = voxel.tau_s
-                f_vox.attrs['tau_o'] = voxel.tau_o
-                f_vox.attrs['e_base'] = voxel.e_base
-                f_vox.attrs['v_base'] = voxel.v_base
-                f_vox.attrs['alpha'] = voxel.alpha
-                f_vox.attrs['T_2E'] = voxel.params.T_2E
-                f_vox.attrs['T_2I'] = voxel.params.T_2I
-                f_vox.attrs['s_e_0'] = voxel.params.s_e_0
-                f_vox.attrs['s_i_0'] = voxel.params.s_i_0
-                f_vox.attrs['B0'] = voxel.params.B0
-                f_vox.attrs['TE'] = voxel.params.TE
-                f_vox.attrs['s_e'] = voxel.params.s_e
-                f_vox.attrs['s_i'] = voxel.params.s_i
-                f_vox.attrs['beta'] = voxel.params.beta
-                f_vox.attrs['k2'] = voxel.k2
-                f_vox.attrs['k3'] = voxel.k3
+                f_vox_params=f_vox.create_group('voxel_params')
+                for attr, value in self.voxel_params.iteritems():
+                    f_vox_params.attrs[attr] = value
 
                 f_vox_total=f_vox.create_group('total_syn')
                 f_vox_total['G_total'] = self.monitors['voxel']['G_total'].values
@@ -613,7 +580,7 @@ class WTAMonitor():
             if self.record_firing_rate:
                 f_rates = f.create_group('firing_rates')
                 e_rates = []
-                for i in range(num_groups):
+                for i in range(self.network_params.num_groups):
                     e_rates.append(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5 * ms, filter='gaussian'))
                 f_rates['e_rates'] = np.array(e_rates)
 
@@ -626,14 +593,14 @@ class WTAMonitor():
                 back_rate['firing_rate']=self.monitors['background_rate'].smooth_rate(width=5*ms,filter='gaussian')
                 task_rates=f.create_group('task_rates')
                 t_rates=[]
-                for i in range(num_groups):
+                for i in range(self.network_params.num_groups):
                     t_rates.append(self.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,filter='gaussian'))
                 task_rates['firing_rates']=np.array(t_rates)
 
             # Write spike data
             if self.record_spikes:
                 f_spikes = f.create_group('spikes')
-                for idx in range(num_groups):
+                for idx in range(self.network_params.num_groups):
                     spike_monitor=self.monitors['excitatory_spike_%d' % idx]
                     if len(spike_monitor.spikes):
                         f_spikes['e.%d.spike_neurons' % idx] = np.array([s[0] for s in spike_monitor.spikes])
@@ -656,11 +623,11 @@ class WTAMonitor():
 
         else:
             f_summary=f.create_group('summary')
-            endIdx=int(stim_end_time/self.clock.dt)
+            endIdx=int(self.sim_params.stim_end_time/self.clock.dt)
             startIdx=endIdx-500
             e_mean_final=[]
             e_max=[]
-            for idx in range(num_groups):
+            for idx in range(self.network_params.num_groups):
                 rate_monitor=self.monitors['excitatory_rate_%d' % idx]
                 e_rate=rate_monitor.smooth_rate(width=5*ms, filter='gaussian')
                 e_mean_final.append(np.mean(e_rate[startIdx:endIdx]))
@@ -673,7 +640,7 @@ class WTAMonitor():
             f_summary['e_max']=np.array(e_max)
             f_summary['i_mean']=np.array(i_mean_final)
             f_summary['i_max']=np.array(i_max)
-            f_summary['bold_max']=np.max(self.voxel_monitor['y'].values)
-            f_summary['bold_exc_max']=np.max(self.voxel_exc_monitor['y'].values)
+            f_summary['bold_max']=np.max(self.monitors['voxel']['y'].values)
+            f_summary['bold_exc_max']=np.max(self.monitors['voxel_exc']['y'].values)
 
         f.close()
