@@ -112,7 +112,7 @@ class WTANetworkGroup(NeuronGroup):
     #       params = network parameters
     #       background_input = background input source
     #       task_inputs = task input sources
-    def __init__(self, params=default_params, pyr_params=pyr_params, inh_params=inh_params,
+    def __init__(self, params=default_params, pyr_params=pyr_params(), inh_params=inh_params(),
                  background_input=None, task_inputs=None, clock=defaultclock):
         self.params=params
         self.pyr_params=pyr_params
