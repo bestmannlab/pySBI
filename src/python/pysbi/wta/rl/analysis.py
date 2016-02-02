@@ -40,7 +40,7 @@ class FileInfo:
         self.trial_duration=float(f.attrs['trial_duration'])*second
         self.background_freq=float(f.attrs['background_freq'])*Hz
 
-        self.wta_params=default_params
+        self.wta_params=default_params()
         self.wta_params.C=float(f.attrs['C'])*farad
         self.wta_params.gL=float(f.attrs['gL'])*siemens
         self.wta_params.EL=float(f.attrs['EL'])*volt
