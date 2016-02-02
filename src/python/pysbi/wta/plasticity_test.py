@@ -10,10 +10,10 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     # Plasticity parameters
     tau_pre = 20 * ms
     tau_post = tau_pre
-    dA_pre= 0.001 #.001
-    dA_post = -dA_pre * 1.05
+    dA_pre= 0.002 #0.001
+    dA_post = -dA_pre * 1.09 #1.05
     # Maximum synaptic weight
-    gmax = 4 * nS
+    gmax = 4 * nS#4 * nS
 
     # Simulation parameters
     # Time step
@@ -49,7 +49,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
     # Background inputs
     background_size=network_size
-    background_rate=950*Hz
+    background_rate=950*Hz #950
     background_input = PoissonGroup(background_size, rates = background_rate, clock = sim_clock)
 
     # Task-related inputs
@@ -163,4 +163,4 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
 
 if __name__=='__main__':
-    test_plasticity(6, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=2.1*nS, init_incorrect_weight=1.1*nS)
+    test_plasticity(120, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
