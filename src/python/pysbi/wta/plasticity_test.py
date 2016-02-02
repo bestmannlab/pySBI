@@ -6,12 +6,12 @@ import numpy as np
 # Plasticity parameters
 plasticity_params=Parameters(
     tau_pre = 20 * ms,
-    dA_pre= 0.001, #.001
+    dA_pre= 0.002, #.001
     # Maximum synaptic weight
     gmax = 4 * nS
 )
 plasticity_params.tau_post=plasticity_params.tau_pre
-plasticity_params.dA_post=-plasticity_params.dA_pre*1.05
+plasticity_params.dA_post=-plasticity_params.dA_pre*1.09
 
 
 def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS):
@@ -90,14 +90,15 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
             wmax=plasticity_params.gmax, update='additive')
 
         # Network monitor
-        wta_monitor = WTAMonitor(wta_net, None, None, record_lfp = False, record_voxel = False,
+        wta_monitor = WTAMonitor(wta_net, None, None, sim_params, record_lfp = False, record_voxel = False,
             record_connections=record_connections, clock = sim_clock)
 
         net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values(), stdp0_0, stdp1_1, stdp1_0, stdp0_1)
     else:
         # Network monitor
-        wta_monitor = WTAMonitor(wta_net, None, None, record_lfp = False, record_voxel = False, clock = sim_clock)
+        wta_monitor = WTAMonitor(wta_net, None, None, sim_params, record_lfp = False, record_voxel = False,
+            clock = sim_clock)
 
         net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values())
@@ -148,4 +149,4 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
 
 if __name__=='__main__':
-    test_plasticity(6, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=2.1*nS, init_incorrect_weight=1.1*nS)
+    test_plasticity(12, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)

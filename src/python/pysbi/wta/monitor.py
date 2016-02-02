@@ -185,7 +185,9 @@ class WTAMonitor():
         self.pyr_params=network.pyr_params
         self.inh_params=network.inh_params
         self.sim_params=sim_params
-        self.voxel_params=voxel.params
+        self.voxel_params=None
+        if voxel is not None:
+            self.voxel_params=voxel.params
         self.monitors={}
         self.save_summary_only=save_summary_only
         self.clock=clock
