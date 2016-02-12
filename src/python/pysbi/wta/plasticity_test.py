@@ -147,6 +147,17 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     if sim_params.ntrials>1:
         session_monitor.plot()
 
+    correct_ma=session_monitor.get_correct_ma()
+    trial_diag_weights = session_monitor.get_trial_diag_weights()
+
+    return correct_ma, trial_diag_weights
 
 if __name__=='__main__':
-    test_plasticity(12, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+    nsessions=10
+    ntrials=120
+    all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
+
+    for session in range(nsessions):
+        correct_ma, trial_diag_weights=test_plasticity(ntrials, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS,
+            init_incorrect_weight=0.6*nS)
+        all_trial_diag_weights[session,:,:]=trial_diag_weights

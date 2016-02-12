@@ -64,9 +64,20 @@ class SessionMonitor():
         for conn in self.record_connections:
             self.trial_weights[conn].append(wta_net.connections[conn].W.todense())
 
+    def get_correct_ma(self):
+        correct_ma = np.convolve(self.trial_correct[0, :], np.ones((self.conv_window,)) / self.conv_window, mode='valid')
+        return correct_ma
+
+    def get_trial_diag_weights(self):
+        trial_diag_weights = np.zeros((len(self.record_connections), self.sim_params.ntrials))
+        for i, conn in enumerate(self.record_connections):
+            for trial_idx in range(self.sim_params.ntrials):
+                trial_diag_weights[i, trial_idx] = np.mean(np.diagonal(self.trial_weights[conn][trial_idx]))
+        return trial_diag_weights
+
     def plot(self):
         # Convolve accuracy
-        correct_ma = (np.convolve(self.trial_correct[0,:], np.ones((self.conv_window,))/self.conv_window, mode='valid'))
+        correct_ma = self.get_correct_ma()
 
         resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
         perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
@@ -75,10 +86,7 @@ class SessionMonitor():
         print('perc correct (responded)=%.2f' % perc_correct)
         print('no response=%.2f' % (float(self.num_no_response)/float(self.sim_params.ntrials)))
 
-        trial_diag_weights=np.zeros((len(self.record_connections),self.sim_params.ntrials))
-        for i, conn in enumerate(self.record_connections):
-            for trial_idx in range(self.sim_params.ntrials):
-                trial_diag_weights[i,trial_idx]=np.mean(np.diagonal(self.trial_weights[conn][trial_idx]))
+        trial_diag_weights = self.get_trial_diag_weights()
 
         if len(self.record_connections)>0:
             plt.figure()
