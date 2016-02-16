@@ -180,6 +180,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
     for i in range(sim_params.ntrials):
         # Re-init network
+        net.clock=sim_clock
         net.reinit()
         # Get task-related inputs and compute correct response
         if i<(ntrials/2):
@@ -218,7 +219,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     #correct_ma=session_monitor.get_correct_ma()
     #trial_diag_weights = session_monitor.get_trial_diag_weights()
 
-    #return correct_ma, trial_diag_weights
+    return correct_ma, trial_diag_weights
 
 
 
@@ -234,8 +235,8 @@ if __name__=='__main__':
     for session in range(nsessions):
         correct_ma, trial_diag_weights=test_plasticity(ntrials, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:]=trial_diag_weights
-        avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
-    all_correct_ma[session,:] = correct_ma
+        all_correct_ma[session,:] = correct_ma
+    avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
     avg_all_correct_ma = all_correct_ma.mean(axis=0)
 
     plt.figure()
