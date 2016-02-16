@@ -198,11 +198,12 @@ if __name__=='__main__':
     #test_plasticity(240, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
     nsessions = 2
     ntrials=6
+    conv_window=2
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
     all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
 
     for session in range(nsessions):
-        correct_ma, trial_diag_weights=test_plasticity(ntrials, conv_window= 2, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights=test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:]=trial_diag_weights
         all_correct_ma[session,:] = correct_ma
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
