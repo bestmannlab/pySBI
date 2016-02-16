@@ -2,16 +2,18 @@ from brian import Clock, ms, PoissonGroup, Hz, network_operation, Network, Expon
 from pysbi.wta.network import WTANetworkGroup, pyr_params, simulation_params, default_params
 from pysbi.wta.monitor import WTAMonitor, SessionMonitor
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 
 # Plasticity parameters
 plasticity_params=Parameters(
     tau_pre = 20 * ms,
-    dA_pre= 0.0014,  #0.005 for saturation in first 120, 0.002 for no saturation
+    dA_pre= 0.0005,  #0.005 for saturation in first 120, 0.002 for no saturation
     # Maximum synaptic weight
     gmax = 4 * nS   #5 *nS
 )
 plasticity_params.tau_post=plasticity_params.tau_pre
-plasticity_params.dA_post=-plasticity_params.dA_pre*1.13  #1.13 for saturation in first 120, 1.09 for no saturation #second one is 1.12, first is 1.13
+plasticity_params.dA_post=-plasticity_params.dA_pre*1.1  #1.13 for saturation in first 120, 1.09 for no saturation
 
 contrast_lowdiff = [.256, .512]
 contrast_highdiff = [.016, .032]
@@ -83,16 +85,16 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
         # Input projections plasticity
         stdp0_0 = ExponentialSTDP(wta_net.connections['t0->e0_ampa'], plasticity_params.tau_pre,
             plasticity_params.tau_post, plasticity_params.dA_pre, plasticity_params.dA_post,
-            wmax=plasticity_params.gmax, update='additive')
+            wmax=plasticity_params.gmax, update='additive', clock=sim_clock)
         stdp1_1 = ExponentialSTDP(wta_net.connections['t1->e1_ampa'], plasticity_params.tau_pre,
             plasticity_params.tau_post, plasticity_params.dA_pre, plasticity_params.dA_post,
-            wmax=plasticity_params.gmax, update='additive')
+            wmax=plasticity_params.gmax, update='additive', clock=sim_clock)
         stdp0_1= ExponentialSTDP(wta_net.connections['t0->e1_ampa'], plasticity_params.tau_pre,
             plasticity_params.tau_post, plasticity_params.dA_pre, plasticity_params.dA_post,
-            wmax=plasticity_params.gmax, update='additive')
+            wmax=plasticity_params.gmax, update='additive', clock=sim_clock)
         stdp1_0 = ExponentialSTDP(wta_net.connections['t1->e0_ampa'], plasticity_params.tau_pre,
             plasticity_params.tau_post, plasticity_params.dA_pre, plasticity_params.dA_post,
-            wmax=plasticity_params.gmax, update='additive')
+            wmax=plasticity_params.gmax, update='additive', clock=sim_clock)
 
         # Network monitor
         wta_monitor = WTAMonitor(wta_net, None, None, sim_params, record_lfp = False, record_voxel = False,
@@ -186,9 +188,9 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
         else:
             task_input_rates=trials_2[i-ntrials/2]
             correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
-        #if i >= ntrials/2:
-            #p_dcs = 0*pA
-            #i_dcs = 0*pA
+        if i >= ntrials/2:
+            p_dcs = 0*pA
+            i_dcs = 0*pA
 
 
 
@@ -197,6 +199,7 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
         print('trial %d' % i)
         print 'task input 0 = %.2f  task input 1 = %.2f' % (task_input_rates[0], task_input_rates[1])
         print p_dcs
+        print i_dcs
 
 
         # Run network and get response
@@ -212,19 +215,44 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     if sim_params.ntrials>1:
         session_monitor.plot()
 
-    correct_ma=session_monitor.get_correct_ma()
-    trial_diag_weights = session_monitor.get_trial_diag_weights()
+    #correct_ma=session_monitor.get_correct_ma()
+    #trial_diag_weights = session_monitor.get_trial_diag_weights()
 
-    return correct_ma, trial_diag_weights
+    #return correct_ma, trial_diag_weights
+
 
 
 
 if __name__=='__main__':
-    nsessions=10
-    ntrials=120
+    #test_plasticity(240, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+    nsessions = 10
+    ntrials=24
+    conv_window = 10
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
+    all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
 
     for session in range(nsessions):
-        correct_ma, trial_diag_weights=test_plasticity(ntrials, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS,
-            init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights=test_plasticity(ntrials, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:]=trial_diag_weights
+        avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
+    all_correct_ma[session,:] = correct_ma
+    avg_all_correct_ma = all_correct_ma.mean(axis=0)
+
+    plt.figure()
+    plt.title("Total Moving Average")
+    plt.plot(avg_all_correct_ma, label = 'moving avg')
+    plt.legend(loc = 'best')
+    plt.ylim(0,1)
+    plt.xlabel('trial')
+    plt.ylabel('accuracy')
+
+    plt.figure()
+    plt.title('Total')
+    record_connections = ['t0->e0_ampa', 't1->e1_ampa', 't0->e1_ampa', 't1->e0_ampa']
+    for i in range(len(record_connections)):
+        plt.plot(avg_all_trial_diag_weights[i,:]/nS, label = record_connections[i])
+        plt.legend(loc = 'best')
+        plt.xlabel('trial')
+        plt.ylabel('average weight')
+
+    plt.show()
