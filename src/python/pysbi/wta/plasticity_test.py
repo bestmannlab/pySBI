@@ -19,7 +19,7 @@ contrast_lowdiff = [.256, .512]
 contrast_highdiff = [.016, .032]
 
 
-def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS,
+def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS,
                     contrast_range_firsthalf = [.016, .032, .064, .128, .256, .512],
                     contrast_range_secondhalf = [.016, .032, .064, .128, .256, .512] ):
 
@@ -32,9 +32,6 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
     # Simulation clock
     sim_clock = Clock(dt=sim_params.dt)
-
-    # Accuracy convolution window size
-    conv_window=10
 
     # Network definition
     wta_params=default_params()
@@ -199,14 +196,13 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
 
 if __name__=='__main__':
     #test_plasticity(240, plasticity=True, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
-    nsessions = 10
-    ntrials=24
-    conv_window = 10
+    nsessions = 2
+    ntrials=6
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
     all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
 
     for session in range(nsessions):
-        correct_ma, trial_diag_weights=test_plasticity(ntrials, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights=test_plasticity(ntrials, conv_window= 2, plasticity=True, p_dcs=0.5*pA, i_dcs=-0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:]=trial_diag_weights
         all_correct_ma[session,:] = correct_ma
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
