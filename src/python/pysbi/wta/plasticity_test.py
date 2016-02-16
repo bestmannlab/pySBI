@@ -19,7 +19,9 @@ contrast_lowdiff = [.256, .512]
 contrast_highdiff = [.016, .032]
 
 
-def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS, contrast_range_firsthalf = [.016, .032, .064, .128, .256, .512], contrast_range_secondhalf = [.016, .032, .064, .128, .256, .512] ):
+def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weight=1.5*nS, init_incorrect_weight=.81*nS,
+                    contrast_range_firsthalf = [.016, .032, .064, .128, .256, .512],
+                    contrast_range_secondhalf = [.016, .032, .064, .128, .256, .512] ):
 
     # Simulation parameters
     sim_params=simulation_params()
@@ -113,34 +115,6 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     session_monitor=SessionMonitor(wta_net, sim_params, plasticity_params, record_connections=record_connections,
         conv_window=conv_window, record_firing_rates=False)
 
-    # # Construct list of trials
-    # trials=[]
-    # contrast_range=[.016, .032, .064, .128, .256, .512]
-    # # Trials per contrast is at least one, or ntrials / number of contrasts
-    # trials_per_contrast=np.max([1,np.round(sim_params.ntrials/len(contrast_range))])
-    # # For each contrast value
-    # for i,contrast in enumerate(contrast_range):
-    #     # Add trials with this contrast value
-    #     for j in range(trials_per_contrast):
-    #         # Compute inputs
-    #         inputs=[wta_params.mu_0+wta_params.p_a*contrast*100.0, wta_params.mu_0-wta_params.p_b*contrast*100.0]
-    #         # Make every other trial have input 1 > input0
-    #         if j%2==0:
-    #             trials.append(np.array(inputs))
-    #         else:
-    #             trials.append(np.array([inputs[1],inputs[0]]))
-    # # Shuffle trials
-    # np.random.shuffle(trials)
-    #
-    # for i in range(sim_params.ntrials):
-    #
-    #     # Re-init network
-    #     net.reinit()
-    #
-    #     # Get task-related inputs and compute correct response
-    #     task_input_rates=trials[i]
-    #     correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
-
     # Construct list of trials
     trials_1 = []
     trials_2 = []
@@ -185,10 +159,9 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
         # Get task-related inputs and compute correct response
         if i<(ntrials/2):
             task_input_rates=trials_1[i]
-            correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
         else:
             task_input_rates=trials_2[i-ntrials/2]
-            correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
+        correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
         if i >= ntrials/2:
             p_dcs = 0*pA
             i_dcs = 0*pA
@@ -216,8 +189,8 @@ def test_plasticity(ntrials, plasticity=False, p_dcs=0*pA, i_dcs=0*pA, init_weig
     if sim_params.ntrials>1:
         session_monitor.plot()
 
-    #correct_ma=session_monitor.get_correct_ma()
-    #trial_diag_weights = session_monitor.get_trial_diag_weights()
+    correct_ma=session_monitor.get_correct_ma()
+    trial_diag_weights = session_monitor.get_trial_diag_weights()
 
     return correct_ma, trial_diag_weights
 
