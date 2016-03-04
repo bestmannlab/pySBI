@@ -109,6 +109,9 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values())
 
+
+
+
     session_monitor=SessionMonitor(wta_net, sim_params, plasticity_params, record_connections=record_connections,
         conv_window=conv_window, record_firing_rates=False)
 
@@ -173,6 +176,7 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         print i_dcs
 
 
+
         # Run network and get response
         net.run(sim_params.trial_duration, report='text')
         session_monitor.record_trial(i, task_input_rates, correct_input, wta_net, wta_monitor)
@@ -187,26 +191,38 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
      #   session_monitor.plot()
 
     correct_ma=session_monitor.get_correct_ma()
-    trial_diag_weights = session_monitor.get_trial_diag_weights()
-
-    return correct_ma, trial_diag_weights
-
+    if plasticity:
+        trial_diag_weights = session_monitor.get_trial_diag_weights()
+    else:
+        trial_diag_weights = np.zeros((4, ntrials))
+    perc_correct = session_monitor.get_perc_correct()
+    perc_correct_test = session_monitor.get_perc_correct_test()
+    return correct_ma, trial_diag_weights, perc_correct, perc_correct_test
 
 
 
 if __name__=='__main__':
     nsessions = 10
-    ntrials=240
+    ntrials= 240
     conv_window=10
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
     all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
+    all_perc_correct = np.zeros((nsessions,1))
+    all_perc_correct_test = np.zeros((nsessions,1))
 
     for session in range(nsessions):
-        correct_ma, trial_diag_weights=test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=-0.5*pA, i_dcs=0.25*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
-        all_trial_diag_weights[session,:,:]=trial_diag_weights
+        correct_ma, trial_diag_weights, perc_correct, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=False, p_dcs=-2.0*pA, i_dcs=1.0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        all_trial_diag_weights[session,:,:] = trial_diag_weights
         all_correct_ma[session,:] = correct_ma
+        all_perc_correct[session,:] = perc_correct
+        all_perc_correct_test[session,:] = perc_correct_test
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
     avg_all_correct_ma = all_correct_ma.mean(axis=0)
+    avg_all_perc_correct = all_perc_correct.mean(axis=0)
+    avg_all_perc_correct_test = all_perc_correct_test.mean(axis=0)
+
+    print('perc correct (responded)=%.2f' % avg_all_perc_correct)
+    print ('perc correct test phase (responded)=%.2f' % avg_all_perc_correct_test)
 
     plt.figure()
     plt.title("Total Moving Average")
@@ -222,6 +238,7 @@ if __name__=='__main__':
     for i in range(len(record_connections)):
         plt.plot(avg_all_trial_diag_weights[i,:]/nS, label = record_connections[i])
         plt.legend(loc = 'best')
+        plt.ylim(0,1.8)
         plt.xlabel('trial')
         plt.ylabel('average weight')
 
