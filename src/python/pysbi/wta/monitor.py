@@ -94,31 +94,42 @@ class SessionMonitor():
                 trial_diag_weights[i, trial_idx] = np.mean(np.diagonal(self.trial_weights[conn][trial_idx]))
         return trial_diag_weights
 
+    def get_perc_correct(self):
+        resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
+        perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
+        return perc_correct
+
+    def get_perc_correct_test(self):
+        resp_trials = np.where(self.trial_resp[0,:]>-1)[0]
+        resp_trials_test = [x for x in resp_trials if x >= self.sim_params.ntrials/2]
+        perc_correct_test = float(np.sum(self.trial_correct[0,resp_trials_test]))/float(len(resp_trials_test))
+        return perc_correct_test
+
     def plot(self):
         # Convolve accuracy
         correct_ma = self.get_correct_ma()
 
-        resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
-        resp_trials_test = [x for x in resp_trials if x >= self.sim_params.ntrials/2]
-        #resp_trials_training = [y for y in resp_trials if y < self.sim_params.ntrials/2]
-
-        perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
-        perc_correct_overall=float(np.sum(self.trial_correct[0,:]))/float(self.sim_params.ntrials)
-        perc_correct_test=float(np.sum(self.trial_correct[0,resp_trials_test]))/float(len(resp_trials_test))
-        perc_correct_test_overall = float(np.sum(self.trial_correct_test))/float(self.sim_params.ntrials/2)
-        #perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
-        #perc_correct_training_overall = float(self.correct_avg[0,:][self.sim_params.ntrials/2-1])
-
-        #print self.correct_avg
-        #print self.correct_test_avg
-        #print self.correct_avg[:self.sim_params.ntrials/2]
-        print('perc correct test phase (overall)=%.2f' % perc_correct_test_overall)
-        print ('perc correct test phase (responded)=%.2f' % perc_correct_test)
-        #print ('perc correct training phase (overall)=%.2f' % perc_correct_training_overall)
-        #print ('perc correct training phase (responded)=%.2f' % perc_correct_training_overall)
-        print('perc correct (overall)=%.2f' % perc_correct_overall)
-        print('perc correct (responded)=%.2f' % perc_correct)
-        print('no response=%.2f' % (float(self.num_no_response)/float(self.sim_params.ntrials)))
+        # resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
+        # resp_trials_test = [x for x in resp_trials if x >= self.sim_params.ntrials/2]
+        # #resp_trials_training = [y for y in resp_trials if y < self.sim_params.ntrials/2]
+        #
+        # perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
+        # perc_correct_overall=float(np.sum(self.trial_correct[0,:]))/float(self.sim_params.ntrials)
+        # perc_correct_test=float(np.sum(self.trial_correct[0,resp_trials_test]))/float(len(resp_trials_test))
+        # perc_correct_test_overall = float(np.sum(self.trial_correct_test))/float(self.sim_params.ntrials/2)
+        # #perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
+        # #perc_correct_training_overall = float(self.correct_avg[0,:][self.sim_params.ntrials/2-1])
+        #
+        # #print self.correct_avg
+        # #print self.correct_test_avg
+        # #print self.correct_avg[:self.sim_params.ntrials/2]
+        # print('perc correct test phase (overall)=%.2f' % perc_correct_test_overall)
+        # print ('perc correct test phase (responded)=%.2f' % perc_correct_test)
+        # #print ('perc correct training phase (overall)=%.2f' % perc_correct_training_overall)
+        # #print ('perc correct training phase (responded)=%.2f' % perc_correct_training_overall)
+        # print('perc correct (overall)=%.2f' % perc_correct_overall)
+        # print('perc correct (responded)=%.2f' % perc_correct)
+        # print('no response=%.2f' % (float(self.num_no_response)/float(self.sim_params.ntrials)))
 
         trial_diag_weights = self.get_trial_diag_weights()
 
