@@ -8,12 +8,12 @@ from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, sho
 # Plasticity parameters
 plasticity_params=Parameters(
     tau_pre = 20 * ms,
-    dA_pre= 0.0005,  #0.005 for saturation in first 120, 0.002 for no saturation
+    dA_pre= 0.0001,  #0.0005
     # Maximum synaptic weight
     gmax = 4 * nS   #5 *nS
 )
 plasticity_params.tau_post=plasticity_params.tau_pre
-plasticity_params.dA_post=-plasticity_params.dA_pre*1.1  #1.13 for saturation in first 120, 1.09 for no saturation
+plasticity_params.dA_post=-plasticity_params.dA_pre*1.1  #1.1
 
 contrast_lowdiff = [.256, .512]
 contrast_highdiff = [.016, .032]
@@ -99,14 +99,14 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         wta_monitor = WTAMonitor(wta_net, None, None, sim_params, record_lfp = False, record_voxel = False,
             record_connections=record_connections, clock = sim_clock)
 
-        net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
+        net = Network(background_input, task_inputs, set_task_inputs, inject_current, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values(), stdp0_0, stdp1_1, stdp1_0, stdp0_1)
     else:
         # Network monitor
         wta_monitor = WTAMonitor(wta_net, None, None, sim_params, record_lfp = False, record_voxel = False,
             clock = sim_clock)
 
-        net = Network(background_input, task_inputs, set_task_inputs, wta_net, wta_net.connections.values(),
+        net = Network(background_input, task_inputs, set_task_inputs, inject_current, wta_net, wta_net.connections.values(),
             wta_monitor.monitors.values())
 
 
@@ -211,7 +211,7 @@ if __name__=='__main__':
     all_perc_correct_test = np.zeros((nsessions,1))
 
     for session in range(nsessions):
-        correct_ma, trial_diag_weights, perc_correct, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=False, p_dcs=-2.0*pA, i_dcs=1.0*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights, perc_correct, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=2*pA, i_dcs=-1*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:] = trial_diag_weights
         all_correct_ma[session,:] = correct_ma
         all_perc_correct[session,:] = perc_correct
@@ -223,6 +223,9 @@ if __name__=='__main__':
 
     print('perc correct (responded)=%.2f' % avg_all_perc_correct)
     print ('perc correct test phase (responded)=%.2f' % avg_all_perc_correct_test)
+    print all_perc_correct
+    print all_perc_correct_test
+    print all_trial_diag_weights[:,:,149]
 
     plt.figure()
     plt.title("Total Moving Average")
