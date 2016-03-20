@@ -8,7 +8,7 @@ from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, sho
 # Plasticity parameters
 plasticity_params=Parameters(
     tau_pre = 20 * ms,
-    dA_pre= 0.0001,  #0.0005
+    dA_pre= 0.0005,  #0.0005
     # Maximum synaptic weight
     gmax = 4 * nS   #5 *nS
 )
@@ -196,8 +196,9 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
     else:
         trial_diag_weights = np.zeros((4, ntrials))
     perc_correct = session_monitor.get_perc_correct()
+    perc_correct_training = session_monitor.get_perc_correct_training()
     perc_correct_test = session_monitor.get_perc_correct_test()
-    return correct_ma, trial_diag_weights, perc_correct, perc_correct_test
+    return correct_ma, trial_diag_weights, perc_correct, perc_correct_training, perc_correct_test
 
 
 
@@ -208,24 +209,32 @@ if __name__=='__main__':
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
     all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
     all_perc_correct = np.zeros((nsessions,1))
+    all_perc_correct_training = np.zeros((nsessions,1))
     all_perc_correct_test = np.zeros((nsessions,1))
 
+
     for session in range(nsessions):
-        correct_ma, trial_diag_weights, perc_correct, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=2*pA, i_dcs=-1*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights, perc_correct, perc_correct_training, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=-4*pA, i_dcs=2*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
         all_trial_diag_weights[session,:,:] = trial_diag_weights
         all_correct_ma[session,:] = correct_ma
         all_perc_correct[session,:] = perc_correct
+        all_perc_correct_training[session,:] = perc_correct_training
         all_perc_correct_test[session,:] = perc_correct_test
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
     avg_all_correct_ma = all_correct_ma.mean(axis=0)
     avg_all_perc_correct = all_perc_correct.mean(axis=0)
+    avg_all_perc_correct_training = all_perc_correct_training.mean(axis=0)
     avg_all_perc_correct_test = all_perc_correct_test.mean(axis=0)
 
     print('perc correct (responded)=%.2f' % avg_all_perc_correct)
+    print ('perc correct training phase (responded)=%.2f' % avg_all_perc_correct_training)
     print ('perc correct test phase (responded)=%.2f' % avg_all_perc_correct_test)
     print all_perc_correct
+    print all_perc_correct_training
     print all_perc_correct_test
-    print all_trial_diag_weights[:,:,149]
+    print all_trial_diag_weights[:,:,119]
+    print all_trial_diag_weights[:,:,239]
+
 
     plt.figure()
     plt.title("Total Moving Average")
