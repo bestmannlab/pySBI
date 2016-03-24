@@ -71,7 +71,7 @@ class SessionMonitor():
         # else:
         #     self.trial_correct_test[0,trial_idx] = correct
         #     self.correct_test_avg[0,trial_idx] = (np.sum(self.trial_correct_test))/(trial_idx+1 - self.sim_params.ntrials/2)
-        if trial_idx>= self.sim_params.ntrials/2:
+        if self.sim_params.ntrials>1 and trial_idx>= self.sim_params.ntrials/2:
             self.trial_correct_test[0,trial_idx - self.sim_params.ntrials/2] = correct
             self.correct_test_avg[0,trial_idx - self.sim_params.ntrials/2]= (np.sum(self.trial_correct_test))/(trial_idx+1 - self.sim_params.ntrials/2)
 

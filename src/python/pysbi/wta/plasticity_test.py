@@ -162,7 +162,7 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         else:
             task_input_rates=trials_2[i-ntrials/2]
         correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
-        if i >= ntrials/2:
+        if ntrials>1 and i >= ntrials/2:
             p_dcs = 0*pA
             i_dcs = 0*pA
 
@@ -180,15 +180,15 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         # Run network and get response
         net.run(sim_params.trial_duration, report='text')
         session_monitor.record_trial(i, task_input_rates, correct_input, wta_net, wta_monitor)
-        #if sim_params.ntrials==1:
-         #   wta_monitor.plot()
+        if sim_params.ntrials==1:
+            wta_monitor.plot()
 
 
 
 
 
-    #if sim_params.ntrials>1:
-     #   session_monitor.plot()
+    if sim_params.ntrials>1:
+        session_monitor.plot()
 
     correct_ma=session_monitor.get_correct_ma()
     if plasticity:
@@ -202,20 +202,41 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
 
 
 if __name__=='__main__':
-    nsessions = 10
+    # Number of sessions to run
+    #nsessions = 10
+    nsessions = 1
+    # Number of trials per session
     ntrials= 240
+    #ntrials= 1
+    # Accuracy convolution window (trials)
     conv_window=10
+
+    stimulation_intensities={
+        'control': [0*pA, 0*pA],
+        'depolarizing': [8*pA, -4*pA],
+        'hyperpolarizing': [-8*pA, 4*pA]
+    }
+    # Store weights and performance for each session
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
-    all_correct_ma = np.zeros((nsessions,ntrials-conv_window+1))
+    all_correct_ma = np.zeros((nsessions,np.max([1,ntrials-conv_window+1])))
     all_perc_correct = np.zeros((nsessions,1))
     all_perc_correct_test = np.zeros((nsessions,1))
 
+    # Run each session
     for session in range(nsessions):
-        correct_ma, trial_diag_weights, perc_correct, perc_correct_test =test_plasticity(ntrials, conv_window= conv_window, plasticity=True, p_dcs=2*pA, i_dcs=-1*pA, init_weight=1.1*nS, init_incorrect_weight=0.6*nS)
+        correct_ma, trial_diag_weights, perc_correct, perc_correct_test = test_plasticity(ntrials,
+            conv_window=conv_window, plasticity=True,
+            p_dcs=stimulation_intensities['control'][0],
+            i_dcs=stimulation_intensities['control'][1], init_weight=1.1*nS,
+            init_incorrect_weight=0.6*nS)
+
+        # Store weights and performance
         all_trial_diag_weights[session,:,:] = trial_diag_weights
         all_correct_ma[session,:] = correct_ma
         all_perc_correct[session,:] = perc_correct
         all_perc_correct_test[session,:] = perc_correct_test
+
+    # Average weights and performance acrorss sessions
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
     avg_all_correct_ma = all_correct_ma.mean(axis=0)
     avg_all_perc_correct = all_perc_correct.mean(axis=0)
