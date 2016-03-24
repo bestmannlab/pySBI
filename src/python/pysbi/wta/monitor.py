@@ -105,6 +105,12 @@ class SessionMonitor():
         perc_correct_test = float(np.sum(self.trial_correct[0,resp_trials_test]))/float(len(resp_trials_test))
         return perc_correct_test
 
+    def get_perc_correct_training(self):
+        resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
+        resp_trials_training = [y for y in resp_trials if y < self.sim_params.ntrials/2]
+        perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
+        return perc_correct_training
+
     def plot(self):
         # Convolve accuracy
         correct_ma = self.get_correct_ma()

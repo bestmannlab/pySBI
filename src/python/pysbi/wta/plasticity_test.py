@@ -8,7 +8,7 @@ from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, sho
 # Plasticity parameters
 plasticity_params=Parameters(
     tau_pre = 20 * ms,
-    dA_pre= 0.0001,  #0.0005
+    dA_pre= 0.0005,  #0.0005
     # Maximum synaptic weight
     gmax = 4 * nS   #5 *nS
 )
@@ -162,7 +162,7 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
         else:
             task_input_rates=trials_2[i-ntrials/2]
         correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
-        if ntrials>1 and i >= ntrials/2:
+        if i >= ntrials/2:
             p_dcs = 0*pA
             i_dcs = 0*pA
 
@@ -196,35 +196,36 @@ def test_plasticity(ntrials, conv_window= 10, plasticity=False, p_dcs=0*pA, i_dc
     else:
         trial_diag_weights = np.zeros((4, ntrials))
     perc_correct = session_monitor.get_perc_correct()
+    perc_correct_training = session_monitor.get_perc_correct_training()
     perc_correct_test = session_monitor.get_perc_correct_test()
-    return correct_ma, trial_diag_weights, perc_correct, perc_correct_test
+    return correct_ma, trial_diag_weights, perc_correct, perc_correct_training, perc_correct_test
 
 
 
 if __name__=='__main__':
     # Number of sessions to run
     #nsessions = 10
-    nsessions = 1
+    nsessions = 10
     # Number of trials per session
     ntrials= 240
-    #ntrials= 1
     # Accuracy convolution window (trials)
     conv_window=10
 
     stimulation_intensities={
         'control': [0*pA, 0*pA],
-        'depolarizing': [8*pA, -4*pA],
-        'hyperpolarizing': [-8*pA, 4*pA]
+        'depolarizing': [2*pA, -1*pA],
+        'hyperpolarizing': [-2*pA, 1*pA]
     }
     # Store weights and performance for each session
     all_trial_diag_weights=np.zeros((nsessions,4,ntrials))
     all_correct_ma = np.zeros((nsessions,np.max([1,ntrials-conv_window+1])))
     all_perc_correct = np.zeros((nsessions,1))
+    all_perc_correct_training = np.zeros((nsessions,1))
     all_perc_correct_test = np.zeros((nsessions,1))
 
     # Run each session
     for session in range(nsessions):
-        correct_ma, trial_diag_weights, perc_correct, perc_correct_test = test_plasticity(ntrials,
+        correct_ma, trial_diag_weights, perc_correct, perc_correct_training, perc_correct_test = test_plasticity(ntrials,
             conv_window=conv_window, plasticity=True,
             p_dcs=stimulation_intensities['control'][0],
             i_dcs=stimulation_intensities['control'][1], init_weight=1.1*nS,
@@ -234,19 +235,25 @@ if __name__=='__main__':
         all_trial_diag_weights[session,:,:] = trial_diag_weights
         all_correct_ma[session,:] = correct_ma
         all_perc_correct[session,:] = perc_correct
+        all_perc_correct_training[session,:] = perc_correct_training
         all_perc_correct_test[session,:] = perc_correct_test
 
     # Average weights and performance acrorss sessions
     avg_all_trial_diag_weights = all_trial_diag_weights.mean(axis=0)
     avg_all_correct_ma = all_correct_ma.mean(axis=0)
     avg_all_perc_correct = all_perc_correct.mean(axis=0)
+    avg_all_perc_correct_training = all_perc_correct_training.mean(axis=0)
     avg_all_perc_correct_test = all_perc_correct_test.mean(axis=0)
 
     print('perc correct (responded)=%.2f' % avg_all_perc_correct)
+    print ('perc correct training phase (responded)=%.2f' % avg_all_perc_correct_training)
     print ('perc correct test phase (responded)=%.2f' % avg_all_perc_correct_test)
     print all_perc_correct
+    print all_perc_correct_training
     print all_perc_correct_test
-    print all_trial_diag_weights[:,:,149]
+    print all_trial_diag_weights[:,:,119]
+    print all_trial_diag_weights[:,:,239]
+
 
     plt.figure()
     plt.title("Total Moving Average")
