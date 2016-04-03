@@ -328,7 +328,8 @@ class SubjectReport:
         }
         self.bias_rt_params={'slope':{},'offset':{}}
         self.bias_perc_left_params={'k':{}}
-
+        self.incongruent_bias_perc_correct={}
+        self.congruent_bias_perc_correct={}
         self.sessions={}
 
     def create_report(self, regenerate_plots=True, regenerate_session_plots=True, regenerate_trial_plots=True):
@@ -345,6 +346,26 @@ class SubjectReport:
                 self.contrast_range, stim_report_dir, self.edesc, version=self.version, dt=self.dt)
             self.sessions[stim_level].create_report(regenerate_plots=regenerate_session_plots,
                 regenerate_trial_plots=regenerate_trial_plots)
+
+            self.incongruent_bias_perc_correct[stim_level]=0.0
+            self.congruent_bias_perc_correct[stim_level]=0.0
+
+            n_incong_trials=0.0
+            n_cong_trials=0.0
+            for idx,trial_summary in enumerate(self.sessions[stim_level].series.trial_summaries):
+                if trial_summary.data.rt is not None:
+                    e0_rate=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/self.dt):int(950*ms/self.dt)])
+                    e1_rate=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/self.dt):int(950*ms/self.dt)])
+                    if (e0_rate>e1_rate and trial_summary.max_in_idx==0) or (e1_rate>e0_rate and trial_summary.max_in_idx==1):
+                        n_cong_trials+=1.0
+                        if trial_summary.correct:
+                            self.congruent_bias_perc_correct[stim_level]+=1.0
+                    elif (e0_rate<e1_rate and trial_summary.max_in_idx==0) or (e1_rate<e0_rate and trial_summary.max_in_idx==1):
+                        n_incong_trials+=1.0
+                        if trial_summary.correct:
+                            self.incongruent_bias_perc_correct[stim_level]+=1.0
+            self.congruent_bias_perc_correct[stim_level]=self.congruent_bias_perc_correct[stim_level]/n_cong_trials
+            self.incongruent_bias_perc_correct[stim_level]=self.incongruent_bias_perc_correct[stim_level]/n_incong_trials
 
         self.wta_params=self.sessions['control'].wta_params
         self.pyr_params=self.sessions['control'].pyr_params
@@ -956,7 +977,8 @@ class DCSComparisonReport:
         self.rt_linear_coeffs={'bias':{},'ev diff':{}}
         self.rt_linear_intercepts={}
         self.perc_no_response={}
-
+        self.congruent_bias_perc_correct={}
+        self.incongruent_bias_perc_correct={}
         self.subjects={}
 
     def export_neural_csv(self, file_name):
@@ -1060,6 +1082,11 @@ class DCSComparisonReport:
                 if not stim_level in num_no_responses:
                     num_no_responses[stim_level]=0
                     num_trials[stim_level]=0
+                if not stim_level in self.congruent_bias_perc_correct:
+                    self.congruent_bias_perc_correct[stim_level]=0.0
+                    self.incongruent_bias_perc_correct[stim_level]=0.0
+                self.congruent_bias_perc_correct[stim_level]+=self.subjects[virtual_subj_id].congruent_bias_perc_correct[stim_level]
+                self.incongruent_bias_perc_correct[stim_level]+=self.subjects[virtual_subj_id].incongruent_bias_perc_correct[stim_level]
                 for idx,trial_summary in enumerate(session_report.series.trial_summaries):
                     num_trials[stim_level]+=1.0
                     if trial_summary.data.rt is None:
@@ -1068,6 +1095,10 @@ class DCSComparisonReport:
                 if not stim_level in self.perc_no_response:
                     self.perc_no_response[stim_level]=[]
                 self.perc_no_response[stim_level].append(num_no_responses[stim_level]/num_trials[stim_level])
+
+        for stim_level in self.congruent_bias_perc_correct:
+            self.congruent_bias_perc_correct[stim_level]=self.congruent_bias_perc_correct[stim_level]/float(len(self.virtual_subj_ids))
+            self.incongruent_bias_perc_correct[stim_level]=self.incongruent_bias_perc_correct[stim_level]/float(len(self.virtual_subj_ids))
 
         furl='img/rt'
         self.rt_url='%s.png' % furl
@@ -1115,6 +1146,36 @@ class DCSComparisonReport:
         self.bias_rt_url='%s.png' % furl
         if regenerate_plots:
             self.plot_bias_rt(furl, self.dt, condition_colors)
+
+        furl='img/congruent_bias_dist'
+        self.congruent_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_congruent_bias_dist(furl, self.dt)
+
+        furl='img/incongruent_bias_dist'
+        self.incongruent_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_incongruent_bias_dist(furl, self.dt)
+
+        furl='img/congruent_correct_bias_dist'
+        self.congruent_correct_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_congruent_correct_bias_dist(furl, self.dt, condition_colors)
+
+        furl='img/congruent_incorrect_bias_dist'
+        self.congruent_incorrect_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_congruent_incorrect_bias_dist(furl, self.dt, condition_colors)
+
+        furl='img/incongruent_correct_bias_dist'
+        self.incongruent_correct_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_incongruent_correct_bias_dist(furl, self.dt, condition_colors)
+
+        furl='img/incongruent_incorrect_bias_dist'
+        self.incongruent_incorrect_bias_dist_url='%s.png' % furl
+        if regenerate_plots:
+            self.plot_incongruent_incorrect_bias_dist(furl, self.dt, condition_colors)
 
         furl='img/congruent_correct_bias_rt'
         self.congruent_correct_bias_rt_url='%s.png' % furl
@@ -1986,6 +2047,197 @@ class DCSComparisonReport:
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
 
+    def plot_congruent_bias_dist(self, furl, dt):
+        fname=os.path.join(self.reports_dir, furl)
+        correct_condition_biases=[]
+        incorrect_condition_biases=[]
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_bias=np.abs(prestim_e0-prestim_e1)
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
+                            if trial_summary.correct:
+                                correct_condition_biases.append(prestim_bias)
+                            else:
+                                incorrect_condition_biases.append(prestim_bias)
+        fig=plt.figure()
+        correct_hist,correct_bins=np.histogram(np.array(correct_condition_biases), bins=range(10))
+        incorrect_hist,incorrect_bins=np.histogram(np.array(incorrect_condition_biases), bins=range(10))
+        bin_width=correct_bins[1]-correct_bins[0]
+        bars=plt.bar(correct_bins[:-1],correct_hist/float(len(correct_condition_biases))*100.0,
+                     width=bin_width, label='correct')
+        for bar in bars:
+            bar.set_color('b')
+            bar.set_alpha(0.5)
+        bars=plt.bar(incorrect_bins[:-1],incorrect_hist/float(len(incorrect_condition_biases))*100.0,
+                     width=bin_width, label='incorrect')
+        for bar in bars:
+            bar.set_color('r')
+            bar.set_alpha(0.5)
+        plt.ylim([0,90])
+        plt.xlim([0,10])
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_incongruent_bias_dist(self, furl, dt):
+        fname=os.path.join(self.reports_dir, furl)
+        correct_condition_biases=[]
+        incorrect_condition_biases=[]
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_bias=np.abs(prestim_e0-prestim_e1)
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
+                            if trial_summary.correct:
+                                correct_condition_biases.append(prestim_bias)
+                            else:
+                                incorrect_condition_biases.append(prestim_bias)
+        fig=plt.figure()
+        correct_hist,correct_bins=np.histogram(np.array(correct_condition_biases), bins=range(10))
+        incorrect_hist,incorrect_bins=np.histogram(np.array(incorrect_condition_biases), bins=range(10))
+        bin_width=correct_bins[1]-correct_bins[0]
+        bars=plt.bar(correct_bins[:-1],correct_hist/float(len(correct_condition_biases))*100.0,
+                     width=bin_width, label='correct')
+        for bar in bars:
+            bar.set_color('b')
+            bar.set_alpha(0.5)
+        bars=plt.bar(incorrect_bins[:-1],incorrect_hist/float(len(incorrect_condition_biases))*100.0,
+                     width=bin_width, label='incorrect')
+        for bar in bars:
+            bar.set_color('r')
+            bar.set_alpha(0.5)
+        plt.ylim([0,90])
+        plt.xlim([0,10])
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        plt.legend(loc='best')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_congruent_correct_bias_dist(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+        fig=plt.figure()
+        for idx,stim_level in enumerate(['cathode','control','anode']):
+            hist,bins=np.histogram(np.array(condition_biases[stim_level]), bins=range(10))
+            bin_width=bins[1]-bins[0]
+            bars=plt.bar(bins[:-1],hist/float(len(condition_biases[stim_level]))*100.0,width=bin_width, label=stim_level)
+            for bar in bars:
+                bar.set_color(colors[stim_level])
+                bar.set_alpha(0.5)
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_congruent_incorrect_bias_dist(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and not trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==0) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==1):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+        fig=plt.figure()
+        for idx,stim_level in enumerate(['cathode','control','anode']):
+            hist,bins=np.histogram(np.array(condition_biases[stim_level]), bins=range(10))
+            bin_width=bins[1]-bins[0]
+            bars=plt.bar(bins[:-1],hist/float(len(condition_biases[stim_level]))*100.0,width=bin_width, label=stim_level)
+            for bar in bars:
+                bar.set_color(colors[stim_level])
+                bar.set_alpha(0.5)
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_incongruent_correct_bias_dist(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+        fig=plt.figure()
+        for idx,stim_level in enumerate(['cathode','control','anode']):
+            hist,bins=np.histogram(np.array(condition_biases[stim_level]), bins=range(10))
+            bin_width=bins[1]-bins[0]
+            bars=plt.bar(bins[:-1],hist/float(len(condition_biases[stim_level]))*100.0,width=bin_width, label=stim_level)
+            for bar in bars:
+                bar.set_color(colors[stim_level])
+                bar.set_alpha(0.5)
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+    def plot_incongruent_incorrect_bias_dist(self, furl, dt, colors):
+        fname=os.path.join(self.reports_dir, furl)
+        condition_biases={}
+        for subj_report in self.subjects.itervalues():
+            for stim_level, session_report in subj_report.sessions.iteritems():
+                if not stim_level in condition_biases:
+                    condition_biases[stim_level]=[]
+                for idx,trial_summary in enumerate(session_report.series.trial_summaries):
+                    if trial_summary.data.rt is not None and not trial_summary.correct:
+                        prestim_e0=np.mean(trial_summary.data.e_firing_rates[0][int(500*ms/dt):int(950*ms/dt)])
+                        prestim_e1=np.mean(trial_summary.data.e_firing_rates[1][int(500*ms/dt):int(950*ms/dt)])
+                        if (prestim_e0>prestim_e1 and trial_summary.max_in_idx==1) or (prestim_e1>prestim_e0 and trial_summary.max_in_idx==0):
+                            prestim_bias=np.abs(prestim_e0-prestim_e1)
+                            condition_biases[stim_level].append(prestim_bias)
+        fig=plt.figure()
+        for idx,stim_level in enumerate(['cathode','control','anode']):
+            hist,bins=np.histogram(np.array(condition_biases[stim_level]), bins=range(10))
+            bin_width=bins[1]-bins[0]
+            bars=plt.bar(bins[:-1],hist/float(len(condition_biases[stim_level]))*100.0,width=bin_width, label=stim_level)
+            for bar in bars:
+                bar.set_color(colors[stim_level])
+                bar.set_alpha(0.5)
+        plt.xlabel('Bias')
+        plt.ylabel('% of Trials')
+        save_to_png(fig, '%s.png' % fname)
+        save_to_eps(fig, '%s.eps' % fname)
+        plt.close(fig)
+
+
     def plot_congruent_correct_bias_rt(self, furl, dt, colors):
         fname=os.path.join(self.reports_dir, furl)
         condition_biases={}
@@ -2046,8 +2298,8 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
-        #plt.xlim([0,7])
-        #plt.ylim([0,650])
+        plt.xlim([0,6.1])
+        plt.ylim([0,1000])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -2113,8 +2365,8 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
-        #plt.xlim([0,7])
-        #plt.ylim([0,650])
+        plt.xlim([0,0.8])
+        plt.ylim([550,1300])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -2180,8 +2432,8 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
-        #plt.xlim([0,7])
-        #plt.ylim([0,650])
+        plt.xlim([0,6.1])
+        plt.ylim([0,1000])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
@@ -2247,8 +2499,8 @@ class DCSComparisonReport:
         plt.legend(loc='best')
         plt.xlabel('Bias')
         plt.ylabel('RT')
-        #plt.xlim([0,7])
-        #plt.ylim([0,650])
+        plt.xlim([0,6.1])
+        plt.ylim([0,1000])
         save_to_png(fig, '%s.png' % fname)
         save_to_eps(fig, '%s.eps' % fname)
         plt.close(fig)
