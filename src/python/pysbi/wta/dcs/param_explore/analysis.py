@@ -587,12 +587,12 @@ class ParamExploreReport():
         mean_rt_linear_intercept={'anode':[],'cathode':[]}
         std_rt_linear_intercept={'anode':[],'cathode':[]}
         for stim_gain in self.stim_gains:
-            for param in mean_rt_linear_coeff:
-                for condition in mean_rt_linear_coeff[param]:
+            for condition in mean_rt_linear_coeff[param]:
+                for param in mean_rt_linear_coeff:
                     mean_rt_linear_coeff[param][condition].append(np.mean(self.rt_linear_coeff[param][condition][stim_gain]))
                     std_rt_linear_coeff[param][condition].append(np.std(self.rt_linear_coeff[param][condition][stim_gain])/np.sqrt(len(self.rt_linear_coeff[param][condition][stim_gain])))
-                    mean_rt_linear_intercept[condition].append(np.mean(self.rt_linear_intercept[condition][stim_gain]))
-                    std_rt_linear_intercept[condition].append(np.std(self.rt_linear_intercept[condition][stim_gain])/np.sqrt(len(self.rt_linear_intercept[condition][stim_gain])))
+                mean_rt_linear_intercept[condition].append(np.mean(self.rt_linear_intercept[condition][stim_gain]))
+                std_rt_linear_intercept[condition].append(np.std(self.rt_linear_intercept[condition][stim_gain])/np.sqrt(len(self.rt_linear_intercept[condition][stim_gain])))
         
         furl='img/rt_linear_coeff_bias'
         fname=os.path.join(self.reports_dir, furl)
@@ -603,7 +603,7 @@ class ParamExploreReport():
         plt.errorbar(self.stim_gains, mean_rt_linear_coeff['bias']['cathode'],yerr=std_rt_linear_coeff['bias']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
-        plt.ylim([-0.1, 1.0])
+        #plt.ylim([-0.1, 1.0])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Accuracy Logistic Coefficient: bias')
         plt.legend(loc='best')
@@ -623,7 +623,7 @@ class ParamExploreReport():
         plt.errorbar(self.stim_gains, mean_rt_linear_coeff['ev diff']['cathode'],yerr=std_rt_linear_coeff['ev diff']['cathode'],
             fmt='o%s' % condition_colors['cathode'],label='cathode')
         plt.xlim([0,np.max(self.stim_gains)+.5])
-        plt.ylim([-0.1, 1.0])
+        #plt.ylim([-0.1, 1.0])
         plt.xlabel('Stimulation Gain')
         plt.ylabel('Accuracy Logistic Coefficient: Input diff')
         plt.legend(loc='best')
