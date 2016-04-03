@@ -389,12 +389,21 @@ class SessionReport:
 
         self.perc_no_response=0.0
         self.perc_correct_response=0.0
-        self.low_ev_diff_perc_correct=0.0
-        self.high_ev_diff_perc_correct=0.0
+        self.obj_low_ev_diff_perc_correct=0.0
+        self.obj_high_ev_diff_perc_correct=0.0
+        self.subj_low_ev_diff_perc_correct=0.0
+        self.subj_high_ev_diff_perc_correct=0.0
 
-        median_ev_diff=np.median(np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:]))
-        num_low_ev_diff_trials=0.0
-        num_high_ev_diff_trials=0.0
+        #obj_median_ev_diff=np.median(np.abs(data.prob_walk[0,:]*data.mags[0,:]-data.prob_walk[1,:]*data.mags[1,:]))
+        obj_ev_diff=np.abs(data.prob_walk[0,:]*data.mags[0,:]-data.prob_walk[1,:]*data.mags[1,:])
+        obj_lims=np.percentile(obj_ev_diff,[25.0,75.0])
+        #subj_median_ev_diff=np.median(np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:]))
+        subj_ev_diff=np.abs(data.vals[0,:]*data.mags[0,:]-data.vals[1,:]*data.mags[1,:])
+        subj_lims=np.percentile(subj_ev_diff,[25.0,75.0])
+        num_obj_low_ev_diff_trials=0.0
+        num_obj_high_ev_diff_trials=0.0
+        num_subj_low_ev_diff_trials=0.0
+        num_subj_high_ev_diff_trials=0.0
 
         self.trials=[]
         for trial in range(self.num_trials):
@@ -411,22 +420,37 @@ class SessionReport:
                 self.perc_no_response+=1.0
             elif trial_data.correct:
                 self.perc_correct_response+=1.0
-            ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
-            if ev_diff<=median_ev_diff:
+            trial_subj_ev_diff=np.abs(data.vals[0,trial]*data.mags[0,trial]-data.vals[1,trial]*data.mags[1,trial])
+            trial_obj_ev_diff=np.abs(data.prob_walk[0,trial]*data.mags[0,trial]-data.prob_walk[1,trial]*data.mags[1,trial])
+            #if subj_ev_diff<=subj_median_ev_diff:
+            if trial_subj_ev_diff<=subj_lims[0]:
                 if trial_data.correct:
-                    self.low_ev_diff_perc_correct+=1.0
+                    self.subj_low_ev_diff_perc_correct+=1.0
                 if trial_data.choice>-1:
-                    num_low_ev_diff_trials+=1.0
-            else:
+                    num_subj_low_ev_diff_trials+=1.0
+            elif trial_subj_ev_diff>=subj_lims[1]:
                 if trial_data.correct:
-                    self.high_ev_diff_perc_correct+=1.0
+                    self.subj_high_ev_diff_perc_correct+=1.0
                 if trial_data.choice>-1:
-                    num_high_ev_diff_trials+=1.0
+                    num_subj_high_ev_diff_trials+=1.0
+            #if obj_ev_diff<=obj_median_ev_diff:
+            if trial_obj_ev_diff<=obj_lims[0]:
+                if trial_data.correct:
+                    self.obj_low_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_obj_low_ev_diff_trials+=1.0
+            elif trial_obj_ev_diff>=obj_lims[1]:
+                if trial_data.correct:
+                    self.obj_high_ev_diff_perc_correct+=1.0
+                if trial_data.choice>-1:
+                    num_obj_high_ev_diff_trials+=1.0
 
             self.trials.append(trial_data)
         self.perc_correct_response=self.perc_correct_response/(self.num_trials-self.perc_no_response)*100.0
-        self.low_ev_diff_perc_correct=self.low_ev_diff_perc_correct/num_low_ev_diff_trials*100.0
-        self.high_ev_diff_perc_correct=self.high_ev_diff_perc_correct/num_high_ev_diff_trials*100.0
+        self.obj_low_ev_diff_perc_correct=self.obj_low_ev_diff_perc_correct/num_obj_low_ev_diff_trials*100.0
+        self.obj_high_ev_diff_perc_correct=self.obj_high_ev_diff_perc_correct/num_obj_high_ev_diff_trials*100.0
+        self.subj_low_ev_diff_perc_correct=self.subj_low_ev_diff_perc_correct/num_subj_low_ev_diff_trials*100.0
+        self.subj_high_ev_diff_perc_correct=self.subj_high_ev_diff_perc_correct/num_subj_high_ev_diff_trials*100.0
         self.perc_no_response=self.perc_no_response/self.num_trials*100.0
 
         #create report
@@ -723,10 +747,6 @@ class StimConditionReport:
         self.condition_perc_correct=[]
         self.ev_diff=[]
 
-        #beta_hist,beta_bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
-        beta_hist,beta_bins=np.histogram(self.condition_betas, bins=10)
-        ev_diff_hist,ev_diff_bins=np.histogram(np.array(self.ev_diff), bins=10)
-
         for virtual_subj_id in range(self.num_subjects):
             if virtual_subj_id not in self.excluded_sessions:
                 print('subject %d' % virtual_subj_id)
@@ -746,6 +766,10 @@ class StimConditionReport:
         self.condition_alphas=np.array(self.condition_alphas)
         self.condition_betas=np.array(self.condition_betas)
         self.condition_perc_correct=np.array(self.condition_perc_correct)
+
+        #beta_hist,beta_bins=np.histogram(reject_outliers(self.condition_betas), bins=10)
+        beta_hist,beta_bins=np.histogram(self.condition_betas, bins=10)
+        ev_diff_hist,ev_diff_bins=np.histogram(np.array(self.ev_diff), bins=10)
 
         # Create beta bar plot
         furl='img/beta_dist'
@@ -1108,7 +1132,7 @@ class RLReport:
             ax.set_xticklabels(self.stim_conditions)
             ax.set_xlabel('Condition')
             ax.set_ylabel('% Correct')
-            ax.set_ylim([50, 90])
+            #ax.set_ylim([50, 90])
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
@@ -1123,118 +1147,236 @@ class RLReport:
             ax.set_xticklabels(['Control', 'Anode'])
             ax.set_xlabel('Condition')
             ax.set_ylabel('% Correct')
-            ax.set_ylim([50, 90])
+            #ax.set_ylim([50, 90])
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-    def process_perc_correct_ev_diff(self, num_comparisons, regenerate_plots):
+    def process_perc_correct_obj_ev_diff(self, num_comparisons, regenerate_plots):
         # Create % correct plot
-        furl = 'img/perc_correct_ev_diff'
+        furl = 'img/perc_correct_obj_ev_diff'
         fname = os.path.join(self.reports_dir, furl)
-        self.perc_correct_ev_diff_url = '%s.png' % furl
+        self.perc_correct_obj_ev_diff_url = '%s.png' % furl
         
-        self.perc_correct_low_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_low_ev_diff_perc_correct.values())
-        self.perc_correct_low_ev_diff_control_wilcoxon = {}
-        self.perc_correct_low_ev_diff_anode_wilcoxon = {}
-        self.perc_correct_low_ev_diff_cathode_wilcoxon = {}
-        self.perc_correct_low_ev_diff_mean = {}
-        self.perc_correct_low_ev_diff_std = {}
-        perc_correct_low_ev_diff_mean = []
-        perc_correct_low_ev_diff_std_err = []
+        self.perc_correct_obj_ev_diff_control_wilcoxon = {}
+        self.perc_correct_obj_low_ev_diff_mean = {}
+        self.perc_correct_obj_low_ev_diff_std = {}
+        perc_correct_obj_low_ev_diff_mean = []
+        perc_correct_obj_low_ev_diff_std_err = []
 
-        self.perc_correct_high_ev_diff_freidman = stats.friedmanchisquare(*self.stim_condition_high_ev_diff_perc_correct.values())
-        self.perc_correct_high_ev_diff_control_wilcoxon = {}
-        self.perc_correct_high_ev_diff_anode_wilcoxon = {}
-        self.perc_correct_high_ev_diff_cathode_wilcoxon = {}
-        self.perc_correct_high_ev_diff_mean = {}
-        self.perc_correct_high_ev_diff_std = {}
-        perc_correct_high_ev_diff_mean = []
-        perc_correct_high_ev_diff_std_err = []
+        self.perc_correct_obj_high_ev_diff_mean = {}
+        self.perc_correct_obj_high_ev_diff_std = {}
+        perc_correct_obj_high_ev_diff_mean = []
+        perc_correct_obj_high_ev_diff_std_err = []
+        
+        self.perc_control_correct_obj_low_ev_diff_mean = {}
+        self.perc_control_correct_obj_low_ev_diff_std = {}
+        perc_control_correct_obj_low_ev_diff_mean = []
+        perc_control_correct_obj_low_ev_diff_std_err = []
+
+        self.perc_control_correct_obj_high_ev_diff_mean = {}
+        self.perc_control_correct_obj_high_ev_diff_std = {}
+        perc_control_correct_obj_high_ev_diff_mean = []
+        perc_control_correct_obj_high_ev_diff_std_err = []
         
         for stim_condition in self.stim_conditions:
+            self.perc_correct_obj_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_obj_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition]) / np.sqrt(len(self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition]))
+            perc_correct_obj_low_ev_diff_mean.append(self.perc_correct_obj_low_ev_diff_mean[stim_condition])
+            perc_correct_obj_low_ev_diff_std_err.append(self.perc_correct_obj_low_ev_diff_std[stim_condition])
+
+            self.perc_correct_obj_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_obj_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition]) / np.sqrt(len(self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition]))
+            perc_correct_obj_high_ev_diff_mean.append(self.perc_correct_obj_high_ev_diff_mean[stim_condition])
+            perc_correct_obj_high_ev_diff_std_err.append(self.perc_correct_obj_high_ev_diff_std[stim_condition])
             if not stim_condition == 'control':
-                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['control'],
-                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_low_ev_diff_control_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+                self.stim_condition_obj_low_ev_diff_perc_control_correct[stim_condition]=self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition]/self.stim_condition_obj_low_ev_diff_perc_correct['control']*100.0
+                self.stim_condition_obj_high_ev_diff_perc_control_correct[stim_condition]=self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition]/self.stim_condition_obj_high_ev_diff_perc_correct['control']*100.0
 
-                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['control'],
-                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_high_ev_diff_control_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
-            if stim_condition.startswith('anode_control'):
-                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['anode'],
-                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_low_ev_diff_anode_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+                T, p = stats.wilcoxon(self.stim_condition_obj_low_ev_diff_perc_control_correct[stim_condition],
+                    self.stim_condition_obj_high_ev_diff_perc_control_correct[stim_condition])
+                self.perc_correct_obj_ev_diff_control_wilcoxon[stim_condition] = (T, p, norm.isf(np.min([1.0, p / 2.0])))
 
-                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['anode'],
-                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_high_ev_diff_anode_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
-            elif stim_condition.startswith('cathode_control'):
-                T, p = stats.wilcoxon(self.stim_condition_low_ev_diff_perc_correct['cathode'],
-                    self.stim_condition_low_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_low_ev_diff_cathode_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
+                self.perc_control_correct_obj_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_obj_low_ev_diff_perc_control_correct[stim_condition])
+                self.perc_control_correct_obj_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_obj_low_ev_diff_perc_control_correct[stim_condition]) / np.sqrt(len(self.stim_condition_obj_low_ev_diff_perc_control_correct[stim_condition]))
+                perc_control_correct_obj_low_ev_diff_mean.append(self.perc_control_correct_obj_low_ev_diff_mean[stim_condition])
+                perc_control_correct_obj_low_ev_diff_std_err.append(self.perc_control_correct_obj_low_ev_diff_std[stim_condition])
 
-                T, p = stats.wilcoxon(self.stim_condition_high_ev_diff_perc_correct['cathode'],
-                    self.stim_condition_high_ev_diff_perc_correct[stim_condition])
-                self.perc_correct_high_ev_diff_cathode_wilcoxon[stim_condition] = (
-                    T, p * num_comparisons, norm.isf(np.min([1.0, p * num_comparisons / 2.0])))
-                
-            self.perc_correct_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
-            self.perc_correct_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_low_ev_diff_perc_correct[stim_condition]) / np.sqrt(
-                len(self.stim_condition_low_ev_diff_perc_correct[stim_condition]))
-            perc_correct_low_ev_diff_mean.append(self.perc_correct_low_ev_diff_mean[stim_condition])
-            perc_correct_low_ev_diff_std_err.append(self.perc_correct_low_ev_diff_std[stim_condition])
+                self.perc_control_correct_obj_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_obj_high_ev_diff_perc_control_correct[stim_condition])
+                self.perc_control_correct_obj_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_obj_high_ev_diff_perc_control_correct[stim_condition]) / np.sqrt(len(self.stim_condition_obj_high_ev_diff_perc_control_correct[stim_condition]))
+                perc_control_correct_obj_high_ev_diff_mean.append(self.perc_control_correct_obj_high_ev_diff_mean[stim_condition])
+                perc_control_correct_obj_high_ev_diff_std_err.append(self.perc_control_correct_obj_high_ev_diff_std[stim_condition])
 
-            self.perc_correct_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
-            self.perc_correct_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_high_ev_diff_perc_correct[stim_condition]) / np.sqrt(
-                len(self.stim_condition_high_ev_diff_perc_correct[stim_condition]))
-            perc_correct_high_ev_diff_mean.append(self.perc_correct_high_ev_diff_mean[stim_condition])
-            perc_correct_high_ev_diff_std_err.append(self.perc_correct_high_ev_diff_std[stim_condition])
         if regenerate_plots:
-            fig = Figure(figsize=(20, 6))
-            pos = np.arange(len(self.stim_conditions)) + 0.5    # Center bars on the Y-axis ticks
-            ax = fig.add_subplot(2, 1, 1)
-            ax.bar(pos, np.array([[perc_correct_low_ev_diff_mean],[perc_correct_high_ev_diff_mean]]), width=.5,
-                yerr=np.array([[perc_correct_low_ev_diff_std_err],[perc_correct_high_ev_diff_std_err]]), align='center',
-                ecolor='k')
-            ax.set_legend(['low EV diff','high EV diff'])
+            fig = Figure()#figsize=(20, 6))
+
+            width=.25
+            half_width=width*.5
+
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(len(self.stim_conditions)-1)-width    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_control_correct_obj_high_ev_diff_mean, width=width, yerr=perc_control_correct_obj_high_ev_diff_std_err, align='center',
+                ecolor='k',color='b')
+            pos = np.arange(len(self.stim_conditions)-1)    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_control_correct_obj_low_ev_diff_mean, width=width, yerr=perc_control_correct_obj_low_ev_diff_std_err, align='center',
+                ecolor='k',color='r')
+            ax.legend(['Easy','Hard'],loc='best')
+            ax.set_xticks(np.arange(len(self.stim_conditions)-1))
+            ax.set_xticklabels(self.stim_conditions[1:])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Control Correct')
+            ax.set_ylim([80, 110])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_control_correct_obj_anode_only')
+            fig = Figure()
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(2)    # Center bars on the Y-axis ticks
+            ax.bar(pos, np.array([self.perc_control_correct_obj_high_ev_diff_mean['anode'], self.perc_control_correct_obj_low_ev_diff_mean['anode']]),
+                   width=width, yerr=np.array([self.perc_control_correct_obj_high_ev_diff_std['anode'], self.perc_control_correct_obj_low_ev_diff_std['anode']]),
+                   align='center', ecolor='k')
             ax.set_xticks(pos)
+            ax.set_xticklabels(['Easy', 'Hard'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Control Correct')
+            ax.set_ylim([80, 90])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_obj')
+            fig = Figure()
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(len(self.stim_conditions))-width    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_correct_obj_high_ev_diff_mean, width=width, yerr=perc_correct_obj_high_ev_diff_std_err, align='center',
+                ecolor='k',color='b')
+            pos = np.arange(len(self.stim_conditions))    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_correct_obj_low_ev_diff_mean, width=width, yerr=perc_correct_obj_low_ev_diff_std_err, align='center',
+                ecolor='k',color='r')
+            ax.legend(['Easy','Hard'],loc='best')
+            ax.set_xticks(np.arange(len(self.stim_conditions)))
             ax.set_xticklabels(self.stim_conditions)
             ax.set_xlabel('Condition')
             ax.set_ylabel('% Correct')
-            ax.set_ylim([50, 90])
+            ax.set_ylim([60, 90])
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
 
-            fname = os.path.join(self.reports_dir, 'img/perc_correct_anode_only')
+    def process_perc_correct_subj_ev_diff(self, num_comparisons, regenerate_plots):
+        # Create % correct plot
+        furl = 'img/perc_correct_subj_ev_diff'
+        fname = os.path.join(self.reports_dir, furl)
+        self.perc_correct_subj_ev_diff_url = '%s.png' % furl
+        
+        self.perc_correct_subj_ev_diff_control_wilcoxon = {}
+        self.perc_correct_subj_low_ev_diff_mean = {}
+        self.perc_correct_subj_low_ev_diff_std = {}
+        perc_correct_subj_low_ev_diff_mean = []
+        perc_correct_subj_low_ev_diff_std_err = []
+
+        self.perc_correct_subj_high_ev_diff_mean = {}
+        self.perc_correct_subj_high_ev_diff_std = {}
+        perc_correct_subj_high_ev_diff_mean = []
+        perc_correct_subj_high_ev_diff_std_err = []
+
+        self.perc_control_correct_subj_low_ev_diff_mean = {}
+        self.perc_control_correct_subj_low_ev_diff_std = {}
+        perc_control_correct_subj_low_ev_diff_mean = []
+        perc_control_correct_subj_low_ev_diff_std_err = []
+
+        self.perc_control_correct_subj_high_ev_diff_mean = {}
+        self.perc_control_correct_subj_high_ev_diff_std = {}
+        perc_control_correct_subj_high_ev_diff_mean = []
+        perc_control_correct_subj_high_ev_diff_std_err = []
+
+        for stim_condition in self.stim_conditions:
+            self.perc_correct_subj_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_subj_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition]) / np.sqrt(len(self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition]))
+            perc_correct_subj_low_ev_diff_mean.append(self.perc_correct_subj_low_ev_diff_mean[stim_condition])
+            perc_correct_subj_low_ev_diff_std_err.append(self.perc_correct_subj_low_ev_diff_std[stim_condition])
+
+            self.perc_correct_subj_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition])
+            self.perc_correct_subj_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition]) / np.sqrt(len(self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition]))
+            perc_correct_subj_high_ev_diff_mean.append(self.perc_correct_subj_high_ev_diff_mean[stim_condition])
+            perc_correct_subj_high_ev_diff_std_err.append(self.perc_correct_subj_high_ev_diff_std[stim_condition])
+            if not stim_condition == 'control':
+                self.stim_condition_subj_low_ev_diff_perc_control_correct[stim_condition]=self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition]/self.stim_condition_subj_low_ev_diff_perc_correct['control']*100.0
+                self.stim_condition_subj_high_ev_diff_perc_control_correct[stim_condition]=self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition]/self.stim_condition_subj_high_ev_diff_perc_correct['control']*100.0
+
+                T, p = stats.wilcoxon(self.stim_condition_subj_low_ev_diff_perc_control_correct[stim_condition],
+                    self.stim_condition_subj_high_ev_diff_perc_control_correct[stim_condition])
+                self.perc_correct_subj_ev_diff_control_wilcoxon[stim_condition] = (T, p, norm.isf(np.min([1.0, p / 2.0])))
+
+                self.perc_control_correct_subj_low_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_subj_low_ev_diff_perc_control_correct[stim_condition])
+                self.perc_control_correct_subj_low_ev_diff_std[stim_condition] = np.std(self.stim_condition_subj_low_ev_diff_perc_control_correct[stim_condition]) / np.sqrt(len(self.stim_condition_subj_low_ev_diff_perc_control_correct[stim_condition]))
+                perc_control_correct_subj_low_ev_diff_mean.append(self.perc_control_correct_subj_low_ev_diff_mean[stim_condition])
+                perc_control_correct_subj_low_ev_diff_std_err.append(self.perc_control_correct_subj_low_ev_diff_std[stim_condition])
+
+                self.perc_control_correct_subj_high_ev_diff_mean[stim_condition] = np.mean(self.stim_condition_subj_high_ev_diff_perc_control_correct[stim_condition])
+                self.perc_control_correct_subj_high_ev_diff_std[stim_condition] = np.std(self.stim_condition_subj_high_ev_diff_perc_control_correct[stim_condition]) / np.sqrt(len(self.stim_condition_subj_high_ev_diff_perc_control_correct[stim_condition]))
+                perc_control_correct_subj_high_ev_diff_mean.append(self.perc_control_correct_subj_high_ev_diff_mean[stim_condition])
+                perc_control_correct_subj_high_ev_diff_std_err.append(self.perc_control_correct_subj_high_ev_diff_std[stim_condition])
+
+        if regenerate_plots:
+            fig = Figure()#figsize=(20, 6))
+
+            width=.25
+            half_width=width*.5
+
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(len(self.stim_conditions)-1)-width    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_control_correct_subj_high_ev_diff_mean, width=width, yerr=perc_control_correct_subj_high_ev_diff_std_err, align='center',
+                ecolor='k',color='b')
+            pos = np.arange(len(self.stim_conditions)-1)    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_control_correct_subj_low_ev_diff_mean, width=width, yerr=perc_control_correct_subj_low_ev_diff_std_err, align='center',
+                ecolor='k',color='r')
+            ax.legend(['Easy','Hard'], loc='best')
+            ax.set_xticks(np.arange(len(self.stim_conditions)-1))
+            ax.set_xticklabels(self.stim_conditions[1:])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Control Correct')
+            ax.set_ylim([80, 115])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_control_correct_subj_anode_only')
             fig = Figure()
-            pos = np.arange(2) + 0.5
-            ax = fig.add_subplot(2, 1, 1)
-            ax.bar(pos, np.array([[self.perc_correct_low_ev_diff_mean['control'],
-                                   self.perc_correct_low_ev_diff_mean['anode']],
-                                  [self.perc_correct_high_ev_diff_mean['control'],
-                                   self.perc_correct_high_ev_diff_mean['anode']]]), width=.5,
-                yerr=np.array([[self.perc_correct_low_ev_diff_std['control'],
-                                self.perc_correct_low_ev_diff_std['anode']],
-                               [self.perc_correct_low_ev_diff_std['control'],
-                                self.perc_correct_high_ev_diff_std['anode']]]), align='center', ecolor='k')
-            ax.set_legend(['low EV diff','high EV diff'])
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(2)    # Center bars on the Y-axis ticks
+            ax.bar(pos, np.array([self.perc_control_correct_subj_high_ev_diff_mean['anode'], self.perc_control_correct_subj_low_ev_diff_mean['anode']]),
+                   width=width, yerr=np.array([self.perc_control_correct_subj_high_ev_diff_std['anode'], self.perc_control_correct_subj_low_ev_diff_std['anode']]),
+                   align='center', ecolor='k', color='b')
             ax.set_xticks(pos)
-            ax.set_xticklabels(['Control', 'Anode'])
+            ax.set_xticklabels(['Easy', 'Hard'])
+            ax.set_xlabel('Condition')
+            ax.set_ylabel('% Control Correct')
+            ax.set_ylim([80, 105])
+            save_to_png(fig, '%s.png' % fname)
+            save_to_eps(fig, '%s.eps' % fname)
+            plt.close(fig)
+
+            fname = os.path.join(self.reports_dir, 'img/perc_correct_subj')
+            fig = Figure()
+            ax = fig.add_subplot(1, 1, 1)
+            pos = np.arange(len(self.stim_conditions))-width    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_correct_subj_high_ev_diff_mean, width=width, yerr=perc_correct_subj_high_ev_diff_std_err, align='center',
+                ecolor='k',color='b')
+            pos = np.arange(len(self.stim_conditions))    # Center bars on the Y-axis ticks
+            ax.bar(pos, perc_correct_subj_low_ev_diff_mean, width=width, yerr=perc_correct_subj_low_ev_diff_std_err, align='center',
+                ecolor='k',color='r')
+            ax.legend(['Easy','Hard'], loc='best')
+            ax.set_xticks(np.arange(len(self.stim_conditions)))
+            ax.set_xticklabels(self.stim_conditions)
             ax.set_xlabel('Condition')
             ax.set_ylabel('% Correct')
-            ax.set_ylim([50, 90])
+            ax.set_ylim([40, 105])
             save_to_png(fig, '%s.png' % fname)
             save_to_eps(fig, '%s.eps' % fname)
             plt.close(fig)
-
-        return num_comparisons
 
     def generate_data_files(self):
         # Figure 1c
@@ -1987,8 +2129,15 @@ class RLReport:
             self.cathode_stim_condition_large_ev_inh_rate_std_err={}
 
         self.stim_condition_perc_correct={}
-        self.stim_condition_low_ev_diff_perc_correct={}
-        self.stim_condition_high_ev_diff_perc_correct={}
+        self.stim_condition_obj_low_ev_diff_perc_correct={}
+        self.stim_condition_obj_high_ev_diff_perc_correct={}
+        self.stim_condition_subj_low_ev_diff_perc_correct={}
+        self.stim_condition_subj_high_ev_diff_perc_correct={}
+        
+        self.stim_condition_obj_low_ev_diff_perc_control_correct={}
+        self.stim_condition_obj_high_ev_diff_perc_control_correct={}
+        self.stim_condition_subj_low_ev_diff_perc_control_correct={}
+        self.stim_condition_subj_high_ev_diff_perc_control_correct={}
         self.stim_condition_no_response={}
         for stim_condition in self.stim_conditions:
             if regenerate_plots:
@@ -2051,18 +2200,24 @@ class RLReport:
                     self.cathode_stim_condition_large_ev_inh_rate_std_err[stim_condition]=self.stim_condition_reports[stim_condition].compute_trial_rate_inh_stats(0,10000,self.ev_diff_bins[6],self.ev_diff_bins[-1])
 
             self.stim_condition_perc_correct[stim_condition]=[]
-            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=[]
-            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition]=[]
+            self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition]=[]
             self.stim_condition_no_response[stim_condition]=[]
             for session in self.stim_condition_reports[stim_condition].sessions:
                 self.stim_condition_perc_correct[stim_condition].append(session.perc_correct_response)
-                self.stim_condition_low_ev_diff_perc_correct[stim_condition].append(session.low_ev_diff_perc_correct)
-                self.stim_condition_high_ev_diff_perc_correct[stim_condition].append(session.high_ev_diff_perc_correct)
+                self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition].append(session.obj_low_ev_diff_perc_correct)
+                self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition].append(session.obj_high_ev_diff_perc_correct)
+                self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition].append(session.subj_low_ev_diff_perc_correct)
+                self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition].append(session.subj_high_ev_diff_perc_correct)
                 self.stim_condition_no_response[stim_condition].append(session.perc_no_response)
         for stim_condition in self.stim_conditions:
             self.stim_condition_perc_correct[stim_condition]=np.array(self.stim_condition_perc_correct[stim_condition])
-            self.stim_condition_low_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_low_ev_diff_perc_correct[stim_condition])
-            self.stim_condition_high_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_high_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_obj_low_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_obj_high_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_subj_low_ev_diff_perc_correct[stim_condition])
+            self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition]=np.array(self.stim_condition_subj_high_ev_diff_perc_correct[stim_condition])
             self.stim_condition_no_response[stim_condition]=np.array(self.stim_condition_no_response[stim_condition])
 
         num_comparisons = 0.0
@@ -2075,6 +2230,8 @@ class RLReport:
                 num_comparisons += 1.0
 
         self.process_perc_correct(num_comparisons, regenerate_plots)
+        self.process_perc_correct_obj_ev_diff(num_comparisons, regenerate_plots)
+        self.process_perc_correct_subj_ev_diff(num_comparisons, regenerate_plots)
 
         # Create perc no response plot
         furl='img/perc_no_response'
@@ -3381,7 +3538,7 @@ class RLReport:
 
         fname=os.path.join(self.reports_dir, 'img/alpha_bar')
         fig=plt.figure()
-        pos = np.arange(len(self.stim_condition))+0.5    # Center bars on the Y-axis ticks
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             color='b'
@@ -3402,7 +3559,7 @@ class RLReport:
 
         fname=os.path.join(self.reports_dir, 'img/beta_bar')
         fig=plt.figure()
-        pos = np.arange(len(self.stim_condition))+0.5    # Center bars on the Y-axis ticks
+        pos = np.arange(len(self.stim_conditions))+0.5    # Center bars on the Y-axis ticks
         ax=fig.add_subplot(1,1,1)
         for stim_condition in self.stim_conditions:
             color='b'
@@ -4770,7 +4927,8 @@ def rename_data_files(data_dir):
 
 if __name__=='__main__':
     report=RLReport('/data/pySBI/rl/virtual_subjects.v2/','rl.virtual_subject.%d.%s',
-        ['control','anode','anode_control_4','anode_control_5','anode_control_6','cathode','cathode_control_4','cathode_control_5','cathode_control_6'],'/data/pySBI/reports/rl/virtual_subjects.v2',
+        #['control','anode','anode_control_4','anode_control_5','anode_control_6','cathode','cathode_control_4','cathode_control_5','cathode_control_6'],'/data/pySBI/reports/rl/virtual_subjects.v2',
+        ['control','anode','cathode'],'/data/pySBI/reports/rl/virtual_subjects.v2',
         25,'')
     #report.create_report()
     #plot_trials_ev_diff('../../data/rerw','virtual_subject_0.control.h5')
