@@ -203,7 +203,18 @@ p={{ rinfo.perc_correct_freidman[1] }}
 <br>{{ stim_condition }}, W={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_cathode_wilcoxon[stim_condition][2] }}
 {% endfor %}
 
-<img width="50%" src="{{ rinfo.perc_correct_ev_diff_url }}"/>
+<h5>Subjective EV Diff</h5>
+<img width="50%" src="{{ rinfo.perc_correct_subj_ev_diff_url }}"/>
+<h5>% of control</h5>
+{% for stim_condition in rinfo.perc_correct_subj_ev_diff_control_wilcoxon %}
+<br>{{ stim_condition }}, W={{ rinfo.perc_correct_subj_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_subj_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_subj_ev_diff_control_wilcoxon[stim_condition][2] }}
+{% endfor %}
+<h5>Objective EV Diff</h5>
+<img width="50%" src="{{ rinfo.perc_correct_obj_ev_diff_url }}"/>
+<h5>% of control</h5>
+{% for stim_condition in rinfo.perc_correct_obj_ev_diff_control_wilcoxon %}
+<br>{{ stim_condition }}, W={{ rinfo.perc_correct_obj_ev_diff_control_wilcoxon[stim_condition][0] }}, p={{ rinfo.perc_correct_obj_ev_diff_control_wilcoxon[stim_condition][1] }}, Z={{ rinfo.perc_correct_obj_ev_diff_control_wilcoxon[stim_condition][2] }}
+{% endfor %}
 
 <h4>% No Response</h4>
 <img width="50%" src="{{ rinfo.perc_no_response_url }}"/>
