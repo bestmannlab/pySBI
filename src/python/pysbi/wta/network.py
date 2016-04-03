@@ -5,7 +5,6 @@ from brian.clock import defaultclock, Clock
 from brian.directcontrol import PoissonGroup
 from brian.equations import Equations
 from brian.connections import DelayConnection
-from brian.experimental.model_documentation import document_network, labels_from_namespace, LaTeXDocumentWriter
 from brian.library.IF import exp_IF
 from brian.library.synapses import exp_synapse, biexp_synapse
 from brian.membrane_equations import Current, InjectedCurrent
@@ -18,10 +17,10 @@ import argparse
 import numpy as np
 from pysbi.util.utils import init_connection
 from pysbi.voxel import Voxel, LFPSource, get_bold_signal
-from pysbi.wta.monitor import WTAMonitor, write_output
-#brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
- #                            gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
-  #                           usecodegenreset = True)
+from pysbi.wta.monitor import WTAMonitor
+brian.set_global_preferences(useweave=True,openmp=True,useweave_linear_diffeq =True,
+                             gcc_options = ['-ffast-math','-march=native'],usecodegenweave = True,
+                             usecodegenreset = True)
 
 pyr_params=Parameters(
     C=0.5*nF,
@@ -29,15 +28,18 @@ pyr_params=Parameters(
     refractory=2*ms,
     w_nmda = 0.165 * nS,
     w_ampa_ext = 2.1*nS,
+    w_ampa_bak = 2.1*nS,
     w_ampa_rec = 0.05*nS,
     w_gaba = 1.3*nS,
 )
+
 inh_params=Parameters(
     C=0.2*nF,
     gL=20*nS,
     refractory=1*ms,
     w_nmda = 0.13 * nS,
     w_ampa_ext = 1.62*nS,
+    w_ampa_bak = 1.63*nS,
     w_ampa_rec = 0.04*nS,
     w_gaba = 1.0*nS,
 )
@@ -66,6 +68,39 @@ default_params=Parameters(
     p_e_i=0.1,
     p_i_i=0.1,
     p_i_e=0.2,
+    # Background firing rate
+    background_freq=5,
+    # Input variance
+    input_var=4*Hz,
+    # Input refresh rate
+    refresh_rate=60.0,
+    # Number of response options
+    num_groups=2,
+    # Total size of the network (excitatory and inhibitory cells)
+    network_group_size=2000,
+    background_input_size=2000,
+    mu_0=40.0,
+    # Proportion of pyramidal cells getting task-related input
+    f=.15,
+    task_input_resting_rate=1*Hz,
+    # Response threshold
+    resp_threshold=25
+)
+default_params.p_a=default_params.mu_0/100.0
+default_params.p_b=default_params.p_a
+default_params.task_input_size=int(default_params.network_group_size*.8*default_params.f)
+
+simulation_params=Parameters(
+    trial_duration=4*second,
+    stim_start_time=1*second,
+    stim_end_time=3*second,
+    dt=0.5*ms,
+    ntrials=1,
+    muscimol_amount=0*nS,
+    injection_site=0,
+    p_dcs=0*pA,
+    i_dcs=0*pA,
+    dcs_start_time=0*ms
 )
 
 # WTA network class - extends Brian's NeuronGroup
@@ -77,15 +112,13 @@ class WTANetworkGroup(NeuronGroup):
     #       params = network parameters
     #       background_input = background input source
     #       task_inputs = task input sources
-    def __init__(self, N, num_groups, params=default_params, background_input=None, task_inputs=None, clock=defaultclock):
-        self.N=N
-        self.num_groups=num_groups
+    def __init__(self, params=default_params, pyr_params=pyr_params(), inh_params=inh_params(),
+                 background_input=None, task_inputs=None, clock=defaultclock):
         self.params=params
         self.pyr_params=pyr_params
         self.inh_params=inh_params
         self.background_input=background_input
         self.task_inputs=task_inputs
-        self.f=.15
 
         ## Set up equations
 
@@ -122,8 +155,8 @@ class WTANetworkGroup(NeuronGroup):
         # Total synaptic current
         eqs += Equations('I_abs=(I_ampa_r**2)**.5+(I_ampa_b**2)**.5+(I_ampa_x**2)**.5+(I_nmda**2)**.5+(I_gaba_a**2)**.5 : amp')
 
-        NeuronGroup.__init__(self, N, model=eqs, threshold=-20*mV, refractory=1*ms, reset=params.Vr,
-            compile=True, freeze=True, clock=clock)
+        NeuronGroup.__init__(self, params.network_group_size, model=eqs, threshold=-20*mV, refractory=1*ms,
+            reset=params.Vr, compile=True, freeze=True, clock=clock)
 
         self.init_subpopulations()
 
@@ -132,14 +165,14 @@ class WTANetworkGroup(NeuronGroup):
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
         # Main excitatory subpopulation
-        self.e_size=int(self.N*.8)
+        self.e_size=int(self.params.network_group_size*.8)
         self.group_e=self.subgroup(self.e_size)
         self.group_e.C=self.pyr_params.C
         self.group_e.gL=self.pyr_params.gL
         self.group_e._refractory_time=self.pyr_params.refractory
 
         # Main inhibitory subpopulation
-        self.i_size=int(self.N*.2)
+        self.i_size=int(self.params.network_group_size*.2)
         self.group_i=self.subgroup(self.i_size)
         self.group_i.C=self.inh_params.C
         self.group_i.gL=self.inh_params.gL
@@ -147,12 +180,12 @@ class WTANetworkGroup(NeuronGroup):
 
         # Input-specific sub-subpopulations
         self.groups_e=[]
-        for i in range(self.num_groups):
-            subgroup_e=self.group_e.subgroup(int(self.f*self.e_size))
+        for i in range(self.params.num_groups):
+            subgroup_e=self.group_e.subgroup(int(self.params.f*self.e_size))
             self.groups_e.append(subgroup_e)
 
         # Initialize state variables
-        self.vm = self.params.EL+randn(self.N)*mV
+        self.vm = self.params.EL+randn(self.params.network_group_size)*mV
         self.group_e.g_ampa_b = rand(self.e_size)*self.pyr_params.w_ampa_ext*2.0
         self.group_e.g_nmda = rand(self.e_size)*self.pyr_params.w_nmda*2.0
         self.group_e.g_gaba_a = rand(self.e_size)*self.pyr_params.w_gaba*2.0
@@ -167,7 +200,7 @@ class WTANetworkGroup(NeuronGroup):
         self.connections={}
 
         # Iterate over input groups
-        for i in range(self.num_groups):
+        for i in range(self.params.num_groups):
 
             # E population - recurrent connections
             self.connections['e%d->e%d_ampa' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
@@ -194,30 +227,29 @@ class WTANetworkGroup(NeuronGroup):
             self.connections['b->ampa']=DelayConnection(self.background_input, self, 'g_ampa_b', delay=.5*ms)
             self.connections['b->ampa'][:,:]=0
             for i in xrange(len(self.background_input)):
-                if i<int(self.N*.8):
-                    self.connections['b->ampa'][i,i]=self.pyr_params.w_ampa_ext
+                if i<self.e_size:
+                    self.connections['b->ampa'][i,i]=self.pyr_params.w_ampa_bak
                 else:
-                    self.connections['b->ampa'][i,i]=self.inh_params.w_ampa_ext
+                    self.connections['b->ampa'][i,i]=self.inh_params.w_ampa_bak
 
         if self.task_inputs is not None:
             # Task input -> E population connections
-            for i in range(self.num_groups):
+            for i in range(self.params.num_groups):
                 self.connections['t%d->e%d_ampa' % (i,i)]=DelayConnection(self.task_inputs[i], self.groups_e[i],
                     'g_ampa_x')
                 self.connections['t%d->e%d_ampa' % (i,i)].connect_one_to_one(weight=self.pyr_params.w_ampa_ext,
                     delay=.5*ms)
                 self.connections['t%d->e%d_ampa' % (i,1-i)]=DelayConnection(self.task_inputs[i], self.groups_e[1-i],
                     'g_ampa_x')
-                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight=.01 * self.pyr_params.w_ampa_ext,
+                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight= .01 * self.pyr_params.w_ampa_ext,
                     delay=.5*ms)
 
 
 
 
-def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=5, input_var=4*Hz, output_file=None,
-            save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
-            record_firing_rate=True, record_inputs=False, record_connections=None, plot_output=False, muscimol_amount=0*nS, injection_site=0,
-            p_dcs=0*pA, i_dcs=0*pA, dcs_start_time=0*ms, report='text'):
+def run_wta(wta_params, input_freq, sim_params, output_file=None, save_summary_only=False, record_lfp=True,
+            record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
+            record_inputs=False, record_connections=None, plot_output=False, report='text'):
     """
     Run WTA network
        wta_params = network parameters
@@ -241,43 +273,35 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     """
 
     start_time = time()
-    simulation_clock=Clock(dt=.5*ms)
-    refresh_rate=60.0
-    input_update_clock=Clock(dt=(1.0/refresh_rate)*second)
 
-    # Init simulation parameters
-    stim_start_time=1*second
-    stim_end_time=trial_duration-1*second
+    simulation_clock=Clock(dt=sim_params.dt)
+    input_update_clock=Clock(dt=(1.0/wta_params.refresh_rate)*second)
 
-    # Total size of the network (excitatory and inhibitory cells)
-    network_group_size=2000
-    background_input_size=2000
-    task_input_size=int(network_group_size*.8*.15)
-
-    background_input=PoissonGroup(background_input_size, rates=background_freq*Hz, clock=simulation_clock)
+    background_input=PoissonGroup(wta_params.background_input_size, rates=wta_params.background_freq*Hz,
+        clock=simulation_clock)
     task_inputs=[]
-    for i in range(num_groups):
-        task_inputs.append(PoissonGroup(task_input_size, rates=1*Hz, clock=simulation_clock))
+    for i in range(wta_params.num_groups):
+        task_inputs.append(PoissonGroup(wta_params.task_input_size, rates=1*Hz, clock=simulation_clock))
 
     # Create WTA network
-    wta_network=WTANetworkGroup(network_group_size, num_groups, params=wta_params, background_input=background_input,
-        task_inputs=task_inputs, clock=simulation_clock)
+    wta_network=WTANetworkGroup(params=wta_params, background_input=background_input, task_inputs=task_inputs,
+        clock=simulation_clock)
 
     @network_operation(when='start', clock=input_update_clock)
     def set_task_inputs():
         for idx in range(len(task_inputs)):
-            rate=1*Hz
-            if stim_start_time<=simulation_clock.t<stim_end_time:
-                rate=input_freq[idx]*Hz+np.random.randn()*input_var
-                if rate<1*Hz:
-                    rate=1*Hz
+            rate=wta_params.task_input_resting_rate
+            if sim_params.stim_start_time<=simulation_clock.t<sim_params.stim_end_time:
+                rate=input_freq[idx]*Hz+np.random.randn()*wta_params.input_var
+                if rate<wta_params.task_input_resting_rate:
+                    rate=wta_params.task_input_resting_rate
             task_inputs[idx]._S[0, :]=rate
 
     @network_operation(clock=simulation_clock)
     def inject_current():
-        if simulation_clock.t>dcs_start_time:
-            wta_network.group_e.I_dcs=p_dcs
-            wta_network.group_i.I_dcs=i_dcs
+        if simulation_clock.t>sim_params.dcs_start_time:
+            wta_network.group_e.I_dcs=sim_params.p_dcs
+            wta_network.group_i.I_dcs=sim_params.i_dcs
 
     # LFP source
     lfp_source=LFPSource(wta_network.group_e, clock=simulation_clock)
@@ -286,60 +310,39 @@ def run_wta(wta_params, num_groups, input_freq, trial_duration, background_freq=
     voxel=Voxel(simulation_clock, network=wta_network)
 
     # Create network monitor
-    wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, record_lfp=record_lfp, record_voxel=record_voxel,
+    wta_monitor=WTAMonitor(wta_network, lfp_source, voxel, sim_params, record_lfp=record_lfp, record_voxel=record_voxel,
         record_neuron_state=record_neuron_state, record_spikes=record_spikes, record_firing_rate=record_firing_rate,
         record_inputs=record_inputs, record_connections=record_connections, save_summary_only=save_summary_only,
         clock=simulation_clock)
 
     @network_operation(when='start', clock=simulation_clock)
     def inject_muscimol():
-        if muscimol_amount>0:
-            wta_network.groups_e[injection_site].g_muscimol=muscimol_amount
+        if sim_params.muscimol_amount>0:
+            wta_network.groups_e[sim_params.injection_site].g_muscimol=sim_params.muscimol_amount
 
     # Create Brian network and reset clock
-    net=Network(background_input, task_inputs,set_task_inputs, wta_network, lfp_source, voxel, wta_network.connections.values(),
-        wta_monitor.monitors.values(), inject_muscimol, inject_current)
+    net=Network(background_input, task_inputs,set_task_inputs, wta_network, lfp_source, voxel,
+        wta_network.connections.values(), wta_monitor.monitors.values(), inject_muscimol, inject_current)
     print "Initialization time: %.2fs" % (time() - start_time)
-
-#    writer=LaTeXDocumentWriter()
-#    labels={}
-#    labels[voxel]=('v',str(voxel))
-#    labels[background_input]=('bi',str(background_input))
-#    labels[lfp_source]=('lfp',str(lfp_source))
-#    labels[wta_network]=('n',str(wta_network))
-#    labels[wta_network.group_e]=('e',str(wta_network.group_e))
-#    labels[wta_network.group_i]=('i',str(wta_network.group_i))
-#    for i,e_group in enumerate(wta_network.groups_e):
-#        labels[e_group]=('e%d' % i,'%s %d' % (str(e_group),i))
-#    for i,task_input in enumerate(task_inputs):
-#        labels[task_input]=('t%d' % i,'%s %d' % (str(task_input),i))
-#    for name,conn in wta_network.connections.iteritems():
-#        labels[conn]=(name,str(conn))
-#    for name,monitor in wta_monitor.monitors.iteritems():
-#        labels[monitor]=(name,str(monitor))
-#    writer.document_network(net=net, labels=labels)
 
     # Run simulation
     start_time = time()
-    net.run(trial_duration, report=report)
+    net.run(sim_params.trial_duration, report=report)
     print "Simulation time: %.2fs" % (time() - start_time)
 
     # Compute BOLD signal
     if record_voxel:
         start_time = time()
         wta_monitor.monitors['voxel_exc']=get_bold_signal(wta_monitor.monitors['voxel']['G_total_exc'].values[0],
-            voxel.params, [500, 2500], trial_duration)
+            voxel.params, [500, 2500], sim_params.trial_duration)
         wta_monitor.monitors['voxel']=get_bold_signal(wta_monitor.monitors['voxel']['G_total'].values[0], voxel.params,
-            [500, 2500], trial_duration)
+            [500, 2500], sim_params.trial_duration)
         print "BOLD generation time: %.2fs" % (time() - start_time)
 
     # Write output to file
     if output_file is not None:
         start_time = time()
-        write_output(background_input_size, background_freq, input_freq, network_group_size, num_groups, output_file,
-            record_firing_rate, record_neuron_state, record_spikes, record_voxel, record_lfp, record_inputs,
-            stim_end_time, stim_start_time, task_input_size, trial_duration, voxel, wta_monitor, wta_params,
-            wta_network.pyr_params, wta_network.inh_params, muscimol_amount, injection_site, p_dcs, i_dcs)
+        wta_monitor.write_output(input_freq, output_file)
         print 'Wrote output to %s' % output_file
         print "Write output time: %.2fs" % (time() - start_time)
 
@@ -391,13 +394,17 @@ if __name__=='__main__':
     wta_params.p_e_i=argvals.p_e_i
     wta_params.p_i_i=argvals.p_i_i
     wta_params.p_i_e=argvals.p_i_e
+    wta_params.num_groups=argvals.num_groups
+    wta_params.background_freq=argvals.background
 
-    run_wta(wta_params, argvals.num_groups, input_freq, argvals.trial_duration*second,
-        background_freq=argvals.background, output_file=argvals.output_file,
-        record_lfp=argvals.record_lfp, record_voxel=argvals.record_voxel,
-        record_neuron_state=argvals.record_neuron_state, record_spikes=argvals.record_spikes,
-        record_firing_rate=argvals.record_firing_rate, record_inputs=argvals.record_inputs,
-        record_connections='t0->e0_ampa',
+    sim_params=simulation_params()
+    sim_params.trial_duration=argvals.trial_duration*second
+
+
+    run_wta(wta_params, input_freq, sim_params, output_file=argvals.output_file, record_lfp=argvals.record_lfp,
+        record_voxel=argvals.record_voxel, record_neuron_state=argvals.record_neuron_state,
+        record_spikes=argvals.record_spikes, record_firing_rate=argvals.record_firing_rate,
+        record_inputs=argvals.record_inputs, record_connections=['t0->e0_ampa'],
         muscimol_amount=argvals.muscimol_amount*siemens, injection_site=argvals.injection_site,
         p_dcs=argvals.p_dcs*pA, i_dcs=argvals.i_dcs*pA,dcs_start_time=argvals.dcs_start_time*second,
         save_summary_only=argvals.save_summary_only, plot_output=argvals.plot_output)
