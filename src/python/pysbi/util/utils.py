@@ -123,6 +123,18 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
                     break
     return rt,decision_idx
 
+def mdm_outliers(dist):
+    c=1.1926
+    medians=[]
+    for idx,x in enumerate(dist):
+        medians.append(np.median(np.abs(x-dist)))
+    mdm=c*np.median(medians)
+    outliers=[]
+    for idx,x in enumerate(dist):
+        if np.median(np.abs(x-dist))/mdm>3:
+            outliers.append(idx)
+    return outliers
+
 def reject_outliers(data, m = 2.):
     d = np.abs(data - np.median(data))
     mdev = np.median(d)
