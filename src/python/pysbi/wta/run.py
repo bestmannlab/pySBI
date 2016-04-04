@@ -1,7 +1,7 @@
 import os
-from brian.stdunits import nS, pA
+from brian.stdunits import nS, pA, Hz
 import numpy as np
-from brian.units import siemens
+from brian.units import siemens, second
 from ezrcluster.launcher import Launcher
 from pysbi.config import SRC_DIR
 from pysbi.wta.network import simulation_params, default_params
@@ -20,9 +20,9 @@ def get_wta_cmds(wta_params, inputs, sim_params, contrast, trial, record_lfp=Tru
     cmds.append('--inputs')
     cmds.append(','.join([str(input) for input in inputs]))
     cmds.append('--background')
-    cmds.append('%0.3f' % wta_params.background_freq)
+    cmds.append('%0.3f' % wta_params.background_freq/Hz)
     cmds.append('--trial_duration')
-    cmds.append('%0.3f' % sim_params.trial_duration)
+    cmds.append('%0.3f' % sim_params.trial_duration/second)
     cmds.append('--p_e_e')
     cmds.append('%0.3f' % wta_params.p_e_e)
     cmds.append('--p_e_i')
@@ -44,6 +44,8 @@ def get_wta_cmds(wta_params, inputs, sim_params, contrast, trial, record_lfp=Tru
     if sim_params.i_dcs>0 or sim_params.i_dcs<0:
         cmds.append('--i_dcs')
         cmds.append(str(sim_params.i_dcs/pA))
+    cmds.append('--refresh_rate')
+    cmds.append(str(sim_params.refresh_rate))
     cmds.append('--record_lfp')
     if record_lfp:
         cmds.append('1')

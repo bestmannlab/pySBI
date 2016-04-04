@@ -44,11 +44,10 @@ def launch_virtual_subject_processes(nodes, mu_0, virtual_subj_ids, behavioral_p
         beta=beta_bin+np.random.rand()*bin_width
         wta_params.background_freq=(beta-161.08)/-.17
 
-        contrast_range=[0.0, .016, .032, .064, .096, .128, .256, .512]
+        contrast_range=[0.0, .032, .064, .096, .128, .256, .512]
         for i,contrast in enumerate(contrast_range):
-            inputs=np.zeros(2)
-            inputs[0]=wta_params.mu_0+wta_params.p_a*contrast*100.0
-            inputs[1]=wta_params.mu_0-wta_params.p_b*contrast*100.0
+            inputs=np.array([wta_params.mu_0+wta_params.p_a*contrast*100.0,
+                             wta_params.mu_0-wta_params.p_b*contrast*100.0])
             for t in range(trials):
                 np.random.shuffle(inputs)
                 for stim_condition,stim_values in stim_conditions.iteritems():
