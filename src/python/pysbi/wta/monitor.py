@@ -21,16 +21,12 @@ class SessionMonitor():
         self.trial_rt=np.zeros((1,sim_params.ntrials))
         self.trial_resp=np.zeros((1,sim_params.ntrials))
         self.trial_correct=np.zeros((1,sim_params.ntrials))
-        #self.trial_correct_test = np.zeros((1,sim_params.ntrials))
-        self.trial_correct_test = np.zeros((1,sim_params.ntrials/2))
         self.record_connections=record_connections
         self.record_firing_rates=record_firing_rates
         self.trial_weights={}
         for conn in self.record_connections:
             self.trial_weights[conn]=[]
         self.correct_avg = np.zeros((1, sim_params.ntrials))
-        #self.correct_test_avg = np.zeros((1, sim_params.ntrials))
-        self.correct_test_avg = np.zeros((1, sim_params.ntrials/2)) #new
         self.pop_rates={}
         if self.record_firing_rates:
             for i,group_e in enumerate(network.groups_e):
@@ -65,21 +61,6 @@ class SessionMonitor():
         self.trial_resp[0,trial_idx]=choice
         self.trial_correct[0,trial_idx]=correct
         self.correct_avg[0,trial_idx] = (np.sum(self.trial_correct))/(trial_idx+1)
-        # if trial_idx < self.sim_params.ntrials/2:
-        #     self.trial_correct_test[0,trial_idx] = 0
-        #     self.correct_test_avg[0, trial_idx] = 0
-        # else:
-        #     self.trial_correct_test[0,trial_idx] = correct
-        #     self.correct_test_avg[0,trial_idx] = (np.sum(self.trial_correct_test))/(trial_idx+1 - self.sim_params.ntrials/2)
-        if self.sim_params.ntrials>1 and trial_idx>= self.sim_params.ntrials/2:
-            self.trial_correct_test[0,trial_idx - self.sim_params.ntrials/2] = correct
-            self.correct_test_avg[0,trial_idx - self.sim_params.ntrials/2]= (np.sum(self.trial_correct_test))/(trial_idx+1 - self.sim_params.ntrials/2)
-
-        #print self.correct_test_avg
-        #self.correct_test_overall[0,trial_idx] = (np.sum(self.trial_correct[self.sim_params.ntrials/2,:]))/(trial_idx - self.sim_params.ntrials/2)
-        #print self.correct_test_overall
-        #print self.correct_test_avg
-        #print self.correct_test_avg
         for conn in self.record_connections:
             self.trial_weights[conn].append(wta_net.connections[conn].W.todense())
 
@@ -114,28 +95,6 @@ class SessionMonitor():
     def plot(self):
         # Convolve accuracy
         correct_ma = self.get_correct_ma()
-
-        # resp_trials=np.where(self.trial_resp[0,:]>-1)[0]
-        # resp_trials_test = [x for x in resp_trials if x >= self.sim_params.ntrials/2]
-        # #resp_trials_training = [y for y in resp_trials if y < self.sim_params.ntrials/2]
-        #
-        # perc_correct=float(np.sum(self.trial_correct[0,resp_trials]))/float(len(resp_trials))
-        # perc_correct_overall=float(np.sum(self.trial_correct[0,:]))/float(self.sim_params.ntrials)
-        # perc_correct_test=float(np.sum(self.trial_correct[0,resp_trials_test]))/float(len(resp_trials_test))
-        # perc_correct_test_overall = float(np.sum(self.trial_correct_test))/float(self.sim_params.ntrials/2)
-        # #perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
-        # #perc_correct_training_overall = float(self.correct_avg[0,:][self.sim_params.ntrials/2-1])
-        #
-        # #print self.correct_avg
-        # #print self.correct_test_avg
-        # #print self.correct_avg[:self.sim_params.ntrials/2]
-        # print('perc correct test phase (overall)=%.2f' % perc_correct_test_overall)
-        # print ('perc correct test phase (responded)=%.2f' % perc_correct_test)
-        # #print ('perc correct training phase (overall)=%.2f' % perc_correct_training_overall)
-        # #print ('perc correct training phase (responded)=%.2f' % perc_correct_training_overall)
-        # print('perc correct (overall)=%.2f' % perc_correct_overall)
-        # print('perc correct (responded)=%.2f' % perc_correct)
-        # print('no response=%.2f' % (float(self.num_no_response)/float(self.sim_params.ntrials)))
 
         trial_diag_weights = self.get_trial_diag_weights()
 
@@ -180,7 +139,7 @@ class SessionMonitor():
         plt.plot(self.trial_resp[0,:])
         plt.xlabel('trial')
         plt.ylabel('choice e0=0 e1=1')
-        plt.show()
+        #plt.show()
 
     def write_output(self, output_file):
 
@@ -320,7 +279,7 @@ class WTAMonitor():
     def plot(self):
 
         # Spike raster plots
-        if self.network_params.num_groups:
+        if self.record_spikes:
             num_plots=self.network_params.num_groups+1
             figure()
             for i in range(self.network_params.num_groups):
@@ -553,7 +512,7 @@ class WTAMonitor():
             xlabel('Time (ms)')
             ylabel('Connection Weight (nS)')
 
-        show()
+        #show()
 
 
     ## Write monitor data to HDF5 file
