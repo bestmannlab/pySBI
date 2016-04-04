@@ -1,5 +1,4 @@
 from brian import Clock, Hz, second, PoissonGroup, network_operation, pA, Network, nS
-import h5py
 from pysbi.wta.monitor import WTAMonitor, SessionMonitor
 from pysbi.wta.network import default_params, pyr_params, inh_params, simulation_params, WTANetworkGroup
 import numpy as np
@@ -44,36 +43,6 @@ class VirtualSubject:
                            self.wta_network.connections.values(), self.wta_monitor.monitors.values())
 
 
-    def run_session(self, sim_params, output_file=None):
-
-        session_monitor=SessionMonitor(self.wta_network, sim_params, {}, record_connections=[], conv_window=10,
-                                       record_firing_rates=True)
-
-        coherence_levels=[0.032, .064, .128, .256, .512]
-        trials_per_level=20
-        trial_inputs=np.zeros((trials_per_level*len(coherence_levels),2))
-        for i in range(len(coherence_levels)):
-            coherence=coherence_levels[i]
-            # Left
-            trial_inputs[i*trials_per_level:i*trials_per_level+trials_per_level/2,0]=self.wta_params.mu_0+self.wta_params.p_a*coherence*100.0
-            trial_inputs[i*trials_per_level:i*trials_per_level+trials_per_level/2,1]=self.wta_params.mu_0-self.wta_params.p_b*coherence*100.0
-
-            #Right
-            trial_inputs[i*trials_per_level+trials_per_level/2:i*trials_per_level+trials_per_level,0]=self.wta_params.mu_0-self.wta_params.p_b*coherence*100.0
-            trial_inputs[i*trials_per_level+trials_per_level/2:i*trials_per_level+trials_per_level,1]=self.wta_params.mu_0+self.wta_params.p_a*coherence*100.0
-
-        trial_inputs=np.random.permutation(trial_inputs)
-
-        for t in range(sim_params.ntrials):
-            task_input_rates=trial_inputs[t,:]
-            correct_input=np.where(task_input_rates==np.max(task_input_rates))[0]
-            self.run_trial(sim_params, task_input_rates)
-            session_monitor.record_trial(t, task_input_rates, correct_input, self.wta_network, self.wta_monitor)
-
-        session_monitor.plot()
-        if output_file is not None:
-            session_monitor.write_output(output_file)
-
     def run_trial(self, sim_params, input_freq):
         self.wta_monitor.sim_params=sim_params
         self.net.reinit(states=False)
@@ -108,28 +77,3 @@ class VirtualSubject:
 
         #self.wta_monitor.plot()
         self.net.remove(set_task_inputs, inject_current, inject_muscimol)
-
-
-if __name__=='__main__':
-    for i in range(20):
-        wta_params=default_params()
-        wta_params.background_freq=950*Hz
-        pyr_params=pyr_params()
-        pyr_params.w_nmda=0.14*nS
-        sim_params=simulation_params()
-        sim_params.ntrials=100
-        sim_params.dcs_end_time=sim_params.trial_duration
-        subject=VirtualSubject(i, wta_params=wta_params, pyr_params=pyr_params, sim_params=sim_params)
-
-        subject.run_session(sim_params, output_file='/home/jbonaiuto/Projects/pySBI/data/rdmd/subject.%d.control.h5' % i)
-        #plt.show()
-
-        sim_params.p_dcs=2*pA
-        sim_params.i_dcs=-1*pA
-        subject.run_session(sim_params, output_file='/home/jbonaiuto/Projects/pySBI/data/rdmd/subject.%d.depolarizing.h5' % i)
-        #plt.show()
-
-        sim_params.p_dcs=-2*pA
-        sim_params.i_dcs=1*pA
-        subject.run_session(sim_params, output_file='/home/jbonaiuto/Projects/pySBI/data/rdmd/subject.%d.hyperpolarizing.h5' % i)
-        #plt.show()
