@@ -268,15 +268,19 @@ class FitRT(_baseFunctionFit):
 class FitSigmoid(_baseFunctionFit):
     def eval(self, xx=None, params=None):
         if params==None:  params=self.params #so the user can set params for this particular eval
-        k = params[0]
+        x0 = params[0]
+        k=params[1]
         xx = np.asarray(xx)
-        yy = 1.0/(1.0+np.exp(-k*xx))
+        #yy = a+1.0/(1.0+np.exp(-k*xx))
+        yy =1.0/(1.0+np.exp(-k*(xx-x0)))
         return yy
 
     def inverse(self, yy, params=None):
         if params==None:  params=self.params #so the user can set params for this particular eval
-        k = params[0]
-        xx = -np.log((1/yy)-1)/k
+        x0 = params[0]
+        k=params[1]
+        #xx = -np.log((1/(yy-a))-1)/k
+        xx = -np.log((1.0/yy)-1.0)/k+x0
         return xx
 
 
