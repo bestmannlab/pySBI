@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def run_virtual_subjects(subj_ids, conditions, output_dir):
     for subj_id in subj_ids:
         wta_params=default_params(background_freq=950*Hz)
-        pyramidal_params=pyr_params(w_nmda=0.15*nS)
+        pyramidal_params=pyr_params(w_nmda=0.14*nS)
         subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
 
         for condition, sim_params in conditions.iteritems():
@@ -51,11 +51,7 @@ def run_session(subject, sim_params, output_file, plot=False):
 if __name__=='__main__':
     conditions={
         'control': simulation_params(ntrials=100),
-        'depolarizing': simulation_params(ntrials=100, p_dcs=1*pA, i_dcs=-0.5*pA, dcs_start_time=0*second, dcs_end_time=4*second),
-        'hyperpolarizing': simulation_params(ntrials=100, p_dcs=-1*pA, i_dcs=-0.5*pA, dcs_start_time=0*second, dcs_end_time=4*second)
+        'depolarizing': simulation_params(ntrials=100, p_dcs=2*pA, i_dcs=-1*pA, dcs_start_time=0*second, dcs_end_time=4*second),
+        'hyperpolarizing': simulation_params(ntrials=100, p_dcs=-2*pA, i_dcs=1*pA, dcs_start_time=0*second, dcs_end_time=4*second)
     }
-    #run_virtual_subjects(range(4), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
-    #run_virtual_subjects(range(4,8), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
-    #run_virtual_subjects(range(8,12), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
-    #run_virtual_subjects(range(12,16), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
-    run_virtual_subjects(range(17,20), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
+    run_virtual_subjects(range(20), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/')
