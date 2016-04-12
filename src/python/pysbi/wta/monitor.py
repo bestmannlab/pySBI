@@ -1,5 +1,6 @@
 import h5py
 from brian.experimental.connectionmonitor import ConnectionMonitor
+from matplotlib.patches import Rectangle
 import numpy as np
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock
 import matplotlib.pyplot as plt
@@ -119,15 +120,6 @@ class SessionMonitor():
         plt.ylim(0,1)
         plt.xlabel('trial')
         plt.ylabel('accuracy')
-        if self.sim_params.plasticity==True:
-            plt.figure()
-            #plt.plot(self.correct_test_avg[0,:][self.sim_params.ntrials/2:], label = 'test phase average')
-            plt.plot(self.correct_test_avg[0,:], label = 'test phase average')
-            #plt.plot(self.correct_avg[0,:][:self.sim_params.ntrials/2], label = 'training phase average')
-            plt.legend(loc = 'best')
-            plt.ylim(0,1)
-            plt.xlabel('trial')
-            plt.ylabel('accuracy')
 
         plt.figure()
         plt.plot(self.trial_rt[0,:])
@@ -179,7 +171,7 @@ class SessionMonitor():
         f_neur['trial_inputs']=self.trial_inputs
         f_conns=f_neur.create_group('connections')
         for conn in self.record_connections:
-            f_conn=f_conns.create_group('conn')
+            f_conn=f_conns.create_group(conn)
             for trial_idx in range(self.sim_params.ntrials):
                 f_conn['trial_%d' % trial_idx]=self.trial_weights[conn][trial_idx]
 
@@ -212,6 +204,7 @@ class WTAMonitor():
         self.pyr_params=network.pyr_params
         self.inh_params=network.inh_params
         self.sim_params=sim_params
+        self.plasticity_params=network.plasticity_params
         self.voxel_params=None
         if voxel is not None:
             self.voxel_params=voxel.params
@@ -290,45 +283,59 @@ class WTAMonitor():
 
         # Network firing rate plots
         if self.record_firing_rate:
+
+            e_rate_0=self.monitors['excitatory_rate_0'].smooth_rate(width=5*ms)/hertz
+            e_rate_1=self.monitors['excitatory_rate_1'].smooth_rate(width=5*ms)/hertz
+            rt, choice = get_response_time(np.array([e_rate_0, e_rate_1]), self.sim_params.stim_start_time,
+                self.sim_params.stim_end_time, upper_threshold = self.network_params.resp_threshold,
+                dt = self.sim_params.dt)
+
             figure()
             ax=subplot(211)
-            max_rates=[np.max(self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz)]
+            i_rate=self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz
+            max_rates=[np.max(i_rate[500:]), self.network_params.resp_threshold+10]
             for i in range(self.network_params.num_groups):
-                max_rates.append(np.max(self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz))
+                e_rate=self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz
+                max_rates.append(np.max(e_rate[500:]))
             max_rate=np.max(max_rates)
+
+            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
+                alpha=0.25, facecolor='yellow', edgecolor='none')
+            ax.add_patch(rect)
 
             for idx in range(self.network_params.num_groups):
                 pop_rate_monitor=self.monitors['excitatory_rate_%d' % idx]
-                ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
+                ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
+                    pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
                 ylim(0,max_rate)
-            legend()
+            ax.plot([0-self.sim_params.stim_start_time/ms, (self.sim_params.trial_duration-self.sim_params.stim_start_time)/ms],
+                [self.network_params.resp_threshold/hertz, self.network_params.resp_threshold/hertz], 'k--')
+            ax.plot([rt,rt],[0, max_rate],'k--')
+            legend(loc='best')
             ylabel('Firing rate (Hz)')
 
             ax=subplot(212)
+            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
+                alpha=0.25, facecolor='yellow', edgecolor='none')
+            ax.add_patch(rect)
             pop_rate_monitor=self.monitors['inhibitory_rate']
-            ax.plot(pop_rate_monitor.times/ms, pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i')
+            ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
+                pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i')
             ylim(0,max_rate)
-            legend()
+            ax.plot([rt,rt],[0, max_rate],'k--')
             ylabel('Firing rate (Hz)')
             xlabel('Time (ms)')
 
         # Input firing rate plots
         if self.record_inputs:
             figure()
-            #max_rates=[np.max(self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)]
-            max_rates=[]
-            for i in range(self.network_params.num_groups):
-                max_rates.append(np.max(self.monitors['task_rate_%d' % i].smooth_rate(width=5*ms,
-                    filter='gaussian')/hertz))
-            max_rate=np.max(max_rates)
             ax=subplot(111)
 #            ax.plot(self.monitors['background_rate'].times/ms,
 #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
-            ylim(0,max_rate)
             for i in range(self.network_params.num_groups):
                 task_monitor=self.monitors['task_rate_%d' % i]
                 ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
-                ylim(0,max_rate)
+            ylim(0,90)
 
         # Network state plots
         if self.record_neuron_state:
@@ -557,6 +564,10 @@ class WTAMonitor():
         f_inh_params=f.create_group('inh_params')
         for attr, value in self.inh_params.iteritems():
             f_inh_params.attrs[attr] = value
+
+        f_plasticity_params=f.create_cgroup('plasticity_params')
+        for attr, value in self.plasticity_params.iteritems():
+            f_plasticity_params.attrs[attr] = value
 
         if not self.save_summary_only:
             # Write LFP data

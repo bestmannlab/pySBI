@@ -12,6 +12,12 @@ class Struct():
     def __init__(self):
         pass
 
+colors={
+    'control': 'b',
+    'depolarizing': 'r',
+    'hyperpolarizing': 'g'
+}
+
 def save_to_png(fig, output_file):
     fig.set_facecolor("#FFFFFF")
     canvas = FigureCanvasAgg(fig)

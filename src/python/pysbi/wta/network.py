@@ -1,3 +1,4 @@
+from brian.stdp import ExponentialSTDP
 from numpy.matlib import randn, rand
 from time import time
 import brian
@@ -28,7 +29,8 @@ pyr_params=Parameters(
     gL=25*nS,
     refractory=2*ms,
     w_nmda = 0.165 * nS,
-    w_ampa_ext = 2.1*nS,
+    w_ampa_ext_correct = 2.1*nS,
+    w_ampa_ext_incorrect = 0.0*nS,
     w_ampa_bak = 2.1*nS,
     w_ampa_rec = 0.05*nS,
     w_gaba = 1.3*nS,
@@ -106,6 +108,16 @@ simulation_params=Parameters(
     plasticity=False
 )
 
+# Plasticity parameters
+plasticity_params=Parameters(
+    tau_pre = 20 * ms,
+    dA_pre= 0.0005,  #0.0005
+    # Maximum synaptic weight
+    gmax = 4 * nS   #5 *nS
+)
+plasticity_params.tau_post=plasticity_params.tau_pre
+plasticity_params.dA_post=-plasticity_params.dA_pre*1.1  #1.1
+
 # WTA network class - extends Brian's NeuronGroup
 class WTANetworkGroup(NeuronGroup):
 
@@ -116,10 +128,11 @@ class WTANetworkGroup(NeuronGroup):
     #       background_input = background input source
     #       task_inputs = task input sources
     def __init__(self, params=default_params, pyr_params=pyr_params(), inh_params=inh_params(),
-                 background_input=None, task_inputs=None, clock=defaultclock):
+                 plasticity_params=plasticity_params(), background_input=None, task_inputs=None, clock=defaultclock):
         self.params=params
         self.pyr_params=pyr_params
         self.inh_params=inh_params
+        self.plasticity_params=plasticity_params
         self.background_input=background_input
         self.task_inputs=task_inputs
 
@@ -163,7 +176,7 @@ class WTANetworkGroup(NeuronGroup):
 
         self.init_subpopulations()
 
-        self.init_connectivity()
+        self.init_connectivity(clock)
 
     ## Initialize excitatory and inhibitory subpopulations
     def init_subpopulations(self):
@@ -189,7 +202,7 @@ class WTANetworkGroup(NeuronGroup):
 
         # Initialize state variables
         self.vm = self.params.EL+randn(self.params.network_group_size)*mV
-        self.group_e.g_ampa_b = rand(self.e_size)*self.pyr_params.w_ampa_ext*2.0
+        self.group_e.g_ampa_b = rand(self.e_size)*self.pyr_params.w_ampa_ext_correct*2.0
         self.group_e.g_nmda = rand(self.e_size)*self.pyr_params.w_nmda*2.0
         self.group_e.g_gaba_a = rand(self.e_size)*self.pyr_params.w_gaba*2.0
         self.group_i.g_ampa_r = rand(self.i_size)*self.inh_params.w_ampa_rec*2.0
@@ -200,8 +213,9 @@ class WTANetworkGroup(NeuronGroup):
 
 
     ## Initialize network connectivity
-    def init_connectivity(self):
+    def init_connectivity(self, clock):
         self.connections={}
+        self.stdp={}
 
         # Iterate over input groups
         for i in range(self.params.num_groups):
@@ -241,19 +255,26 @@ class WTANetworkGroup(NeuronGroup):
             for i in range(self.params.num_groups):
                 self.connections['t%d->e%d_ampa' % (i,i)]=DelayConnection(self.task_inputs[i], self.groups_e[i],
                     'g_ampa_x')
-                self.connections['t%d->e%d_ampa' % (i,i)].connect_one_to_one(weight=self.pyr_params.w_ampa_ext,
+                self.connections['t%d->e%d_ampa' % (i,i)].connect_one_to_one(weight=self.pyr_params.w_ampa_ext_correct,
                     delay=.5*ms)
                 self.connections['t%d->e%d_ampa' % (i,1-i)]=DelayConnection(self.task_inputs[i], self.groups_e[1-i],
                     'g_ampa_x')
-                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight= .01 * self.pyr_params.w_ampa_ext,
+                self.connections['t%d->e%d_ampa' % (i,1-i)].connect_one_to_one(weight=self.pyr_params.w_ampa_ext_incorrect,
                     delay=.5*ms)
 
+                # Input projections plasticity
+                self.stdp['stdp%d_%d' % (i,i)] = ExponentialSTDP(self.connections['t%d->e%d_ampa' % (i, i)],
+                    self.plasticity_params.tau_pre, self.plasticity_params.tau_post, self.plasticity_params.dA_pre,
+                    self.plasticity_params.dA_post, wmax=self.plasticity_params.gmax, update='additive', clock=clock)
+                self.stdp['stdp%d_%d' % (i,1-1)] = ExponentialSTDP(self.connections['t%d->e%d_ampa' % (i, 1-i)],
+                    self.plasticity_params.tau_pre, self.plasticity_params.tau_post, self.plasticity_params.dA_pre,
+                    self.plasticity_params.dA_post, wmax=self.plasticity_params.gmax, update='additive', clock=clock)
 
 
-
-def run_wta(wta_params, input_freq, sim_params, pyr_params=pyr_params(), inh_params=inh_params(), output_file=None,
-            save_summary_only=False, record_lfp=True, record_voxel=True, record_neuron_state=False, record_spikes=True,
-            record_firing_rate=True, record_inputs=False, record_connections=None, plot_output=False, report='text'):
+def run_wta(wta_params, input_freq, sim_params, pyr_params=pyr_params(), inh_params=inh_params(),
+            plasticity_params=plasticity_params(), output_file=None, save_summary_only=False, record_lfp=True,
+            record_voxel=True, record_neuron_state=False, record_spikes=True, record_firing_rate=True,
+            record_inputs=False, record_connections=None, plot_output=False, report='text'):
     """
     Run WTA network
        wta_params = network parameters
@@ -283,7 +304,7 @@ def run_wta(wta_params, input_freq, sim_params, pyr_params=pyr_params(), inh_par
 
     # Create WTA network
     wta_network=WTANetworkGroup(params=wta_params, background_input=background_input, task_inputs=task_inputs,
-                                pyr_params=pyr_params, inh_params=inh_params, clock=simulation_clock)
+        pyr_params=pyr_params, inh_params=inh_params, plasticity_params=plasticity_params, clock=simulation_clock)
 
     @network_operation(when='start', clock=input_update_clock)
     def set_task_inputs():
@@ -321,6 +342,8 @@ def run_wta(wta_params, input_freq, sim_params, pyr_params=pyr_params(), inh_par
     # Create Brian network and reset clock
     net=Network(background_input, task_inputs,set_task_inputs, wta_network, lfp_source, voxel,
         wta_network.connections.values(), wta_monitor.monitors.values(), inject_muscimol, inject_current)
+    if sim_params.plasticity:
+        net.add(wta_network.stdp.values())
     print "Initialization time: %.2fs" % (time() - start_time)
 
 #    writer=LaTeXDocumentWriter()
@@ -389,6 +412,7 @@ if __name__=='__main__':
     ap.add_argument('--i_dcs', type=float, default=0.0, help='Interneuron cell DCS (pA)')
     ap.add_argument('--refresh_rate', type=float, default=60.0, help='Screen refresh rate (Hz)')
     ap.add_argument('--dcs_start_time', type=float, default=0.0, help='Time to start dcs (s)')
+    ap.add_argument('--plasticity', type=int, default=0, help='Include plasticity between inputs and network')
     ap.add_argument('--record_lfp', type=int, default=1, help='Record LFP data')
     ap.add_argument('--record_voxel', type=int, default=1, help='Record voxel data')
     ap.add_argument('--record_neuron_state', type=int, default=0, help='Record neuron state data (synaptic conductances, ' \

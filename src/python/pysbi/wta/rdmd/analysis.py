@@ -1,7 +1,7 @@
 import h5py
 import os
 import numpy as np
-from pysbi.util.utils import mdm_outliers, FitWeibull, FitSigmoid
+from pysbi.util.utils import mdm_outliers, FitWeibull, FitSigmoid, colors
 import matplotlib.pyplot as plt
 
 
@@ -30,8 +30,8 @@ def read_subject_condition_data(data_dir, subj_id, condition, filter=True):
             resp = -1
         rt = trial_rt[0, trial_idx]
 
-        if rt > 100:
-            trial_data.append([trial_idx, direction, coherence, correct, resp, last_resp, rt])
+        #if rt > 100:
+        trial_data.append([trial_idx, direction, coherence, correct, resp, last_resp, rt])
         last_resp = resp
     trial_data = np.array(trial_data)
     if filter:
@@ -41,12 +41,66 @@ def read_subject_condition_data(data_dir, subj_id, condition, filter=True):
     return trial_data
 
 
+def analyze_single_subject_choice_prob(subj_id, conditions, data_dir, plot=False):
+# Dict of conditions
+    subj_last_left_coherence_choices={}
+    subj_last_right_coherence_choices={}
+    for condition in conditions:
+        # Read condition data for this subject
+        trial_data = read_subject_condition_data(data_dir, subj_id, condition, filter=False)
+        # Dict of coherence levels
+        subj_last_left_coherence_choices[condition]={}
+        subj_last_right_coherence_choices[condition]={}
+        # For each trial
+        for trial_idx in range(trial_data.shape[0]):
+            # Get coherence - negative coherences when direction is to the left
+            coherence=trial_data[trial_idx,2]*trial_data[trial_idx,1]
+            last_resp=trial_data[trial_idx,5]
+            resp=trial_data[trial_idx,4]
+            if last_resp<0:
+                # List of rigtward choices (0=left, 1=right)
+                if not coherence in subj_last_left_coherence_choices[condition]:
+                    subj_last_left_coherence_choices[condition][coherence]=[]
+                    # Append 0 to list if left (-1) or 1 if right
+                subj_last_left_coherence_choices[condition][coherence].append(np.max([0,resp]))
+            elif last_resp>0:
+                # List of rigtward choices (0=left, 1=right)
+                if not coherence in subj_last_right_coherence_choices[condition]:
+                    subj_last_right_coherence_choices[condition][coherence]=[]
+                    # Append 0 to list if left (-1) or 1 if right
+                subj_last_right_coherence_choices[condition][coherence].append(np.max([0,resp]))
+
+    if plot:
+        fig=plt.figure()
+        for condition in conditions:
+            coherences=sorted(subj_last_left_coherence_choices[condition].keys())
+            choice_probs=[]
+            for coherence in coherences:
+                choice_probs.append(np.mean(subj_last_left_coherence_choices[condition][coherence]))
+            acc_fit=FitSigmoid(coherences, choice_probs, guess=[0.0, 0.2])
+            smoothInt = np.arange(min(coherences), max(coherences), 0.001)
+            smoothResp = acc_fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, '--%s' % colors[condition], label='left* - %s' % condition)
+            plt.plot(coherences,choice_probs,'o%s' % colors[condition])
+
+            coherences=sorted(subj_last_right_coherence_choices[condition].keys())
+            choice_probs=[]
+            for coherence in coherences:
+                choice_probs.append(np.mean(subj_last_right_coherence_choices[condition][coherence]))
+            acc_fit=FitSigmoid(coherences, choice_probs, guess=[0.0, 0.2])
+            smoothInt = np.arange(min(coherences), max(coherences), 0.001)
+            smoothResp = acc_fit.eval(smoothInt)
+            plt.plot(smoothInt, smoothResp, colors[condition], label='right* - %s' % condition)
+            plt.plot(coherences,choice_probs,'o%s' % colors[condition])
+        plt.legend(loc='best')
+        plt.xlabel('Coherence')
+        plt.ylabel('% of Right Choices')
+
+        plt.show()
+    return subj_last_left_coherence_choices, subj_last_right_coherence_choices
+
+
 def analyze_choice_prob(subj_ids, conditions, data_dir):
-    colors={
-        'control': 'b',
-        'depolarizing': 'r',
-        'hyperpolarizing': 'g'
-    }
 
     last_left_coherence_choices={}
     last_right_coherence_choices={}
@@ -54,33 +108,9 @@ def analyze_choice_prob(subj_ids, conditions, data_dir):
     # For each subject
     for subj_id in subj_ids:
         # Dict of conditions
-        subj_last_left_coherence_choices={}
-        subj_last_right_coherence_choices={}
+        subj_last_left_coherence_choices, subj_last_right_coherence_choices=analyze_single_subject_choice_prob(subj_id,
+            conditions, data_dir)
         for condition in conditions:
-            # Read condition data for this subject
-            trial_data = read_subject_condition_data(data_dir, subj_id, condition)
-            # Dict of coherence levels
-            subj_last_left_coherence_choices[condition]={}
-            subj_last_right_coherence_choices[condition]={}
-            # For each trial
-            for trial_idx in range(trial_data.shape[0]):
-                # Get coherence - negative coherences when direction is to the left
-                coherence=trial_data[trial_idx,2]*trial_data[trial_idx,1]
-                last_resp=trial_data[trial_idx,5]
-                resp=trial_data[trial_idx,4]
-                if last_resp<0:
-                    # List of rigtward choices (0=left, 1=right)
-                    if not coherence in subj_last_left_coherence_choices[condition]:
-                        subj_last_left_coherence_choices[condition][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
-                    subj_last_left_coherence_choices[condition][coherence].append(np.max([0,resp]))
-                elif last_resp>0:
-                    # List of rigtward choices (0=left, 1=right)
-                    if not coherence in subj_last_right_coherence_choices[condition]:
-                        subj_last_right_coherence_choices[condition][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
-                    subj_last_right_coherence_choices[condition][coherence].append(np.max([0,resp]))
-
             if not condition in last_left_coherence_choices:
                 last_left_coherence_choices[condition]={}
                 last_right_coherence_choices[condition]={}
@@ -140,5 +170,6 @@ def export_behavioral_data_long(subj_ids, conditions, data_dir, output_filename)
 if __name__=='__main__':
    # export_behavioral_data_long(range(20),['control','depolarizing','hyperpolarizing'],
    #     '/home/jbonaiuto/Projects/pySBI/data/rdmd','/home/jbonaiuto/Projects/pySBI/data/rdmd/behav_data_long.csv')
-   analyze_choice_prob(range(20),['control','depolarizing','hyperpolarizing'],
-       '/home/jbonaiuto/Projects/pySBI/data/rdmd')
+#   analyze_choice_prob(range(20),['control','depolarizing','hyperpolarizing'],
+#       '/home/jbonaiuto/Projects/pySBI/data/rdmd')
+    analyze_single_subject_choice_prob(1,['control','depolarizing','hyperpolarizing'],'/home/jbonaiuto/Projects/pySBI/data/rdmd', plot=True)
