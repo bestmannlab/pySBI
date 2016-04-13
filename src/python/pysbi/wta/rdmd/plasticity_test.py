@@ -35,7 +35,7 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
         beta=beta_bin+np.random.rand()*bin_width
 
         # Create virtual subject parameters - background freq from beta dist, resp threshold between 20 and 30Hz
-        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20+np.random.uniform(10))
+        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=15+np.random.uniform(10))
         # Set initial input weights
         plasticity_pyr_params=pyr_params(w_ampa_ext_correct=1.1*nS, w_ampa_ext_incorrect=0.6*nS)
         plas_params=plasticity_params()
@@ -138,7 +138,7 @@ def run_nostim_training_subjects(subj_ids, stim_types, coherence_levels, trials_
         conditions['testing_%s' % stim_type] = (
         simulation_params(ntrials=trials_per_condition, p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=0 * second,
             dcs_end_time=4 * second), True, coherence_levels)
-        # Run subjects
+    # Run subjects
     run_virtual_subjects(subj_ids, conditions, '/data/pySBI/stdp/control_learning',
         '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
 
