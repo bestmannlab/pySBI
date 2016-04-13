@@ -330,12 +330,17 @@ class WTAMonitor():
         if self.record_inputs:
             figure()
             ax=subplot(111)
+            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
+                alpha=0.25, facecolor='yellow', edgecolor='none')
+            ax.add_patch(rect)
 #            ax.plot(self.monitors['background_rate'].times/ms,
 #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             for i in range(self.network_params.num_groups):
                 task_monitor=self.monitors['task_rate_%d' % i]
-                ax.plot(task_monitor.times/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+                ax.plot(task_monitor.times/ms-self.sim_params.stim_start_time/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
             ylim(0,90)
+            ylabel('Firing rate (Hz)')
+            xlabel('Time (ms)')
 
         # Network state plots
         if self.record_neuron_state:
