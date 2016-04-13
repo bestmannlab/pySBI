@@ -118,7 +118,7 @@ def run_session(subject, condition, sim_params, coherence_levels, output_file=No
         plt.show()
 
 
-def run_nostim_training_subjects(nsubjects, stim_types, coherence_levels, trials_per_condition):
+def run_nostim_training_subjects(subj_ids, stim_types, coherence_levels, trials_per_condition):
     """
     Run subjects with no stimulation during training - runs baseline without stim, training without stim, and test with
     and without stim
@@ -139,11 +139,11 @@ def run_nostim_training_subjects(nsubjects, stim_types, coherence_levels, trials
         simulation_params(ntrials=trials_per_condition, p_dcs=p_dcs, i_dcs=i_dcs, dcs_start_time=0 * second,
             dcs_end_time=4 * second), True, coherence_levels)
         # Run subjects
-    run_virtual_subjects(range(nsubjects), conditions, '/home/jbonaiuto/Projects/pySBI/data/stdp/control_learning',
+    run_virtual_subjects(subj_ids, conditions, '/data/pySBI/stdp/control_learning',
         '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
 
 
-def run_stim_training_subjects(nsubjects, stim_types, coherence_levels):
+def run_stim_training_subjects(subj_ids, stim_types, coherence_levels):
     # Run subjects with depolarizing or hyperpolarizing stimulation during training
     for stim_type, (p_dcs, i_dcs) in stim_types.iteritems():
         conditions={
@@ -156,13 +156,11 @@ def run_stim_training_subjects(nsubjects, stim_types, coherence_levels):
             'testing': (simulation_params(ntrials=120), True, coherence_levels),
             }
         # Run subjects
-        run_virtual_subjects(range(nsubjects), conditions,
-            '/home/jbonaiuto/Projects/pySBI/data/stdp/%s_learning' % stim_type,
+        run_virtual_subjects(subj_ids, conditions,
+            '/data/pySBI/stdp/%s_learning' % stim_type,
             '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
 
 if __name__=='__main__':
-    # Number of subjects to simulate
-    nsubjects=2
     # Max stimulation intensity
     stim_intensity_max=2*pA
     # Stimulation intensities
@@ -176,8 +174,8 @@ if __name__=='__main__':
     trials_per_condition=120
 
     # Run subjects with no stimulation during training
-    run_nostim_training_subjects(nsubjects, stim_types, coherence_levels, trials_per_condition)
+    run_nostim_training_subjects(range(20), stim_types, coherence_levels, trials_per_condition)
 
     # Run subjects with stimulation during training
-    run_stim_training_subjects(nsubjects, stim_types, coherence_levels)
+    run_stim_training_subjects(range(20), stim_types, coherence_levels)
 
