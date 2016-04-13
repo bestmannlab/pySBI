@@ -53,7 +53,7 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
 
             # Run session
             run_session(subject, condition, sim_params, coherence_levels,
-                output_file=os.path.join(output_dir, 'subject.%d.%s.h5' % (subj_id,condition)), plot=True)
+                output_file=os.path.join(output_dir, 'subject.%d.%s.h5' % (subj_id,condition)))
 
 
 def run_session(subject, condition, sim_params, coherence_levels, output_file=None, plot=False):
@@ -174,8 +174,8 @@ if __name__=='__main__':
     trials_per_condition=120
 
     # Run subjects with no stimulation during training
-    run_nostim_training_subjects(range(20), stim_types, coherence_levels, trials_per_condition)
+    run_nostim_training_subjects(range(16,20), stim_types, coherence_levels, trials_per_condition)
 
     # Run subjects with stimulation during training
-    run_stim_training_subjects(range(20), stim_types, coherence_levels)
+    run_stim_training_subjects(range(16,20), stim_types, coherence_levels)
 
