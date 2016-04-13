@@ -1,8 +1,32 @@
 from brian import Clock, Hz, second, PoissonGroup, network_operation, pA, Network, nS
+import h5py
 from pysbi.wta.monitor import WTAMonitor, SessionMonitor
 from pysbi.wta.network import default_params, pyr_params, inh_params, simulation_params, WTANetworkGroup, plasticity_params
 import numpy as np
 import matplotlib.pyplot as plt
+
+def generate_virtual_subject(subj_id, behavioral_param_file):
+    # Load alpha and beta params of control group from behavioral parameter file
+    f = h5py.File(behavioral_param_file)
+    control_group=f['control']
+    alpha_vals=np.array(control_group['alpha'])
+    beta_vals=np.array(control_group['beta'])
+
+    # Sample beta from subject distribution - don't use subjects with high alpha
+    beta_hist,beta_bins=np.histogram(beta_vals[np.where(alpha_vals<.99)[0]], density=True)
+    bin_width=beta_bins[1]-beta_bins[0]
+    beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
+    beta=beta_bin+np.random.rand()*bin_width
+
+    # Create virtual subject parameters - background freq from beta dist, resp threshold between 15 and 25Hz
+    wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=15+np.random.uniform(10))
+    # Set initial input weights and modify NMDA recurrent
+    pyramidal_params=pyr_params(w_nmda=0.15*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.0*nS)
+
+    # Create a virtual subject
+    subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
+    return subject
+
 
 class VirtualSubject:
     def __init__(self, subj_id, wta_params=default_params(), pyr_params=pyr_params(), inh_params=inh_params(),
@@ -69,6 +93,8 @@ class VirtualSubject:
         def inject_muscimol():
             if sim_params.muscimol_amount > 0:
                 self.wta_network.groups_e[sim_params.injection_site].g_muscimol = sim_params.muscimol_amount
+
+        self.net.remove(set_task_inputs, inject_current, inject_muscimol, self.wta_network.stdp.values())
 
         self.net.add(set_task_inputs, inject_current, inject_muscimol)
         if sim_params.plasticity:

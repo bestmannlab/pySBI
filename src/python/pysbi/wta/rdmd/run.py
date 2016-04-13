@@ -3,7 +3,7 @@ import h5py
 import os
 from pysbi.wta.monitor import SessionMonitor
 from pysbi.wta.network import default_params, pyr_params, simulation_params
-from pysbi.wta.virtual_subject import VirtualSubject
+from pysbi.wta.virtual_subject import VirtualSubject, generate_virtual_subject
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,29 +17,11 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
         inverse temp param distribution
     """
 
-    # Load alpha and beta params of control group from behavioral parameter file
-    f = h5py.File(behavioral_param_file)
-    control_group=f['control']
-    alpha_vals=np.array(control_group['alpha'])
-    beta_vals=np.array(control_group['beta'])
-
     # Run each subject
     for subj_id in subj_ids:
         print('***** Running subject %d *****' % subj_id)
 
-        # Sample beta from subject distribution - don't use subjects with high alpha
-        beta_hist,beta_bins=np.histogram(beta_vals[np.where(alpha_vals<.99)[0]], density=True)
-        bin_width=beta_bins[1]-beta_bins[0]
-        beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
-        beta=beta_bin+np.random.rand()*bin_width
-
-        # Create virtual subject parameters - background freq from beta dist, resp threshold between 15 and 25Hz
-        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=15+np.random.uniform(10))
-        # Set initial input weights and modify NMDA recurrent
-        pyramidal_params=pyr_params(w_nmda=0.15*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.0*nS)
-
-        # Create a virtual subject
-        subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
+        subject=generate_virtual_subject(subj_id, behavioral_param_file)
 
         # Run through each condition
         for condition, sim_params in conditions.iteritems():
