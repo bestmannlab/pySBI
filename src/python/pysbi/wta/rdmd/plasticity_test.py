@@ -37,7 +37,7 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
         # Create virtual subject parameters - background freq from beta dist, resp threshold between 20 and 30Hz
         wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=15+np.random.uniform(10))
         # Set initial input weights
-        plasticity_pyr_params=pyr_params(w_ampa_ext_correct=1.1*nS, w_ampa_ext_incorrect=0.6*nS)
+        plasticity_pyr_params=pyr_params(w_nmda=0.14*nS, w_ampa_ext_correct=1.1*nS, w_ampa_ext_incorrect=0.6*nS)
         plas_params=plasticity_params()
 
         # Create a virtual subject
