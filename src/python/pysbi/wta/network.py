@@ -222,23 +222,23 @@ class WTANetworkGroup(NeuronGroup):
 
             # E population - recurrent connections
             self.connections['e%d->e%d_ampa' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
-                'g_ampa_r', self.pyr_params.w_ampa_rec, self.params.p_e_e, .5*ms, allow_self_conn=False)
+                'g_ampa_r', self.pyr_params.w_ampa_rec, self.params.p_e_e, delay=.5*ms, allow_self_conn=False)
             self.connections['e%d->e%d_nmda' % (i,i)]=init_connection(self.groups_e[i], self.groups_e[i],
-                'g_nmda', self.pyr_params.w_nmda, self.params.p_e_e, .5*ms, allow_self_conn=False)
+                'g_nmda', self.pyr_params.w_nmda, self.params.p_e_e, delay=.5*ms, allow_self_conn=False)
 
         # E -> I excitatory connections
         self.connections['e->i_ampa']=init_connection(self.group_e, self.group_i, 'g_ampa_r', self.inh_params.w_ampa_rec,
-            self.params.p_e_i, .5*ms)
+            self.params.p_e_i, delay=.5*ms)
         self.connections['e->i_nmda']=init_connection(self.group_e, self.group_i, 'g_nmda', self.inh_params.w_nmda,
-            self.params.p_e_i, .5*ms)
+            self.params.p_e_i, delay=.5*ms)
 
         # I -> E - inhibitory connections
         self.connections['i->e_gabaa']=init_connection(self.group_i, self.group_e, 'g_gaba_a', self.pyr_params.w_gaba,
-            self.params.p_i_e, .5*ms)
+            self.params.p_i_e, delay=.5*ms)
 
         # I population - recurrent connections
         self.connections['i->i_gabaa']=init_connection(self.group_i, self.group_i, 'g_gaba_a', self.inh_params.w_gaba,
-            self.params.p_i_i, .5*ms, allow_self_conn=False)
+            self.params.p_i_i, delay=.5*ms, allow_self_conn=False)
 
         if self.background_input is not None:
             # Background -> E+I population connections
