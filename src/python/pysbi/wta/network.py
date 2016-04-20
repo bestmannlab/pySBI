@@ -266,7 +266,7 @@ class WTANetworkGroup(NeuronGroup):
                 self.stdp['stdp%d_%d' % (i,i)] = ExponentialSTDP(self.connections['t%d->e%d_ampa' % (i, i)],
                     self.plasticity_params.tau_pre, self.plasticity_params.tau_post, self.plasticity_params.dA_pre,
                     self.plasticity_params.dA_post, wmax=self.plasticity_params.gmax, update='additive', clock=clock)
-                self.stdp['stdp%d_%d' % (i,1-1)] = ExponentialSTDP(self.connections['t%d->e%d_ampa' % (i, 1-i)],
+                self.stdp['stdp%d_%d' % (i,1-i)] = ExponentialSTDP(self.connections['t%d->e%d_ampa' % (i, 1-i)],
                     self.plasticity_params.tau_pre, self.plasticity_params.tau_post, self.plasticity_params.dA_pre,
                     self.plasticity_params.dA_post, wmax=self.plasticity_params.gmax, update='additive', clock=clock)
 
