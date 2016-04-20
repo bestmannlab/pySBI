@@ -53,7 +53,7 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
 
             # Run session
             run_session(subject, condition, sim_params, coherence_levels,
-                output_file=os.path.join(output_dir, 'subject.%d.%s.h5' % (subj_id,condition)), plot=True)
+                output_file=os.path.join(output_dir, 'subject.%d.%s.h5' % (subj_id,condition)))
 
 
 def run_session(subject, condition, sim_params, coherence_levels, output_file=None, plot=False):
