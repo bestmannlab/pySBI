@@ -6,6 +6,7 @@ from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeM
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
+from pysbi.util.plot import plot_network_firing_rates
 from pysbi.util.utils import get_response_time
 
 class SessionMonitor():
@@ -93,6 +94,29 @@ class SessionMonitor():
         perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
         return perc_correct_training
 
+    def plot_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
+        if self.record_firing_rates:
+            mean_e_pop_rates=[]
+            for i in range(self.network_params.num_groups):
+                pop_rate_mat=np.array(self.pop_rates['excitatory_rate_%d' % i])
+                mean_e_pop_rates.append(np.mean(pop_rate_mat[trials,:],axis=0))
+            mean_e_pop_rates=np.array(mean_e_pop_rates)
+            pop_rate_mat=np.array(self.pop_rates['inhibitory_rate'])
+            mean_i_pop_rate=np.mean(pop_rate_mat[trials,:],axis=0)
+            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params, i_rate=mean_i_pop_rate, plt_title=plt_title)
+
+    def plot_sorted_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
+        if self.record_firing_rates:
+            chosen_pop_rates=[]
+            unchosen_pop_rates=[]
+            for trial_idx in trials:
+                resp=self.trial_resp[0,trial_idx]
+                if resp>-1:
+                    chosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % resp][trial_idx])
+                    unchosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % (1-resp)][trial_idx])
+            mean_e_pop_rates=np.array([np.mean(np.array(chosen_pop_rates),axis=0), np.mean(np.array(unchosen_pop_rates),axis=0)])
+            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params, plt_title=plt_title, labels=['chosen','unchosen'])
+
     def plot(self):
         # Convolve accuracy
         correct_ma = self.get_correct_ma()
@@ -107,6 +131,27 @@ class SessionMonitor():
             #plt.ylim(0, gmax/nS)
             plt.xlabel('trial')
             plt.ylabel('average weight')
+
+        if self.record_firing_rates:
+            self.plot_mean_firing_rates(range(self.sim_params.ntrials))
+            self.plot_sorted_mean_firing_rates(range(self.sim_params.ntrials))
+
+            trial_coherence_levels=[]
+            for idx in range(self.sim_params.ntrials):
+                coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+                trial_coherence_levels.append(float('%.3f' % coherence))
+            coherence_levels=sorted(np.unique(trial_coherence_levels))
+            trial_coherence_idx=[]
+            for idx in range(self.sim_params.ntrials):
+                coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+                coherence_dist=np.abs(np.array(coherence_levels)-coherence)
+                coherence_idx=np.where(coherence_dist==np.min(coherence_dist))[0][0]
+                trial_coherence_idx.append(coherence_idx)
+
+            for idx,coherence in enumerate(coherence_levels):
+                trials=np.where(trial_coherence_idx==idx)[0]
+                self.plot_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
+                self.plot_sorted_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
 
         plt.figure()
         plt.plot(self.trial_correct[0,:])
@@ -286,58 +331,29 @@ class WTAMonitor():
 
             e_rate_0=self.monitors['excitatory_rate_0'].smooth_rate(width=5*ms)/hertz
             e_rate_1=self.monitors['excitatory_rate_1'].smooth_rate(width=5*ms)/hertz
-            rt, choice = get_response_time(np.array([e_rate_0, e_rate_1]), self.sim_params.stim_start_time,
-                self.sim_params.stim_end_time, upper_threshold = self.network_params.resp_threshold,
-                dt = self.sim_params.dt)
-
-            figure()
-            ax=subplot(211)
             i_rate=self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz
-            max_rates=[np.max(i_rate[500:]), self.network_params.resp_threshold+10]
-            for i in range(self.network_params.num_groups):
-                e_rate=self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz
-                max_rates.append(np.max(e_rate[500:]))
-            max_rate=np.max(max_rates)
-
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
-                alpha=0.25, facecolor='yellow', edgecolor='none')
-            ax.add_patch(rect)
-
-            for idx in range(self.network_params.num_groups):
-                pop_rate_monitor=self.monitors['excitatory_rate_%d' % idx]
-                ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
-                    pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
-                ylim(0,max_rate)
-            ax.plot([0-self.sim_params.stim_start_time/ms, (self.sim_params.trial_duration-self.sim_params.stim_start_time)/ms],
-                [self.network_params.resp_threshold/hertz, self.network_params.resp_threshold/hertz], 'k--')
-            ax.plot([rt,rt],[0, max_rate],'k--')
-            legend(loc='best')
-            ylabel('Firing rate (Hz)')
-
-            ax=subplot(212)
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
-                alpha=0.25, facecolor='yellow', edgecolor='none')
-            ax.add_patch(rect)
-            pop_rate_monitor=self.monitors['inhibitory_rate']
-            ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
-                pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i')
-            ylim(0,max_rate)
-            ax.plot([rt,rt],[0, max_rate],'k--')
-            ylabel('Firing rate (Hz)')
-            xlabel('Time (ms)')
+            plot_network_firing_rates(np.array([e_rate_0, e_rate_1]), i_rate, self.sim_params, self.network_params)
 
         # Input firing rate plots
         if self.record_inputs:
             figure()
             ax=subplot(111)
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
+            max_rate=0
+            task_rates=[]
+            for i in range(self.network_params.num_groups):
+                task_monitor=self.monitors['task_rate_%d' % i]
+                task_rate=task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz
+                if np.max(task_rate)>max_rate:
+                    max_rate=np.max(task_rate)
+                task_rates.append(task_rate)
+
+            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate+5,
                 alpha=0.25, facecolor='yellow', edgecolor='none')
             ax.add_patch(rect)
 #            ax.plot(self.monitors['background_rate'].times/ms,
 #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             for i in range(self.network_params.num_groups):
-                task_monitor=self.monitors['task_rate_%d' % i]
-                ax.plot(task_monitor.times/ms-self.sim_params.stim_start_time/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+                ax.plot((np.array(range(len(task_rates[i])))*self.sim_params.dt)/ms-self.sim_params.stim_start_time/ms, task_rates[i])
             ylim(0,90)
             ylabel('Firing rate (Hz)')
             xlabel('Time (ms)')
