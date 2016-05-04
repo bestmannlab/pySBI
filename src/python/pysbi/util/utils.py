@@ -1,7 +1,7 @@
 import math
 from scipy import optimize
 from scipy.stats import ttest_ind
-from brian import ms, second
+from brian import ms, second, Connection
 from brian.connections.delayconnection import DelayConnection
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pylab as plt
@@ -76,7 +76,7 @@ def init_rand_weight_connection(pop1, pop2, target_name, min_weight, max_weight,
             conn.delay[j,j]=0.0
     return conn
 
-def init_connection(pop1, pop2, target_name, weight, p, delay, allow_self_conn=True):
+def init_connection(pop1, pop2, target_name, weight, p, delay=None, allow_self_conn=True):
     """
     Initialize a connection between two populations
     pop1 = population sending projections
@@ -87,15 +87,19 @@ def init_connection(pop1, pop2, target_name, weight, p, delay, allow_self_conn=T
     delay = delay
     allow_self_conn = allow neuron to project to itself
     """
-    conn=DelayConnection(pop1, pop2, target_name, sparseness=p, weight=weight, delay=delay)
+    if delay is not None:
+        conn=DelayConnection(pop1, pop2, target_name, sparseness=p, weight=weight, delay=delay)
+    else:
+        conn=Connection(pop1, pop2, sparseness=p, weight=weight)
 
     # Remove self-connections
     if not allow_self_conn and len(pop1)==len(pop2):
         for j in xrange(len(pop1)):
             conn[j,j]=0.0
-            conn.delay[j,j]=0.0
             conn[j,j]=0.0
-            conn.delay[j,j]=0.0
+            if delay is not None:
+                conn.delay[j,j]=0.0
+                conn.delay[j,j]=0.0
     return conn
 
 
@@ -110,7 +114,7 @@ def rt_function(x, a, k, tr):
 def exp_decay(x, n, lam):
     return n*np.exp(-lam*x)
 
-def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, lower_threshold=None, dt=.1*ms):
+def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_threshold=60, threshold_diff=None, dt=.1*ms):
     rate_1=e_firing_rates[0]
     rate_2=e_firing_rates[1]
     times=np.array(range(len(rate_1)))*(dt/second)
@@ -120,11 +124,11 @@ def get_response_time(e_firing_rates, stim_start_time, stim_end_time, upper_thre
         time=time*second
         if stim_start_time < time < stim_end_time:
             if rt is None:
-                if rate_1[idx]>=upper_threshold and (lower_threshold is None or rate_2[idx]<=lower_threshold):
+                if rate_1[idx]>=upper_threshold and (threshold_diff is None or rate_1[idx]-rate_2[idx]>=threshold_diff):
                     decision_idx=0
                     rt=(time-stim_start_time)/ms
                     break
-                elif rate_2[idx]>=upper_threshold and (lower_threshold is None or rate_1[idx]<=lower_threshold):
+                elif rate_2[idx]>=upper_threshold and (threshold_diff is None or rate_2[idx]-rate_1[idx]>=threshold_diff):
                     decision_idx=1
                     rt=(time-stim_start_time)/ms
                     break
