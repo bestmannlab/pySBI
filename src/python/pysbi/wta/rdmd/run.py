@@ -3,7 +3,7 @@ import h5py
 import os
 from pysbi.wta.monitor import SessionMonitor
 from pysbi.wta.network import default_params, pyr_params, simulation_params
-from pysbi.wta.virtual_subject import VirtualSubject, generate_virtual_subject
+from pysbi.wta.virtual_subject import VirtualSubject
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,12 +16,30 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
     behavioral_param_file = h5 file containing softmax-RL parameter distributions, background freq is sampled using
         inverse temp param distribution
     """
+    # Load alpha and beta params of control group from behavioral parameter file
+    f = h5py.File(behavioral_param_file)
+    control_group=f['control']
+    alpha_vals=np.array(control_group['alpha'])
+    beta_vals=np.array(control_group['beta'])
 
     # Run each subject
     for subj_id in subj_ids:
         print('***** Running subject %d *****' % subj_id)
 
-        subject=generate_virtual_subject(subj_id, behavioral_param_file)
+        # Sample beta from subject distribution - don't use subjects with high alpha
+        beta_hist,beta_bins=np.histogram(beta_vals[np.where(alpha_vals<.99)[0]], density=True)
+        bin_width=beta_bins[1]-beta_bins[0]
+        beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
+        beta=beta_bin+np.random.rand()*bin_width
+
+        # Create virtual subject parameters - background freq from beta dist, resp threshold between 15 and 25Hz
+        #wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20+np.random.uniform(5))
+        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20)
+        # Set initial input weights and modify NMDA recurrent
+        pyramidal_params=pyr_params(w_nmda=0.15*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.6*nS)
+
+        # Create a virtual subject
+        subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
 
         # Run through each condition
         for condition, sim_params in conditions.iteritems():
@@ -81,8 +99,8 @@ def run_session(subject, condition, sim_params, output_file=None, plot=False):
         # Run trial
         subject.run_trial(sim_params, task_input_rates)
 
-        # subject.wta_monitor.plot()
-        # plt.show()
+        #subject.wta_monitor.plot()
+        #plt.show()
 
         # Record trial
         session_monitor.record_trial(t, task_input_rates, correct_input, subject.wta_network, subject.wta_monitor)
@@ -92,6 +110,8 @@ def run_session(subject, condition, sim_params, output_file=None, plot=False):
         session_monitor.write_output(output_file)
 
     # Plot
+    session_monitor.plot()
+    plt.show()
     if plot:
         if sim_params.ntrials>1:
             session_monitor.plot()
@@ -101,18 +121,21 @@ def run_session(subject, condition, sim_params, output_file=None, plot=False):
 
 if __name__=='__main__':
     # Trials per condition
-    trials_per_condition=100
+    #trials_per_condition=100
+    trials_per_condition=12
     # Max stimulation intensity
-    stim_intensity_max=2*pA
+    stim_intensity_max=0.5*pA
     # Stimulation conditions
     conditions={
-        'control': simulation_params(ntrials=trials_per_condition),
-        'depolarizing': simulation_params(ntrials=trials_per_condition, p_dcs=stim_intensity_max, i_dcs=-0.5*stim_intensity_max,
-            dcs_start_time=0*second, dcs_end_time=4*second),
-        'hyperpolarizing': simulation_params(ntrials=trials_per_condition, p_dcs=-1*stim_intensity_max, i_dcs=0.5*stim_intensity_max,
-            dcs_start_time=0*second, dcs_end_time=4*second)
+        'control': simulation_params(ntrials=trials_per_condition, trial_duration=3*second, stim_start_time=1*second,
+                                     stim_end_time=2*second),
+        'depolarizing': simulation_params(ntrials=trials_per_condition, trial_duration=3*second, stim_start_time=1*second,
+                                     stim_end_time=2*second, p_dcs=stim_intensity_max, i_dcs=-0.5*stim_intensity_max,
+                                     dcs_start_time=0*second, dcs_end_time=3*second),
+        'hyperpolarizing': simulation_params(ntrials=trials_per_condition, trial_duration=3*second, stim_start_time=1*second,
+                                     stim_end_time=2*second, p_dcs=-1*stim_intensity_max, i_dcs=0.5*stim_intensity_max,
+                                     dcs_start_time=0*second, dcs_end_time=3*second)
     }
-    # run_virtual_subjects(range(20), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/',
-    #     '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
     run_virtual_subjects(range(16,20), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/',
-        '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
+                         '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
+
