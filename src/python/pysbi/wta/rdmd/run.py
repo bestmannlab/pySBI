@@ -36,7 +36,7 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
         #wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20+np.random.uniform(5))
         wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20)
         # Set initial input weights and modify NMDA recurrent
-        pyramidal_params=pyr_params(w_nmda=0.15*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.6*nS)
+        pyramidal_params=pyr_params(w_nmda=0.1475*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.8*nS)
 
         # Create a virtual subject
         subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
@@ -121,8 +121,7 @@ def run_session(subject, condition, sim_params, output_file=None, plot=False):
 
 if __name__=='__main__':
     # Trials per condition
-    #trials_per_condition=100
-    trials_per_condition=12
+    trials_per_condition=100
     # Max stimulation intensity
     stim_intensity_max=0.5*pA
     # Stimulation conditions
