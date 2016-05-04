@@ -5,6 +5,7 @@ from matplotlib.mlab import normpdf
 import numpy as np
 from scipy.stats import wilcoxon, norm
 from sklearn.linear_model import LinearRegression
+from pysbi.util.plot import plot_condition_choice_probability
 from pysbi.util.utils import mdm_outliers, FitSigmoid, get_twod_confidence_interval, FitWeibull, FitRT
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -471,23 +472,7 @@ def plot_choice_probability(colors, condition_coherence_choices):
             left_choice_probs.append(np.mean(condition_coherence_choices['L*'][condition][coherence]))
         for coherence in right_coherences:
             right_choice_probs.append(np.mean(condition_coherence_choices['R*'][condition][coherence]))
-        plot_condition_choice_probability(ax, colors[condition], condition, left_coherences, left_choice_probs, right_coherences, right_choice_probs)
-
-
-def plot_condition_choice_probability(ax, color, condition, left_coherences, left_choice_probs, right_coherences, right_choice_probs):
-    acc_fit = FitSigmoid(left_coherences, left_choice_probs, guess=[0.0, 0.2], display=0)
-    smoothInt = np.arange(min(left_coherences), max(left_coherences), 0.001)
-    smoothResp = acc_fit.eval(smoothInt)
-    ax.plot(smoothInt, smoothResp, '--%s' % color, label='L* %s' % condition)
-    ax.plot(left_coherences, left_choice_probs, 'o%s' % color)
-    acc_fit = FitSigmoid(right_coherences, right_choice_probs, guess=[0.0, 0.2], display=0)
-    smoothInt = np.arange(min(right_coherences), max(right_coherences), 0.001)
-    smoothResp = acc_fit.eval(smoothInt)
-    ax.plot(smoothInt, smoothResp, color, label='R* %s' % condition)
-    ax.plot(right_coherences, right_choice_probs, 'o%s' % color)
-    ax.legend(loc='best')
-    ax.set_xlabel('Coherence')
-    ax.set_ylabel('% of Right Choices')
+        plot_condition_choice_probability(ax, colors[condition],  left_coherences, left_choice_probs, right_coherences, right_choice_probs, extra_label=condition)
 
 
 def plot_logistic_parameter_ratio(colors, condition_logistic_params):
