@@ -1,12 +1,13 @@
 import h5py
 from brian.experimental.connectionmonitor import ConnectionMonitor
+import math
 from matplotlib.patches import Rectangle
 import numpy as np
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
-from pysbi.util.plot import plot_network_firing_rates
+from pysbi.util.plot import plot_network_firing_rates, plot_condition_choice_probability
 from pysbi.util.utils import get_response_time
 
 class SessionMonitor():
@@ -97,13 +98,18 @@ class SessionMonitor():
     def plot_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
         if self.record_firing_rates:
             mean_e_pop_rates=[]
+            std_e_pop_rates=[]
             for i in range(self.network_params.num_groups):
                 pop_rate_mat=np.array(self.pop_rates['excitatory_rate_%d' % i])
                 mean_e_pop_rates.append(np.mean(pop_rate_mat[trials,:],axis=0))
+                std_e_pop_rates.append(np.std(pop_rate_mat[trials,:],axis=0)/np.sqrt(len(trials)))
             mean_e_pop_rates=np.array(mean_e_pop_rates)
+            std_e_pop_rates=np.array(std_e_pop_rates)
             pop_rate_mat=np.array(self.pop_rates['inhibitory_rate'])
             mean_i_pop_rate=np.mean(pop_rate_mat[trials,:],axis=0)
-            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params, i_rate=mean_i_pop_rate, plt_title=plt_title)
+            std_i_pop_rate=np.std(pop_rate_mat[trials,:],axis=0)/np.sqrt(len(trials))
+            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params,
+                std_e_rates=std_e_pop_rates, i_rate=mean_i_pop_rate, std_i_rate=std_i_pop_rate, plt_title=plt_title)
 
     def plot_sorted_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
         if self.record_firing_rates:
@@ -114,8 +120,133 @@ class SessionMonitor():
                 if resp>-1:
                     chosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % resp][trial_idx])
                     unchosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % (1-resp)][trial_idx])
-            mean_e_pop_rates=np.array([np.mean(np.array(chosen_pop_rates),axis=0), np.mean(np.array(unchosen_pop_rates),axis=0)])
-            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params, plt_title=plt_title, labels=['chosen','unchosen'])
+            if len(chosen_pop_rates)>1:
+                chosen_pop_rates=np.array(chosen_pop_rates)
+                unchosen_pop_rates=np.array(unchosen_pop_rates)
+                mean_e_pop_rates=np.array([np.mean(chosen_pop_rates,axis=0), np.mean(unchosen_pop_rates,axis=0)])
+                std_e_pop_rates=np.array([np.std(chosen_pop_rates,axis=0)/np.sqrt(len(trials)),
+                                          np.std(unchosen_pop_rates,axis=0)/np.sqrt(len(trials))])
+                plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params,
+                    std_e_rates=std_e_pop_rates, plt_title=plt_title, labels=['chosen','unchosen'])
+
+    def plot_perc_missed(self):
+        plt.figure()
+        coherence_levels=self.get_coherence_levels()
+        perc_missed=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            perc_missed.append((1.0-float(len(responded_trials))/float(len(trials)))*100.0)
+        plt.plot(coherence_levels,perc_missed,'o')
+        plt.xlabel('Coherence')
+        plt.ylabel('% Missed')
+
+    def plot_coherence_sat(self):
+        plt.figure()
+        coherence_levels=self.get_coherence_levels()
+        mean_rt=[]
+        mean_error=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_rt.append(np.mean(self.trial_rt[0,responded_trials]))
+            mean_error.append(np.mean(1.0-self.trial_correct[0,responded_trials])*100.0)
+        plt.plot(mean_rt,mean_error,'o')
+        plt.xlabel('RT')
+        plt.ylabel('Error Rate')
+
+    def plot_coherence_rt(self):
+        coherence_levels=self.get_coherence_levels()
+        mean_rt=[]
+        std_rt=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_rt.append(np.mean(self.trial_rt[0,responded_trials]))
+            std_rt.append(np.std(self.trial_rt[0,responded_trials])/np.sqrt(len(responded_trials)))
+        plt.figure()
+        plt.errorbar(coherence_levels, mean_rt, yerr=std_rt)
+        plt.xlabel('Coherence')
+        plt.ylabel('RT')
+
+    def plot_coherence_accuracy(self):
+        coherence_levels=self.get_coherence_levels()
+        mean_correct=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_correct.append(np.mean(self.trial_correct[0,responded_trials]))
+        plt.figure()
+        plt.plot(coherence_levels,mean_correct,'o')
+        plt.xlabel('Coherence')
+        plt.ylabel('Accuracy')
+
+    def plot_choice_hysteresis(self):
+        # Dict of coherence levels
+        coherence_choices={
+            'L*':{},
+            'R*':{}
+        }
+
+        # For each trial
+        for trial_idx in range(1,self.sim_params.ntrials):
+            direction = np.where(self.trial_inputs[:, trial_idx] == np.max(self.trial_inputs[:, trial_idx]))[0][0]
+            if direction == 0:
+                direction = -1
+            # Get coherence - negative coherences when direction is to the left
+            coherence = float('%.3f' % np.abs((self.trial_inputs[0, trial_idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0)))*direction
+            last_resp=self.trial_resp[0,trial_idx-1]
+            if last_resp == -1:
+                last_resp=float('NaN')
+            elif last_resp == 0:
+                last_resp = -1
+            resp=self.trial_resp[0,trial_idx]
+            if resp == -1:
+                resp=float('NaN')
+            elif resp == 0:
+                resp = -1
+
+            if not math.isnan(last_resp) and not math.isnan(resp):
+                if last_resp<0:
+                    if not coherence in coherence_choices['L*']:
+                        coherence_choices['L*'][coherence]=[]
+                    # Append 0 to list if left (-1) or 1 if right
+                    coherence_choices['L*'][coherence].append(np.max([0,resp]))
+                elif last_resp>0:
+                    # List of rightward choices (0=left, 1=right)
+                    if not coherence in coherence_choices['R*']:
+                        coherence_choices['R*'][coherence]=[]
+                    # Append 0 to list if left (-1) or 1 if right
+                    coherence_choices['R*'][coherence].append(np.max([0,resp]))
+
+        fig=plt.figure()
+        ax=fig.add_subplot(1,1,1)
+        left_coherences=sorted(coherence_choices['L*'].keys())
+        right_coherences=sorted(coherence_choices['R*'].keys())
+        left_choice_probs = []
+        right_choice_probs = []
+        for coherence in left_coherences:
+            left_choice_probs.append(np.mean(coherence_choices['L*'][coherence]))
+        for coherence in right_coherences:
+            right_choice_probs.append(np.mean(coherence_choices['R*'][coherence]))
+        plot_condition_choice_probability(ax, 'b', left_coherences, left_choice_probs, right_coherences, right_choice_probs)
+
+
+    def get_coherence_levels(self):
+        trial_coherence_levels=[]
+        for idx in range(self.sim_params.ntrials):
+            coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+            trial_coherence_levels.append(float('%.3f' % coherence))
+        return sorted(np.unique(trial_coherence_levels))
+
+    def get_coherence_trials(self, coherence):
+        trial_coherence_idx=[]
+        for idx in range(self.sim_params.ntrials):
+            trial_coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+            if ('%.3f' % trial_coherence)==('%.3f' % coherence):
+                trial_coherence_idx.append(idx)
+
+        return np.array(trial_coherence_idx)
 
     def plot(self):
         # Convolve accuracy
@@ -136,22 +267,18 @@ class SessionMonitor():
             self.plot_mean_firing_rates(range(self.sim_params.ntrials))
             self.plot_sorted_mean_firing_rates(range(self.sim_params.ntrials))
 
-            trial_coherence_levels=[]
-            for idx in range(self.sim_params.ntrials):
-                coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
-                trial_coherence_levels.append(float('%.3f' % coherence))
-            coherence_levels=sorted(np.unique(trial_coherence_levels))
-            trial_coherence_idx=[]
-            for idx in range(self.sim_params.ntrials):
-                coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
-                coherence_dist=np.abs(np.array(coherence_levels)-coherence)
-                coherence_idx=np.where(coherence_dist==np.min(coherence_dist))[0][0]
-                trial_coherence_idx.append(coherence_idx)
+            coherence_levels=self.get_coherence_levels()
 
-            for idx,coherence in enumerate(coherence_levels):
-                trials=np.where(trial_coherence_idx==idx)[0]
+            for coherence in coherence_levels:
+                trials=self.get_coherence_trials(coherence)
                 self.plot_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
                 self.plot_sorted_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
+
+        self.plot_coherence_rt()
+        self.plot_coherence_accuracy()
+        self.plot_coherence_sat()
+        self.plot_perc_missed()
+        self.plot_choice_hysteresis()
 
         plt.figure()
         plt.plot(self.trial_correct[0,:])
