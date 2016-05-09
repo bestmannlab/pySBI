@@ -70,9 +70,11 @@ def analyze_subject_accuracy_rt(subject, plot=False):
     condition_coherence_rt={}
     condition_coherence_rt_diff={}
     condition_accuracy_thresh={}
+    condition_overall_accuracy_rt={}
     for condition,trial_data in subject.iteritems():
         condition_coherence_accuracy[condition]={}
         condition_coherence_rt[condition]={}
+        condition_overall_accuracy_rt[condition]=[[],[]]
         # For each trial
         for trial_idx in range(trial_data.shape[0]):
             # Get coherence - negative coherences when direction is to the left
@@ -80,13 +82,17 @@ def analyze_subject_accuracy_rt(subject, plot=False):
             correct=trial_data[trial_idx,3]
             rt=trial_data[trial_idx,6]
 
-            if not coherence in condition_coherence_accuracy[condition]:
-                condition_coherence_accuracy[condition][coherence]=[]
-            condition_coherence_accuracy[condition][np.abs(coherence)].append(float(correct))
+            if not math.isnan(rt):
+                if not coherence in condition_coherence_accuracy[condition]:
+                    condition_coherence_accuracy[condition][coherence]=[]
+                condition_coherence_accuracy[condition][np.abs(coherence)].append(float(correct))
 
-            if not coherence in condition_coherence_rt[condition]:
-                condition_coherence_rt[condition][coherence]=[]
-            condition_coherence_rt[condition][np.abs(coherence)].append(rt)
+                if not coherence in condition_coherence_rt[condition]:
+                    condition_coherence_rt[condition][coherence]=[]
+                condition_coherence_rt[condition][np.abs(coherence)].append(rt)
+
+                condition_overall_accuracy_rt[condition][0].append(correct)
+                condition_overall_accuracy_rt[condition][1].append(rt)
 
         coherences = sorted(condition_coherence_accuracy[condition].keys())
         accuracy=[]
@@ -94,6 +100,9 @@ def analyze_subject_accuracy_rt(subject, plot=False):
             accuracy.append(np.mean(condition_coherence_accuracy[condition][coherence]))
         acc_fit = FitWeibull(coherences, accuracy, guess=[0.0, 0.2], display=0)
         condition_accuracy_thresh[condition]=acc_fit.inverse(0.8)
+
+        condition_overall_accuracy_rt[condition][0]=np.mean(condition_overall_accuracy_rt[condition][0])
+        condition_overall_accuracy_rt[condition][1]=np.mean(condition_overall_accuracy_rt[condition][1])
 
     for stim_condition in ['depolarizing', 'hyperpolarizing']:
         condition_coherence_rt_diff[stim_condition]={}
@@ -106,9 +115,9 @@ def analyze_subject_accuracy_rt(subject, plot=False):
 
         plot_choice_rt(colors, condition_coherence_rt)
 
-        plot_choice_rt_diff(colors, condition_coherence_rt, plot_err=False)
+        plot_choice_rt_diff(colors, condition_coherence_rt_diff, plot_err=False)
 
-    return condition_coherence_accuracy, condition_coherence_rt, condition_coherence_rt_diff, condition_accuracy_thresh
+    return condition_coherence_accuracy, condition_coherence_rt, condition_coherence_rt_diff, condition_accuracy_thresh, condition_overall_accuracy_rt
 
 
 def analyze_subject_choice_hysteresis(subject, plot=False):
@@ -130,23 +139,25 @@ def analyze_subject_choice_hysteresis(subject, plot=False):
         condition_coherence_choices['R*'][condition]={}
 
         # For each trial
-        for trial_idx in range(trial_data.shape[0]):
+        for trial_idx in range(1,trial_data.shape[0]):
             # Get coherence - negative coherences when direction is to the left
             coherence=trial_data[trial_idx,2]*trial_data[trial_idx,1]
             last_resp=trial_data[trial_idx,5]
             resp=trial_data[trial_idx,4]
 
-            if last_resp<0:
-                if not coherence in condition_coherence_choices['L*'][condition]:
-                    condition_coherence_choices['L*'][condition][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
-                condition_coherence_choices['L*'][condition][coherence].append(np.max([0,resp]))
-            elif last_resp>0:
-                # List of rightward choices (0=left, 1=right)
-                if not coherence in condition_coherence_choices['R*'][condition]:
-                    condition_coherence_choices['R*'][condition][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
-                condition_coherence_choices['R*'][condition][coherence].append(np.max([0,resp]))
+            if not math.isnan(resp) and not math.isnan(last_resp):
+
+                if last_resp<0:
+                    if not coherence in condition_coherence_choices['L*'][condition]:
+                        condition_coherence_choices['L*'][condition][coherence]=[]
+                        # Append 0 to list if left (-1) or 1 if right
+                    condition_coherence_choices['L*'][condition][coherence].append(np.max([0,resp]))
+                elif last_resp>0:
+                    # List of rightward choices (0=left, 1=right)
+                    if not coherence in condition_coherence_choices['R*'][condition]:
+                        condition_coherence_choices['R*'][condition][coherence]=[]
+                        # Append 0 to list if left (-1) or 1 if right
+                    condition_coherence_choices['R*'][condition][coherence].append(np.max([0,resp]))
 
         choice_probs=[]
         full_coherences=[]
@@ -188,17 +199,23 @@ def analyze_accuracy_rt(subjects, plot=True, print_stats=True):
     condition_coherence_rt={}
     condition_coherence_rt_diff={}
     condition_accuracy_thresh={}
+    condition_overall_accuracy_rt={}
     # For each subject
     for subject in subjects:
 
-        subj_condition_coherence_accuracy, subj_condition_coherence_rt, subj_condition_coherence_rt_diff,subj_condition_accuracy_thresh=analyze_subject_accuracy_rt(subject, plot=False)
+        subj_condition_coherence_accuracy, subj_condition_coherence_rt, subj_condition_coherence_rt_diff,\
+            subj_condition_accuracy_thresh,subj_condition_overall_accuracy_rt=analyze_subject_accuracy_rt(subject,
+                                                                                                          plot=False)
 
         for condition in conditions:
             if not condition in condition_coherence_accuracy:
                 condition_coherence_accuracy[condition]={}
                 condition_coherence_rt[condition]={}
                 condition_accuracy_thresh[condition]=[]
+                condition_overall_accuracy_rt[condition]=[[],[]]
             condition_accuracy_thresh[condition].append(subj_condition_accuracy_thresh[condition])
+            condition_overall_accuracy_rt[condition][0].append(subj_condition_overall_accuracy_rt[condition][0])
+            condition_overall_accuracy_rt[condition][1].append(subj_condition_overall_accuracy_rt[condition][1])
 
             for coherence in subj_condition_coherence_accuracy[condition]:
                 if not coherence in condition_coherence_accuracy[condition]:
@@ -219,6 +236,8 @@ def analyze_accuracy_rt(subjects, plot=True, print_stats=True):
                 condition_coherence_rt_diff[condition][coherence].append(subj_condition_coherence_rt_diff[condition][coherence])
 
     if plot:
+        plot_sat(colors, condition_overall_accuracy_rt)
+
         plot_choice_accuracy(colors, condition_coherence_accuracy, plot_err=True)
 
         plot_choice_rt(colors, condition_coherence_rt)
@@ -378,6 +397,17 @@ def plot_indifference(colors, condition_sigmoid_offsets):
     ax.set_ylabel('Indifference Point for R* Trials')
     ax.legend(loc='best')
 
+
+def plot_sat(colors, condition_overall_accuracy_rt):
+    fig=plt.figure()
+    ax=fig.add_subplot(1,1,1)
+    for condition,overall_accuracy_rt in condition_overall_accuracy_rt.iteritems():
+        ellipse_x, ellipse_y=get_twod_confidence_interval(overall_accuracy_rt[1],1-np.array(overall_accuracy_rt[0]))
+        ax.plot(ellipse_x,ellipse_y,'%s-' % colors[condition])
+        ax.plot(overall_accuracy_rt[1],1-np.array(overall_accuracy_rt[0]),'o%s' % colors[condition], label=condition)
+    ax.legend(loc='best')
+    ax.set_xlabel('Mean RT')
+    ax.set_ylabel('Error Rate')
 
 def plot_choice_accuracy(colors, condition_coherence_accuracy, plot_err=False):
     fig = plt.figure()
