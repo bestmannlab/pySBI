@@ -7,8 +7,8 @@ from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeM
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
-from pysbi.util.plot import plot_network_firing_rates, plot_condition_choice_probability
-from pysbi.util.utils import get_response_time
+from pyAttractor.util.plot import plot_network_firing_rates, plot_condition_choice_probability
+from pyAttractor.util.utils import get_response_time, FitWeibull, FitRT
 
 class SessionMonitor():
     def __init__(self, network, sim_params, plasticity_params, record_connections=[], conv_window=10,
@@ -165,7 +165,11 @@ class SessionMonitor():
             mean_rt.append(np.mean(self.trial_rt[0,responded_trials]))
             std_rt.append(np.std(self.trial_rt[0,responded_trials])/np.sqrt(len(responded_trials)))
         plt.figure()
-        plt.errorbar(coherence_levels, mean_rt, yerr=std_rt)
+        rt_fit = FitRT(coherence_levels, mean_rt, guess=[1,1,1], display=0)
+        smoothInt = np.arange(min(coherence_levels), max(coherence_levels), 0.001)
+        smoothRT = rt_fit.eval(smoothInt)
+        plt.semilogx(smoothInt, smoothRT,'b')
+        plt.errorbar(coherence_levels, mean_rt, yerr=std_rt, fmt='bo')
         plt.xlabel('Coherence')
         plt.ylabel('RT')
 
@@ -176,8 +180,14 @@ class SessionMonitor():
             trials=self.get_coherence_trials(coherence)
             responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
             mean_correct.append(np.mean(self.trial_correct[0,responded_trials]))
+        acc_fit = FitWeibull(coherence_levels, mean_correct, guess=[0.0, 0.2], display=0)
+        smoothInt = np.arange(.01, 1.0, 0.001)
+        smoothResp = acc_fit.eval(smoothInt)
+        thresh=acc_fit.inverse(0.8)
         plt.figure()
-        plt.plot(coherence_levels,mean_correct,'o')
+        plt.semilogx(smoothInt, smoothResp,'b')
+        plt.plot(coherence_levels,mean_correct,'ob')
+        plt.plot([thresh,thresh],[0.5,1],'--b')
         plt.xlabel('Coherence')
         plt.ylabel('Accuracy')
 
@@ -193,7 +203,7 @@ class SessionMonitor():
             direction = np.where(self.trial_inputs[:, trial_idx] == np.max(self.trial_inputs[:, trial_idx]))[0][0]
             if direction == 0:
                 direction = -1
-            # Get coherence - negative coherences when direction is to the left
+                # Get coherence - negative coherences when direction is to the left
             coherence = float('%.3f' % np.abs((self.trial_inputs[0, trial_idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0)))*direction
             last_resp=self.trial_resp[0,trial_idx-1]
             if last_resp == -1:
@@ -210,13 +220,13 @@ class SessionMonitor():
                 if last_resp<0:
                     if not coherence in coherence_choices['L*']:
                         coherence_choices['L*'][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
+                        # Append 0 to list if left (-1) or 1 if right
                     coherence_choices['L*'][coherence].append(np.max([0,resp]))
                 elif last_resp>0:
                     # List of rightward choices (0=left, 1=right)
                     if not coherence in coherence_choices['R*']:
                         coherence_choices['R*'][coherence]=[]
-                    # Append 0 to list if left (-1) or 1 if right
+                        # Append 0 to list if left (-1) or 1 if right
                     coherence_choices['R*'][coherence].append(np.max([0,resp]))
 
         fig=plt.figure()
@@ -271,7 +281,7 @@ class SessionMonitor():
 
             for coherence in coherence_levels:
                 trials=self.get_coherence_trials(coherence)
-                self.plot_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
+                #self.plot_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
                 self.plot_sorted_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
 
         self.plot_coherence_rt()
@@ -411,7 +421,7 @@ class WTAMonitor():
             self.record_idx.append(i_idx)
             self.monitors['network'] = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b',
                                                                         'g_gaba_a', 'g_nmda','I_ampa_r','I_ampa_x',
-                                                                        'I_ampa_b','I_gaba_a','I_nmda'], 
+                                                                        'I_ampa_b','I_gaba_a','I_nmda'],
                 record=self.record_idx, clock=clock)
 
         # Population rate monitors
@@ -477,8 +487,8 @@ class WTAMonitor():
             rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate+5,
                 alpha=0.25, facecolor='yellow', edgecolor='none')
             ax.add_patch(rect)
-#            ax.plot(self.monitors['background_rate'].times/ms,
-#                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
+            #            ax.plot(self.monitors['background_rate'].times/ms,
+            #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
             for i in range(self.network_params.num_groups):
                 ax.plot((np.array(range(len(task_rates[i])))*self.sim_params.dt)/ms-self.sim_params.stim_start_time/ms, task_rates[i])
             ylim(0,90)
@@ -503,7 +513,7 @@ class WTAMonitor():
                 neuron_idx=self.record_idx[i]
                 ax=subplot(int('%d1%d' % (self.network_params.num_groups+1,i+1)))
                 title('e%d' % i)
-                ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS, 
+                ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS,
                     label='AMPA-recurrent')
                 ax.plot(network_monitor['g_ampa_x'].times/ms, network_monitor['g_ampa_x'][neuron_idx]/nS,
                     label='AMPA-task')
@@ -667,7 +677,7 @@ class WTAMonitor():
             xlabel('Time (ms)')
             ylabel('Connection Weight (nS)')
 
-        #show()
+            #show()
 
 
     ## Write monitor data to HDF5 file
@@ -696,11 +706,11 @@ class WTAMonitor():
 
         # Write basic parameters
         f.attrs['input_freq'] = input_freq
-        
+
         f_sim_params=f.create_group('sim_params')
         for attr, value in self.sim_params.iteritems():
             f_sim_params.attrs[attr] = value
-            
+
         f_network_params=f.create_group('network_params')
         for attr, value in self.network_params.iteritems():
             f_network_params.attrs[attr] = value
