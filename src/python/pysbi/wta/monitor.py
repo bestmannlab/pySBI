@@ -7,8 +7,9 @@ from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeM
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
-from pyAttractor.util.plot import plot_network_firing_rates, plot_condition_choice_probability
-from pyAttractor.util.utils import get_response_time, FitWeibull, FitRT
+from pysbi.util.plot import plot_network_firing_rates, plot_condition_choice_probability
+from pysbi.util.utils import get_response_time, FitRT, FitWeibull
+
 
 class SessionMonitor():
     def __init__(self, network, sim_params, plasticity_params, record_connections=[], conv_window=10,

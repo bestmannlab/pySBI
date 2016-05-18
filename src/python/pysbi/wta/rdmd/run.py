@@ -31,12 +31,12 @@ def run_virtual_subjects(subj_ids, conditions, output_dir, behavioral_param_file
         bin_width=beta_bins[1]-beta_bins[0]
         beta_bin=np.random.choice(beta_bins[:-1], p=beta_hist*bin_width)
         beta=beta_bin+np.random.rand()*bin_width
+        #beta=np.mean(beta_vals[np.where(alpha_vals<.99)[0]])
 
         # Create virtual subject parameters - background freq from beta dist, resp threshold between 15 and 25Hz
-        #wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20+np.random.uniform(5))
-        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=20)
+        wta_params=default_params(background_freq=(beta-161.08)/-.17, resp_threshold=18+np.random.uniform(4))
         # Set initial input weights and modify NMDA recurrent
-        pyramidal_params=pyr_params(w_nmda=0.1475*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.8*nS)
+        pyramidal_params=pyr_params(w_nmda=0.145*nS, w_ampa_ext_correct=1.6*nS, w_ampa_ext_incorrect=0.9*nS)
 
         # Create a virtual subject
         subject=VirtualSubject(subj_id, wta_params=wta_params, pyr_params=pyramidal_params)
@@ -110,8 +110,6 @@ def run_session(subject, condition, sim_params, output_file=None, plot=False):
         session_monitor.write_output(output_file)
 
     # Plot
-    session_monitor.plot()
-    plt.show()
     if plot:
         if sim_params.ntrials>1:
             session_monitor.plot()
@@ -123,7 +121,7 @@ if __name__=='__main__':
     # Trials per condition
     trials_per_condition=100
     # Max stimulation intensity
-    stim_intensity_max=0.5*pA
+    stim_intensity_max=0.75*pA
     # Stimulation conditions
     conditions={
         'control': simulation_params(ntrials=trials_per_condition, trial_duration=3*second, stim_start_time=1*second,
@@ -135,6 +133,6 @@ if __name__=='__main__':
                                      stim_end_time=2*second, p_dcs=-1*stim_intensity_max, i_dcs=0.5*stim_intensity_max,
                                      dcs_start_time=0*second, dcs_end_time=3*second)
     }
-    run_virtual_subjects(range(16,20), conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/',
+    run_virtual_subjects([5], conditions, '/home/jbonaiuto/Projects/pySBI/data/rdmd/',
                          '/home/jbonaiuto/Projects/pySBI/data/rerw/subjects/fitted_behavioral_params.h5')
 

@@ -6,12 +6,13 @@ from pysbi.util.utils import get_response_time, FitSigmoid
 
 
 def plot_network_firing_rates(e_rates, sim_params, network_params, std_e_rates=None, i_rate=None, std_i_rate=None,
-                              plt_title=None, labels=None):
+                              plt_title=None, labels=None, ax=None):
     rt, choice = get_response_time(e_rates, sim_params.stim_start_time, sim_params.stim_end_time,
                                    upper_threshold = network_params.resp_threshold, dt = sim_params.dt)
 
-    figure()
-    max_rates=[network_params.resp_threshold+10]
+    if ax is None:
+        figure()
+    max_rates=[network_params.resp_threshold]
     if i_rate is not None:
         max_rates.append(np.max(i_rate[500:]))
     for i in range(network_params.num_groups):
@@ -20,7 +21,7 @@ def plot_network_firing_rates(e_rates, sim_params, network_params, std_e_rates=N
 
     if i_rate is not None:
         ax=subplot(211)
-    else:
+    elif ax is None:
         ax=subplot(111)
     rect=Rectangle((0,0),(sim_params.stim_end_time-sim_params.stim_start_time)/ms, max_rate+5,
         alpha=0.25, facecolor='yellow', edgecolor='none')
