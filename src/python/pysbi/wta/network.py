@@ -113,10 +113,10 @@ plasticity_params=Parameters(
     tau_pre = 20 * ms,
     dA_pre= 0.0005,  #0.0005
     # Maximum synaptic weight
-    gmax = 4 * nS   #5 *nS
+    gmax = 3.25 * nS   #3.25
 )
 plasticity_params.tau_post=plasticity_params.tau_pre
-plasticity_params.dA_post=-plasticity_params.dA_pre*1.1  #1.1
+plasticity_params.dA_post=-plasticity_params.dA_pre*1.2  #1.1
 
 # WTA network class - extends Brian's NeuronGroup
 class WTANetworkGroup(NeuronGroup):
