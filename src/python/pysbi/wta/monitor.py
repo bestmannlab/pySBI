@@ -1,12 +1,15 @@
 import h5py
 from brian.experimental.connectionmonitor import ConnectionMonitor
+import math
 from matplotlib.patches import Rectangle
 import numpy as np
 from brian import StateMonitor, MultiStateMonitor, PopulationRateMonitor, SpikeMonitor, raster_plot, ms, hertz, nS, nA, mA, defaultclock, second, Clock
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure, subplot, ylim, legend, ylabel, xlabel, show, title
 # Collection of monitors for WTA network
-from pysbi.util.utils import get_response_time
+from pysbi.util.plot import plot_network_firing_rates, plot_condition_choice_probability
+from pysbi.util.utils import get_response_time, FitRT, FitWeibull
+
 
 class SessionMonitor():
     def __init__(self, network, sim_params, plasticity_params, record_connections=[], conv_window=10,
@@ -93,6 +96,169 @@ class SessionMonitor():
         perc_correct_training = float(np.sum(self.trial_correct[0,resp_trials_training]))/float(len(resp_trials_training))
         return perc_correct_training
 
+    def plot_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
+        if self.record_firing_rates:
+            mean_e_pop_rates=[]
+            std_e_pop_rates=[]
+            for i in range(self.network_params.num_groups):
+                pop_rate_mat=np.array(self.pop_rates['excitatory_rate_%d' % i])
+                mean_e_pop_rates.append(np.mean(pop_rate_mat[trials,:],axis=0))
+                std_e_pop_rates.append(np.std(pop_rate_mat[trials,:],axis=0)/np.sqrt(len(trials)))
+            mean_e_pop_rates=np.array(mean_e_pop_rates)
+            std_e_pop_rates=np.array(std_e_pop_rates)
+            pop_rate_mat=np.array(self.pop_rates['inhibitory_rate'])
+            mean_i_pop_rate=np.mean(pop_rate_mat[trials,:],axis=0)
+            std_i_pop_rate=np.std(pop_rate_mat[trials,:],axis=0)/np.sqrt(len(trials))
+            plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params,
+                std_e_rates=std_e_pop_rates, i_rate=mean_i_pop_rate, std_i_rate=std_i_pop_rate, plt_title=plt_title)
+
+    def plot_sorted_mean_firing_rates(self, trials, plt_title='Mean Firing Rates'):
+        if self.record_firing_rates:
+            chosen_pop_rates=[]
+            unchosen_pop_rates=[]
+            for trial_idx in trials:
+                resp=self.trial_resp[0,trial_idx]
+                if resp>-1:
+                    chosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % resp][trial_idx])
+                    unchosen_pop_rates.append(self.pop_rates['excitatory_rate_%d' % (1-resp)][trial_idx])
+            if len(chosen_pop_rates)>1:
+                chosen_pop_rates=np.array(chosen_pop_rates)
+                unchosen_pop_rates=np.array(unchosen_pop_rates)
+                mean_e_pop_rates=np.array([np.mean(chosen_pop_rates,axis=0), np.mean(unchosen_pop_rates,axis=0)])
+                std_e_pop_rates=np.array([np.std(chosen_pop_rates,axis=0)/np.sqrt(len(trials)),
+                                          np.std(unchosen_pop_rates,axis=0)/np.sqrt(len(trials))])
+                plot_network_firing_rates(np.array(mean_e_pop_rates), self.sim_params, self.network_params,
+                    std_e_rates=std_e_pop_rates, plt_title=plt_title, labels=['chosen','unchosen'])
+
+    def plot_perc_missed(self):
+        plt.figure()
+        coherence_levels=self.get_coherence_levels()
+        perc_missed=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            perc_missed.append((1.0-float(len(responded_trials))/float(len(trials)))*100.0)
+        plt.plot(coherence_levels,perc_missed,'o')
+        plt.xlabel('Coherence')
+        plt.ylabel('% Missed')
+
+    def plot_coherence_sat(self):
+        plt.figure()
+        coherence_levels=self.get_coherence_levels()
+        mean_rt=[]
+        mean_error=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_rt.append(np.mean(self.trial_rt[0,responded_trials]))
+            mean_error.append(np.mean(1.0-self.trial_correct[0,responded_trials])*100.0)
+        plt.plot(mean_rt,mean_error,'o')
+        plt.xlabel('RT')
+        plt.ylabel('Error Rate')
+
+    def plot_coherence_rt(self):
+        coherence_levels=self.get_coherence_levels()
+        mean_rt=[]
+        std_rt=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_rt.append(np.mean(self.trial_rt[0,responded_trials]))
+            std_rt.append(np.std(self.trial_rt[0,responded_trials])/np.sqrt(len(responded_trials)))
+        plt.figure()
+        rt_fit = FitRT(coherence_levels, mean_rt, guess=[1,1,1], display=0)
+        smoothInt = np.arange(min(coherence_levels), max(coherence_levels), 0.001)
+        smoothRT = rt_fit.eval(smoothInt)
+        plt.semilogx(smoothInt, smoothRT,'b')
+        plt.errorbar(coherence_levels, mean_rt, yerr=std_rt, fmt='bo')
+        plt.xlabel('Coherence')
+        plt.ylabel('RT')
+
+    def plot_coherence_accuracy(self):
+        coherence_levels=self.get_coherence_levels()
+        mean_correct=[]
+        for coherence in coherence_levels:
+            trials=self.get_coherence_trials(coherence)
+            responded_trials=np.intersect1d(np.where(self.trial_resp[0,:]>-1)[0],trials)
+            mean_correct.append(np.mean(self.trial_correct[0,responded_trials]))
+        acc_fit = FitWeibull(coherence_levels, mean_correct, guess=[0.0, 0.2], display=0)
+        smoothInt = np.arange(.01, 1.0, 0.001)
+        smoothResp = acc_fit.eval(smoothInt)
+        thresh=acc_fit.inverse(0.8)
+        plt.figure()
+        plt.semilogx(smoothInt, smoothResp,'b')
+        plt.plot(coherence_levels,mean_correct,'ob')
+        plt.plot([thresh,thresh],[0.5,1],'--b')
+        plt.xlabel('Coherence')
+        plt.ylabel('Accuracy')
+
+    def plot_choice_hysteresis(self):
+        # Dict of coherence levels
+        coherence_choices={
+            'L*':{},
+            'R*':{}
+        }
+
+        # For each trial
+        for trial_idx in range(1,self.sim_params.ntrials):
+            direction = np.where(self.trial_inputs[:, trial_idx] == np.max(self.trial_inputs[:, trial_idx]))[0][0]
+            if direction == 0:
+                direction = -1
+                # Get coherence - negative coherences when direction is to the left
+            coherence = float('%.3f' % np.abs((self.trial_inputs[0, trial_idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0)))*direction
+            last_resp=self.trial_resp[0,trial_idx-1]
+            if last_resp == -1:
+                last_resp=float('NaN')
+            elif last_resp == 0:
+                last_resp = -1
+            resp=self.trial_resp[0,trial_idx]
+            if resp == -1:
+                resp=float('NaN')
+            elif resp == 0:
+                resp = -1
+
+            if not math.isnan(last_resp) and not math.isnan(resp):
+                if last_resp<0:
+                    if not coherence in coherence_choices['L*']:
+                        coherence_choices['L*'][coherence]=[]
+                        # Append 0 to list if left (-1) or 1 if right
+                    coherence_choices['L*'][coherence].append(np.max([0,resp]))
+                elif last_resp>0:
+                    # List of rightward choices (0=left, 1=right)
+                    if not coherence in coherence_choices['R*']:
+                        coherence_choices['R*'][coherence]=[]
+                        # Append 0 to list if left (-1) or 1 if right
+                    coherence_choices['R*'][coherence].append(np.max([0,resp]))
+
+        fig=plt.figure()
+        ax=fig.add_subplot(1,1,1)
+        left_coherences=sorted(coherence_choices['L*'].keys())
+        right_coherences=sorted(coherence_choices['R*'].keys())
+        left_choice_probs = []
+        right_choice_probs = []
+        for coherence in left_coherences:
+            left_choice_probs.append(np.mean(coherence_choices['L*'][coherence]))
+        for coherence in right_coherences:
+            right_choice_probs.append(np.mean(coherence_choices['R*'][coherence]))
+        plot_condition_choice_probability(ax, 'b', left_coherences, left_choice_probs, right_coherences, right_choice_probs)
+
+
+    def get_coherence_levels(self):
+        trial_coherence_levels=[]
+        for idx in range(self.sim_params.ntrials):
+            coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+            trial_coherence_levels.append(float('%.3f' % coherence))
+        return sorted(np.unique(trial_coherence_levels))
+
+    def get_coherence_trials(self, coherence):
+        trial_coherence_idx=[]
+        for idx in range(self.sim_params.ntrials):
+            trial_coherence = np.abs((self.trial_inputs[0, idx] - self.network_params.mu_0) / (self.network_params.p_a * 100.0))
+            if ('%.3f' % trial_coherence)==('%.3f' % coherence):
+                trial_coherence_idx.append(idx)
+
+        return np.array(trial_coherence_idx)
+
     def plot(self):
         # Convolve accuracy
         correct_ma = self.get_correct_ma()
@@ -107,6 +273,23 @@ class SessionMonitor():
             #plt.ylim(0, gmax/nS)
             plt.xlabel('trial')
             plt.ylabel('average weight')
+
+        if self.record_firing_rates:
+            self.plot_mean_firing_rates(range(self.sim_params.ntrials))
+            self.plot_sorted_mean_firing_rates(range(self.sim_params.ntrials))
+
+            coherence_levels=self.get_coherence_levels()
+
+            for coherence in coherence_levels:
+                trials=self.get_coherence_trials(coherence)
+                #self.plot_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
+                self.plot_sorted_mean_firing_rates(trials, plt_title='Coherence=%.3f' % coherence)
+
+        self.plot_coherence_rt()
+        self.plot_coherence_accuracy()
+        self.plot_coherence_sat()
+        self.plot_perc_missed()
+        self.plot_choice_hysteresis()
 
         plt.figure()
         plt.plot(self.trial_correct[0,:])
@@ -239,7 +422,7 @@ class WTAMonitor():
             self.record_idx.append(i_idx)
             self.monitors['network'] = MultiStateMonitor(network, vars=['vm','g_ampa_r','g_ampa_x','g_ampa_b',
                                                                         'g_gaba_a', 'g_nmda','I_ampa_r','I_ampa_x',
-                                                                        'I_ampa_b','I_gaba_a','I_nmda'], 
+                                                                        'I_ampa_b','I_gaba_a','I_nmda'],
                 record=self.record_idx, clock=clock)
 
         # Population rate monitors
@@ -286,58 +469,29 @@ class WTAMonitor():
 
             e_rate_0=self.monitors['excitatory_rate_0'].smooth_rate(width=5*ms)/hertz
             e_rate_1=self.monitors['excitatory_rate_1'].smooth_rate(width=5*ms)/hertz
-            rt, choice = get_response_time(np.array([e_rate_0, e_rate_1]), self.sim_params.stim_start_time,
-                self.sim_params.stim_end_time, upper_threshold = self.network_params.resp_threshold,
-                dt = self.sim_params.dt)
-
-            figure()
-            ax=subplot(211)
             i_rate=self.monitors['inhibitory_rate'].smooth_rate(width=5*ms)/hertz
-            max_rates=[np.max(i_rate[500:]), self.network_params.resp_threshold+10]
-            for i in range(self.network_params.num_groups):
-                e_rate=self.monitors['excitatory_rate_%d' % i].smooth_rate(width=5*ms)/hertz
-                max_rates.append(np.max(e_rate[500:]))
-            max_rate=np.max(max_rates)
-
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
-                alpha=0.25, facecolor='yellow', edgecolor='none')
-            ax.add_patch(rect)
-
-            for idx in range(self.network_params.num_groups):
-                pop_rate_monitor=self.monitors['excitatory_rate_%d' % idx]
-                ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
-                    pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='e %d' % idx)
-                ylim(0,max_rate)
-            ax.plot([0-self.sim_params.stim_start_time/ms, (self.sim_params.trial_duration-self.sim_params.stim_start_time)/ms],
-                [self.network_params.resp_threshold/hertz, self.network_params.resp_threshold/hertz], 'k--')
-            ax.plot([rt,rt],[0, max_rate],'k--')
-            legend(loc='best')
-            ylabel('Firing rate (Hz)')
-
-            ax=subplot(212)
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
-                alpha=0.25, facecolor='yellow', edgecolor='none')
-            ax.add_patch(rect)
-            pop_rate_monitor=self.monitors['inhibitory_rate']
-            ax.plot(pop_rate_monitor.times/ms-self.sim_params.stim_start_time/ms,
-                pop_rate_monitor.smooth_rate(width=5*ms)/hertz, label='i')
-            ylim(0,max_rate)
-            ax.plot([rt,rt],[0, max_rate],'k--')
-            ylabel('Firing rate (Hz)')
-            xlabel('Time (ms)')
+            plot_network_firing_rates(np.array([e_rate_0, e_rate_1]), i_rate, self.sim_params, self.network_params)
 
         # Input firing rate plots
         if self.record_inputs:
             figure()
             ax=subplot(111)
-            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate,
-                alpha=0.25, facecolor='yellow', edgecolor='none')
-            ax.add_patch(rect)
-#            ax.plot(self.monitors['background_rate'].times/ms,
-#                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
+            max_rate=0
+            task_rates=[]
             for i in range(self.network_params.num_groups):
                 task_monitor=self.monitors['task_rate_%d' % i]
-                ax.plot(task_monitor.times/ms-self.sim_params.stim_start_time/ms, task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz)
+                task_rate=task_monitor.smooth_rate(width=5*ms,filter='gaussian')/hertz
+                if np.max(task_rate)>max_rate:
+                    max_rate=np.max(task_rate)
+                task_rates.append(task_rate)
+
+            rect=Rectangle((0,0),(self.sim_params.stim_end_time-self.sim_params.stim_start_time)/ms, max_rate+5,
+                alpha=0.25, facecolor='yellow', edgecolor='none')
+            ax.add_patch(rect)
+            #            ax.plot(self.monitors['background_rate'].times/ms,
+            #                self.monitors['background_rate'].smooth_rate(width=5*ms)/hertz)
+            for i in range(self.network_params.num_groups):
+                ax.plot((np.array(range(len(task_rates[i])))*self.sim_params.dt)/ms-self.sim_params.stim_start_time/ms, task_rates[i])
             ylim(0,90)
             ylabel('Firing rate (Hz)')
             xlabel('Time (ms)')
@@ -360,7 +514,7 @@ class WTAMonitor():
                 neuron_idx=self.record_idx[i]
                 ax=subplot(int('%d1%d' % (self.network_params.num_groups+1,i+1)))
                 title('e%d' % i)
-                ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS, 
+                ax.plot(network_monitor['g_ampa_r'].times/ms, network_monitor['g_ampa_r'][neuron_idx]/nS,
                     label='AMPA-recurrent')
                 ax.plot(network_monitor['g_ampa_x'].times/ms, network_monitor['g_ampa_x'][neuron_idx]/nS,
                     label='AMPA-task')
@@ -524,7 +678,7 @@ class WTAMonitor():
             xlabel('Time (ms)')
             ylabel('Connection Weight (nS)')
 
-        #show()
+            #show()
 
 
     ## Write monitor data to HDF5 file
@@ -553,11 +707,11 @@ class WTAMonitor():
 
         # Write basic parameters
         f.attrs['input_freq'] = input_freq
-        
+
         f_sim_params=f.create_group('sim_params')
         for attr, value in self.sim_params.iteritems():
             f_sim_params.attrs[attr] = value
-            
+
         f_network_params=f.create_group('network_params')
         for attr, value in self.network_params.iteritems():
             f_network_params.attrs[attr] = value

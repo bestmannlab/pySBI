@@ -1,3 +1,4 @@
+import math
 from scipy import optimize
 from scipy.stats import ttest_ind
 from brian import ms, second, Connection
@@ -277,7 +278,7 @@ class FitRT(_baseFunctionFit):
 
 class FitSigmoid(_baseFunctionFit):
     def eval(self, xx=None, params=None):
-        if params==None:  params=self.params #so the user can set params for this particular eval
+        if params is None:  params=self.params #so the user can set params for this particular eval
         x0 = params[0]
         k=params[1]
         xx = np.asarray(xx)
@@ -286,7 +287,7 @@ class FitSigmoid(_baseFunctionFit):
         return yy
 
     def inverse(self, yy, params=None):
-        if params==None:  params=self.params #so the user can set params for this particular eval
+        if params is None:  params=self.params #so the user can set params for this particular eval
         x0 = params[0]
         k=params[1]
         #xx = -np.log((1/(yy-a))-1)/k
@@ -425,3 +426,35 @@ def pairwise_comparisons(measure_dict, factor_levels, comparison_factors):
         (t,p)=ttest_ind(measure_dict[comparison_factors[0]][factor_value],measure_dict[comparison_factors[1]][factor_value])
         pairwise[factor_value]=(t,p*num_comparisons/2.0)
     return pairwise
+
+
+def get_twod_confidence_interval(x, y):
+    covariance=np.cov(x,y)
+    [eigenvals, eigenvecs ] = np.linalg.eig(covariance)
+    max_eigenval=np.max(eigenvals)
+    max_eigenval_idx=np.where(eigenvals==max_eigenval)[0][0]
+    max_eigenvec=eigenvecs[:,max_eigenval_idx]
+    min_eigenval=np.min(eigenvals)
+    angle = math.atan2(max_eigenvec[1], max_eigenvec[0])
+    if angle < 0:
+        angle = angle + 2*math.pi
+    centroid_center=[np.mean(x),np.mean(y)]
+    # Get the 95% confidence interval error ellipse
+    chisquare_val = 2.4477
+    theta_grid = np.arange(0,2*math.pi+2*math.pi/100.0,2*math.pi/100.0)
+    phi = angle
+    X0=centroid_center[0]
+    Y0=centroid_center[1]
+    a=chisquare_val*np.sqrt(max_eigenval)
+    b=chisquare_val*np.sqrt(min_eigenval)
+    # the ellipse in x and y coordinates
+    ellipse_x_r  = a*np.cos( theta_grid )
+    ellipse_y_r  = b*np.sin( theta_grid )
+
+    #Define a rotation matrix
+    R = np.array([[ math.cos(phi), math.sin(phi)],[-math.sin(phi), math.cos(phi)]])
+
+    #let's rotate the ellipse to some angle phi
+    r_ellipse = np.dot(np.transpose(np.array([ellipse_x_r,ellipse_y_r])),R)
+
+    return r_ellipse[:,0] + X0,r_ellipse[:,1] + Y0
